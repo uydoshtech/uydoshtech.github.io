@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UyDosh — Privacy Policy</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="images/uydosh-logo.svg" as="image" />
+
+    <style>
+      :root {
+        color-scheme: light dark;
+        --blue: #00426e;
+        --bg: #061525;
+        --fg: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --brand: #e11d2e;
+        --brand2: #60a5fa;
+        --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --fg: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.7);
+          --card: rgba(15, 23, 42, 0.04);
+          --stroke: rgba(15, 23, 42, 0.12);
+          --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial;
+        background: radial-gradient(
+            1200px 500px at 15% 0%,
+            rgba(0, 66, 110, 0.36),
+            transparent 58%
+          ),
+          radial-gradient(
+            900px 600px at 85% 10%,
+            rgba(96, 165, 250, 0.22),
+            transparent 62%
+          ),
+          radial-gradient(
+            800px 620px at 92% 82%,
+            rgba(225, 29, 46, 0.12),
+            transparent 62%
+          ),
+          var(--bg);
+        color: var(--fg);
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 64px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px 20px;
+        padding: 10px 0 18px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 0 1 auto;
+      }
+      .brand img {
+        width: 60px;
+        height: 60px;
+        display: block;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .brand strong {
+        font-size: 16px;
+        letter-spacing: 0.2px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        flex: 1 1 auto;
+        max-width: 100%;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+      }
+      .pill:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: var(--fg);
+      }
+      .lang {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        max-width: 100%;
+      }
+      .lang button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        padding: 7px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .lang button[aria-pressed="true"] {
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .lang button:hover {
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .lang button .flag {
+        font-size: 14px;
+        line-height: 1;
+        transform: translateY(-0.5px);
+      }
+
+      @media (max-width: 720px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        nav {
+          justify-content: flex-start;
+        }
+        .pill {
+          font-size: 14px;
+          padding: 8px 10px;
+        }
+      }
+
+      .content {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 18px;
+        max-width: 42rem;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: clamp(26px, 3.2vw, 36px);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 18px 0 8px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+      .legal-text[hidden] {
+        display: none;
+      }
+      .legal-text {
+        white-space: pre-line;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 15px;
+        margin: 0 0 14px;
+      }
+
+      footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 15px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <a
+            href="index.html"
+            style="display: inline-flex; gap: 12px; align-items: center"
+          >
+            <img src="images/uydosh-logo.svg" alt="UyDosh logo" />
+            <div>
+              <strong>UyDosh</strong><br />
+              <span style="color: var(--muted); font-size: 15px"
+                >Rentals & roommates</span
+              >
+            </div>
+          </a>
+        </div>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="false" aria-label="O'zbekcha">
+              <span class="flag" aria-hidden="true">🇺🇿</span>
+            </button>
+            <button type="button" data-lang="ru" aria-pressed="false" aria-label="Русский">
+              <span class="flag" aria-hidden="true">🇷🇺</span>
+            </button>
+            <button type="button" data-lang="en" aria-pressed="true" aria-label="English">
+              <span class="flag" aria-hidden="true">🇬🇧</span>
+            </button>
+          </div>
+          <a class="pill" href="index.html" data-label="home">Home</a>
+          <a class="pill" href="terms-of-service.html" data-label="terms">Terms</a>
+          <a class="pill" href="https://uydoshtech.github.io/delete-account.html" data-label="delete">Delete Account</a>
+          <a class="pill" href="mailto:uydoshtech@gmail.com" data-label="contact">Contact</a>
+        </nav>
+      </header>
+
+      <main class="content">
+        <h1 data-label="title">Privacy Policy — UyDosh</h1>
+        <p class="meta" data-label="updated">Last updated: June 27, 2026</p>
+
+        <div class="legal-text" data-policy-lang="en">Privacy Policy
+
+UyDosh
+
+Effective Date: June 27, 2026
+Last Updated: June 27, 2026
+
+This Privacy Policy explains how UyDosh ("UyDosh," "we," "our," or "us") collects, uses, stores, shares, and protects personal information when you use our mobile application, website, Telegram bot, Telegram alerts, support channels, and related services collectively referred to as the "Service."
+
+UyDosh is a housing and roommate discovery platform designed to help users find apartments, rooms, roommates, neighbors, and housing-related opportunities. The Service may include user-created listings, chat features, notifications, location-based search, photo processing, AI-assisted moderation, and optional 3D/LiDAR apartment scanning features.
+
+By using UyDosh, you agree to the practices described in this Privacy Policy. If you do not agree with this Privacy Policy, please do not use the Service.
+
+1. Who We Are
+
+The Service is operated by Artur Musin, Tashkent, Uzbekistan.
+
+Website: https://uydoshtech.github.io/
+
+Email: uydoshtech@gmail.com
+
+For privacy questions, account deletion requests, complaints, content removal requests, or data-related requests, contact us at uydoshtech@gmail.com.
+
+2. Information We Collect
+
+2.1 Account Information
+
+When you create or use an account, we may collect your name or display name, username, profile photo or avatar, email address if provided through Apple, Google, or another login provider, Telegram username or Telegram account identifier if you connect Telegram, Apple ID or Google account identifier used for authentication, account creation date, account status, settings, preferences, university or educational institution if provided, gender if you choose to provide it for housing or roommate preferences, language preferences, and city, district, or general location preferences.
+
+We do not require phone-number registration unless a feature specifically asks you to provide a phone number voluntarily.
+
+2.2 Authentication Information
+
+UyDosh may allow you to sign in using third-party authentication providers, including Apple Sign-In, Google Sign-In, and Telegram login or Telegram bot connection.
+
+When you use these services, we receive information that the provider makes available to us, such as your account identifier, name, username, email address, or profile photo, depending on your privacy settings with that provider. We do not receive your Apple, Google, or Telegram password.
+
+2.3 Profile and Housing Preferences
+
+You may provide information to help us match you with relevant listings, roommates, or housing opportunities, such as preferred city, district, neighborhood, university, or area; desired rent range or budget; preferred room type or apartment type; move-in date or availability; gender preference, if relevant to roommate search; number of roommates; lifestyle preferences; description, bio, or personal notes; saved listings; and liked, followed, hidden, reported, or blocked users or listings.
+
+Some of this information may be visible to other users depending on the feature and your chosen settings.
+
+2.4 Listings and User-Generated Content
+
+When you create, edit, publish, save, report, or interact with a listing, we may collect listing title, description, apartment or room details, price, address, approximate location, district or map location, photos and media, contact details you choose to provide such as Telegram username or phone number, housing rules, roommate preferences, availability, listing category, listing status, edit history, moderation status, review notes, reports, complaints, or flags related to the listing.
+
+If you publish a listing, parts of that listing may become visible to other users of the Service.
+
+2.5 Telegram-Related Data
+
+UyDosh may use Telegram integrations to help users sign in, connect Telegram features, receive alerts, or use Telegram contact options. Depending on the feature, we may collect or process Telegram username, Telegram user ID or chat-related identifiers, Telegram bot linking tokens, Telegram alert preferences, and contact information you choose to provide such as a Telegram username.
+
+We use this information to provide the requested Telegram-related features, deliver notifications, prevent abuse, support moderation, and respond to user requests.
+
+If you believe content or contact information shown in UyDosh contains your personal information, infringes your rights, or should be removed, contact us at uydoshtech@gmail.com.
+
+2.6 Messages and Chat Data
+
+If you use in-app chat or messaging features, we may collect and store message text, sender and recipient identifiers, message timestamps, message delivery status, edited message history, reactions, conversation metadata, reports or moderation flags, and attachments if supported.
+
+We use chat data to provide messaging functionality, deliver notifications, prevent abuse, investigate complaints, enforce our Terms of Use, and improve user safety. We do not use private chats for advertising targeting.
+
+2.7 Photos, Media, and AI Processing
+
+When you upload photos or media, we may collect and process listing photos, profile photos, apartment images, room images, images submitted for moderation or support, and image metadata where technically available.
+
+UyDosh may use automated tools, including AI-assisted processing, to blur faces or sensitive visual details, detect inappropriate, harmful, misleading, or unsafe content, improve listing quality, prevent scams, fraud, duplicate listings, or spam, and generate safer previews or thumbnails.
+
+AI-assisted photo processing may be performed by our own systems or trusted service providers. We do not use your private photos to identify you personally unless necessary for safety, moderation, legal compliance, or support.
+
+2.8 Location Information
+
+UyDosh may collect location-related information in several ways. You may provide city, district, neighborhood, university area, apartment address, approximate map pin, search area, or preferred housing location.
+
+If you grant device location permission, we may collect your approximate or precise location to show nearby listings, improve map search, suggest relevant housing options, calculate distance to universities, districts, or points of interest, and improve location-based alerts.
+
+You can control device location permissions in your iOS or Android settings. We recommend that users avoid publishing exact personal addresses unless necessary for a housing listing. Where possible, UyDosh may display approximate locations rather than exact addresses.
+
+2.9 3D Scans, LiDAR, Floor Plans, and Apartment Measurements
+
+UyDosh may offer optional features that allow users to scan apartments, rooms, walls, floors, windows, or other interior elements using LiDAR, camera, AR, or similar device technologies.
+
+If you use these features, we may collect or process 3D scans, room measurements, floor plans, wall, floor, ceiling, window, or door dimensions, area calculations, sunlight, shadow, direction, or orientation data, compass direction, latitude and longitude associated with the scanned apartment if provided, generated visualizations, previews, measurement files, and related media such as photos, videos, or 3D assets.
+
+These features are optional. You should not scan private property unless you have the legal right or permission to do so. 3D scans and measurements may reveal sensitive information about a home or interior space. Please review scans carefully before sharing them publicly.
+
+2.10 Device, Technical, and Usage Information
+
+When you use the Service, we may automatically collect device type, operating system, app version, device language, time zone, IP address, device identifiers or installation identifiers, push notification token, crash logs, diagnostic logs, performance data, session data, feature usage, clicks, views, impressions, interactions, referral source, and approximate network information.
+
+We use this information to operate, secure, debug, improve, and analyze the Service.
+
+2.11 Push Notification Information
+
+If you enable push notifications, we may collect and use Firebase Cloud Messaging tokens, Apple Push Notification tokens, device identifiers related to push delivery, notification preferences, notification delivery status, and alert categories such as new listings, Telegram alerts, chats, saved searches, moderation updates, or account notices.
+
+You can disable push notifications in your device settings or inside the app, where available.
+
+2.12 Support, Complaints, and Reports
+
+If you contact support, submit a complaint, report content, report a user, or request account deletion, we may collect your contact information, your message or complaint, screenshots or attachments, listing or user identifiers, chat history related to the complaint, internal review notes, resolution status, and date and time of the request.
+
+We use this information to respond to you, investigate abuse, enforce our rules, protect users, and comply with legal obligations.
+
+3. How We Use Information
+
+3.1 To Provide the Service
+
+We use information to create and manage accounts, authenticate users, show housing listings, publish and manage listings, enable search and filters, match users with relevant housing opportunities, enable chat and communication, deliver push notifications, connect Telegram alerts, save preferences and saved listings, provide map and location-based features, and provide optional 3D scanning and measurement features.
+
+3.2 To Improve Safety and Trust
+
+We use information to detect spam, scams, fraud, fake listings, duplicate listings, and suspicious behavior; review and moderate listings; review user reports and complaints; block abusive users; enforce our Terms of Use; protect users from harmful or misleading content; verify listing quality; and prevent unauthorized access or misuse.
+
+3.3 To Provide Telegram Features
+
+We may use Telegram-related data to link accounts, deliver Telegram alerts, support Telegram contact options, prevent abuse, investigate complaints, and maintain the reliability of requested Telegram features.
+
+3.4 To Personalize the Experience
+
+We may use your information to show relevant listings, suggest roommates, apartments, or housing opportunities, prioritize listings near your preferred university, city, or district, remember your filters and preferences, improve recommendations, and show content in your preferred language.
+
+3.5 To Communicate With You
+
+We may send service notifications, account updates, security alerts, chat notifications, listing updates, Telegram alert notifications, moderation decisions, support responses, and important legal or policy updates.
+
+3.6 To Analyze and Improve the Service
+
+We may use information to understand how users interact with the app, fix bugs, improve performance, improve listing quality, develop new features, measure growth and engagement, and improve onboarding, search, recommendations, moderation, and notifications.
+
+3.7 For Legal and Compliance Purposes
+
+We may use information to comply with applicable laws, respond to lawful requests, protect our rights and property, resolve disputes, enforce agreements, maintain business records, and investigate abuse, fraud, or security incidents.
+
+4. Legal Bases for Processing
+
+Where applicable law requires a legal basis for processing personal data, we rely on one or more of the following legal bases: contract, consent, legitimate interests, and legal obligation.
+
+Contract: we process information when necessary to provide the Service, manage accounts, publish listings, enable chats, deliver notifications, and perform our Terms of Use.
+
+Consent: we rely on consent where required, including for certain permissions such as location access, push notifications, photo access, camera access, microphone access, or optional features. You may withdraw consent by changing app settings, device permissions, or contacting us.
+
+Legitimate interests: we may process information for legitimate interests such as safety, fraud prevention, service improvement, analytics, moderation, support, and security, provided those interests are not overridden by your rights.
+
+Legal obligation: we may process information when required to comply with law, court orders, government requests, tax, accounting, or regulatory obligations.
+
+5. How We Share Information
+
+5.1 With Other Users
+
+Depending on your activity and settings, other users may see your display name, profile photo, public profile information, published listings, listing photos, listing descriptions, approximate location or address shown in the listing, contact details you choose to publish, messages you send to them, and your reactions, follows, or interactions where visible.
+
+Do not include sensitive personal information in public listings or messages unless you want other users to see it.
+
+5.2 With Service Providers
+
+We may share information with trusted vendors who help us operate the Service, such as cloud hosting providers, database and storage providers, authentication providers, push notification providers, analytics providers, crash reporting providers, AI processing or moderation providers, email or support tools, map, location, or geocoding providers, and security and fraud prevention tools.
+
+These providers may process information only as needed to provide services to us and are expected to protect it appropriately.
+
+5.3 With Authentication Providers
+
+If you sign in with Apple, Google, or Telegram, your interaction with those providers is also governed by their own privacy policies and account settings.
+
+5.4 With Telegram
+
+If you connect Telegram features, interact with our Telegram bot, receive Telegram alerts, or use Telegram contact options, certain information may be processed through Telegram according to Telegram's own terms and privacy policy. UyDosh does not control Telegram's independent data practices.
+
+5.5 For Legal Reasons
+
+We may disclose information if we believe it is reasonably necessary to comply with law, respond to legal process, protect user safety, investigate fraud, abuse, or security issues, enforce our Terms of Use, protect our rights, property, or business, or prevent harm to UyDosh, users, or the public.
+
+5.6 Business Transfers
+
+If UyDosh is involved in a merger, acquisition, financing, reorganization, sale of assets, or transfer of business, user information may be transferred as part of that transaction, subject to appropriate safeguards.
+
+6. Public Listings and User Responsibility
+
+UyDosh allows users to publish housing-related content. Public listings may be viewed by other users and may include information you choose to provide.
+
+You are responsible for ensuring that your listings do not include information you do not want to make public. Avoid publishing passport information, government ID numbers, bank card information, exact personal home address unless necessary, private information about other people, sensitive photos, or information you do not have permission to share.
+
+If you include contact information in a listing, other users may use it to contact you outside UyDosh. We are not responsible for communications that happen outside our Service.
+
+7. User Listings and External Contact Details
+
+UyDosh may organize, moderate, and display housing-related listings created by users.
+
+Listings may include information provided by users, such as listing description, price, location, photos, Telegram username, phone number, and other contact details.
+
+We may edit, summarize, reformat, anonymize, blur, or moderate listings to improve safety, readability, and privacy.
+
+If you are the author of a listing and want it removed, corrected, or anonymized, contact us at uydoshtech@gmail.com.
+
+8. Artificial Intelligence and Automated Processing
+
+UyDosh may use automated systems and AI-assisted tools to support listing quality checks, category detection, duplicate detection, scam detection, spam detection, photo blurring, moderation, translation or text cleanup, recommendation, and matching.
+
+Automated tools may make mistakes. Important moderation decisions may be reviewed manually where appropriate. You may contact us if you believe an automated decision, listing classification, or moderation action is incorrect.
+
+9. Location, Maps, and Approximate Address Display
+
+Location is important for housing search. UyDosh may use location information to show listings on a map, suggest nearby apartments, calculate distances, and improve search.
+
+Exact home addresses can be sensitive. Depending on the feature, we may show exact location if provided and intentionally published, approximate location, district or neighborhood, university area, or a map pin with reduced precision.
+
+Users should carefully review location information before publishing a listing.
+
+10. Data Retention
+
+We keep personal information only as long as reasonably necessary for the purposes described in this Privacy Policy, including providing the Service, maintaining security, resolving disputes, complying with legal obligations, and enforcing our agreements.
+
+Typical retention practices may include: account data retained while your account is active; listings retained while active and for a reasonable period after deletion or archival for safety, fraud prevention, audit, and dispute resolution; chat messages retained while your account or conversation is active, unless deleted according to available features or legal requirements; Telegram-related data retained as needed to provide requested Telegram features, deliver alerts, prevent abuse, and support moderation; support and complaint records retained as needed to resolve the issue and maintain safety records; device and analytics data retained for a limited period needed for analytics, debugging, security, and performance improvement; and legal records retained as required by applicable law.
+
+When information is no longer needed, we delete, anonymize, or securely retain it in accordance with applicable requirements.
+
+11. Account Deletion
+
+You may request deletion of your account through the in-app account deletion feature, if available, or by contacting support at uydoshtech@gmail.com.
+
+When you request account deletion, we will delete or anonymize personal information associated with your account, unless we need to retain certain information for legitimate reasons, such as legal compliance, fraud prevention, security, dispute resolution, protection of other users, enforcement of our Terms of Use, financial, audit, or business records, or previously published content that must be retained in limited form for moderation history or legal reasons.
+
+Some information may remain in backups for a limited period before being deleted according to our backup retention practices. Deleting your UyDosh account does not automatically delete your information from third-party services such as Telegram, Apple, Google, or conversations that occurred outside UyDosh.
+
+12. Your Privacy Rights
+
+Depending on your location and applicable law, you may have rights to access the personal information we hold about you, request correction of inaccurate information, request deletion of your personal information, object to certain processing, restrict certain processing, withdraw consent, request a copy of your data, opt out of certain communications, and lodge a complaint with a data protection authority.
+
+To exercise these rights, contact us at uydoshtech@gmail.com. We may need to verify your identity before fulfilling your request.
+
+13. California Privacy Rights
+
+If you are a California resident and applicable law applies to us, you may have specific rights under California privacy laws, including the right to know, delete, correct, and limit certain uses of personal information.
+
+UyDosh does not sell personal information. UyDosh does not knowingly share personal information for cross-context behavioral advertising unless clearly disclosed and permitted by law.
+
+To submit a California privacy request, contact us at uydoshtech@gmail.com.
+
+14. European, UK, and Similar Privacy Rights
+
+If you are located in the European Economic Area, United Kingdom, Switzerland, or another region with similar privacy laws, you may have additional rights under applicable data protection laws.
+
+Where applicable, you may request access to your personal data, correction of your personal data, deletion of your personal data, restriction of processing, objection to processing, data portability, withdrawal of consent, and review of certain automated decisions.
+
+You may also have the right to complain to your local data protection authority.
+
+15. International Data Transfers
+
+UyDosh may process and store information in countries other than your country of residence. These countries may have privacy laws that differ from the laws of your country. Where required, we use appropriate safeguards for international data transfers, such as contractual protections, technical safeguards, and access controls.
+
+16. Security
+
+We use reasonable technical, organizational, and administrative measures to protect personal information, including access controls, authentication protections, encryption where appropriate, secure cloud infrastructure, logging and monitoring, internal permission controls, moderation and abuse detection, and backup and recovery practices.
+
+However, no system is completely secure. We cannot guarantee that unauthorized access, hacking, data loss, or misuse will never occur.
+
+You are responsible for keeping your account credentials secure and for controlling access to your device, email, Apple account, Google account, and Telegram account.
+
+17. Children and Minors
+
+UyDosh is not intended for children under the age of 13. If you are under the age required by your country to use online services without parental consent, you may use UyDosh only with permission from a parent or legal guardian.
+
+We do not knowingly collect personal information from children under 13. If we learn that we have collected personal information from a child under 13 without appropriate consent, we will take reasonable steps to delete it.
+
+18. Third-Party Services and Links
+
+UyDosh may include links, integrations, or references to third-party services, including Telegram, Apple, Google, map providers, cloud services, analytics providers, payment providers if introduced later, and external websites or contact methods.
+
+This Privacy Policy does not apply to third-party services. Their own privacy policies govern how they collect and use your information.
+
+19. Analytics and Diagnostics
+
+We may use analytics and diagnostic tools to understand app performance, crashes, user engagement, and feature usage.
+
+Analytics data may include app screens viewed, buttons clicked, listing interactions, search filters, notification interactions, device type, app version, crash reports, and performance logs.
+
+We use this information to improve the Service and fix issues. Where possible, we limit analytics data and avoid collecting unnecessary sensitive information.
+
+20. Push Notifications and Marketing Communications
+
+UyDosh may send push notifications related to new housing listings, saved searches, Telegram alerts, chat messages, listing moderation status, account security, product updates, and important service announcements.
+
+You can control push notifications through your device settings or app settings. We may send non-marketing service messages even if you disable promotional notifications, such as security alerts or account-related notices.
+
+21. Advertising
+
+UyDosh may show advertising in the future, including sponsored posts, promoted listings, or in-app placements.
+
+If advertising is introduced, we may use limited information to show relevant ads, such as city, district, university area, listing category, app language, and general app activity.
+
+We do not use private chat messages for advertising targeting. If we introduce personalized advertising or share information with advertising partners, we will update this Privacy Policy and provide any required controls or consent options.
+
+22. Sensitive Information
+
+UyDosh is a housing-related service. You should avoid submitting sensitive personal information unless necessary.
+
+Sensitive information may include passport or national ID numbers, financial information, health information, religious beliefs, political views, precise home address not intended for publication, information about children, and private information about other people.
+
+If you submit sensitive information voluntarily, you understand that it may be processed as part of the feature where you submitted it.
+
+23. User Reports, Moderation, and Safety Investigations
+
+UyDosh may review user activity, listings, chats, photos, complaints, and technical data when necessary to investigate scams, prevent fraud, remove unsafe listings, respond to complaints, enforce platform rules, protect users, and comply with law.
+
+Moderation may involve automated tools, human review, or both. If your content or account is restricted, removed, or blocked, you may contact us at uydoshtech@gmail.com.
+
+24. Data Accuracy
+
+We rely on users and third-party sources to provide accurate listing information. UyDosh does not guarantee that all listings, prices, addresses, photos, roommate details, or contact information are accurate.
+
+If you find incorrect personal information or an inaccurate listing, contact us or use the reporting tools in the app.
+
+25. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time. If we make material changes, we may notify you by updating the Last Updated date, showing an in-app notice, sending a push notification, sending an email if available, or posting an announcement through our official channels.
+
+Your continued use of the Service after the updated Privacy Policy becomes effective means you accept the updated policy.
+
+26. Contact Us
+
+For privacy questions, data requests, complaints, account deletion, or content removal requests, contact:
+
+UyDosh Privacy Team
+
+Operator: Artur Musin
+
+Website: https://uydoshtech.github.io/
+
+Email: uydoshtech@gmail.com
+
+Location: Tashkent, Uzbekistan
+
+27. Summary of Key Practices
+
+UyDosh collects account, listing, chat, Telegram, location, device, support, and optional 3D scan data.
+
+UyDosh uses data to provide housing search, roommate discovery, alerts, chat, moderation, safety, support, and app improvement.
+
+UyDosh may provide Telegram login, alerts, and contact options.
+
+UyDosh may use AI-assisted tools for listing parsing, moderation, and photo blurring.
+
+UyDosh does not sell personal information.
+
+UyDosh does not use private chats for advertising targeting.
+
+Users can request account deletion.
+
+Users can request removal or correction of their listings and contact information.
+
+Exact addresses, photos, contacts, and 3D scans may be sensitive and should be shared carefully.</div>
+
+        <div class="legal-text" data-policy-lang="uz" hidden>Maxfiylik siyosati
+
+UyDosh
+
+Kuchga kirish sanasi: 2026-yil 27-iyun
+Oxirgi yangilangan sana: 2026-yil 27-iyun
+
+Ushbu Maxfiylik siyosati UyDosh (“UyDosh”, “biz”, “bizning” yoki “bizni”) mobil ilovamiz, veb-saytimiz, Telegram botimiz, Telegram ogohlantirishlari, qo‘llab-quvvatlash kanallari va birgalikda “Xizmat” deb ataladigan tegishli xizmatlardan foydalanganingizda shaxsiy ma’lumotlarni qanday yig‘ishi, ishlatishi, saqlashi, ulashishi va himoya qilishini tushuntiradi.
+
+UyDosh foydalanuvchilarga kvartiralar, xonalar, xonadoshlar, qo‘shnilar va uy-joy bilan bog‘liq imkoniyatlarni topishga yordam beradigan uy-joy va xonadosh izlash platformasidir. Xizmat foydalanuvchilar yaratgan e’lonlar, chat funksiyalari, bildirishnomalar, joylashuvga asoslangan qidiruv, suratlarni qayta ishlash, AI yordamidagi moderatsiya hamda ixtiyoriy 3D/LiDAR kvartira skanerlash funksiyalarini o‘z ichiga olishi mumkin.
+
+UyDosh’dan foydalanish orqali siz ushbu Maxfiylik siyosatida tasvirlangan amaliyotlarga rozilik bildirasiz. Agar ushbu siyosatga rozi bo‘lmasangiz, Xizmatdan foydalanmang.
+
+1. Biz kimmiz
+
+Xizmat Artur Musin, Toshkent, O‘zbekiston tomonidan boshqariladi.
+
+Veb-sayt: https://uydoshtech.github.io/
+
+Email: uydoshtech@gmail.com
+
+Maxfiylik savollari, akkauntni o‘chirish so‘rovlari, shikoyatlar, kontentni olib tashlash yoki ma’lumotlarga oid so‘rovlar uchun uydoshtech@gmail.com manziliga yozing.
+
+2. Biz yig‘adigan ma’lumotlar
+
+2.1 Akkaunt ma’lumotlari
+
+Akkaunt yaratganingizda yoki undan foydalanganingizda biz ismingiz yoki ko‘rsatiladigan ismingiz, foydalanuvchi nomingiz, profil surati yoki avataringiz, Apple, Google yoki boshqa login provayderi orqali berilgan email manzilingiz, Telegram’ni ulasangiz Telegram foydalanuvchi nomi yoki akkaunt identifikatori, autentifikatsiya uchun ishlatilgan Apple ID yoki Google akkaunt identifikatori, akkaunt yaratilgan sana, akkaunt holati, sozlamalar, afzalliklar, ko‘rsatilgan bo‘lsa universitet yoki ta’lim muassasasi, uy-joy yoki xonadosh afzalliklari uchun ixtiyoriy ko‘rsatilgan jins, til afzalliklari hamda shahar, tuman yoki umumiy joylashuv afzalliklarini yig‘ishimiz mumkin.
+
+Telefon raqami orqali ro‘yxatdan o‘tishni talab qilmaymiz, faqat ayrim funksiya telefon raqamini ixtiyoriy berishingizni alohida so‘rasa bundan mustasno.
+
+2.2 Autentifikatsiya ma’lumotlari
+
+UyDosh Apple Sign-In, Google Sign-In hamda Telegram login yoki Telegram bot ulanishi kabi uchinchi tomon autentifikatsiya provayderlari orqali kirishga ruxsat berishi mumkin.
+
+Bu xizmatlardan foydalanganda biz provayder maxfiylik sozlamalaringizga qarab bizga taqdim etadigan akkaunt identifikatori, ism, foydalanuvchi nomi, email manzil yoki profil surati kabi ma’lumotlarni olamiz. Biz Apple, Google yoki Telegram parolingizni olmaymiz.
+
+2.3 Profil va uy-joy afzalliklari
+
+Sizga mos e’lonlar, xonadoshlar yoki uy-joy imkoniyatlarini topishda yordam berish uchun afzal shahar, tuman, mahalla, universitet yoki hudud; ijara byudjeti; xona yoki kvartira turi; ko‘chib kirish sanasi; xonadosh qidirish uchun zarur bo‘lsa jins afzalligi; xonadoshlar soni; turmush tarzi afzalliklari; tavsif, bio yoki shaxsiy izohlar; saqlangan e’lonlar; yoqtirilgan, kuzatilgan, yashirilgan, shikoyat qilingan yoki bloklangan foydalanuvchilar va e’lonlar kabi ma’lumotlarni berishingiz mumkin.
+
+Bu ma’lumotlarning ayrimlari funksiya va tanlangan sozlamalaringizga qarab boshqa foydalanuvchilarga ko‘rinishi mumkin.
+
+2.4 E’lonlar va foydalanuvchi kontenti
+
+E’lon yaratganingizda, tahrirlaganingizda, chop etganingizda, saqlaganingizda, shikoyat qilganingizda yoki u bilan o‘zaro aloqada bo‘lganingizda biz e’lon sarlavhasi, tavsifi, kvartira yoki xona tafsilotlari, narx, manzil, taxminiy joylashuv, tuman yoki xaritadagi joylashuv, suratlar va media, o‘zingiz ko‘rsatgan Telegram foydalanuvchi nomi yoki telefon raqami kabi aloqa ma’lumotlari, uy qoidalari, xonadosh afzalliklari, mavjudlik, e’lon toifasi, holati, tahrir tarixi, moderatsiya holati, tekshiruv izohlari, shikoyatlar yoki e’longa oid belgilarni yig‘ishimiz mumkin.
+
+E’lon chop etsangiz, uning ayrim qismlari Xizmatning boshqa foydalanuvchilariga ko‘rinishi mumkin.
+
+2.5 Telegram bilan bog‘liq ma’lumotlar
+
+UyDosh foydalanuvchilarga tizimga kirish, Telegram funksiyalarini ulash, ogohlantirishlar olish yoki Telegram aloqa imkoniyatlaridan foydalanishda yordam berish uchun Telegram integratsiyalaridan foydalanishi mumkin. Funksiyaga qarab biz Telegram foydalanuvchi nomi, Telegram foydalanuvchi ID’si yoki chatga oid identifikatorlar, Telegram bot ulash tokenlari, Telegram ogohlantirish afzalliklari hamda siz ko‘rsatgan Telegram foydalanuvchi nomi kabi aloqa ma’lumotlarini yig‘ishimiz yoki qayta ishlashimiz mumkin.
+
+Bu ma’lumotlardan so‘ralgan Telegram funksiyalarini taqdim etish, bildirishnomalarni yetkazish, suiiste’molni oldini olish, moderatsiyani qo‘llab-quvvatlash va foydalanuvchi so‘rovlariga javob berish uchun foydalanamiz.
+
+Agar UyDosh’da ko‘rsatilgan kontent yoki aloqa ma’lumotlari shaxsiy ma’lumotlaringizni o‘z ichiga oladi, huquqlaringizni buzadi yoki olib tashlanishi kerak deb hisoblasangiz, uydoshtech@gmail.com manziliga yozing.
+
+2.6 Xabarlar va chat ma’lumotlari
+
+Ilova ichidagi chat yoki xabar almashish funksiyalaridan foydalansangiz, biz xabar matni, jo‘natuvchi va qabul qiluvchi identifikatorlari, xabar vaqtlari, yetkazib berish holati, tahrirlangan xabar tarixi, reaksiyalar, suhbat metadatasi, shikoyatlar yoki moderatsiya belgilari hamda qo‘llab-quvvatlansa ilovalarni yig‘ishimiz va saqlashimiz mumkin.
+
+Chat ma’lumotlaridan xabar almashishni ta’minlash, bildirishnomalar yetkazish, suiiste’molni oldini olish, shikoyatlarni tekshirish, Foydalanish shartlarimizni bajarish va foydalanuvchi xavfsizligini yaxshilash uchun foydalanamiz. Shaxsiy chatlardan reklama targeting uchun foydalanmaymiz.
+
+2.7 Suratlar, media va AI qayta ishlash
+
+Surat yoki media yuklaganingizda biz e’lon suratlari, profil suratlari, kvartira va xona rasmlari, moderatsiya yoki qo‘llab-quvvatlash uchun yuborilgan rasmlar hamda texnik jihatdan mavjud bo‘lsa rasm metadatasini yig‘ishimiz va qayta ishlashimiz mumkin.
+
+UyDosh yuzlar yoki sezgir vizual tafsilotlarni xiralashtirish, nomaqbul, zararli, chalg‘ituvchi yoki xavfli kontentni aniqlash, e’lon sifatini yaxshilash, firibgarlik, dublikat e’lonlar yoki spamni oldini olish hamda xavfsizroq oldindan ko‘rish yoki eskizlar yaratish uchun AI yordamidagi avtomatik vositalardan foydalanishi mumkin.
+
+AI yordamidagi suratlarni qayta ishlash o‘z tizimlarimiz yoki ishonchli xizmat provayderlari tomonidan bajarilishi mumkin. Biz shaxsiy suratlaringizdan sizni shaxsan aniqlash uchun foydalanmaymiz, faqat xavfsizlik, moderatsiya, qonuniy muvofiqlik yoki qo‘llab-quvvatlash uchun zarur bo‘lsa bundan mustasno.
+
+2.8 Joylashuv ma’lumotlari
+
+UyDosh joylashuvga oid ma’lumotlarni bir necha yo‘l bilan yig‘ishi mumkin. Siz shahar, tuman, mahalla, universitet hududi, kvartira manzili, taxminiy xarita nuqtasi, qidiruv hududi yoki afzal uy-joy joylashuvini taqdim etishingiz mumkin.
+
+Agar qurilma joylashuviga ruxsat bersangiz, yaqin e’lonlarni ko‘rsatish, xarita qidiruvini yaxshilash, mos uy-joy variantlarini tavsiya qilish, universitetlar, tumanlar yoki qiziqarli joylargacha masofani hisoblash va joylashuvga asoslangan ogohlantirishlarni yaxshilash uchun taxminiy yoki aniq joylashuvingizni yig‘ishimiz mumkin.
+
+Qurilma joylashuv ruxsatlarini iOS yoki Android sozlamalarida boshqarishingiz mumkin. Foydalanuvchilarga uy-joy e’loni uchun zarur bo‘lmasa aniq shaxsiy manzillarni e’lon qilmaslikni tavsiya qilamiz. Imkon qadar UyDosh aniq manzillar o‘rniga taxminiy joylashuvlarni ko‘rsatishi mumkin.
+
+2.9 3D skanlar, LiDAR, reja va kvartira o‘lchovlari
+
+UyDosh foydalanuvchilarga LiDAR, kamera, AR yoki shunga o‘xshash qurilma texnologiyalari yordamida kvartira, xona, devor, pol, deraza yoki boshqa ichki elementlarni skanerlash imkonini beradigan ixtiyoriy funksiyalarni taklif qilishi mumkin.
+
+Bu funksiyalardan foydalansangiz, biz 3D skanlar, xona o‘lchovlari, reja chizmalari, devor, pol, shift, deraza yoki eshik o‘lchamlari, maydon hisob-kitoblari, quyosh nuri, soya, yo‘nalish yoki orientatsiya ma’lumotlari, kompas yo‘nalishi, berilgan bo‘lsa skanerlangan kvartiraga bog‘liq kenglik va uzunlik, yaratilgan vizualizatsiyalar, oldindan ko‘rishlar, o‘lchov fayllari hamda surat, video yoki 3D assetlar kabi tegishli mediani yig‘ishimiz yoki qayta ishlashimiz mumkin.
+
+Bu funksiyalar ixtiyoriy. Qonuniy huquqingiz yoki ruxsatingiz bo‘lmasa xususiy mulkni skanerlamang. 3D skanlar va o‘lchovlar uy yoki ichki makon haqida sezgir ma’lumotlarni ochib berishi mumkin. Ularni ommaga ulashishdan oldin diqqat bilan ko‘rib chiqing.
+
+2.10 Qurilma, texnik va foydalanish ma’lumotlari
+
+Xizmatdan foydalanganda biz qurilma turi, operatsion tizim, ilova versiyasi, qurilma tili, vaqt zonasi, IP manzil, qurilma yoki o‘rnatish identifikatorlari, push-bildirishnoma tokeni, crash loglar, diagnostika loglari, ishlash ma’lumotlari, sessiya ma’lumotlari, funksiya ishlatilishi, bosishlar, ko‘rishlar, taassurotlar, o‘zaro aloqalar, yo‘naltiruvchi manba va taxminiy tarmoq ma’lumotlarini avtomatik yig‘ishimiz mumkin.
+
+Bu ma’lumotlardan Xizmatni ishlatish, himoyalash, nosozliklarni tuzatish, yaxshilash va tahlil qilish uchun foydalanamiz.
+
+2.11 Push-bildirishnoma ma’lumotlari
+
+Push-bildirishnomalarni yoqsangiz, Firebase Cloud Messaging tokenlari, Apple Push Notification tokenlari, push yetkazib berish bilan bog‘liq qurilma identifikatorlari, bildirishnoma afzalliklari, yetkazib berish holati hamda yangi e’lonlar, Telegram ogohlantirishlari, chatlar, saqlangan qidiruvlar, moderatsiya yangilanishlari yoki akkaunt xabarlari kabi ogohlantirish toifalarini yig‘ishimiz va ishlatishimiz mumkin.
+
+Push-bildirishnomalarni qurilma sozlamalarida yoki mavjud bo‘lsa ilova ichida o‘chirishingiz mumkin.
+
+2.12 Qo‘llab-quvvatlash, shikoyatlar va xabar berish
+
+Qo‘llab-quvvatlashga murojaat qilsangiz, shikoyat yuborsangiz, kontent yoki foydalanuvchi haqida xabar bersangiz yoki akkauntni o‘chirishni so‘rasangiz, aloqa ma’lumotlaringiz, xabaringiz yoki shikoyatingiz, skrinshotlar yoki ilovalar, e’lon yoki foydalanuvchi identifikatorlari, shikoyatga oid chat tarixi, ichki tekshiruv izohlari, yechim holati hamda so‘rov sanasi va vaqtini yig‘ishimiz mumkin.
+
+Bu ma’lumotlardan sizga javob berish, suiiste’molni tekshirish, qoidalarimizni bajarish, foydalanuvchilarni himoya qilish va qonuniy majburiyatlarga rioya qilish uchun foydalanamiz.
+
+3. Ma’lumotlardan qanday foydalanamiz
+
+3.1 Xizmatni taqdim etish
+
+Ma’lumotlardan akkauntlarni yaratish va boshqarish, foydalanuvchilarni autentifikatsiya qilish, uy-joy e’lonlarini ko‘rsatish, e’lonlarni chop etish va boshqarish, qidiruv va filtrlarni yoqish, foydalanuvchilarni mos uy-joy imkoniyatlari bilan moslashtirish, chat va aloqa funksiyalarini ta’minlash, push-bildirishnomalarni yetkazish, Telegram ogohlantirishlarini ulash, afzalliklar va saqlangan e’lonlarni saqlash, xarita va joylashuv funksiyalarini hamda ixtiyoriy 3D skanerlash va o‘lchash funksiyalarini taqdim etish uchun foydalanamiz.
+
+3.2 Xavfsizlik va ishonchni yaxshilash
+
+Ma’lumotlardan spam, firibgarlik, soxta e’lonlar, dublikat e’lonlar va shubhali xatti-harakatlarni aniqlash; e’lonlarni ko‘rib chiqish va moderatsiya qilish; foydalanuvchi shikoyatlarini tekshirish; tajovuzkor foydalanuvchilarni bloklash; Foydalanish shartlarini bajarish; foydalanuvchilarni zararli yoki chalg‘ituvchi kontentdan himoya qilish; e’lon sifatini tekshirish; ruxsatsiz kirish yoki noto‘g‘ri foydalanishni oldini olish uchun foydalanamiz.
+
+3.3 Telegram funksiyalarini taqdim etish
+
+Telegram ma’lumotlaridan akkauntlarni ulash, Telegram ogohlantirishlarini yetkazish, Telegram aloqa imkoniyatlarini qo‘llab-quvvatlash, suiiste’molni oldini olish, shikoyatlarni tekshirish va so‘ralgan Telegram funksiyalarining ishonchliligini saqlash uchun foydalanishimiz mumkin.
+
+3.4 Tajribani shaxsiylashtirish
+
+Ma’lumotlaringizdan mos e’lonlarni ko‘rsatish, xonadoshlar, kvartiralar yoki uy-joy imkoniyatlarini tavsiya qilish, afzal universitet, shahar yoki tumanga yaqin e’lonlarni ustuvor qilish, filtr va afzalliklaringizni eslab qolish, tavsiyalarni yaxshilash va kontentni afzal tilingizda ko‘rsatish uchun foydalanishimiz mumkin.
+
+3.5 Siz bilan bog‘lanish
+
+Biz xizmat bildirishnomalari, akkaunt yangilanishlari, xavfsizlik ogohlantirishlari, chat bildirishnomalari, e’lon yangilanishlari, Telegram ogohlantirishlari, moderatsiya qarorlari, qo‘llab-quvvatlash javoblari va muhim huquqiy yoki siyosat yangilanishlarini yuborishimiz mumkin.
+
+3.6 Xizmatni tahlil qilish va yaxshilash
+
+Ma’lumotlardan foydalanuvchilar ilova bilan qanday o‘zaro aloqada bo‘lishini tushunish, xatolarni tuzatish, ishlashni yaxshilash, e’lon sifatini oshirish, yangi funksiyalar ishlab chiqish, o‘sish va faollikni o‘lchash hamda onboarding, qidiruv, tavsiyalar, moderatsiya va bildirishnomalarni yaxshilash uchun foydalanishimiz mumkin.
+
+3.7 Qonuniy va muvofiqlik maqsadlari
+
+Ma’lumotlardan amaldagi qonunlarga rioya qilish, qonuniy so‘rovlarga javob berish, huquqlarimiz va mulkimizni himoya qilish, nizolarni hal qilish, kelishuvlarni bajarish, biznes yozuvlarini yuritish hamda suiiste’mol, firibgarlik yoki xavfsizlik hodisalarini tekshirish uchun foydalanishimiz mumkin.
+
+4. Qayta ishlashning huquqiy asoslari
+
+Amaldagi qonun shaxsiy ma’lumotlarni qayta ishlash uchun huquqiy asos talab qilsa, biz quyidagi asoslardan biriga yoki bir nechtasiga tayanamiz: shartnoma, rozilik, qonuniy manfaatlar va qonuniy majburiyat.
+
+Shartnoma: Xizmatni taqdim etish, akkauntlarni boshqarish, e’lonlarni chop etish, chatlarni yoqish, bildirishnomalarni yetkazish va Foydalanish shartlarimizni bajarish uchun zarur bo‘lganda ma’lumotlarni qayta ishlaymiz.
+
+Rozilik: talab qilingan hollarda, jumladan joylashuv, push-bildirishnoma, surat, kamera, mikrofon ruxsatlari yoki ixtiyoriy funksiyalar uchun rozilikka tayanamiz. Rozilikni ilova sozlamalari, qurilma ruxsatlari yoki bizga murojaat qilish orqali bekor qilishingiz mumkin.
+
+Qonuniy manfaatlar: xavfsizlik, firibgarlikni oldini olish, xizmatni yaxshilash, tahlil, moderatsiya, qo‘llab-quvvatlash va xavfsizlik kabi qonuniy manfaatlar uchun ma’lumotlarni qayta ishlashimiz mumkin, agar bu manfaatlar huquqlaringizdan ustun bo‘lmasa.
+
+Qonuniy majburiyat: qonun, sud qarorlari, davlat so‘rovlari, soliq, buxgalteriya yoki regulyator talablariga rioya qilish zarur bo‘lganda ma’lumotlarni qayta ishlashimiz mumkin.
+
+5. Ma’lumotlarni qanday ulashamiz
+
+5.1 Boshqa foydalanuvchilar bilan
+
+Faoliyatingiz va sozlamalaringizga qarab boshqa foydalanuvchilar ko‘rsatiladigan ismingiz, profil suratingiz, ommaviy profil ma’lumotlari, chop etilgan e’lonlaringiz, e’lon suratlari, tavsiflar, e’londa ko‘rsatilgan taxminiy joylashuv yoki manzil, o‘zingiz chop etgan aloqa ma’lumotlari, ularga yuborgan xabarlaringiz hamda ko‘rinadigan bo‘lsa reaksiyalar, kuzatishlar yoki o‘zaro aloqalaringizni ko‘rishi mumkin.
+
+Agar boshqalar ko‘rishini xohlamasangiz, ommaviy e’lonlar yoki xabarlarga sezgir shaxsiy ma’lumotlarni kiritmang.
+
+5.2 Xizmat provayderlari bilan
+
+Biz Xizmatni yuritishga yordam beradigan ishonchli vendorlar bilan ma’lumot ulashishimiz mumkin: bulutli hosting, ma’lumotlar bazasi va saqlash provayderlari, autentifikatsiya provayderlari, push-bildirishnoma, tahlil, crash reporting, AI qayta ishlash yoki moderatsiya, email yoki qo‘llab-quvvatlash vositalari, xarita, joylashuv yoki geokodlash provayderlari, xavfsizlik va firibgarlikni oldini olish vositalari.
+
+Bu provayderlar ma’lumotlarni faqat bizga xizmat ko‘rsatish uchun zarur darajada qayta ishlashi va ularni munosib himoya qilishi kutiladi.
+
+5.3 Autentifikatsiya provayderlari bilan
+
+Apple, Google yoki Telegram orqali kirsangiz, bu provayderlar bilan o‘zaro aloqangiz ularning shaxsiy maxfiylik siyosatlari va akkaunt sozlamalari bilan ham tartibga solinadi.
+
+5.4 Telegram bilan
+
+Telegram funksiyalarini ulasangiz, Telegram botimiz bilan aloqada bo‘lsangiz, Telegram ogohlantirishlarini olsangiz yoki Telegram aloqa variantlaridan foydalansangiz, ayrim ma’lumotlar Telegram’ning o‘z shartlari va maxfiylik siyosatiga muvofiq Telegram orqali qayta ishlanishi mumkin. UyDosh Telegram’ning mustaqil ma’lumot amaliyotlarini nazorat qilmaydi.
+
+5.5 Qonuniy sabablar uchun
+
+Qonunga rioya qilish, yuridik jarayonga javob berish, foydalanuvchi xavfsizligini himoya qilish, firibgarlik, suiiste’mol yoki xavfsizlik muammolarini tekshirish, Foydalanish shartlarini bajarish, huquqlarimiz, mulkimiz yoki biznesimizni himoya qilish yoki UyDosh, foydalanuvchilar yoki jamoatchilikka zarar yetishining oldini olish uchun zarur deb hisoblasak, ma’lumotlarni oshkor qilishimiz mumkin.
+
+5.6 Biznes o‘tkazmalari
+
+Agar UyDosh qo‘shilish, sotib olish, moliyalashtirish, qayta tashkil etish, aktivlarni sotish yoki biznesni o‘tkazishda ishtirok etsa, foydalanuvchi ma’lumotlari tegishli himoya choralariga rioya qilgan holda ushbu bitimning bir qismi sifatida o‘tkazilishi mumkin.
+
+6. Ommaviy e’lonlar va foydalanuvchi javobgarligi
+
+UyDosh foydalanuvchilarga uy-joyga oid kontentni chop etishga imkon beradi. Ommaviy e’lonlar boshqa foydalanuvchilar tomonidan ko‘rilishi va siz ko‘rsatgan ma’lumotlarni o‘z ichiga olishi mumkin.
+
+E’lonlaringiz ommaga chiqarishni istamagan ma’lumotlarni o‘z ichiga olmasligiga siz javobgarsiz. Pasport ma’lumotlari, davlat ID raqamlari, bank karta ma’lumotlari, zarur bo‘lmasa aniq shaxsiy uy manzili, boshqa odamlar haqidagi maxfiy ma’lumotlar, sezgir suratlar yoki ulashishga ruxsatingiz bo‘lmagan ma’lumotlarni e’lon qilmang.
+
+E’londa aloqa ma’lumotlarini qo‘shsangiz, boshqa foydalanuvchilar siz bilan UyDosh’dan tashqarida bog‘lanishi mumkin. Xizmatimizdan tashqarida bo‘ladigan aloqalar uchun javobgar emasmiz.
+
+7. Foydalanuvchi e’lonlari va tashqi aloqa ma’lumotlari
+
+UyDosh foydalanuvchilar yaratgan uy-joyga oid e’lonlarni tartiblashi, moderatsiya qilishi va ko‘rsatishi mumkin.
+
+E’lonlar foydalanuvchilar taqdim etgan tavsif, narx, joylashuv, suratlar, Telegram foydalanuvchi nomi, telefon raqami va boshqa aloqa ma’lumotlarini o‘z ichiga olishi mumkin.
+
+Xavfsizlik, o‘qilishi va maxfiylikni yaxshilash uchun e’lonlarni tahrirlashimiz, qisqartirishimiz, qayta formatlashimiz, anonimlashtirishimiz, xiralashtirishimiz yoki moderatsiya qilishimiz mumkin.
+
+Agar e’lon muallifi bo‘lsangiz va uni olib tashlash, tuzatish yoki anonimlashtirishni xohlasangiz, uydoshtech@gmail.com manziliga yozing.
+
+8. Sun’iy intellekt va avtomatlashtirilgan qayta ishlash
+
+UyDosh e’lon sifatini tekshirish, toifani aniqlash, dublikatlar, firibgarlik va spamni aniqlash, suratlarni xiralashtirish, moderatsiya, tarjima yoki matnni tozalash, tavsiya va moslashtirishni qo‘llab-quvvatlash uchun avtomatlashtirilgan tizimlar va AI yordamidagi vositalardan foydalanishi mumkin.
+
+Avtomatlashtirilgan vositalar xato qilishi mumkin. Muhim moderatsiya qarorlari zarur hollarda qo‘lda ko‘rib chiqilishi mumkin. Avtomatik qaror, e’lon tasnifi yoki moderatsiya harakati noto‘g‘ri deb hisoblasangiz, bizga murojaat qilishingiz mumkin.
+
+9. Joylashuv, xaritalar va taxminiy manzil ko‘rsatish
+
+Uy-joy qidiruvida joylashuv muhim. UyDosh xaritada e’lonlarni ko‘rsatish, yaqin kvartiralarni tavsiya qilish, masofalarni hisoblash va qidiruvni yaxshilash uchun joylashuv ma’lumotlaridan foydalanishi mumkin.
+
+Aniq uy manzillari sezgir bo‘lishi mumkin. Funksiyaga qarab, biz taqdim etilgan va ataylab chop etilgan bo‘lsa aniq joylashuvni, taxminiy joylashuvni, tuman yoki mahallani, universitet hududini yoki aniqligi kamaytirilgan xarita nuqtasini ko‘rsatishimiz mumkin.
+
+Foydalanuvchilar e’lon chop etishdan oldin joylashuv ma’lumotlarini diqqat bilan ko‘rib chiqishi kerak.
+
+10. Ma’lumotlarni saqlash muddati
+
+Biz shaxsiy ma’lumotlarni ushbu Maxfiylik siyosatida tasvirlangan maqsadlar uchun, jumladan Xizmatni taqdim etish, xavfsizlikni saqlash, nizolarni hal qilish, qonuniy majburiyatlarga rioya qilish va kelishuvlarimizni bajarish uchun oqilona zarur bo‘lgan muddatdagina saqlaymiz.
+
+Odatdagi saqlash amaliyotlari quyidagilarni o‘z ichiga olishi mumkin: akkaunt faol bo‘lganida akkaunt ma’lumotlari; e’lonlar faol bo‘lganida va o‘chirilgan yoki arxivlanganidan keyin xavfsizlik, firibgarlikni oldini olish, audit va nizolar uchun oqilona muddat; chat xabarlari akkaunt yoki suhbat faol bo‘lganida, mavjud funksiyalar yoki qonuniy talablar bo‘yicha o‘chirilmaguncha; Telegram bilan bog‘liq ma’lumotlar so‘ralgan Telegram funksiyalarini taqdim etish, ogohlantirishlarni yetkazish, suiiste’molni oldini olish va moderatsiyani qo‘llab-quvvatlash uchun zarur bo‘lganida; qo‘llab-quvvatlash va shikoyat yozuvlari muammoni hal qilish va xavfsizlik yozuvlarini saqlash uchun zarur bo‘lganida; qurilma va tahlil ma’lumotlari tahlil, nosozliklarni tuzatish, xavfsizlik va ishlashni yaxshilash uchun cheklangan muddat; qonuniy yozuvlar esa amaldagi qonunchilik talab qilgan muddatda.
+
+Ma’lumotlar endi kerak bo‘lmaganda, biz ularni amaldagi talablarga muvofiq o‘chiramiz, anonimlashtiramiz yoki xavfsiz saqlaymiz.
+
+11. Akkauntni o‘chirish
+
+Akkauntingizni ilova ichidagi akkauntni o‘chirish funksiyasi mavjud bo‘lsa u orqali yoki uydoshtech@gmail.com manzilidagi qo‘llab-quvvatlashga murojaat qilib o‘chirishni so‘rashingiz mumkin.
+
+Akkauntni o‘chirishni so‘raganingizda, biz akkauntingizga bog‘liq shaxsiy ma’lumotlarni o‘chiramiz yoki anonimlashtiramiz, agar qonuniy muvofiqlik, firibgarlikni oldini olish, xavfsizlik, nizolarni hal qilish, boshqa foydalanuvchilarni himoya qilish, Foydalanish shartlarini bajarish, moliyaviy, audit yoki biznes yozuvlari yoki avval chop etilgan kontentni moderatsiya tarixi yoki qonuniy sabablarga ko‘ra cheklangan shaklda saqlash kabi asosli sabablar bo‘lmasa.
+
+Ayrim ma’lumotlar zaxira nusxalarda cheklangan muddat qolishi mumkin. UyDosh akkauntini o‘chirish Telegram, Apple, Google kabi uchinchi tomon xizmatlaridagi yoki UyDosh’dan tashqarida bo‘lgan suhbatlardagi ma’lumotlaringizni avtomatik o‘chirmaydi.
+
+12. Maxfiylik huquqlaringiz
+
+Joylashuvingiz va amaldagi qonunga qarab, biz saqlayotgan shaxsiy ma’lumotlarga kirish, noto‘g‘ri ma’lumotlarni tuzatish, shaxsiy ma’lumotlaringizni o‘chirish, ayrim qayta ishlashga e’tiroz bildirish, qayta ishlashni cheklash, rozilikni bekor qilish, ma’lumotlaringiz nusxasini so‘rash, ayrim xabarlardan voz kechish va ma’lumotlarni himoya qilish organiga shikoyat qilish huquqlariga ega bo‘lishingiz mumkin.
+
+Bu huquqlarni amalga oshirish uchun uydoshtech@gmail.com manziliga yozing. So‘rovingizni bajarishdan oldin shaxsingizni tasdiqlashimiz kerak bo‘lishi mumkin.
+
+13. Kaliforniya maxfiylik huquqlari
+
+Agar siz Kaliforniya rezidenti bo‘lsangiz va amaldagi qonun bizga tatbiq etilsa, Kaliforniya maxfiylik qonunlari bo‘yicha bilish, o‘chirish, tuzatish va shaxsiy ma’lumotlardan ayrim foydalanishni cheklash huquqlariga ega bo‘lishingiz mumkin.
+
+UyDosh shaxsiy ma’lumotlarni sotmaydi. UyDosh shaxsiy ma’lumotlarni kross-kontekst xulq-atvor reklamasi uchun ulashmaydi, faqat qonun bo‘yicha aniq oshkor qilingan va ruxsat etilgan hollardan tashqari.
+
+Kaliforniya maxfiylik so‘rovini yuborish uchun uydoshtech@gmail.com manziliga yozing.
+
+14. Yevropa, Buyuk Britaniya va o‘xshash maxfiylik huquqlari
+
+Agar Yevropa iqtisodiy hududi, Buyuk Britaniya, Shveytsariya yoki o‘xshash maxfiylik qonunlariga ega boshqa hududda bo‘lsangiz, amaldagi ma’lumotlarni himoya qilish qonunlari bo‘yicha qo‘shimcha huquqlarga ega bo‘lishingiz mumkin.
+
+Tegishli hollarda shaxsiy ma’lumotlaringizga kirish, ularni tuzatish, o‘chirish, qayta ishlashni cheklash, qayta ishlashga e’tiroz bildirish, ma’lumot portativligi, rozilikni bekor qilish va ayrim avtomatlashtirilgan qarorlarni ko‘rib chiqishni so‘rashingiz mumkin.
+
+Mahalliy ma’lumotlarni himoya qilish organiga shikoyat qilish huquqingiz ham bo‘lishi mumkin.
+
+15. Xalqaro ma’lumot o‘tkazmalari
+
+UyDosh ma’lumotlarni yashash mamlakatingizdan boshqa mamlakatlarda qayta ishlashi va saqlashi mumkin. Bu mamlakatlarning maxfiylik qonunlari sizning mamlakatingiz qonunlaridan farq qilishi mumkin. Talab qilingan hollarda xalqaro ma’lumot o‘tkazmalari uchun shartnomaviy himoyalar, texnik himoya choralari va kirish nazorati kabi munosib choralarni qo‘llaymiz.
+
+16. Xavfsizlik
+
+Biz shaxsiy ma’lumotlarni himoya qilish uchun kirish nazorati, autentifikatsiya himoyalari, zarur bo‘lsa shifrlash, xavfsiz bulut infratuzilmasi, loglash va monitoring, ichki ruxsat nazorati, moderatsiya va suiiste’molni aniqlash hamda zaxiralash va tiklash amaliyotlari kabi oqilona texnik, tashkiliy va ma’muriy choralarni qo‘llaymiz.
+
+Biroq hech bir tizim to‘liq xavfsiz emas. Ruxsatsiz kirish, buzib kirish, ma’lumot yo‘qolishi yoki noto‘g‘ri foydalanish hech qachon sodir bo‘lmasligini kafolatlay olmaymiz.
+
+Akkaunt ma’lumotlaringizni xavfsiz saqlash hamda qurilmangiz, email, Apple akkaunt, Google akkaunt va Telegram akkauntingizga kirishni nazorat qilish uchun siz javobgarsiz.
+
+17. Bolalar va voyaga yetmaganlar
+
+UyDosh 13 yoshdan kichik bolalar uchun mo‘ljallanmagan. Agar mamlakatingizda ota-ona roziligisiz onlayn xizmatlardan foydalanish uchun talab qilinadigan yoshdan kichik bo‘lsangiz, UyDosh’dan faqat ota-ona yoki qonuniy vasiy ruxsati bilan foydalanishingiz mumkin.
+
+Biz 13 yoshdan kichik bolalardan bila turib shaxsiy ma’lumot yig‘maymiz. Agar 13 yoshdan kichik boladan tegishli roziliksiz shaxsiy ma’lumot yig‘ganimizni bilsak, uni o‘chirish uchun oqilona choralar ko‘ramiz.
+
+18. Uchinchi tomon xizmatlari va havolalar
+
+UyDosh Telegram, Apple, Google, xarita provayderlari, bulut xizmatlari, tahlil provayderlari, keyinchalik joriy qilinsa to‘lov provayderlari hamda tashqi veb-saytlar yoki aloqa usullariga havolalar, integratsiyalar yoki murojaatlarni o‘z ichiga olishi mumkin.
+
+Ushbu Maxfiylik siyosati uchinchi tomon xizmatlariga tatbiq etilmaydi. Ular ma’lumotlaringizni qanday yig‘ishi va ishlatishini o‘z maxfiylik siyosatlari tartibga soladi.
+
+19. Tahlil va diagnostika
+
+Ilova ishlashi, nosozliklar, foydalanuvchi faolligi va funksiyalardan foydalanishni tushunish uchun tahlil va diagnostika vositalaridan foydalanishimiz mumkin.
+
+Tahlil ma’lumotlari ko‘rilgan ilova ekranlari, bosilgan tugmalar, e’lonlar bilan o‘zaro aloqalar, qidiruv filtrlari, bildirishnoma o‘zaro aloqalari, qurilma turi, ilova versiyasi, crash hisobotlari va ishlash loglarini o‘z ichiga olishi mumkin.
+
+Bu ma’lumotlardan Xizmatni yaxshilash va muammolarni tuzatish uchun foydalanamiz. Imkon qadar tahlil ma’lumotlarini cheklaymiz va keraksiz sezgir ma’lumotlarni yig‘ishdan qochamiz.
+
+20. Push-bildirishnomalar va marketing xabarlari
+
+UyDosh yangi uy-joy e’lonlari, saqlangan qidiruvlar, Telegram ogohlantirishlari, chat xabarlari, e’lon moderatsiya holati, akkaunt xavfsizligi, mahsulot yangilanishlari va muhim xizmat e’lonlari haqida push-bildirishnomalar yuborishi mumkin.
+
+Push-bildirishnomalarni qurilma sozlamalari yoki ilova sozlamalari orqali boshqarishingiz mumkin. Reklama bildirishnomalarini o‘chirgan bo‘lsangiz ham, xavfsizlik ogohlantirishlari yoki akkauntga oid xabarlar kabi marketing bo‘lmagan xizmat xabarlarini yuborishimiz mumkin.
+
+21. Reklama
+
+UyDosh kelajakda sponsor qilingan postlar, targ‘ib qilingan e’lonlar yoki ilova ichidagi joylashuvlar kabi reklamalarni ko‘rsatishi mumkin.
+
+Reklama joriy qilinsa, shahar, tuman, universitet hududi, e’lon toifasi, ilova tili va umumiy ilova faoliyati kabi cheklangan ma’lumotlardan mos reklamalarni ko‘rsatish uchun foydalanishimiz mumkin.
+
+Shaxsiy chat xabarlaridan reklama targeting uchun foydalanmaymiz. Shaxsiylashtirilgan reklama joriy qilsak yoki reklama hamkorlari bilan ma’lumot ulashsak, ushbu Maxfiylik siyosatini yangilaymiz va talab qilingan boshqaruvlar yoki rozilik imkoniyatlarini taqdim etamiz.
+
+22. Sezgir ma’lumotlar
+
+UyDosh uy-joyga oid xizmatdir. Zarur bo‘lmasa, sezgir shaxsiy ma’lumotlarni yubormaslik kerak.
+
+Sezgir ma’lumotlarga pasport yoki milliy ID raqamlari, moliyaviy ma’lumotlar, sog‘liq ma’lumotlari, diniy e’tiqod, siyosiy qarashlar, ommaga mo‘ljallanmagan aniq uy manzili, bolalar haqidagi ma’lumotlar va boshqa odamlar haqidagi maxfiy ma’lumotlar kirishi mumkin.
+
+Agar sezgir ma’lumotlarni ixtiyoriy yuborsangiz, ular yuborgan funksiyangiz doirasida qayta ishlanishi mumkinligini tushunasiz.
+
+23. Foydalanuvchi xabarlari, moderatsiya va xavfsizlik tekshiruvlari
+
+UyDosh firibgarlikni tekshirish, firibgarlikni oldini olish, xavfli e’lonlarni olib tashlash, shikoyatlarga javob berish, platforma qoidalarini bajarish, foydalanuvchilarni himoya qilish va qonunga rioya qilish zarur bo‘lganda foydalanuvchi faoliyati, e’lonlar, chatlar, suratlar, shikoyatlar va texnik ma’lumotlarni ko‘rib chiqishi mumkin.
+
+Moderatsiya avtomatlashtirilgan vositalar, inson tekshiruvi yoki ikkalasini ham o‘z ichiga olishi mumkin. Kontentingiz yoki akkauntingiz cheklansa, olib tashlansa yoki bloklansa, uydoshtech@gmail.com manziliga murojaat qilishingiz mumkin.
+
+24. Ma’lumotlarning aniqligi
+
+Biz aniq e’lon ma’lumotlari uchun foydalanuvchilar va uchinchi tomon manbalariga tayanamiz. UyDosh barcha e’lonlar, narxlar, manzillar, suratlar, xonadosh tafsilotlari yoki aloqa ma’lumotlari aniq bo‘lishini kafolatlamaydi.
+
+Noto‘g‘ri shaxsiy ma’lumot yoki noaniq e’lon topsangiz, bizga murojaat qiling yoki ilovadagi xabar berish vositalaridan foydalaning.
+
+25. Ushbu Maxfiylik siyosatiga o‘zgartirishlar
+
+Biz ushbu Maxfiylik siyosatini vaqti-vaqti bilan yangilashimiz mumkin. Muhim o‘zgarishlar kiritilsa, Oxirgi yangilangan sanani yangilash, ilova ichida xabarnoma ko‘rsatish, push-bildirishnoma yuborish, email mavjud bo‘lsa email yuborish yoki rasmiy kanallarimizda e’lon joylash orqali sizni xabardor qilishimiz mumkin.
+
+Yangilangan Maxfiylik siyosati kuchga kirganidan keyin Xizmatdan foydalanishni davom ettirsangiz, yangilangan siyosatni qabul qilgan hisoblanasiz.
+
+26. Biz bilan bog‘lanish
+
+Maxfiylik savollari, ma’lumot so‘rovlari, shikoyatlar, akkauntni o‘chirish yoki kontentni olib tashlash so‘rovlari uchun murojaat qiling:
+
+UyDosh Maxfiylik jamoasi
+
+Operator: Artur Musin
+
+Veb-sayt: https://uydoshtech.github.io/
+
+Email: uydoshtech@gmail.com
+
+Joylashuv: Toshkent, O‘zbekiston
+
+27. Asosiy amaliyotlar qisqacha mazmuni
+
+UyDosh akkaunt, e’lon, chat, Telegram, joylashuv, qurilma, qo‘llab-quvvatlash va ixtiyoriy 3D skan ma’lumotlarini yig‘adi.
+
+UyDosh ma’lumotlardan uy-joy qidiruvi, xonadosh topish, ogohlantirishlar, chat, moderatsiya, xavfsizlik, qo‘llab-quvvatlash va ilovani yaxshilash uchun foydalanadi.
+
+UyDosh Telegram login, ogohlantirishlar va aloqa imkoniyatlarini taqdim etishi mumkin.
+
+UyDosh e’lonlarni tahlil qilish, moderatsiya va suratlarni xiralashtirish uchun AI yordamidagi vositalardan foydalanishi mumkin.
+
+UyDosh shaxsiy ma’lumotlarni sotmaydi.
+
+UyDosh shaxsiy chatlardan reklama targeting uchun foydalanmaydi.
+
+Foydalanuvchilar akkauntni o‘chirishni so‘rashi mumkin.
+
+Foydalanuvchilar o‘z e’lonlari va aloqa ma’lumotlarini olib tashlash yoki tuzatishni so‘rashi mumkin.
+
+Aniq manzillar, suratlar, kontaktlar va 3D skanlar sezgir bo‘lishi mumkin va ehtiyotkorlik bilan ulashilishi kerak.</div>
+
+        <div class="legal-text" data-policy-lang="ru" hidden>Политика конфиденциальности
+
+UyDosh
+
+Дата вступления в силу: 27 июня 2026 г.
+Последнее обновление: 27 июня 2026 г.
+
+Настоящая Политика конфиденциальности объясняет, как UyDosh (“UyDosh”, “мы”, “наш” или “нас”) собирает, использует, хранит, передает и защищает персональную информацию, когда вы используете наше мобильное приложение, веб-сайт, Telegram-бот, Telegram-уведомления, каналы поддержки и связанные сервисы, вместе именуемые “Сервис”.
+
+UyDosh — это платформа для поиска жилья и соседей по жилью, созданная, чтобы помогать пользователям находить квартиры, комнаты, соседей, соседей по району и связанные с жильем возможности. Сервис может включать объявления, созданные пользователями, чаты, уведомления, поиск по местоположению, обработку фотографий, модерацию с помощью ИИ и дополнительные функции 3D/LiDAR-сканирования квартир.
+
+Используя UyDosh, вы соглашаетесь с практиками, описанными в настоящей Политике конфиденциальности. Если вы не согласны с этой Политикой, пожалуйста, не используйте Сервис.
+
+1. Кто мы
+
+Сервисом управляет Артур Мусин, Ташкент, Узбекистан.
+
+Веб-сайт: https://uydoshtech.github.io/
+
+Email: uydoshtech@gmail.com
+
+По вопросам конфиденциальности, удаления аккаунта, жалоб, удаления контента или запросов, связанных с данными, свяжитесь с нами по адресу uydoshtech@gmail.com.
+
+2. Информация, которую мы собираем
+
+2.1 Информация аккаунта
+
+Когда вы создаете или используете аккаунт, мы можем собирать ваше имя или отображаемое имя, имя пользователя, фото профиля или аватар, email, если он предоставлен через Apple, Google или другого провайдера входа, имя пользователя Telegram или идентификатор Telegram-аккаунта, если вы подключаете Telegram, Apple ID или идентификатор Google-аккаунта, используемый для аутентификации, дату создания аккаунта, статус аккаунта, настройки, предпочтения, университет или образовательное учреждение, если указано, пол, если вы решили указать его для поиска жилья или соседа, языковые предпочтения, а также предпочтения по городу, району или общему местоположению.
+
+Мы не требуем регистрации по номеру телефона, если только отдельная функция специально не просит вас добровольно предоставить номер телефона.
+
+2.2 Информация аутентификации
+
+UyDosh может разрешать вход через сторонних провайдеров аутентификации, включая Apple Sign-In, Google Sign-In, вход через Telegram или подключение Telegram-бота.
+
+Когда вы используете эти сервисы, мы получаем информацию, которую провайдер делает доступной для нас, например идентификатор аккаунта, имя, имя пользователя, email или фото профиля, в зависимости от ваших настроек конфиденциальности у такого провайдера. Мы не получаем ваш пароль Apple, Google или Telegram.
+
+2.3 Профиль и жилищные предпочтения
+
+Вы можете предоставить информацию, которая помогает нам подбирать релевантные объявления, соседей или варианты жилья, например предпочитаемый город, район, квартал, университет или территорию; желаемый бюджет аренды; тип комнаты или квартиры; дату въезда; предпочтение по полу, если это важно для поиска соседа; количество соседей; бытовые предпочтения; описание, био или личные заметки; сохраненные объявления; а также понравившихся, отслеживаемых, скрытых, пожалованных или заблокированных пользователей и объявления.
+
+Часть этой информации может быть видна другим пользователям в зависимости от функции и выбранных вами настроек.
+
+2.4 Объявления и пользовательский контент
+
+Когда вы создаете, редактируете, публикуете, сохраняете, жалуетесь или взаимодействуете с объявлением, мы можем собирать заголовок объявления, описание, сведения о квартире или комнате, цену, адрес, примерное местоположение, район или точку на карте, фотографии и медиа, контактные данные, которые вы решили указать, например Telegram username или номер телефона, правила жилья, предпочтения по соседям, доступность, категорию объявления, статус объявления, историю изменений, статус модерации, заметки проверки, жалобы или флаги, связанные с объявлением.
+
+Если вы публикуете объявление, его части могут стать видимыми другим пользователям Сервиса.
+
+2.5 Данные, связанные с Telegram
+
+UyDosh может использовать интеграции Telegram, чтобы помогать пользователям входить в аккаунт, подключать функции Telegram, получать уведомления или использовать способы связи через Telegram. В зависимости от функции мы можем собирать или обрабатывать имя пользователя Telegram, Telegram user ID или идентификаторы, связанные с чатом, токены привязки Telegram-бота, настройки Telegram-уведомлений, а также контактную информацию, которую вы решили указать, например Telegram username.
+
+Мы используем эту информацию, чтобы предоставлять запрошенные функции Telegram, доставлять уведомления, предотвращать злоупотребления, поддерживать модерацию и отвечать на запросы пользователей.
+
+Если вы считаете, что контент или контактная информация, отображаемые в UyDosh, содержат ваши персональные данные, нарушают ваши права или должны быть удалены, свяжитесь с нами по адресу uydoshtech@gmail.com.
+
+2.6 Сообщения и данные чатов
+
+Если вы используете встроенные чаты или функции сообщений, мы можем собирать и хранить текст сообщений, идентификаторы отправителя и получателя, время сообщений, статус доставки, историю редактирования, реакции, метаданные переписки, жалобы или флаги модерации, а также вложения, если они поддерживаются.
+
+Мы используем данные чатов для предоставления сообщений, доставки уведомлений, предотвращения злоупотреблений, расследования жалоб, соблюдения наших Условий использования и повышения безопасности пользователей. Мы не используем личные чаты для рекламного таргетинга.
+
+2.7 Фотографии, медиа и обработка ИИ
+
+Когда вы загружаете фотографии или медиа, мы можем собирать и обрабатывать фотографии объявлений, фото профиля, изображения квартир и комнат, изображения, отправленные для модерации или поддержки, а также метаданные изображений, если они технически доступны.
+
+UyDosh может использовать автоматизированные инструменты, включая обработку с помощью ИИ, чтобы размывать лица или чувствительные визуальные детали, обнаруживать неприемлемый, вредный, вводящий в заблуждение или небезопасный контент, улучшать качество объявлений, предотвращать скам, мошенничество, дубли объявлений или спам, а также создавать более безопасные превью или миниатюры.
+
+Обработка фотографий с помощью ИИ может выполняться нашими системами или доверенными поставщиками услуг. Мы не используем ваши частные фотографии для вашей личной идентификации, если это не необходимо для безопасности, модерации, соблюдения закона или поддержки.
+
+2.8 Информация о местоположении
+
+UyDosh может собирать информацию о местоположении разными способами. Вы можете указать город, район, квартал, район университета, адрес квартиры, примерную точку на карте, зону поиска или предпочтительное местоположение жилья.
+
+Если вы разрешаете доступ к геолокации устройства, мы можем собирать ваше примерное или точное местоположение, чтобы показывать объявления поблизости, улучшать поиск по карте, предлагать релевантные варианты жилья, рассчитывать расстояние до университетов, районов или интересующих мест и улучшать уведомления по местоположению.
+
+Вы можете управлять разрешениями геолокации в настройках iOS или Android. Мы рекомендуем пользователям не публиковать точные личные адреса, если это не необходимо для объявления о жилье. Где возможно, UyDosh может показывать примерное местоположение вместо точного адреса.
+
+2.9 3D-сканы, LiDAR, планы помещений и измерения квартиры
+
+UyDosh может предлагать дополнительные функции, позволяющие пользователям сканировать квартиры, комнаты, стены, полы, окна или другие элементы интерьера с помощью LiDAR, камеры, AR или похожих технологий устройства.
+
+Если вы используете эти функции, мы можем собирать или обрабатывать 3D-сканы, размеры комнат, планы помещений, размеры стен, пола, потолка, окон или дверей, расчеты площади, данные о солнечном свете, тени, направлении или ориентации, направление компаса, широту и долготу, связанную со сканируемой квартирой, если она предоставлена, созданные визуализации, превью, файлы измерений и связанные медиа, например фотографии, видео или 3D-объекты.
+
+Эти функции необязательны. Не сканируйте частную собственность, если у вас нет законного права или разрешения. 3D-сканы и измерения могут раскрывать чувствительную информацию о доме или интерьере. Внимательно проверяйте сканы перед публичной публикацией.
+
+2.10 Информация об устройстве, техническая информация и данные использования
+
+Когда вы используете Сервис, мы можем автоматически собирать тип устройства, операционную систему, версию приложения, язык устройства, часовой пояс, IP-адрес, идентификаторы устройства или установки, токен push-уведомлений, crash logs, диагностические логи, данные производительности, данные сессии, использование функций, клики, просмотры, показы, взаимодействия, источник перехода и примерную сетевую информацию.
+
+Мы используем эту информацию, чтобы эксплуатировать, защищать, отлаживать, улучшать и анализировать Сервис.
+
+2.11 Информация о push-уведомлениях
+
+Если вы включаете push-уведомления, мы можем собирать и использовать токены Firebase Cloud Messaging, токены Apple Push Notification, идентификаторы устройства, связанные с доставкой push, настройки уведомлений, статус доставки и категории уведомлений, например новые объявления, Telegram-уведомления, чаты, сохраненные поиски, обновления модерации или уведомления аккаунта.
+
+Вы можете отключить push-уведомления в настройках устройства или внутри приложения, если такая возможность доступна.
+
+2.12 Поддержка, жалобы и обращения
+
+Если вы обращаетесь в поддержку, подаете жалобу, сообщаете о контенте или пользователе либо запрашиваете удаление аккаунта, мы можем собирать ваши контактные данные, сообщение или жалобу, скриншоты или вложения, идентификаторы объявления или пользователя, историю чата, связанную с жалобой, внутренние заметки проверки, статус решения, дату и время запроса.
+
+Мы используем эту информацию, чтобы отвечать вам, расследовать злоупотребления, обеспечивать соблюдение правил, защищать пользователей и соблюдать юридические обязанности.
+
+3. Как мы используем информацию
+
+3.1 Для предоставления Сервиса
+
+Мы используем информацию для создания и управления аккаунтами, аутентификации пользователей, показа объявлений о жилье, публикации и управления объявлениями, работы поиска и фильтров, подбора релевантных вариантов жилья, включения чата и коммуникации, доставки push-уведомлений, подключения Telegram-уведомлений, сохранения предпочтений и избранных объявлений, предоставления карты и функций по местоположению, а также дополнительных функций 3D-сканирования и измерений.
+
+3.2 Для повышения безопасности и доверия
+
+Мы используем информацию, чтобы обнаруживать спам, скам, мошенничество, фейковые объявления, дубли объявлений и подозрительное поведение; проверять и модерировать объявления; рассматривать жалобы пользователей; блокировать нарушителей; обеспечивать соблюдение Условий использования; защищать пользователей от вредного или вводящего в заблуждение контента; проверять качество объявлений; предотвращать несанкционированный доступ или неправильное использование.
+
+3.3 Для предоставления функций Telegram
+
+Мы можем использовать Telegram-данные, чтобы привязывать аккаунты, доставлять Telegram-уведомления, поддерживать способы связи через Telegram, предотвращать злоупотребления, расследовать жалобы и поддерживать надежность запрошенных функций Telegram.
+
+3.4 Для персонализации опыта
+
+Мы можем использовать вашу информацию, чтобы показывать релевантные объявления, предлагать соседей, квартиры или варианты жилья, отдавать приоритет объявлениям рядом с предпочитаемым университетом, городом или районом, запоминать фильтры и предпочтения, улучшать рекомендации и показывать контент на предпочитаемом языке.
+
+3.5 Для связи с вами
+
+Мы можем отправлять сервисные уведомления, обновления аккаунта, предупреждения безопасности, уведомления чата, обновления объявлений, Telegram-уведомления, решения модерации, ответы поддержки и важные юридические или политические обновления.
+
+3.6 Для анализа и улучшения Сервиса
+
+Мы можем использовать информацию, чтобы понимать, как пользователи взаимодействуют с приложением, исправлять ошибки, улучшать производительность, повышать качество объявлений, разрабатывать новые функции, измерять рост и вовлеченность, улучшать onboarding, поиск, рекомендации, модерацию и уведомления.
+
+3.7 Для юридических целей и соблюдения требований
+
+Мы можем использовать информацию, чтобы соблюдать применимые законы, отвечать на законные запросы, защищать наши права и имущество, разрешать споры, обеспечивать выполнение соглашений, вести деловые записи и расследовать злоупотребления, мошенничество или инциденты безопасности.
+
+4. Правовые основания обработки
+
+Если применимое право требует правового основания для обработки персональных данных, мы полагаемся на одно или несколько из следующих оснований: договор, согласие, законные интересы и юридическая обязанность.
+
+Договор: мы обрабатываем информацию, когда это необходимо для предоставления Сервиса, управления аккаунтами, публикации объявлений, работы чатов, доставки уведомлений и исполнения наших Условий использования.
+
+Согласие: мы полагаемся на согласие там, где это требуется, включая определенные разрешения, такие как доступ к местоположению, push-уведомления, доступ к фото, камере, микрофону или дополнительные функции. Вы можете отозвать согласие, изменив настройки приложения, разрешения устройства или связавшись с нами.
+
+Законные интересы: мы можем обрабатывать информацию для законных интересов, таких как безопасность, предотвращение мошенничества, улучшение сервиса, аналитика, модерация, поддержка и защита, если эти интересы не перевешиваются вашими правами.
+
+Юридическая обязанность: мы можем обрабатывать информацию, когда это необходимо для соблюдения закона, судебных постановлений, государственных запросов, налоговых, бухгалтерских или регуляторных обязанностей.
+
+5. Как мы передаем информацию
+
+5.1 Другим пользователям
+
+В зависимости от вашей активности и настроек другие пользователи могут видеть ваше отображаемое имя, фото профиля, публичную информацию профиля, опубликованные объявления, фотографии объявлений, описания, примерное местоположение или адрес, показанный в объявлении, контактные данные, которые вы решили опубликовать, сообщения, которые вы отправляете им, а также ваши реакции, подписки или взаимодействия там, где они видимы.
+
+Не включайте чувствительную персональную информацию в публичные объявления или сообщения, если вы не хотите, чтобы другие пользователи ее видели.
+
+5.2 Поставщикам услуг
+
+Мы можем передавать информацию доверенным поставщикам, которые помогают нам управлять Сервисом, например провайдерам облачного хостинга, баз данных и хранения, аутентификации, push-уведомлений, аналитики, crash reporting, ИИ-обработки или модерации, email или инструментов поддержки, карт, местоположения или геокодирования, а также инструментов безопасности и предотвращения мошенничества.
+
+Эти поставщики могут обрабатывать информацию только в той мере, в которой это необходимо для оказания услуг нам, и ожидается, что они будут защищать ее надлежащим образом.
+
+5.3 Провайдерам аутентификации
+
+Если вы входите через Apple, Google или Telegram, ваше взаимодействие с этими провайдерами также регулируется их собственными политиками конфиденциальности и настройками аккаунта.
+
+5.4 Telegram
+
+Если вы подключаете функции Telegram, взаимодействуете с нашим Telegram-ботом, получаете Telegram-уведомления или используете варианты связи через Telegram, определенная информация может обрабатываться через Telegram в соответствии с собственными условиями и политикой конфиденциальности Telegram. UyDosh не контролирует независимые практики Telegram в отношении данных.
+
+5.5 По юридическим причинам
+
+Мы можем раскрывать информацию, если считаем это разумно необходимым для соблюдения закона, ответа на юридический процесс, защиты безопасности пользователей, расследования мошенничества, злоупотреблений или проблем безопасности, исполнения Условий использования, защиты наших прав, имущества или бизнеса либо предотвращения вреда UyDosh, пользователям или обществу.
+
+5.6 Передача бизнеса
+
+Если UyDosh участвует в слиянии, приобретении, финансировании, реорганизации, продаже активов или передаче бизнеса, пользовательская информация может быть передана в рамках такой сделки при соблюдении надлежащих гарантий.
+
+6. Публичные объявления и ответственность пользователя
+
+UyDosh позволяет пользователям публиковать контент, связанный с жильем. Публичные объявления могут просматриваться другими пользователями и включать информацию, которую вы решили предоставить.
+
+Вы отвечаете за то, чтобы ваши объявления не содержали информацию, которую вы не хотите делать публичной. Избегайте публикации паспортных данных, государственных ID-номеров, банковских карт, точного личного домашнего адреса, если это не необходимо, частной информации о других людях, чувствительных фотографий или информации, на публикацию которой у вас нет разрешения.
+
+Если вы включаете контактную информацию в объявление, другие пользователи могут использовать ее, чтобы связаться с вами вне UyDosh. Мы не отвечаем за коммуникации, происходящие вне нашего Сервиса.
+
+7. Пользовательские объявления и внешние контактные данные
+
+UyDosh может организовывать, модерировать и показывать объявления о жилье, созданные пользователями.
+
+Объявления могут включать информацию, предоставленную пользователями, например описание, цену, местоположение, фотографии, Telegram username, номер телефона и другие контактные данные.
+
+Мы можем редактировать, резюмировать, переформатировать, анонимизировать, размывать или модерировать объявления для повышения безопасности, читаемости и конфиденциальности.
+
+Если вы являетесь автором объявления и хотите удалить, исправить или анонимизировать его, свяжитесь с нами по адресу uydoshtech@gmail.com.
+
+8. Искусственный интеллект и автоматизированная обработка
+
+UyDosh может использовать автоматизированные системы и инструменты с ИИ для проверки качества объявлений, определения категории, обнаружения дублей, скама и спама, размытия фотографий, модерации, перевода или очистки текста, рекомендаций и подбора.
+
+Автоматизированные инструменты могут ошибаться. Важные решения модерации могут проверяться вручную, где это уместно. Вы можете связаться с нами, если считаете автоматическое решение, классификацию объявления или действие модерации неправильными.
+
+9. Местоположение, карты и отображение примерного адреса
+
+Местоположение важно для поиска жилья. UyDosh может использовать информацию о местоположении, чтобы показывать объявления на карте, предлагать квартиры поблизости, рассчитывать расстояния и улучшать поиск.
+
+Точные домашние адреса могут быть чувствительными. В зависимости от функции мы можем показывать точное местоположение, если оно предоставлено и намеренно опубликовано, примерное местоположение, район или квартал, район университета либо точку на карте с пониженной точностью.
+
+Пользователи должны внимательно проверять информацию о местоположении перед публикацией объявления.
+
+10. Хранение данных
+
+Мы храним персональную информацию только столько, сколько разумно необходимо для целей, описанных в настоящей Политике конфиденциальности, включая предоставление Сервиса, поддержание безопасности, разрешение споров, соблюдение юридических обязанностей и исполнение наших соглашений.
+
+Обычная практика хранения может включать: данные аккаунта, пока аккаунт активен; объявления, пока они активны, и разумный период после удаления или архивирования для безопасности, предотвращения мошенничества, аудита и разрешения споров; сообщения чатов, пока аккаунт или переписка активны, если они не удалены согласно доступным функциям или юридическим требованиям; данные, связанные с Telegram, пока это необходимо для предоставления запрошенных функций Telegram, доставки уведомлений, предотвращения злоупотреблений и поддержки модерации; записи поддержки и жалоб, пока это необходимо для решения вопроса и ведения записей безопасности; данные устройства и аналитики в течение ограниченного периода, необходимого для аналитики, отладки, безопасности и улучшения производительности; юридические записи — как требуется применимым законом.
+
+Когда информация больше не нужна, мы удаляем, анонимизируем или безопасно храним ее в соответствии с применимыми требованиями.
+
+11. Удаление аккаунта
+
+Вы можете запросить удаление аккаунта через функцию удаления аккаунта в приложении, если она доступна, или обратившись в поддержку по адресу uydoshtech@gmail.com.
+
+Когда вы запрашиваете удаление аккаунта, мы удалим или анонимизируем персональную информацию, связанную с вашим аккаунтом, если нам не нужно сохранить определенную информацию по законным причинам, например для соблюдения закона, предотвращения мошенничества, безопасности, разрешения споров, защиты других пользователей, исполнения Условий использования, финансовых, аудиторских или деловых записей либо ранее опубликованного контента, который должен храниться в ограниченной форме для истории модерации или юридических причин.
+
+Некоторая информация может оставаться в резервных копиях ограниченное время до удаления согласно нашим практикам хранения резервных копий. Удаление аккаунта UyDosh не удаляет автоматически вашу информацию из сторонних сервисов, таких как Telegram, Apple, Google, или из переписок, происходивших вне UyDosh.
+
+12. Ваши права на конфиденциальность
+
+В зависимости от вашего местоположения и применимого права у вас могут быть права на доступ к персональной информации, которую мы храним, исправление неточной информации, удаление персональной информации, возражение против определенной обработки, ограничение обработки, отзыв согласия, получение копии данных, отказ от определенных сообщений и подачу жалобы в орган по защите данных.
+
+Чтобы воспользоваться этими правами, свяжитесь с нами по адресу uydoshtech@gmail.com. Нам может потребоваться подтвердить вашу личность перед выполнением запроса.
+
+13. Права на конфиденциальность в Калифорнии
+
+Если вы являетесь резидентом Калифорнии и применимый закон распространяется на нас, у вас могут быть специальные права по законам Калифорнии о конфиденциальности, включая право знать, удалять, исправлять и ограничивать определенное использование персональной информации.
+
+UyDosh не продает персональную информацию. UyDosh сознательно не передает персональную информацию для кросс-контекстной поведенческой рекламы, если это явно не раскрыто и не разрешено законом.
+
+Чтобы подать запрос по конфиденциальности в Калифорнии, свяжитесь с нами по адресу uydoshtech@gmail.com.
+
+14. Права в Европе, Великобритании и похожих юрисдикциях
+
+Если вы находитесь в Европейской экономической зоне, Великобритании, Швейцарии или другом регионе с похожими законами о конфиденциальности, у вас могут быть дополнительные права по применимым законам о защите данных.
+
+Где применимо, вы можете запросить доступ к вашим персональным данным, исправление, удаление, ограничение обработки, возражение против обработки, переносимость данных, отзыв согласия и пересмотр определенных автоматизированных решений.
+
+У вас также может быть право пожаловаться в местный орган по защите данных.
+
+15. Международные передачи данных
+
+UyDosh может обрабатывать и хранить информацию в странах, отличных от страны вашего проживания. В этих странах законы о конфиденциальности могут отличаться от законов вашей страны. Где требуется, мы используем надлежащие гарантии для международных передач данных, например договорные защиты, технические меры и контроль доступа.
+
+16. Безопасность
+
+Мы используем разумные технические, организационные и административные меры для защиты персональной информации, включая контроль доступа, защиту аутентификации, шифрование где уместно, безопасную облачную инфраструктуру, логирование и мониторинг, внутренний контроль разрешений, модерацию и обнаружение злоупотреблений, а также резервное копирование и восстановление.
+
+Однако ни одна система не является полностью безопасной. Мы не можем гарантировать, что несанкционированный доступ, взлом, потеря данных или неправильное использование никогда не произойдут.
+
+Вы отвечаете за безопасность учетных данных аккаунта и контроль доступа к вашему устройству, email, аккаунту Apple, аккаунту Google и аккаунту Telegram.
+
+17. Дети и несовершеннолетние
+
+UyDosh не предназначен для детей младше 13 лет. Если вы младше возраста, требуемого в вашей стране для использования онлайн-сервисов без согласия родителей, вы можете использовать UyDosh только с разрешения родителя или законного опекуна.
+
+Мы сознательно не собираем персональную информацию детей младше 13 лет. Если мы узнаем, что собрали персональную информацию ребенка младше 13 лет без надлежащего согласия, мы примем разумные меры для ее удаления.
+
+18. Сторонние сервисы и ссылки
+
+UyDosh может включать ссылки, интеграции или упоминания сторонних сервисов, включая Telegram, Apple, Google, провайдеров карт, облачные сервисы, провайдеров аналитики, платежных провайдеров, если они будут введены позже, а также внешние сайты или способы связи.
+
+Настоящая Политика конфиденциальности не применяется к сторонним сервисам. Их собственные политики конфиденциальности регулируют то, как они собирают и используют вашу информацию.
+
+19. Аналитика и диагностика
+
+Мы можем использовать аналитические и диагностические инструменты, чтобы понимать производительность приложения, сбои, вовлеченность пользователей и использование функций.
+
+Аналитические данные могут включать просмотренные экраны приложения, нажатые кнопки, взаимодействия с объявлениями, фильтры поиска, взаимодействия с уведомлениями, тип устройства, версию приложения, отчеты о сбоях и логи производительности.
+
+Мы используем эту информацию для улучшения Сервиса и исправления проблем. Где возможно, мы ограничиваем аналитические данные и избегаем сбора ненужной чувствительной информации.
+
+20. Push-уведомления и маркетинговые сообщения
+
+UyDosh может отправлять push-уведомления о новых объявлениях жилья, сохраненных поисках, Telegram-уведомлениях, чатах, статусе модерации объявлений, безопасности аккаунта, обновлениях продукта и важных сервисных объявлениях.
+
+Вы можете управлять push-уведомлениями через настройки устройства или приложения. Мы можем отправлять немаркетинговые сервисные сообщения, даже если вы отключили рекламные уведомления, например предупреждения безопасности или сообщения, связанные с аккаунтом.
+
+21. Реклама
+
+UyDosh может показывать рекламу в будущем, включая спонсорские посты, продвигаемые объявления или размещения внутри приложения.
+
+Если реклама будет введена, мы можем использовать ограниченную информацию для показа релевантной рекламы, например город, район, университетскую зону, категорию объявления, язык приложения и общую активность в приложении.
+
+Мы не используем личные сообщения чата для рекламного таргетинга. Если мы введем персонализированную рекламу или будем передавать информацию рекламным партнерам, мы обновим настоящую Политику конфиденциальности и предоставим требуемые элементы управления или варианты согласия.
+
+22. Чувствительная информация
+
+UyDosh — сервис, связанный с жильем. Вам следует избегать отправки чувствительной персональной информации, если это не необходимо.
+
+Чувствительная информация может включать номера паспорта или национального ID, финансовую информацию, информацию о здоровье, религиозные убеждения, политические взгляды, точный домашний адрес, не предназначенный для публикации, информацию о детях и частную информацию о других людях.
+
+Если вы добровольно отправляете чувствительную информацию, вы понимаете, что она может обрабатываться в рамках функции, где вы ее отправили.
+
+23. Жалобы пользователей, модерация и расследования безопасности
+
+UyDosh может проверять активность пользователей, объявления, чаты, фотографии, жалобы и технические данные, когда это необходимо для расследования скама, предотвращения мошенничества, удаления небезопасных объявлений, ответа на жалобы, соблюдения правил платформы, защиты пользователей и соблюдения закона.
+
+Модерация может включать автоматизированные инструменты, ручную проверку или оба способа. Если ваш контент или аккаунт ограничен, удален или заблокирован, вы можете связаться с нами по адресу uydoshtech@gmail.com.
+
+24. Точность данных
+
+Мы полагаемся на пользователей и сторонние источники в отношении точности информации об объявлениях. UyDosh не гарантирует, что все объявления, цены, адреса, фотографии, сведения о соседях или контактная информация точны.
+
+Если вы нашли неверную персональную информацию или неточное объявление, свяжитесь с нами или используйте инструменты жалобы в приложении.
+
+25. Изменения настоящей Политики конфиденциальности
+
+Мы можем время от времени обновлять настоящую Политику конфиденциальности. Если мы внесем существенные изменения, мы можем уведомить вас, обновив дату Последнего обновления, показав уведомление в приложении, отправив push-уведомление, отправив email, если он доступен, или разместив объявление через наши официальные каналы.
+
+Продолжение использования Сервиса после вступления обновленной Политики конфиденциальности в силу означает, что вы принимаете обновленную политику.
+
+26. Свяжитесь с нами
+
+По вопросам конфиденциальности, запросам данных, жалобам, удалению аккаунта или удалению контента обращайтесь:
+
+Команда конфиденциальности UyDosh
+
+Оператор: Артур Мусин
+
+Веб-сайт: https://uydoshtech.github.io/
+
+Email: uydoshtech@gmail.com
+
+Местоположение: Ташкент, Узбекистан
+
+27. Краткое описание ключевых практик
+
+UyDosh собирает данные аккаунта, объявлений, чатов, Telegram, местоположения, устройства, поддержки и дополнительные данные 3D-сканов.
+
+UyDosh использует данные для поиска жилья, поиска соседей, уведомлений, чата, модерации, безопасности, поддержки и улучшения приложения.
+
+UyDosh может предоставлять вход через Telegram, уведомления и способы связи через Telegram.
+
+UyDosh может использовать инструменты с ИИ для разбора объявлений, модерации и размытия фотографий.
+
+UyDosh не продает персональную информацию.
+
+UyDosh не использует личные чаты для рекламного таргетинга.
+
+Пользователи могут запросить удаление аккаунта.
+
+Пользователи могут запросить удаление или исправление своих объявлений и контактной информации.
+
+Точные адреса, фотографии, контакты и 3D-сканы могут быть чувствительными и должны передаваться осторожно.</div>
+
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links">
+          <a href="index.html" data-label="home">Home</a>
+          <a href="terms-of-service.html" data-label="terms">Terms</a>
+          <a href="https://uydoshtech.github.io/delete-account.html" data-label="delete">Delete account</a>
+          <a href="mailto:uydoshtech@gmail.com" data-label="contact">Contact</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      const LABELS = {
+        uz: {
+          title: "Maxfiylik siyosati — UyDosh",
+          updated: "Oxirgi yangilanish: 2026-yil 27-iyun",
+          home: "Bosh sahifa",
+          terms: "Foydalanish shartlari",
+          delete: "Akkauntni o‘chirish",
+          contact: "Aloqa",
+        },
+        ru: {
+          title: "Политика конфиденциальности — UyDosh",
+          updated: "Последнее обновление: 27 июня 2026 г.",
+          home: "Главная",
+          terms: "Условия использования",
+          delete: "Удалить аккаунт",
+          contact: "Контакты",
+        },
+        en: {
+          title: "Privacy Policy — UyDosh",
+          updated: "Last updated: June 27, 2026",
+          home: "Home",
+          terms: "Terms",
+          delete: "Delete Account",
+          contact: "Contact",
+        },
+      };
+
+      function normalizeLang(lang) {
+        if (lang === "en" || lang === "ru" || lang === "uz") return lang;
+        return "en";
+      }
+
+      function applyLang(lang) {
+        const active = normalizeLang(lang);
+        const labels = LABELS[active] || LABELS.en;
+
+        document.documentElement.lang = active;
+        document.title = labels.title;
+
+        for (const el of document.querySelectorAll("[data-label]")) {
+          const key = el.getAttribute("data-label");
+          if (labels[key]) el.textContent = labels[key];
+        }
+
+        for (const block of document.querySelectorAll("[data-policy-lang]")) {
+          block.hidden = block.getAttribute("data-policy-lang") !== active;
+        }
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.setAttribute(
+            "aria-pressed",
+            btn.getAttribute("data-lang") === active ? "true" : "false"
+          );
+        }
+
+        try {
+          localStorage.setItem("uydosh_lang", active);
+        } catch {}
+      }
+
+      (function initLang() {
+        let initial = "en";
+        try {
+          initial = localStorage.getItem("uydosh_lang") || "en";
+        } catch {}
+        applyLang(initial);
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+        }
+      })();
+    </script>
+  </body>
+</html>

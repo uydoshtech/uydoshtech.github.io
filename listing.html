@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UyDosh — E’lon</title>
+    <meta name="description" content="UyDosh e’lon tafsilotlari." />
+    <meta property="og:title" content="UyDosh — E’lon" id="og-title" />
+    <meta property="og:description" content="Ijara e’loni tafsilotlari." id="og-desc" />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="images/uydosh-logo.svg" id="og-image" />
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <meta name="uydosh-yandex-maps-key" content="70aaf6ac-5a4b-4a69-a5a5-c16536483324" />
+    <script>
+      // Apply a saved manual theme (mini app sun/moon toggle) before first paint to avoid a flash.
+      (function () {
+        try {
+          var theme = localStorage.getItem('uydosh_manual_theme');
+          var vars = theme === 'light'
+            ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
+            : theme === 'dark'
+              ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
+              : null;
+          if (vars) {
+            var root = document.documentElement;
+            for (var prop in vars) root.style.setProperty(prop, vars[prop]);
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <style>
+      :root {
+        color-scheme: light dark;
+        --blue: #00426e;
+        --bg: #061525;
+        --fg: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --brand: #e11d2e;
+        --brand2: #60a5fa;
+        --accent: #22c55e;
+        --price-green: #35c26b;
+        --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --fg: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.7);
+          --card: rgba(15, 23, 42, 0.04);
+          --stroke: rgba(15, 23, 42, 0.12);
+          --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        background:
+          radial-gradient(1200px 500px at 15% 0%, rgba(0, 66, 110, 0.36), transparent 58%),
+          radial-gradient(900px 600px at 85% 10%, rgba(96, 165, 250, 0.22), transparent 62%),
+          radial-gradient(800px 620px at 92% 82%, rgba(225, 29, 46, 0.12), transparent 62%),
+          var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+      }
+      a { color: inherit; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 80px; }
+      header {
+        display: flex; flex-wrap: wrap; align-items: center;
+        justify-content: space-between; gap: 16px 20px; padding: 10px 0 18px;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; }
+      .brand img { width: 56px; height: 56px; display: block; border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); background: rgba(255, 255, 255, 0.04); }
+      .brand strong { font-size: 16px; letter-spacing: 0.2px; }
+      nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        justify-content: flex-end; min-width: 0; flex: 1 1 auto; max-width: 100%; }
+      .lang.lang-dropdown { flex-shrink: 0; }
+      .pill { display: inline-flex; align-items: center; justify-content: center;
+        padding: 8px 12px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+      .pill:hover { background: rgba(255, 255, 255, 0.06); text-decoration: none; color: var(--fg); }
+      .pill.active { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
+
+      .back {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: var(--muted); font-size: 14px; margin: 4px 0 18px;
+      }
+      .back:hover { color: var(--fg); text-decoration: none; }
+      .back .back-icon {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 18px; height: 18px; flex-shrink: 0;
+      }
+      .back .back-icon svg { display: block; width: 16px; height: 16px; }
+      /* Mini App uses Telegram header BackButton — no custom back link styling needed.
+      html.mini-app .back {
+        margin: 0 0 14px;
+        padding: 8px 14px 8px 10px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-weight: 600;
+        gap: 5px;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+      html.mini-app .back:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--fg);
+      }
+      html.mini-app .back:active { opacity: 0.88; }
+      @media (prefers-color-scheme: light) {
+        html.mini-app .back {
+          background: rgba(15, 23, 42, 0.03);
+        }
+        html.mini-app .back:hover {
+          background: rgba(15, 23, 42, 0.06);
+        }
+      }
+      */
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 860px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      /* Gallery */
+      .gallery {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(225, 29, 46, 0.08));
+        box-shadow: var(--shadow);
+      }
+      .gallery .main {
+        aspect-ratio: 4 / 3;
+        display: block;
+        position: relative;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .gallery-viewport {
+        position: relative;
+        overflow: hidden;
+      }
+      .gallery-track {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .gallery-track::-webkit-scrollbar { display: none; }
+      .gallery-slide {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        aspect-ratio: 4 / 3;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .gallery-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      .gallery .counter {
+        position: absolute; top: 10px; right: 10px;
+        padding: 4px 10px; border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 12px; font-weight: 600;
+        pointer-events: none;
+      }
+      .gallery-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px 12px;
+      }
+      .gallery-dot {
+        appearance: none;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1.2px solid var(--fg);
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .gallery-dot[aria-current="true"] {
+        background: var(--fg);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .gallery-track { scroll-behavior: auto; }
+      }
+
+      .details { display: flex; flex-direction: column; gap: 14px; }
+      h1 { font-size: clamp(22px, 2.6vw, 30px); margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
+      .price-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+      .price { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: var(--price-green); }
+      .price small { font-weight: 500; font-size: 14px; color: var(--price-green); opacity: 0.85; margin-left: 2px; }
+      .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+      .badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 11px; border-radius: 999px;
+        font-size: 12px; font-weight: 600;
+        border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+      }
+      .badge.badge-type {
+        border-color: var(--badge-type-color, var(--stroke));
+        color: var(--badge-type-color, var(--muted));
+        background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 14%, transparent);
+      }
+      .badge.badge-gender {
+        border-color: var(--badge-gender-color, var(--stroke));
+        color: var(--badge-gender-color, var(--muted));
+        background: color-mix(in srgb, var(--badge-gender-color, var(--muted)) 14%, transparent);
+      }
+      @media (prefers-color-scheme: light) {
+        .badge.badge-gender[data-gender="1"] {
+          --badge-gender-color: #1565C0;
+        }
+      }
+      .badge .chip-icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .badge .chip-icon svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      .badge.featured {
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        border-color: transparent; color: #fff;
+      }
+
+      .meta-grid {
+        display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 14px;
+        font-size: 14px;
+      }
+      .meta-grid dt { color: var(--muted); margin: 0; }
+      .meta-grid dd { margin: 0; font-weight: 600; }
+
+      .section h2 {
+        font-size: 16px; font-weight: 700; margin: 6px 0 10px;
+      }
+      .description {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        font-size: 15px;
+        color: var(--fg);
+      }
+      .amenities { display: flex; flex-wrap: wrap; gap: 8px; }
+      .amenity {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 13px;
+        color: var(--fg);
+      }
+      .amenity .amenity-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .amenity .amenity-icon svg { display: block; }
+      .map-section .amenities-inline {
+        margin-top: 4px;
+      }
+
+      .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 11px 16px; border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--fg); font-weight: 600; font-size: 15px;
+        cursor: pointer;
+      }
+      .btn:hover { background: rgba(255, 255, 255, 0.08); text-decoration: none; }
+      .btn.primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        box-shadow: 0 14px 40px rgba(34, 197, 94, 0.28);
+        color: white;
+      }
+
+      /* Skeleton + status */
+      .skel {
+        border-radius: 10px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+        background-size: 200% 100%;
+        animation: shimmer 1.2s linear infinite;
+      }
+      @media (prefers-color-scheme: light) {
+        .skel {
+          background: linear-gradient(90deg, rgba(15,23,42,0.05), rgba(15,23,42,0.12), rgba(15,23,42,0.05));
+          background-size: 200% 100%;
+        }
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      .skel.gallery-skel { aspect-ratio: 4/3; width: 100%; }
+      .skel.line { height: 14px; }
+      .skel.line.w40 { width: 40%; }
+      .skel.line.w60 { width: 60%; }
+      .skel.line.w80 { width: 80%; }
+      .skel.line.short { height: 10px; }
+
+      .status-page {
+        text-align: center; padding: 60px 0; color: var(--muted);
+      }
+      .status-page h2 { color: var(--fg); }
+      .status-page .btn { margin-top: 14px; }
+
+      footer {
+        margin-top: 40px;
+        color: var(--muted); font-size: 14px;
+        display: flex; gap: 12px; flex-wrap: wrap;
+        justify-content: space-between; align-items: center;
+      }
+      .links { display: flex; gap: 14px; flex-wrap: wrap; }
+
+      html.mini-app .site-nav-links,
+      html.mini-app .site-footer-links,
+      html.mini-app .app-cta-row { display: none !important; }
+      html.mini-app .back,
+      html.mini-app [data-hide-in-mini-app] { display: none !important; }
+      html.mini-app footer { justify-content: center; }
+
+      .map-section {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .map-section-toggle {
+        appearance: none;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        text-align: left;
+      }
+      .map-section-toggle:active { opacity: 0.9; }
+      .map-section-summary {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+      }
+      .map-section-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .map-section-row .icon {
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .map-section-row .icon svg { width: 18px; height: 18px; display: block; }
+      .map-section-row .icon svg * { stroke: currentColor; fill: none; }
+      .map-section-chevron {
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: transform 180ms ease;
+      }
+      .map-section[aria-expanded="true"] .map-section-chevron {
+        transform: rotate(180deg);
+      }
+      .map-section-body {
+        padding: 0 16px 16px;
+      }
+      .map-section-body[hidden] { display: none; }
+      .map-container {
+        width: 100%;
+        height: 250px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.08);
+      }
+      .map-section-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 12px;
+      }
+      .map-section-actions .btn-link {
+        border: 0;
+        background: transparent;
+        color: var(--brand2);
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        padding: 8px;
+      }
+      .map-section-status {
+        min-height: 250px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 14px;
+        text-align: center;
+        padding: 16px;
+      }
+      .map-section-status-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      /* Description + "posted" date live inside the same card as the
+         location/metro summary above, separated by a hairline divider
+         instead of floating as disconnected sections. */
+      .map-section-extra {
+        padding: 14px 16px;
+        border-top: 1px solid var(--stroke);
+      }
+      .map-section-extra h2 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+      .map-section-extra .meta-grid {
+        border: 0;
+        background: transparent;
+        padding: 0;
+      }
+      .map-section-static {
+        display: flex;
+        flex-direction: column;
+      }
+      .map-section-static > .map-section-extra:first-child {
+        border-top: 0;
+      }
+      .map-section-status .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.1);
+        color: var(--fg);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header data-uydosh-mini-app-header>
+        <a class="brand" href="index.html" data-mini-app-home>
+          <img src="apple-touch-icon.png" width="44" height="44" alt="UyDosh" />
+          <div>
+            <strong>UyDosh</strong>
+            <span data-i18n="brand.tagline">Keling Birga Yashaymiz!</span>
+          </div>
+        </a>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="true" aria-label="O'zbekcha"><span class="flag" aria-hidden="true">🇺🇿</span></button>
+            <button type="button" data-lang="ru" aria-pressed="false" aria-label="Русский"><span class="flag" aria-hidden="true">🇷🇺</span></button>
+            <button type="button" data-lang="en" aria-pressed="false" aria-label="English"><span class="flag" aria-hidden="true">🇬🇧</span></button>
+          </div>
+          <span class="site-nav-links">
+            <a class="pill" href="index.html" data-i18n="nav.home">Asosiy</a>
+            <a class="pill" href="listings.html" data-i18n="nav.listings">E’lonlar</a>
+          </span>
+        </nav>
+      </header>
+
+      <!-- Hidden in Mini App — Telegram header BackButton handles navigation (see data-hide-in-mini-app). -->
+      <a class="back" href="listings.html" data-mini-app-back data-hide-in-mini-app>
+        <span class="back-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </span>
+        <span data-i18n="nav.listings">E’lonlar</span>
+      </a>
+
+      <main id="root">
+        <!-- Skeleton while loading -->
+        <div class="layout" id="skeleton-view">
+          <div>
+            <div class="skel gallery-skel" style="border-radius: 20px;"></div>
+          </div>
+          <div class="details">
+            <div class="skel line w80"></div>
+            <div class="skel line w40"></div>
+            <div class="skel line w60 short"></div>
+            <div class="skel line w80 short"></div>
+            <div class="skel line w60 short"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links site-footer-links">
+          <a href="index.html" data-i18n="nav.home">Asosiy</a>
+          <a href="listings.html" data-i18n="nav.listings">E’lonlar</a>
+          <a href="privacy-policy.html" data-i18n="nav.privacy">Maxfiylik</a>
+          <a href="terms-of-service.html" data-i18n="nav.terms">Foydalanish shartlari</a>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="nav.contact">Aloqa</a>
+        </div>
+      </footer>
+    </div>
+
+    <div id="detail-contact-bar" class="detail-contact-bar" hidden aria-hidden="true"></div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="assets/uydosh-web.js?v=20260703-61"></script>
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+      UyDosh.initTelegramMiniApp();
+
+      // Custom back link hidden in Mini App — Telegram BackButton handles navigation.
+      // document.querySelector('[data-mini-app-back]')?.addEventListener('click', () => {
+      //   if (!UyDosh.isMiniApp()) return;
+      //   window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+      // });
+
+      if (UyDosh.isMiniApp()) {
+        const webApp = window.Telegram?.WebApp;
+        webApp?.MainButton?.hide();
+        webApp?.BackButton?.show();
+        webApp?.BackButton?.onClick(() => {
+          webApp?.HapticFeedback?.impactOccurred('light');
+          location.href = UyDosh.MINI_APP_FEED_PATH;
+        });
+      }
+
+      const detailContactBarEl = document.getElementById('detail-contact-bar');
+
+      function hideDetailContactBar() {
+        if (!detailContactBarEl) return;
+        detailContactBarEl.hidden = true;
+        detailContactBarEl.setAttribute('aria-hidden', 'true');
+        detailContactBarEl.innerHTML = '';
+        document.documentElement.classList.remove('has-detail-contact');
+      }
+
+      function updateDetailContactBar(listing) {
+        if (!detailContactBarEl || !UyDosh.isMiniApp()) {
+          hideDetailContactBar();
+          return;
+        }
+        const handle = UyDosh.listingContactTelegram(listing);
+        if (!handle) {
+          hideDetailContactBar();
+          return;
+        }
+        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle);
+        detailContactBarEl.hidden = false;
+        detailContactBarEl.setAttribute('aria-hidden', 'false');
+        document.documentElement.classList.add('has-detail-contact');
+        UyDosh.bindDetailContactBar(detailContactBarEl, { listingId: listing?.id });
+        UyDosh.applyI18n(detailContactBarEl);
+      }
+
+      const APK_URL = 'https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk';
+
+      const params = new URLSearchParams(location.search);
+      const listingId = params.get('id');
+
+      if (listingId && !UyDosh.isMiniApp()) {
+        UyDosh.tryOpenListingInApp(listingId);
+      }
+
+      const rootEl = document.getElementById('root');
+
+      const state = {
+        listing: null,
+        photos: [],
+        photoIdx: 0,
+        mapExpanded: false,
+        mapLoaded: false,
+        mapLoading: false,
+      };
+
+      const GALLERY_AUTO_MS = 3000;
+      const GALLERY_AUTO_RESUME_MS = 5000;
+      let galleryAutoplayTimer = null;
+      let galleryAutoplayResumeTimer = null;
+      let galleryScrollRaf = null;
+      const galleryReduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+      function stopGalleryAutoplay() {
+        if (galleryAutoplayTimer) {
+          clearInterval(galleryAutoplayTimer);
+          galleryAutoplayTimer = null;
+        }
+        if (galleryAutoplayResumeTimer) {
+          clearTimeout(galleryAutoplayResumeTimer);
+          galleryAutoplayResumeTimer = null;
+        }
+      }
+
+      function startGalleryAutoplay() {
+        stopGalleryAutoplay();
+        if (state.photos.length <= 1 || galleryReduceMotion) return;
+        galleryAutoplayTimer = window.setInterval(() => {
+          scrollGalleryTo((state.photoIdx + 1) % state.photos.length);
+        }, GALLERY_AUTO_MS);
+      }
+
+      function pauseGalleryAutoplay(resumeAfterMs = GALLERY_AUTO_RESUME_MS) {
+        stopGalleryAutoplay();
+        if (state.photos.length <= 1 || galleryReduceMotion) return;
+        galleryAutoplayResumeTimer = window.setTimeout(startGalleryAutoplay, resumeAfterMs);
+      }
+
+      function syncGalleryDots() {
+        for (const dot of rootEl.querySelectorAll('[data-gallery-dot]')) {
+          const i = Number(dot.getAttribute('data-gallery-dot'));
+          dot.setAttribute('aria-current', String(i === state.photoIdx));
+        }
+      }
+
+      function syncGalleryCounter() {
+        const counterEl = rootEl.querySelector('.gallery .counter');
+        if (counterEl) counterEl.textContent = `${state.photoIdx + 1} / ${state.photos.length}`;
+      }
+
+      function galleryScrollLeftForIndex(track, index) {
+        const width = track.clientWidth;
+        if (width > 0) return Math.round(width * index);
+        const slide = track.querySelector(`[data-gallery-slide="${index}"]`);
+        return slide?.offsetLeft ?? 0;
+      }
+
+      function scrollGalleryTo(i, { smooth = true, instant = false } = {}) {
+        if (state.photos.length === 0) return;
+        const n = state.photos.length;
+        const nextIdx = ((i % n) + n) % n;
+        const track = rootEl.querySelector('[data-gallery-track]');
+        if (!track?.querySelector(`[data-gallery-slide="${nextIdx}"]`)) return;
+        state.photoIdx = nextIdx;
+        const left = galleryScrollLeftForIndex(track, nextIdx);
+        const useInstant = instant || galleryReduceMotion || !smooth;
+        if (useInstant) {
+          track.scrollLeft = left;
+        } else {
+          try {
+            track.scrollTo({ left, behavior: 'smooth' });
+          } catch {
+            track.scrollLeft = left;
+          }
+        }
+        syncGalleryDots();
+        syncGalleryCounter();
+      }
+
+      function syncGalleryFromScroll() {
+        const track = rootEl.querySelector('[data-gallery-track]');
+        if (!track) return;
+        const slides = [...track.querySelectorAll('[data-gallery-slide]')];
+        if (slides.length === 0) return;
+        const scrollLeft = track.scrollLeft;
+        const width = track.clientWidth;
+        let best = 0;
+        let bestDist = Infinity;
+        for (const [index, slide] of slides.entries()) {
+          const targetLeft = width > 0 ? width * index : slide.offsetLeft;
+          const dist = Math.abs(targetLeft - scrollLeft);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = index;
+          }
+        }
+        if (best === state.photoIdx) return;
+        state.photoIdx = best;
+        syncGalleryDots();
+        syncGalleryCounter();
+      }
+
+      function sortedPhotos(listing) {
+        const photos = Array.isArray(listing?.photos) ? [...listing.photos] : [];
+        photos.sort((a, b) => {
+          if (a.is_primary && !b.is_primary) return -1;
+          if (!a.is_primary && b.is_primary) return 1;
+          return (a.photo_order ?? 0) - (b.photo_order ?? 0);
+        });
+        return photos;
+      }
+
+      function renderNotFound() {
+        hideDetailContactBar();
+        rootEl.innerHTML = `
+          <div class="status-page">
+            <h2 data-i18n="detail.notFound">${UyDosh.escapeHtml(UyDosh.t('detail.notFound'))}</h2>
+            <a class="btn" href="${UyDosh.escapeHtml(UyDosh.feedPageUrl())}" data-i18n="nav.listings">${UyDosh.escapeHtml(UyDosh.t('nav.listings'))}</a>
+          </div>
+        `;
+      }
+
+      function renderError(retry) {
+        hideDetailContactBar();
+        rootEl.innerHTML = `
+          <div class="status-page">
+            <h2>${UyDosh.escapeHtml(UyDosh.t('feed.error'))}</h2>
+            <button class="btn" id="retry" type="button">${UyDosh.escapeHtml(UyDosh.t('feed.retry'))}</button>
+          </div>
+        `;
+        document.getElementById('retry')?.addEventListener('click', retry);
+      }
+
+      function buildGalleryHtml() {
+        if (state.photos.length === 0) {
+          return `
+            <div class="gallery" aria-label="UyDosh">
+              <div class="main" style="display: grid; place-items: center; color: var(--muted); font-weight: 700; letter-spacing: 0.12em;">
+                UyDosh
+              </div>
+            </div>
+          `;
+        }
+        const multi = state.photos.length > 1;
+        const counter = multi
+          ? `<div class="counter">${state.photoIdx + 1} / ${state.photos.length}</div>` : '';
+        const dots = multi ? `
+          <div class="gallery-dots" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.gallery.dots'))}">
+            ${state.photos.map((_, i) => `
+              <button
+                type="button"
+                class="gallery-dot"
+                role="tab"
+                data-gallery-dot="${i}"
+                aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.gallery.photo'))} ${i + 1} / ${state.photos.length}"
+                aria-current="${i === state.photoIdx ? 'true' : 'false'}"
+              ></button>
+            `).join('')}
+          </div>
+        ` : '';
+
+        return `
+          <div class="gallery" data-gallery>
+            <div class="gallery-viewport">
+              <div class="gallery-track" data-gallery-track tabindex="0" aria-roledescription="carousel">
+                ${state.photos.map((p, i) => `
+                  <div class="gallery-slide" data-gallery-slide="${i}" aria-roledescription="slide" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.gallery.photo'))} ${i + 1} / ${state.photos.length}">
+                    <img
+                      ${i === 0 ? '' : 'loading="lazy" '}
+                      src="${UyDosh.escapeHtml(UyDosh.photoUrl(p))}"
+                      alt="${UyDosh.escapeHtml(state.listing?.title || '')}"
+                      draggable="false"
+                    />
+                  </div>
+                `).join('')}
+              </div>
+              ${counter}
+            </div>
+            ${dots}
+          </div>
+        `;
+      }
+
+      function bindGallery() {
+        stopGalleryAutoplay();
+        const track = rootEl.querySelector('[data-gallery-track]');
+        if (!track || state.photos.length <= 1) return;
+
+        // Ignore pause triggers briefly after mount — iOS/Telegram can deliver a
+        // ghost tap on the gallery when opening detail from a feed card.
+        const pauseAfterMs = Date.now() + 700;
+        const maybePauseAutoplay = () => {
+          if (Date.now() < pauseAfterMs) return;
+          pauseGalleryAutoplay();
+        };
+
+        track.addEventListener('scroll', () => {
+          if (galleryScrollRaf) return;
+          galleryScrollRaf = requestAnimationFrame(() => {
+            galleryScrollRaf = null;
+            syncGalleryFromScroll();
+          });
+        }, { passive: true });
+
+        track.addEventListener('pointerdown', maybePauseAutoplay);
+        track.addEventListener('touchstart', maybePauseAutoplay, { passive: true });
+        track.addEventListener('wheel', maybePauseAutoplay, { passive: true });
+        track.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') maybePauseAutoplay();
+        });
+
+        for (const dot of rootEl.querySelectorAll('[data-gallery-dot]')) {
+          dot.addEventListener('click', () => {
+            const i = Number(dot.getAttribute('data-gallery-dot'));
+            if (Number.isNaN(i)) return;
+            scrollGalleryTo(i);
+            pauseGalleryAutoplay();
+          });
+        }
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            scrollGalleryTo(state.photoIdx, { instant: true });
+            startGalleryAutoplay();
+          });
+        });
+      }
+
+      function showPhoto(i) {
+        scrollGalleryTo(i);
+        pauseGalleryAutoplay();
+      }
+
+      function buildAmenitiesRowHtml(amenities, lang) {
+        const list = Array.isArray(amenities) ? amenities : [];
+        if (list.length === 0) return '';
+        const chips = UyDosh.sortAmenities(list, 'detail').map((amenity) => {
+          const label = UyDosh.localized(amenity, lang);
+          const code = UyDosh.getAmenityCode(amenity);
+          const icon = code ? UyDosh.amenityIconHtml(code, { size: 16 }) : '';
+          return `<span class="amenity">${icon}<span>${UyDosh.escapeHtml(label)}</span></span>`;
+        }).join('');
+        return `<div class="amenities amenities-inline">${chips}</div>`;
+      }
+
+      function buildAmenitiesSectionHtml(amenities, lang) {
+        const row = buildAmenitiesRowHtml(amenities, lang);
+        if (!row) return '';
+        return `
+          <section class="section">
+            <h2 data-i18n="detail.amenities">${UyDosh.escapeHtml(UyDosh.t('detail.amenities'))}</h2>
+            ${row}
+          </section>
+        `;
+      }
+
+      function buildMapSectionHtml(l, lang, amenities = [], extraHtml = '') {
+        const locName = UyDosh.localized(l.location, lang);
+        const metro = UyDosh.localized(l.subway_station, lang);
+        const metroLine = UyDosh.resolveMetroLine(l);
+        const hasLocation = Boolean(locName);
+        const hasMetro = Boolean(metro);
+        if (!hasLocation && !hasMetro) return '';
+
+        const rows = [];
+        if (hasMetro) {
+          rows.push(`<div class="map-section-row">${UyDosh.iconMetro(metroLine)}<span>${UyDosh.escapeHtml(metro)}</span></div>`);
+        }
+        if (hasLocation) {
+          rows.push(`<div class="map-section-row">${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(locName)}</span></div>`);
+        }
+        if (l.move_in_date) {
+          rows.push(
+            `<div class="map-section-row map-section-move-in"><span>${UyDosh.escapeHtml(UyDosh.t('detail.moveIn'))} ${UyDosh.escapeHtml(UyDosh.formatDate(l.move_in_date, lang))}</span></div>`,
+          );
+        }
+        const amenityRow = buildAmenitiesRowHtml(amenities, lang);
+        if (amenityRow) rows.push(amenityRow);
+
+        return `
+          <section class="map-section" data-map-section aria-expanded="false">
+            <button type="button" class="map-section-toggle" data-map-toggle aria-expanded="false">
+              <div class="map-section-summary">${rows.join('')}</div>
+              <span class="map-section-chevron" aria-hidden="true">▾</span>
+            </button>
+          <div class="map-section-body" hidden>
+            <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
+            <div class="map-section-actions">
+              <a class="btn-link" data-open-yandex-map href="#" hidden>${UyDosh.escapeHtml(UyDosh.t('detail.openMapView'))}</a>
+            </div>
+          </div>
+          ${extraHtml}
+        </section>
+      `;
+      }
+
+      const MAP_LOAD_TIMEOUT_MS = 18000;
+
+      function showListingMapError(container) {
+        container.innerHTML = `
+          <div class="map-section-status">
+            <div class="map-section-status-inner">
+              <div>${UyDosh.escapeHtml(UyDosh.t('detail.mapLoadError'))}</div>
+              <button type="button" class="btn" data-map-retry>${UyDosh.escapeHtml(UyDosh.t('map.retry'))}</button>
+            </div>
+          </div>
+        `;
+        container.querySelector('[data-map-retry]')?.addEventListener('click', () => {
+          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+          state.mapLoaded = false;
+          state.mapLoading = false;
+          UyDosh.resetYandexMaps({ hard: true });
+          mountListingMap();
+        });
+      }
+
+      async function mountListingMap() {
+        const container = rootEl.querySelector('#listing-map');
+        if (!container || state.mapLoading || state.mapLoaded) return;
+        state.mapLoading = true;
+        container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('map.loading'))}</div>`;
+        try {
+          await UyDosh.waitForElementLayout(container);
+          const mapModule = await UyDosh.withTimeout(
+            UyDosh.loadYandexMapModule(),
+            MAP_LOAD_TIMEOUT_MS,
+            'Map module load timed out',
+          );
+          const coords = mapModule.resolveListingMapCoordinates(state.listing);
+          if (!coords) {
+            container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.mapUnavailable'))}</div>`;
+            return;
+          }
+          container.innerHTML = '';
+          await UyDosh.waitForElementLayout(container);
+          const map = await UyDosh.withTimeout(
+            mapModule.renderSinglePinMap(container, {
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              lang: UyDosh.getLang(),
+              pin: {
+                id: state.listing?.id,
+                listing_type_id: state.listing?.listing_type_id ?? state.listing?.listing_type?.id,
+                listing_type_code: state.listing?.listing_type?.code ?? state.listing?.listing_type_code,
+                host_resident: state.listing?.host_resident,
+              },
+              selected: true,
+            }),
+            MAP_LOAD_TIMEOUT_MS,
+            'Map render timed out',
+          );
+          if (!map) {
+            throw new Error('Listing map failed to render');
+          }
+          const openLink = rootEl.querySelector('[data-open-yandex-map]');
+          if (openLink) {
+            openLink.href = mapModule.yandexMapsOpenUrl(coords.latitude, coords.longitude);
+            openLink.removeAttribute('hidden');
+            openLink.setAttribute('target', '_blank');
+            openLink.setAttribute('rel', 'noopener noreferrer');
+          }
+          state.mapLoaded = true;
+          UyDosh.reflowActiveMaps();
+        } catch (err) {
+          console.error('Failed to load listing map', err);
+          showListingMapError(container);
+        } finally {
+          state.mapLoading = false;
+        }
+      }
+
+      function bindMapSection() {
+        const toggle = rootEl.querySelector('[data-map-toggle]');
+        const section = rootEl.querySelector('[data-map-section]');
+        const body = rootEl.querySelector('.map-section-body');
+        if (!toggle || !section || !body) return;
+
+        toggle.addEventListener('click', () => {
+          const next = !state.mapExpanded;
+          state.mapExpanded = next;
+          section.setAttribute('aria-expanded', next ? 'true' : 'false');
+          toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+          body.hidden = !next;
+          if (next) {
+            window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+            setTimeout(() => {
+              if (state.mapExpanded) mountListingMap();
+            }, 350);
+          } else {
+            state.mapLoaded = false;
+            state.mapLoading = false;
+            UyDosh.loadYandexMapModule()
+              .then((mapModule) => mapModule.destroyMap(body.querySelector('#listing-map')))
+              .catch(() => { /* ignore */ });
+          }
+        });
+      }
+
+      function render() {
+        stopGalleryAutoplay();
+        const l = state.listing;
+        if (!l) return;
+        const lang = UyDosh.getLang();
+        document.documentElement.lang = lang;
+
+        const title = UyDosh.escapeHtml(l.title || '');
+        document.title = `UyDosh — ${l.title || '#' + l.id}`;
+        const ogTitle = document.getElementById('og-title');
+        const ogDesc = document.getElementById('og-desc');
+        const ogImage = document.getElementById('og-image');
+        if (ogTitle) ogTitle.setAttribute('content', `UyDosh — ${l.title || ''}`);
+        const desc = UyDosh.localizedDescription(l, lang);
+        if (ogDesc && desc) ogDesc.setAttribute('content', desc.slice(0, 160));
+        const primary = UyDosh.primaryPhoto(l);
+        if (ogImage && primary) ogImage.setAttribute('content', UyDosh.photoUrl(primary));
+
+        const price = UyDosh.formatPrice(l, lang);
+        const typeName = UyDosh.listingTypeBadgeLabel(l, lang);
+        const listingTypeId = l.listing_type_id ?? l.listing_type?.id;
+        const typeColor = UyDosh.listingTypeColor(listingTypeId);
+        const locName = UyDosh.localized(l.location, lang);
+        const metro = UyDosh.localized(l.subway_station, lang);
+        const rooms = Number(l.rooms_number);
+
+        const badges = [];
+        if (UyDosh.isFeatured(l)) {
+          badges.push(`<span class="badge featured">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</span>`);
+        }
+        if (typeName) {
+          const typeStyle = typeColor ? ` style="--badge-type-color:${typeColor}"` : '';
+          const typeIcon = UyDosh.listingTypeBadgeIcon(l, { pressed: false });
+          badges.push(`<span class="badge badge-type"${typeStyle}>${typeIcon}${UyDosh.escapeHtml(typeName)}</span>`);
+        }
+        const genderBadge = UyDosh.genderBadgeHtml(l, lang);
+        if (genderBadge) badges.push(genderBadge);
+        if (l.private_room) badges.push(`<span class="badge">${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
+        if (Number.isFinite(rooms) && rooms > 0) {
+          badges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
+        }
+
+        const amenities = Array.isArray(l.amenities) ? l.amenities : [];
+        const hasMapSection = Boolean(locName || metro);
+
+        const isMiniApp = UyDosh.isMiniApp();
+
+        const metaRows = [];
+        if (!hasMapSection && locName) metaRows.push([UyDosh.t('detail.location'), locName]);
+        if (!hasMapSection && metro) metaRows.push([UyDosh.t('detail.metro'), metro]);
+        if (l.move_in_date && !hasMapSection) {
+          metaRows.push([UyDosh.t('detail.moveIn'), UyDosh.formatDate(l.move_in_date, lang)]);
+        }
+        if (l.created_at && !isMiniApp) metaRows.push([UyDosh.t('detail.posted'), UyDosh.formatDate(l.created_at, lang)]);
+        const metaHtml = metaRows.length ? `
+          <dl class="meta-grid">
+            ${metaRows.map(([k, v]) => `<dt>${UyDosh.escapeHtml(k)}</dt><dd>${UyDosh.escapeHtml(v)}</dd>`).join('')}
+          </dl>
+        ` : '';
+
+        const amenitiesHtml = hasMapSection
+          ? ''
+          : buildAmenitiesSectionHtml(amenities, lang);
+
+        // Description and "posted" date are rendered as dividers within the
+        // same card as the location/metro summary (or, when there is no
+        // location/metro, as their own merged card) instead of separate
+        // floating sections.
+        const descriptionExtraHtml = desc ? `
+          <div class="map-section-extra map-section-description">
+            <h2 data-i18n="detail.description">${UyDosh.escapeHtml(UyDosh.t('detail.description'))}</h2>
+            <div class="description">${UyDosh.escapeHtml(desc)}</div>
+          </div>
+        ` : '';
+
+        const postedExtraHtml = (isMiniApp && l.created_at) ? `
+          <div class="map-section-extra map-section-posted">
+            <dl class="meta-grid">
+              <dt>${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
+              <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.created_at, lang))}</dd>
+            </dl>
+          </div>
+        ` : '';
+
+        const cardExtraHtml = `${descriptionExtraHtml}${postedExtraHtml}`;
+
+        const mapHtml = buildMapSectionHtml(l, lang, hasMapSection ? amenities : [], hasMapSection ? cardExtraHtml : '');
+        // No location/metro to anchor a card around — fall back to a plain
+        // (non-collapsible) card so description + posted date still share
+        // one block.
+        const descHtml = hasMapSection ? '' : (cardExtraHtml ? `<div class="map-section map-section-static">${cardExtraHtml}</div>` : '');
+        state.mapExpanded = false;
+        state.mapLoaded = false;
+        state.mapLoading = false;
+
+        rootEl.innerHTML = `
+          <div class="layout">
+            <div>
+              ${buildGalleryHtml()}
+            </div>
+            <div class="details">
+              <h1>${title}</h1>
+              ${price ? `<div class="price-row"><div class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></div></div>` : ''}
+              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+              ${mapHtml}
+              ${amenitiesHtml}
+              ${metaHtml}
+              <div class="cta-row app-cta-row">
+                <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
+                <a class="btn" href="${APK_URL}" download="uydosh.apk" data-i18n="detail.downloadApk">${UyDosh.escapeHtml(UyDosh.t('detail.downloadApk'))}</a>
+              </div>
+            </div>
+          </div>
+          ${descHtml}
+        `;
+
+        bindGallery();
+        bindMapSection();
+        updateDetailContactBar(l);
+      }
+
+      async function load() {
+        if (!listingId) { renderNotFound(); return; }
+        hideDetailContactBar();
+        try {
+          const data = await UyDosh.fetchListing(listingId);
+          state.listing = data;
+          state.photos = sortedPhotos(data);
+          state.photoIdx = 0;
+          render();
+          if (UyDosh.isMiniApp()) {
+            UyDosh.logMiniAppEvent('listing_viewed', {
+              listing_id: Number(listingId),
+              source: 'telegram_mini_app',
+            });
+            UyDosh.logMiniAppScreen('telegram_listing_detail', {
+              listing_id: Number(listingId),
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load listing', err);
+          if (err?.status === 404) renderNotFound();
+          else renderError(() => { rootEl.innerHTML = '<div class="status-page" data-i18n="detail.loading">' + UyDosh.escapeHtml(UyDosh.t('detail.loading')) + '</div>'; load(); });
+        }
+      }
+
+      // Keyboard arrows for gallery navigation.
+      document.addEventListener('keydown', (e) => {
+        if (state.photos.length <= 1) return;
+        if (e.key === 'ArrowLeft') { e.preventDefault(); showPhoto(state.photoIdx - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); showPhoto(state.photoIdx + 1); }
+      });
+
+      UyDosh.initLangSwitcher();
+      document.addEventListener('uydosh:langchange', () => {
+        if (state.listing) {
+          render();
+        } else {
+          UyDosh.applyI18n();
+          hideDetailContactBar();
+        }
+      });
+
+      load();
+    </script>
+  </body>
+</html>

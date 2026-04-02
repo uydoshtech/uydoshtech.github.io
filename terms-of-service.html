@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UyDosh — Terms of Service</title>
+    <meta
+      name="description"
+      content="Terms of Service for the UyDosh mobile application."
+    />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="images/uydosh-logo.svg" as="image" />
+
+    <style>
+      :root {
+        color-scheme: light dark;
+        --blue: #00426e;
+        --bg: #061525;
+        --fg: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --brand: #e11d2e;
+        --brand2: #60a5fa;
+        --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --fg: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.7);
+          --card: rgba(15, 23, 42, 0.04);
+          --stroke: rgba(15, 23, 42, 0.12);
+          --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial;
+        background: radial-gradient(
+            1200px 500px at 15% 0%,
+            rgba(0, 66, 110, 0.36),
+            transparent 58%
+          ),
+          radial-gradient(
+            900px 600px at 85% 10%,
+            rgba(96, 165, 250, 0.22),
+            transparent 62%
+          ),
+          radial-gradient(
+            800px 620px at 92% 82%,
+            rgba(225, 29, 46, 0.12),
+            transparent 62%
+          ),
+          var(--bg);
+        color: var(--fg);
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 64px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px 20px;
+        padding: 10px 0 18px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 0 1 auto;
+      }
+      .brand img {
+        width: 60px;
+        height: 60px;
+        display: block;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .brand strong {
+        font-size: 16px;
+        letter-spacing: 0.2px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        flex: 1 1 auto;
+        max-width: 100%;
+      }
+      .lang {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        max-width: 100%;
+      }
+      .lang button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        padding: 7px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .lang button[aria-pressed="true"] {
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .lang button:hover {
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .lang button .flag {
+        font-size: 14px;
+        line-height: 1;
+        transform: translateY(-0.5px);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+      }
+      .pill:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: var(--fg);
+      }
+
+      @media (max-width: 720px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        nav {
+          justify-content: flex-start;
+        }
+        .pill {
+          font-size: 14px;
+          padding: 8px 10px;
+        }
+      }
+
+      .content {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 18px;
+        max-width: 42rem;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: clamp(26px, 3.2vw, 36px);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 18px 0 8px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      .legal-text[hidden] {
+        display: none;
+      }
+      ul,
+      ol {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 15px;
+        margin: 0 0 14px;
+      }
+      .legal-text {
+        white-space: pre-line;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+
+      footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 15px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <a href="index.html" style="display: inline-flex; gap: 12px; align-items: center">
+            <img src="images/uydosh-logo.svg" alt="UyDosh logo" />
+            <div>
+              <strong>UyDosh</strong><br />
+              <span style="color: var(--muted); font-size: 15px"
+                >Rentals & roommates</span
+              >
+            </div>
+          </a>
+        </div>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="false" aria-label="O'zbekcha">
+              <span class="flag" aria-hidden="true">🇺🇿</span>
+            </button>
+            <button type="button" data-lang="ru" aria-pressed="false" aria-label="Русский">
+              <span class="flag" aria-hidden="true">🇷🇺</span>
+            </button>
+            <button type="button" data-lang="en" aria-pressed="true" aria-label="English">
+              <span class="flag" aria-hidden="true">🇬🇧</span>
+            </button>
+          </div>
+          <a class="pill" href="index.html" data-label="home">Home</a>
+          <a class="pill" href="privacy-policy.html" data-label="privacy">Privacy Policy</a>
+          <a class="pill" href="https://uydoshtech.github.io/delete-account.html" data-label="delete">Delete Account</a>
+          <a class="pill" href="mailto:uydoshtech@gmail.com" data-label="contact">Contact</a>
+        </nav>
+      </header>
+
+      <main class="content">
+        <h1 data-label="title">Terms of Service — UyDosh</h1>
+        <p class="meta" data-label="updated">Last updated: June 27, 2026</p>
+
+        <div class="legal-text" data-terms-lang="en">UyDosh Terms of Use
+
+        Effective Date: June 27, 2026
+        Last Updated: June 27, 2026
+        
+        Welcome to UyDosh.
+        
+        These Terms of Use (“Terms”) govern your access to and use of the UyDosh mobile application, website, services, features, content, listings, messaging tools, notifications, and related services (collectively, the “Service”).
+        
+        The Service is operated by Artur Musin, an individual developer (“UyDosh,” “we,” “us,” or “our”).
+        
+        By creating an account, accessing the Service, posting content, sending messages, or using any part of UyDosh, you agree to these Terms, our Privacy Policy, and our Community Rules. If you do not agree, you must not use the Service.
+        
+        1. About UyDosh
+        
+        UyDosh is a platform that helps users discover, publish, organize, and communicate about housing-related listings and related information.
+        
+        UyDosh may include rental listings, roommate search features, user profiles, direct messages, saved listings, push notifications, complaint tools, and other features related to housing discovery and communication.
+        
+        UyDosh is a platform only. We do not own, rent, sell, inspect, verify, manage, or guarantee any property, room, apartment, dormitory, landlord, tenant, user, listing, price, address, photo, or availability shown through the Service.
+        
+        2. Eligibility
+        
+        You may use UyDosh only if you are legally able to enter into these Terms and use the Service under applicable law.
+        
+        You must not use UyDosh if you are prohibited from using the Service under the laws of your country or region.
+        
+        If you use the Service on behalf of another person, business, organization, landlord, agency, or group, you confirm that you have authority to do so.
+        
+        3. Accounts and Registration
+        
+        To access certain features, you may need to create an account or sign in using supported methods such as Apple Sign-In, Google Sign-In, Telegram linking, or other authentication methods made available by UyDosh.
+        
+        You agree to provide accurate and current information when creating or updating your account. You are responsible for maintaining the security of your account and for all activity that occurs under your account.
+        
+        You must not:
+        
+        * create an account using false, misleading, or stolen information;
+        * impersonate another person or organization;
+        * use another user’s account without permission;
+        * sell, rent, transfer, or share access to your account;
+        * use UyDosh to evade a suspension, ban, moderation action, or legal restriction.
+        
+        We may suspend, restrict, or delete your account if we believe that you violated these Terms, created risk for other users, abused the Service, or used the Service unlawfully.
+        
+        4. Acceptance of Terms and Community Rules
+        
+        Before you can create, upload, publish, or submit user-generated content through UyDosh, you may be required to accept these Terms, our Privacy Policy, and our Community Rules.
+        
+        By posting a listing, uploading a photo, sending a message, linking Telegram, submitting a complaint, or otherwise using interactive features, you confirm that you understand and agree to follow these rules.
+        
+        We may update these Terms or our Community Rules from time to time. If changes are material, we may notify you through the app, email, website, or other reasonable methods.
+        
+        Continued use of the Service after the updated Terms become effective means that you accept the updated Terms.
+        
+        5. User Content
+        
+        “User Content” means any content that users create, upload, submit, publish, send, or otherwise make available through UyDosh, including listings, descriptions, prices, addresses, photos, videos, profile information, messages, comments, complaints, reports, and other materials.
+        
+        You are responsible for your User Content.
+        
+        You represent and warrant that:
+        
+        * you have the right to submit and publish your User Content;
+        * your User Content is accurate to the best of your knowledge;
+        * your User Content does not violate any law, contract, third-party right, privacy right, intellectual property right, or these Terms;
+        * your User Content does not contain false, misleading, fraudulent, discriminatory, abusive, or illegal material.
+        
+        You retain ownership of your User Content. However, by submitting User Content to UyDosh, you grant us a non-exclusive, worldwide, royalty-free, transferable, sublicensable license to host, store, reproduce, process, moderate, display, publish, translate, modify for formatting, blur, redact, distribute, and use your User Content as needed to operate, improve, protect, and promote the Service.
+        
+        This license ends when your User Content is deleted from the Service, except where continued use is necessary for backup, legal compliance, fraud prevention, safety, dispute resolution, moderation history, or legitimate business purposes.
+        
+        6. Housing Listings Disclaimer
+        
+        UyDosh does not guarantee the accuracy, completeness, legality, safety, availability, price, location, ownership, quality, condition, or suitability of any listing.
+        
+        Listings may be created by users, edited, moderated, summarized, translated, categorized, or processed automatically.
+        
+        You understand and agree that:
+        
+        * UyDosh is not a real estate agency;
+        * UyDosh is not a landlord, tenant, broker, escrow agent, property manager, or legal advisor;
+        * UyDosh does not guarantee that any apartment, room, dormitory, or property is real, available, safe, legal, or suitable;
+        * UyDosh does not guarantee that any user, landlord, tenant, agent, or roommate is trustworthy, verified, or legally authorized;
+        * any agreement, payment, meeting, viewing, rental arrangement, deposit, or transaction is made at your own risk.
+        
+        You are responsible for verifying all information before making decisions, sending money, sharing documents, visiting a property, signing an agreement, or entering into any arrangement with another user or third party.
+        
+        7. Safety and Anti-Fraud Rules
+        
+        You agree to use UyDosh safely and responsibly.
+        
+        You must not:
+        
+        * post fake, misleading, duplicate, bait, or fraudulent listings;
+        * request, send, or facilitate suspicious advance payments;
+        * misrepresent ownership, availability, location, price, or conditions of a property;
+        * use stolen photos or photos from other listings without permission;
+        * publish someone else’s personal information without permission;
+        * ask users to move conversations to unsafe channels for the purpose of fraud;
+        * use UyDosh to scam, harass, threaten, exploit, or deceive other users.
+        
+        UyDosh may provide safety tips, warnings, AI-based checks, photo blurring, content moderation, complaint tools, and other safety features. These features are provided to improve user safety, but they do not guarantee that all harmful, false, illegal, or inappropriate content will be detected or removed.
+        
+        Users should independently verify listings and people before meeting, paying, signing, or sharing personal documents.
+        
+        8. Prohibited Content and Behavior
+        
+        You must not use UyDosh to create, upload, publish, send, promote, or distribute content or behavior that is:
+        
+        * false, misleading, fraudulent, or deceptive;
+        * illegal or connected to illegal activity;
+        * discriminatory, hateful, abusive, threatening, violent, or harassing;
+        * sexually explicit, pornographic, exploitative, or inappropriate for the Service;
+        * spam, mass messaging, scraping, phishing, malware, or other abusive automation;
+        * content that violates another person’s privacy or intellectual property rights;
+        * content that includes private documents, payment cards, passwords, authentication codes, or sensitive personal information without permission;
+        * content that promotes unsafe housing practices, illegal rentals, or unlawful discrimination;
+        * content that attempts to bypass moderation, reports, account restrictions, or technical protections;
+        * content that is otherwise harmful to UyDosh, users, or the public.
+        
+        We may remove, restrict, hide, blur, edit, label, or refuse to publish content that we believe violates these Terms, our Community Rules, applicable law, or user safety expectations.
+        
+        9. Photos, AI Processing, and Blurring
+        
+        UyDosh may use automated tools, manual review, or AI-based processing to improve listings, detect safety issues, categorize content, blur sensitive information, reduce privacy risks, or improve the quality of the Service.
+        
+        For example, UyDosh may blur or obscure faces, documents, license plates, personal information, or other sensitive visual elements in uploaded photos.
+        
+        However, AI-based tools are not perfect. They may fail to detect some sensitive content or may incorrectly modify content. You remain responsible for ensuring that the content you upload or publish does not violate privacy, law, third-party rights, or these Terms.
+        
+        By uploading photos or other media, you confirm that you have the right to upload and use them in the Service.
+        
+        10. Telegram Features and Contact Options
+        
+        UyDosh may allow users to connect Telegram accounts, receive Telegram alerts, or use Telegram links and contact options.
+        
+        Telegram is a third-party service. Your use of Telegram is governed by Telegram's own terms and privacy policy.
+        
+        If you believe content or contact information shown in UyDosh violates your rights, contains your personal information, includes your copyrighted material, or should be removed, you may report it through the app or contact us.
+        
+        11. Messaging and Communication
+        
+        UyDosh may allow users to communicate through direct messages, chat features, contact buttons, Telegram links, phone numbers, or other communication tools.
+        
+        You are responsible for your communications with other users.
+        
+        You must not use UyDosh messaging or contact features to:
+        
+        * harass, threaten, insult, or abuse others;
+        * send spam, advertising, scams, phishing, malware, or illegal offers;
+        * request suspicious payments or sensitive documents;
+        * share illegal, offensive, or harmful content;
+        * impersonate another person or organization;
+        * bypass moderation or safety tools.
+        
+        We may provide tools to report messages, block users, restrict abusive accounts, review complaints, or take other safety actions.
+        
+        UyDosh is not responsible for agreements, payments, meetings, damages, losses, or disputes that arise from communications between users.
+        
+        12. Reporting, Blocking, and Moderation
+        
+        UyDosh may provide tools to report listings, users, photos, messages, scams, offensive content, illegal content, or other concerns.
+        
+        You may also be able to block users. When you block a user, that user may be restricted from contacting you or interacting with you through certain Service features.
+        
+        We may review reports and take action at our discretion, including:
+        
+        * removing or hiding content;
+        * blurring or editing content;
+        * warning users;
+        * restricting features;
+        * suspending or deleting accounts;
+        * preventing publication of listings;
+        * preserving information for safety, fraud prevention, legal compliance, or dispute resolution;
+        * contacting users or authorities where appropriate.
+        
+        We are not obligated to monitor all content before it appears on the Service, and we do not guarantee that all harmful or prohibited content will be detected or removed.
+        
+        False, abusive, or bad-faith reports may result in account restrictions.
+        
+        13. Account Deletion
+        
+        You may request deletion of your account through the app or through the account deletion method provided by UyDosh.
+        
+        When you delete your account, we will delete or anonymize account data associated with your account, subject to reasonable technical limitations and legitimate retention needs.
+        
+        We may retain certain information where necessary for:
+        
+        * security and fraud prevention;
+        * legal compliance;
+        * dispute resolution;
+        * enforcement of these Terms;
+        * backup and disaster recovery;
+        * financial, tax, or regulatory obligations;
+        * prevention of abuse, spam, or repeated violations.
+        
+        Some content may remain visible if it was shared with other users, copied by others, included in messages, retained in backups, or required for legitimate reasons. Where possible, we will remove or anonymize personal identifiers.
+        
+        For more information about how we collect, use, retain, and delete data, please review our Privacy Policy.
+        
+        14. Privacy
+        
+        Your privacy is important to us.
+        
+        Our Privacy Policy explains what information we collect, how we use it, how we share it, how long we keep it, and what rights you may have.
+        
+        By using UyDosh, you agree that we may collect and use information as described in our Privacy Policy.
+        
+        15. Third-Party Services
+        
+        UyDosh may use or integrate with third-party services, including authentication providers, hosting providers, analytics tools, crash reporting tools, push notification services, map services, Telegram, payment providers, AI tools, or other services.
+        
+        Your use of third-party services may be governed by their own terms and privacy policies. UyDosh is not responsible for third-party services, content, policies, actions, availability, or security.
+        
+        We may change, suspend, or remove third-party integrations at any time.
+        
+        16. Intellectual Property
+        
+        UyDosh, including its name, logo, design, software, features, interface, database structure, text, graphics, and other materials, is owned by UyDosh or its licensors and is protected by intellectual property and other laws.
+        
+        You may not copy, modify, distribute, sell, reverse engineer, scrape, reproduce, or create derivative works from UyDosh or any part of the Service unless we give you written permission or the law allows it.
+        
+        You must not use UyDosh branding, logos, screenshots, or materials in a misleading or unauthorized way.
+        
+        17. Feedback
+        
+        If you send us feedback, ideas, suggestions, bug reports, feature requests, or other comments, you grant us the right to use them without restriction or compensation to you.
+        
+        We may use feedback to improve, develop, market, or modify UyDosh.
+        
+        18. Restrictions on Use
+        
+        You agree not to:
+        
+        * use UyDosh for unlawful, harmful, fraudulent, or abusive purposes;
+        * interfere with the security or operation of the Service;
+        * attempt to access accounts, systems, data, APIs, or features without authorization;
+        * scrape, crawl, copy, index, or extract data from UyDosh without permission;
+        * use bots, scripts, automation, or mass registration tools without permission;
+        * bypass moderation, rate limits, access controls, or technical protections;
+        * upload malware, malicious code, or harmful files;
+        * use UyDosh to compete unfairly, clone the Service, or harvest user data;
+        * violate applicable law, third-party rights, or these Terms.
+        
+        19. Availability and Changes to the Service
+        
+        We may update, change, suspend, limit, or discontinue any part of UyDosh at any time.
+        
+        We do not guarantee that the Service will always be available, uninterrupted, secure, error-free, or compatible with every device, operating system, network, or region.
+        
+        We may release beta features, experimental tools, AI features, or limited-access features. Such features may change, stop working, or be removed at any time.
+        
+        20. No Professional Advice
+        
+        Information on UyDosh is provided for general informational and communication purposes only.
+        
+        UyDosh does not provide legal, financial, real estate, safety, tax, investment, construction, engineering, or professional advice.
+        
+        You should consult qualified professionals before making legal, financial, rental, property, or safety decisions.
+        
+        21. Disclaimers
+        
+        The Service is provided on an “as is” and “as available” basis.
+        
+        To the fullest extent permitted by law, UyDosh disclaims all warranties, whether express, implied, or statutory, including warranties of accuracy, availability, reliability, merchantability, fitness for a particular purpose, title, non-infringement, safety, and suitability.
+        
+        We do not guarantee that:
+        
+        * listings are accurate, real, legal, available, or safe;
+        * users are verified, honest, trustworthy, or legally authorized;
+        * photos, descriptions, prices, or addresses are correct;
+        * AI tools, filters, categories, alerts, or recommendations are accurate;
+        * reports or complaints will always result in action;
+        * the Service will be uninterrupted, secure, or error-free.
+        
+        You use UyDosh at your own risk.
+        
+        22. Limitation of Liability
+        
+        To the fullest extent permitted by law, UyDosh and its operator, affiliates, service providers, contractors, partners, and representatives will not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for any loss of profits, data, goodwill, business opportunity, housing opportunity, reputation, or other intangible losses.
+        
+        UyDosh is not responsible for damages, losses, disputes, fraud, injury, payments, deposits, meetings, agreements, property issues, or user behavior arising from or related to listings, communications, or interactions between users or third parties.
+        
+        To the fullest extent permitted by law, our total liability for any claim arising out of or relating to the Service or these Terms will not exceed the greater of:
+        
+        * the amount you paid to UyDosh for the Service during the three months before the claim; or
+        * USD 100.
+        
+        Some jurisdictions do not allow certain limitations of liability, so some of these limitations may not apply to you.
+        
+        23. Indemnification
+        
+        You agree to defend, indemnify, and hold harmless UyDosh, its operator, service providers, contractors, partners, and representatives from and against any claims, damages, losses, liabilities, costs, and expenses, including reasonable legal fees, arising from or related to:
+        
+        * your use of the Service;
+        * your User Content;
+        * your violation of these Terms;
+        * your violation of law or third-party rights;
+        * your interactions, agreements, payments, or disputes with other users or third parties;
+        * your fraud, misrepresentation, negligence, or misconduct.
+        
+        24. Suspension and Termination
+        
+        We may suspend, restrict, or terminate your access to UyDosh at any time if we believe that:
+        
+        * you violated these Terms or Community Rules;
+        * your content or behavior creates risk for other users;
+        * your account is involved in fraud, spam, abuse, or illegal activity;
+        * we are required to do so by law, platform policy, or security reasons;
+        * continued access may harm UyDosh, users, or third parties.
+        
+        You may stop using UyDosh at any time. You may also request account deletion as described in these Terms and our Privacy Policy.
+        
+        Sections that by their nature should survive termination will survive, including ownership, disclaimers, limitation of liability, indemnification, dispute-related provisions, and data retention provisions.
+        
+        25. Governing Law
+        
+        These Terms are governed by the laws of the Republic of Uzbekistan, unless mandatory consumer protection laws in your country or region require otherwise.
+        
+        You agree that disputes arising from or related to these Terms or the Service will be resolved by the competent courts of the Republic of Uzbekistan, unless applicable law requires another forum.
+        
+        26. Language
+        
+        These Terms may be made available in English, Russian, Uzbek, or other languages.
+        
+        If there is any conflict or inconsistency between translated versions, the English version will control, unless applicable law requires otherwise.
+        
+        27. Changes to These Terms
+        
+        We may update these Terms from time to time.
+        
+        When we make changes, we may update the “Last Updated” date and, where appropriate, notify you through the app, email, website, or other reasonable methods.
+        
+        If you continue using UyDosh after updated Terms become effective, you agree to the updated Terms.
+        
+        If you do not agree to the updated Terms, you must stop using the Service.
+        
+        28. Contact Us
+        
+        If you have questions, complaints, reports, or requests related to these Terms or the Service, you may contact us at:
+        
+        UyDosh Support
+        Service Provider / Developer: Artur Musin
+        Status: Individual developer
+        Email: uydoshtech@gmail.com
+        Privacy contact: [uydoshtech@gmail.com]
+        Website: [https://uydoshtech.github.io/]
+        Account deletion page: [https://uydoshtech.github.io/delete-account.html]
+        
+        Please include enough information for us to understand and respond to your request.</div>
+
+        <div class="legal-text" data-terms-lang="uz" hidden>UyDosh Foydalanish shartlari
+
+Kuchga kirish sanasi: 2026-yil 27-iyun
+Oxirgi yangilangan sana: 2026-yil 27-iyun
+
+UyDosh xizmatiga xush kelibsiz.
+
+Ushbu Foydalanish shartlari (“Shartlar”) UyDosh mobil ilovasi, veb-sayti, xizmatlari, funksiyalari, kontenti, e’lonlari, xabar almashish vositalari, bildirishnomalari va boshqa tegishli xizmatlaridan foydalanishingizni tartibga soladi (birgalikda — “Xizmat”).
+
+Xizmat Artur Musin, individual dasturchi tomonidan boshqariladi (“UyDosh”, “biz”, “bizni” yoki “bizning”).
+
+Akkaunt yaratish, Xizmatga kirish, kontent joylash, xabar yuborish yoki UyDosh’ning istalgan qismidan foydalanish orqali siz ushbu Shartlar, Maxfiylik siyosati va Hamjamiyat qoidalariga rozilik bildirasiz. Agar rozi bo‘lmasangiz, Xizmatdan foydalanmasligingiz kerak.
+
+1. UyDosh haqida
+
+UyDosh — foydalanuvchilarga uy-joy bilan bog‘liq e’lonlarni topish, joylashtirish, tartibga solish va ular yuzasidan muloqot qilishda yordam beruvchi platforma.
+
+UyDosh ijara e’lonlari, xonadosh izlash funksiyalari, foydalanuvchi profillari, shaxsiy xabarlar, saqlangan e’lonlar, push-bildirishnomalar, shikoyat vositalari va uy-joy izlash hamda muloqot bilan bog‘liq boshqa funksiyalarni o‘z ichiga olishi mumkin.
+
+UyDosh faqat platforma hisoblanadi. Biz Xizmat orqali ko‘rsatiladigan hech qanday mulk, xona, kvartira, yotoqxona, uy egasi, ijarachi, foydalanuvchi, e’lon, narx, manzil, surat yoki mavjudlikni egalik qilmaymiz, ijaraga bermaymiz, sotmaymiz, tekshirmaymiz, boshqarmaymiz yoki kafolatlamaymiz.
+
+2. Foydalanish huquqi
+
+Siz UyDosh’dan faqat ushbu Shartlarni qonuniy ravishda qabul qilish va Xizmatdan amaldagi qonunchilikka muvofiq foydalanish huquqiga ega bo‘lsangiz foydalanishingiz mumkin.
+
+Agar mamlakatingiz yoki hududingiz qonunlariga ko‘ra Xizmatdan foydalanishingiz taqiqlangan bo‘lsa, UyDosh’dan foydalanmasligingiz kerak.
+
+Agar siz Xizmatdan boshqa shaxs, biznes, tashkilot, uy egasi, agentlik yoki guruh nomidan foydalansangiz, bunday vakolatingiz borligini tasdiqlaysiz.
+
+3. Akkauntlar va ro‘yxatdan o‘tish
+
+Ayrim funksiyalardan foydalanish uchun siz akkaunt yaratishingiz yoki Apple Sign-In, Google Sign-In, Telegram ulash yoki UyDosh’da mavjud bo‘lgan boshqa autentifikatsiya usullari orqali tizimga kirishingiz kerak bo‘lishi mumkin.
+
+Akkaunt yaratish yoki yangilashda to‘g‘ri va dolzarb ma’lumotlarni taqdim etishga rozilik bildirasiz. Akkauntingiz xavfsizligi va akkauntingiz orqali amalga oshiriladigan barcha harakatlar uchun siz javobgarsiz.
+
+Siz quyidagilarni qilmasligingiz kerak:
+
+* yolg‘on, chalg‘ituvchi yoki o‘g‘irlangan ma’lumotlar yordamida akkaunt yaratish;
+* boshqa shaxs yoki tashkilot nomidan o‘zini ko‘rsatish;
+* boshqa foydalanuvchining akkauntidan ruxsatsiz foydalanish;
+* akkauntga kirish huquqini sotish, ijaraga berish, topshirish yoki ulashish;
+* UyDosh’dan bloklash, to‘xtatib qo‘yish, moderatsiya chorasi yoki huquqiy cheklovni chetlab o‘tish uchun foydalanish.
+
+Agar siz ushbu Shartlarni buzganingiz, boshqa foydalanuvchilar uchun xavf yaratganingiz, Xizmatdan suiiste’mol qilganingiz yoki Xizmatdan noqonuniy foydalanganingizga ishonsak, akkauntingizni to‘xtatib qo‘yishimiz, cheklashimiz yoki o‘chirishimiz mumkin.
+
+4. Shartlar va Hamjamiyat qoidalarini qabul qilish
+
+UyDosh orqali foydalanuvchi kontentini yaratish, yuklash, joylashtirish yoki yuborishdan oldin sizdan ushbu Shartlar, Maxfiylik siyosati va Hamjamiyat qoidalarini qabul qilish talab qilinishi mumkin.
+
+E’lon joylashtirish, surat yuklash, xabar yuborish, Telegram’ni ulash, shikoyat yuborish yoki interaktiv funksiyalardan foydalanish orqali siz ushbu qoidalarni tushunganingizni va ularga amal qilishga roziligingizni tasdiqlaysiz.
+
+Biz ushbu Shartlar yoki Hamjamiyat qoidalarini vaqti-vaqti bilan yangilashimiz mumkin. Agar o‘zgarishlar muhim bo‘lsa, biz sizni ilova, elektron pochta, veb-sayt yoki boshqa oqilona usullar orqali xabardor qilishimiz mumkin.
+
+Yangilangan Shartlar kuchga kirgandan keyin Xizmatdan foydalanishda davom etishingiz yangilangan Shartlarni qabul qilganingizni anglatadi.
+
+5. Foydalanuvchi kontenti
+
+“Foydalanuvchi kontenti” foydalanuvchilar UyDosh orqali yaratadigan, yuklaydigan, yuboradigan, joylashtiradigan, jo‘natadigan yoki boshqa yo‘l bilan mavjud qiladigan har qanday kontentni anglatadi, jumladan e’lonlar, tavsiflar, narxlar, manzillar, suratlar, videolar, profil ma’lumotlari, xabarlar, izohlar, shikoyatlar, hisobotlar va boshqa materiallar.
+
+Foydalanuvchi kontentingiz uchun siz javobgarsiz.
+
+Siz quyidagilarni tasdiqlaysiz va kafolat berasiz:
+
+* Foydalanuvchi kontentingizni yuborish va joylashtirish huquqiga egasiz;
+* Foydalanuvchi kontentingiz sizga ma’lum bo‘lgan darajada aniq;
+* Foydalanuvchi kontentingiz hech qanday qonun, shartnoma, uchinchi shaxs huquqi, maxfiylik huquqi, intellektual mulk huquqi yoki ushbu Shartlarni buzmaydi;
+* Foydalanuvchi kontentingiz yolg‘on, chalg‘ituvchi, firibgarlik, kamsituvchi, haqoratli yoki noqonuniy materiallarni o‘z ichiga olmaydi.
+
+Siz Foydalanuvchi kontentingizga egalik huquqini saqlab qolasiz. Biroq Foydalanuvchi kontentini UyDosh’ga yuborish orqali siz bizga Xizmatni ishlatish, yaxshilash, himoya qilish va targ‘ib qilish uchun zarur bo‘lgan darajada kontentingizni joylashtirish, saqlash, ko‘paytirish, qayta ishlash, moderatsiya qilish, ko‘rsatish, nashr qilish, tarjima qilish, formatlash uchun o‘zgartirish, xiralashtirish, tahrirlash, tarqatish va undan foydalanish bo‘yicha noeksklyuziv, butun dunyo bo‘yicha amal qiluvchi, bepul, o‘tkazilishi va sublitsenziyalanishi mumkin bo‘lgan litsenziya berasiz.
+
+Ushbu litsenziya Foydalanuvchi kontentingiz Xizmatdan o‘chirilganda tugaydi, biroq zaxira nusxalari, qonunchilikka rioya qilish, firibgarlikning oldini olish, xavfsizlik, nizolarni hal qilish, moderatsiya tarixi yoki qonuniy biznes maqsadlari uchun davomiy foydalanish zarur bo‘lgan hollarda bundan mustasno.
+
+6. Uy-joy e’lonlari bo‘yicha ogohlantirish
+
+UyDosh hech qanday e’lonning aniqligi, to‘liqligi, qonuniyligi, xavfsizligi, mavjudligi, narxi, joylashuvi, egalik huquqi, sifati, holati yoki mosligini kafolatlamaydi.
+
+E’lonlar foydalanuvchilar tomonidan yaratilishi, tahrirlanishi, moderatsiya qilinishi, qisqartirilishi, tarjima qilinishi, toifalarga ajratilishi yoki avtomatik tarzda qayta ishlanishi mumkin.
+
+Siz quyidagilarni tushunasiz va qabul qilasiz:
+
+* UyDosh ko‘chmas mulk agentligi emas;
+* UyDosh uy egasi, ijarachi, broker, eskrou agent, mulk boshqaruvchisi yoki yuridik maslahatchi emas;
+* UyDosh hech qanday kvartira, xona, yotoqxona yoki mulkning haqiqiy, mavjud, xavfsiz, qonuniy yoki mos ekanligini kafolatlamaydi;
+* UyDosh hech qanday foydalanuvchi, uy egasi, ijarachi, agent yoki xonadosh ishonchli, tasdiqlangan yoki qonuniy vakolatga ega ekanligini kafolatlamaydi;
+* har qanday kelishuv, to‘lov, uchrashuv, ko‘rish, ijara kelishuvi, depozit yoki bitim sizning o‘z xavfingiz ostida amalga oshiriladi.
+
+Qaror qabul qilish, pul yuborish, hujjatlar bilan bo‘lishish, mulkni ko‘rishga borish, shartnoma imzolash yoki boshqa foydalanuvchi yoki uchinchi tomon bilan kelishuvga kirishishdan oldin barcha ma’lumotlarni tekshirish uchun siz javobgarsiz.
+
+7. Xavfsizlik va firibgarlikka qarshi qoidalar
+
+Siz UyDosh’dan xavfsiz va mas’uliyat bilan foydalanishga rozilik bildirasiz.
+
+Siz quyidagilarni qilmasligingiz kerak:
+
+* soxta, chalg‘ituvchi, takroriy, “tuzoqli” yoki firibgarlik e’lonlarini joylashtirish;
+* shubhali oldindan to‘lovlarni so‘rash, yuborish yoki bunday to‘lovlarga yordam berish;
+* mulk egaligi, mavjudligi, joylashuvi, narxi yoki shartlari haqida noto‘g‘ri ma’lumot berish;
+* ruxsatsiz o‘g‘irlangan suratlar yoki boshqa e’lonlardagi suratlarni ishlatish;
+* boshqa shaxsning shaxsiy ma’lumotlarini ruxsatsiz joylashtirish;
+* firibgarlik maqsadida foydalanuvchilarni xavfsiz bo‘lmagan kanallarga o‘tkazishga undash;
+* UyDosh’dan aldash, ta’qib qilish, tahdid qilish, ekspluatatsiya qilish yoki boshqa foydalanuvchilarni chalg‘itish uchun foydalanish.
+
+UyDosh xavfsizlik bo‘yicha maslahatlar, ogohlantirishlar, AI asosidagi tekshiruvlar, suratlarni xiralashtirish, kontent moderatsiyasi, shikoyat vositalari va boshqa xavfsizlik funksiyalarini taqdim etishi mumkin. Ushbu funksiyalar foydalanuvchi xavfsizligini oshirish uchun mo‘ljallangan, biroq barcha zararli, yolg‘on, noqonuniy yoki nomaqbul kontent aniqlanishi yoki o‘chirilishini kafolatlamaydi.
+
+Foydalanuvchilar uchrashish, to‘lov qilish, imzolash yoki shaxsiy hujjatlarni ulashishdan oldin e’lonlar va odamlarni mustaqil tekshirishlari kerak.
+
+8. Taqiqlangan kontent va xatti-harakatlar
+
+Siz UyDosh’dan quyidagi kontent yoki xatti-harakatlarni yaratish, yuklash, joylashtirish, yuborish, targ‘ib qilish yoki tarqatish uchun foydalanmasligingiz kerak:
+
+* yolg‘on, chalg‘ituvchi, firibgarlik yoki aldovchi;
+* noqonuniy yoki noqonuniy faoliyat bilan bog‘liq;
+* kamsituvchi, nafratga asoslangan, haqoratli, tahdidli, zo‘ravon yoki ta’qib qiluvchi;
+* jinsiy ochiq, pornografik, ekspluatatsion yoki Xizmat uchun nomaqbul;
+* spam, ommaviy xabarlar, skrey ping, fishing, zararli dastur yoki boshqa suiiste’mol qiluvchi avtomatlashtirish;
+* boshqa shaxsning maxfiyligi yoki intellektual mulk huquqlarini buzadigan kontent;
+* ruxsatsiz shaxsiy hujjatlar, to‘lov kartalari, parollar, autentifikatsiya kodlari yoki sezgir shaxsiy ma’lumotlarni o‘z ichiga olgan kontent;
+* xavfsiz bo‘lmagan uy-joy amaliyotlari, noqonuniy ijara yoki noqonuniy kamsitishni targ‘ib qiluvchi kontent;
+* moderatsiya, shikoyatlar, akkaunt cheklovlari yoki texnik himoyalarni chetlab o‘tishga uringan kontent;
+* UyDosh, foydalanuvchilar yoki jamoatchilikka boshqa tarzda zararli kontent.
+
+Biz ushbu Shartlar, Hamjamiyat qoidalari, amaldagi qonunchilik yoki foydalanuvchi xavfsizligi talablarini buzadi deb hisoblagan kontentni o‘chirishimiz, cheklashimiz, yashirishimiz, xiralashtirishimiz, tahrirlashimiz, belgilashimiz yoki nashr qilishdan bosh tortishimiz mumkin.
+
+9. Suratlar, AI-qayta ishlash va xiralashtirish
+
+UyDosh e’lonlarni yaxshilash, xavfsizlik muammolarini aniqlash, kontentni toifalarga ajratish, sezgir ma’lumotlarni xiralashtirish, maxfiylik xavflarini kamaytirish yoki Xizmat sifatini oshirish uchun avtomatlashtirilgan vositalar, qo‘lda tekshirish yoki AI asosidagi qayta ishlashdan foydalanishi mumkin.
+
+Masalan, UyDosh yuklangan suratlarda yuzlar, hujjatlar, avtomobil raqamlari, shaxsiy ma’lumotlar yoki boshqa sezgir vizual elementlarni xiralashtirishi yoki yashirishi mumkin.
+
+Biroq AI vositalari mukammal emas. Ular ayrim sezgir kontentni aniqlamasligi yoki kontentni noto‘g‘ri o‘zgartirishi mumkin. Siz yuklayotgan yoki joylashtirayotgan kontent maxfiylik, qonun, uchinchi shaxs huquqlari yoki ushbu Shartlarni buzmasligini ta’minlash uchun javobgar bo‘lib qolasiz.
+
+Suratlar yoki boshqa medialarni yuklash orqali siz ularni Xizmatda yuklash va ishlatish huquqiga ega ekaningizni tasdiqlaysiz.
+
+10. Telegram funksiyalari va aloqa imkoniyatlari
+
+UyDosh foydalanuvchilarga Telegram akkauntlarini ulash, Telegram ogohlantirishlarini olish yoki Telegram havolalari va aloqa imkoniyatlaridan foydalanish imkonini berishi mumkin.
+
+Telegram uchinchi tomon xizmatidir. Telegram’dan foydalanishingiz Telegram’ning o‘z shartlari va maxfiylik siyosati bilan tartibga solinadi.
+
+Agar UyDosh’da ko‘rsatilgan kontent yoki aloqa ma’lumotlari huquqlaringizni buzadi, shaxsiy ma’lumotlaringizni o‘z ichiga oladi, mualliflik huquqingiz bilan himoyalangan materiallarni o‘z ichiga oladi yoki o‘chirilishi kerak deb hisoblasangiz, ilova orqali shikoyat qilishingiz yoki biz bilan bog‘lanishingiz mumkin.
+
+11. Xabarlar va muloqot
+
+UyDosh foydalanuvchilarga shaxsiy xabarlar, chat funksiyalari, aloqa tugmalari, Telegram havolalari, telefon raqamlari yoki boshqa muloqot vositalari orqali muloqot qilish imkonini berishi mumkin.
+
+Boshqa foydalanuvchilar bilan muloqotingiz uchun siz javobgarsiz.
+
+Siz UyDosh xabar almashish yoki aloqa funksiyalaridan quyidagilar uchun foydalanmasligingiz kerak:
+
+* boshqalarni ta’qib qilish, tahdid qilish, haqorat qilish yoki kamsitish;
+* spam, reklama, firibgarlik, fishing, zararli dastur yoki noqonuniy takliflar yuborish;
+* shubhali to‘lovlar yoki sezgir hujjatlarni so‘rash;
+* noqonuniy, haqoratli yoki zararli kontentni ulashish;
+* boshqa shaxs yoki tashkilot nomidan o‘zini ko‘rsatish;
+* moderatsiya yoki xavfsizlik vositalarini chetlab o‘tish.
+
+Biz xabarlardan shikoyat qilish, foydalanuvchilarni bloklash, qoidabuzar akkauntlarni cheklash, shikoyatlarni ko‘rib chiqish yoki boshqa xavfsizlik choralarini ko‘rish vositalarini taqdim etishimiz mumkin.
+
+UyDosh foydalanuvchilar o‘rtasidagi muloqotdan kelib chiqadigan kelishuvlar, to‘lovlar, uchrashuvlar, zararlar, yo‘qotishlar yoki nizolar uchun javobgar emas.
+
+12. Shikoyatlar, bloklash va moderatsiya
+
+UyDosh e’lonlar, foydalanuvchilar, suratlar, xabarlar, firibgarlik, haqoratli kontent, noqonuniy kontent yoki boshqa muammolar yuzasidan shikoyat qilish vositalarini taqdim etishi mumkin.
+
+Siz foydalanuvchilarni bloklash imkoniyatiga ham ega bo‘lishingiz mumkin. Foydalanuvchini bloklaganingizda, u foydalanuvchi Xizmatning ayrim funksiyalari orqali siz bilan bog‘lanishi yoki siz bilan o‘zaro aloqada bo‘lishi cheklanishi mumkin.
+
+Biz shikoyatlarni ko‘rib chiqishimiz va o‘z ixtiyorimizga ko‘ra choralar ko‘rishimiz mumkin, jumladan:
+
+* kontentni o‘chirish yoki yashirish;
+* kontentni xiralashtirish yoki tahrirlash;
+* foydalanuvchilarga ogohlantirish berish;
+* funksiyalarni cheklash;
+* akkauntlarni to‘xtatib qo‘yish yoki o‘chirish;
+* e’lonlarning nashr qilinishiga yo‘l qo‘ymaslik;
+* xavfsizlik, firibgarlikning oldini olish, qonunchilikka rioya qilish yoki nizolarni hal qilish uchun ma’lumotlarni saqlash;
+* zarur hollarda foydalanuvchilar yoki vakolatli organlar bilan bog‘lanish.
+
+Biz barcha kontentni Xizmatda paydo bo‘lishidan oldin nazorat qilishga majbur emasmiz va barcha zararli yoki taqiqlangan kontent aniqlanishi yoki o‘chirilishini kafolatlamaymiz.
+
+Yolg‘on, suiiste’mol qilingan yoki yomon niyatli shikoyatlar akkaunt cheklovlariga olib kelishi mumkin.
+
+13. Akkauntni o‘chirish
+
+Siz akkauntingizni ilova orqali yoki UyDosh tomonidan taqdim etilgan akkauntni o‘chirish usuli orqali o‘chirishni so‘rashingiz mumkin.
+
+Akkauntingizni o‘chirganingizda, biz oqilona texnik cheklovlar va qonuniy saqlash ehtiyojlarini hisobga olgan holda akkauntingiz bilan bog‘liq ma’lumotlarni o‘chiramiz yoki anonimlashtiramiz.
+
+Biz quyidagi hollarda ayrim ma’lumotlarni saqlashimiz mumkin:
+
+* xavfsizlik va firibgarlikning oldini olish;
+* qonunchilikka rioya qilish;
+* nizolarni hal qilish;
+* ushbu Shartlarning ijrosini ta’minlash;
+* zaxira nusxalari va avariyadan tiklash;
+* moliyaviy, soliq yoki tartibga soluvchi majburiyatlar;
+* suiiste’mol, spam yoki takroriy buzilishlarning oldini olish.
+
+Ba’zi kontent boshqa foydalanuvchilar bilan ulashilgan, boshqalar tomonidan nusxalangan, xabarlarga kiritilgan, zaxira nusxalarida saqlangan yoki qonuniy sabablarga ko‘ra kerak bo‘lgan bo‘lsa, ko‘rinib qolishi mumkin. Imkon qadar shaxsiy identifikatorlarni o‘chiramiz yoki anonimlashtiramiz.
+
+Ma’lumotlarni qanday yig‘ishimiz, ishlatishimiz, saqlashimiz va o‘chirishimiz haqida batafsil ma’lumot uchun Maxfiylik siyosatimizni ko‘rib chiqing.
+
+14. Maxfiylik
+
+Maxfiyligingiz biz uchun muhim.
+
+Maxfiylik siyosatimiz qanday ma’lumotlarni yig‘ishimiz, ulardan qanday foydalanishimiz, ularni qanday ulashishimiz, qancha muddat saqlashimiz va sizda qanday huquqlar bo‘lishi mumkinligini tushuntiradi.
+
+UyDosh’dan foydalanish orqali siz ma’lumotlarni Maxfiylik siyosatimizda bayon qilinganidek yig‘ishimiz va ishlatishimiz mumkinligiga rozilik bildirasiz.
+
+15. Uchinchi tomon xizmatlari
+
+UyDosh autentifikatsiya provayderlari, hosting provayderlari, analitika vositalari, crash reporting vositalari, push-bildirishnoma xizmatlari, xarita xizmatlari, Telegram, to‘lov provayderlari, AI vositalari yoki boshqa xizmatlar kabi uchinchi tomon xizmatlaridan foydalanishi yoki ular bilan integratsiya qilinishi mumkin.
+
+Uchinchi tomon xizmatlaridan foydalanishingiz ularning o‘z shartlari va maxfiylik siyosatlari bilan tartibga solinishi mumkin. UyDosh uchinchi tomon xizmatlari, kontenti, siyosatlari, harakatlari, mavjudligi yoki xavfsizligi uchun javobgar emas.
+
+Biz uchinchi tomon integratsiyalarini istalgan vaqtda o‘zgartirishimiz, to‘xtatib turishimiz yoki olib tashlashimiz mumkin.
+
+16. Intellektual mulk
+
+UyDosh, jumladan uning nomi, logotipi, dizayni, dasturiy ta’minoti, funksiyalari, interfeysi, ma’lumotlar bazasi tuzilmasi, matnlari, grafikasi va boshqa materiallari UyDosh yoki uning litsenziarlariga tegishli bo‘lib, intellektual mulk va boshqa qonunlar bilan himoyalangan.
+
+Biz yozma ruxsat bermagunimizcha yoki qonun ruxsat bermagunicha, siz UyDosh yoki Xizmatning istalgan qismini nusxalash, o‘zgartirish, tarqatish, sotish, teskari muhandislik qilish, skrey ping qilish, ko‘paytirish yoki undan hosila ishlar yaratishingiz mumkin emas.
+
+Siz UyDosh brendi, logotiplari, skrinshotlari yoki materiallaridan chalg‘ituvchi yoki ruxsatsiz tarzda foydalanmasligingiz kerak.
+
+17. Fikr-mulohaza
+
+Agar siz bizga fikr-mulohaza, g‘oyalar, takliflar, xatoliklar haqida xabarlar, funksiya so‘rovlari yoki boshqa izohlar yuborsangiz, siz bizga ularni cheklovsiz va sizga kompensatsiyasiz ishlatish huquqini berasiz.
+
+Biz fikr-mulohazadan UyDosh’ni yaxshilash, rivojlantirish, targ‘ib qilish yoki o‘zgartirish uchun foydalanishimiz mumkin.
+
+18. Foydalanish cheklovlari
+
+Siz quyidagilarni qilmaslikka rozilik bildirasiz:
+
+* UyDosh’dan noqonuniy, zararli, firibgarlik yoki suiiste’mol maqsadlarida foydalanish;
+* Xizmat xavfsizligi yoki ishlashiga aralashish;
+* akkauntlar, tizimlar, ma’lumotlar, API yoki funksiyalarga ruxsatsiz kirishga urinish;
+* UyDosh’dan ruxsatsiz ma’lumotlarni skrey ping qilish, ko‘rish, nusxalash, indekslash yoki chiqarib olish;
+* ruxsatsiz botlar, skriptlar, avtomatlashtirish yoki ommaviy ro‘yxatdan o‘tish vositalaridan foydalanish;
+* moderatsiya, tezlik cheklovlari, kirish nazorati yoki texnik himoyalarni chetlab o‘tish;
+* zararli dastur, zararli kod yoki xavfli fayllarni yuklash;
+* UyDosh’dan adolatsiz raqobat, Xizmatni klonlash yoki foydalanuvchi ma’lumotlarini yig‘ish uchun foydalanish;
+* amaldagi qonunchilik, uchinchi shaxs huquqlari yoki ushbu Shartlarni buzish.
+
+19. Xizmatning mavjudligi va o‘zgarishlar
+
+Biz UyDosh’ning istalgan qismini istalgan vaqtda yangilashimiz, o‘zgartirishimiz, to‘xtatib turishimiz, cheklashimiz yoki tugatishimiz mumkin.
+
+Biz Xizmat har doim mavjud, uzluksiz, xavfsiz, xatosiz yoki har bir qurilma, operatsion tizim, tarmoq yoki hudud bilan mos bo‘lishini kafolatlamaymiz.
+
+Biz beta funksiyalar, eksperimental vositalar, AI funksiyalar yoki cheklangan kirish funksiyalarini chiqarishimiz mumkin. Bunday funksiyalar o‘zgarishi, ishlamay qolishi yoki istalgan vaqtda olib tashlanishi mumkin.
+
+20. Professional maslahat emas
+
+UyDosh’dagi ma’lumotlar faqat umumiy axborot va muloqot maqsadlari uchun taqdim etiladi.
+
+UyDosh yuridik, moliyaviy, ko‘chmas mulk, xavfsizlik, soliq, investitsiya, qurilish, muhandislik yoki boshqa professional maslahat bermaydi.
+
+Yuridik, moliyaviy, ijara, mulk yoki xavfsizlik bo‘yicha qarorlar qabul qilishdan oldin malakali mutaxassislarga murojaat qilishingiz kerak.
+
+21. Kafolatlardan voz kechish
+
+Xizmat “qanday bo‘lsa shunday” va “mavjud bo‘lgan holatda” taqdim etiladi.
+
+Qonun ruxsat bergan eng keng darajada UyDosh barcha aniq, nazarda tutilgan yoki qonuniy kafolatlardan, jumladan aniqlik, mavjudlik, ishonchlilik, tijoratga yaroqlilik, muayyan maqsadga moslik, egalik huquqi, huquqlarni buzmaslik, xavfsizlik va moslik kafolatlaridan voz kechadi.
+
+Biz quyidagilarni kafolatlamaymiz:
+
+* e’lonlar aniq, haqiqiy, qonuniy, mavjud yoki xavfsiz;
+* foydalanuvchilar tasdiqlangan, halol, ishonchli yoki qonuniy vakolatga ega;
+* suratlar, tavsiflar, narxlar yoki manzillar to‘g‘ri;
+* AI vositalari, filtrlar, toifalar, bildirishnomalar yoki tavsiyalar aniq;
+* shikoyatlar yoki murojaatlar har doim choraga olib keladi;
+* Xizmat uzluksiz, xavfsiz yoki xatosiz ishlaydi.
+
+Siz UyDosh’dan o‘z xavfingiz ostida foydalanasiz.
+
+22. Javobgarlikni cheklash
+
+Qonun ruxsat bergan eng keng darajada UyDosh va uning operatori, affillangan shaxslari, xizmat ko‘rsatuvchilari, pudratchilari, hamkorlari va vakillari har qanday bilvosita, tasodifiy, maxsus, oqibatli, namunaviy yoki jarima xarakteridagi zararlar, shuningdek foyda, ma’lumot, gudvill, biznes imkoniyati, uy-joy imkoniyati, obro‘ yoki boshqa nomoddiy yo‘qotishlar uchun javobgar bo‘lmaydi.
+
+UyDosh e’lonlar, muloqot yoki foydalanuvchilar yoxud uchinchi tomonlar o‘rtasidagi o‘zaro aloqalardan kelib chiqadigan zararlar, yo‘qotishlar, nizolar, firibgarlik, jarohatlar, to‘lovlar, depozitlar, uchrashuvlar, kelishuvlar, mulk muammolari yoki foydalanuvchi xatti-harakatlari uchun javobgar emas.
+
+Qonun ruxsat bergan eng keng darajada Xizmat yoki ushbu Shartlar bilan bog‘liq har qanday da’vo bo‘yicha umumiy javobgarligimiz quyidagilardan kattasidan oshmaydi:
+
+* da’vodan oldingi uch oy ichida Xizmat uchun UyDosh’ga to‘lagan summangiz; yoki
+* 100 AQSh dollari.
+
+Ayrim yurisdiksiyalar javobgarlikning ayrim cheklovlariga yo‘l qo‘ymasligi mumkin, shu sababli ushbu cheklovlarning ayrimlari sizga nisbatan qo‘llanmasligi mumkin.
+
+23. Zararni qoplash
+
+Siz UyDosh, uning operatori, xizmat ko‘rsatuvchilari, pudratchilari, hamkorlari va vakillarini quyidagilardan kelib chiqadigan yoki ular bilan bog‘liq har qanday da’volar, zararlar, yo‘qotishlar, majburiyatlar, xarajatlar va sarflar, jumladan oqilona yuridik xarajatlar bo‘yicha himoya qilish, zararni qoplash va javobgarlikdan ozod qilishga rozilik bildirasiz:
+
+* Xizmatdan foydalanishingiz;
+* Foydalanuvchi kontentingiz;
+* ushbu Shartlarni buzishingiz;
+* qonun yoki uchinchi shaxs huquqlarini buzishingiz;
+* boshqa foydalanuvchilar yoki uchinchi tomonlar bilan o‘zaro aloqalaringiz, kelishuvlaringiz, to‘lovlaringiz yoki nizolaringiz;
+* firibgarlik, noto‘g‘ri ma’lumot berish, ehtiyotsizlik yoki noqonuniy xatti-harakatingiz.
+
+24. To‘xtatib qo‘yish va tugatish
+
+Agar quyidagilarga ishonsak, biz UyDosh’ga kirishingizni istalgan vaqtda to‘xtatib qo‘yishimiz, cheklashimiz yoki tugatishimiz mumkin:
+
+* siz ushbu Shartlar yoki Hamjamiyat qoidalarini buzdingiz;
+* kontentingiz yoki xatti-harakatingiz boshqa foydalanuvchilar uchun xavf yaratadi;
+* akkauntingiz firibgarlik, spam, suiiste’mol yoki noqonuniy faoliyat bilan bog‘liq;
+* biz buni qonun, platforma siyosati yoki xavfsizlik sabablari tufayli qilishimiz kerak;
+* davomiy kirish UyDosh, foydalanuvchilar yoki uchinchi shaxslarga zarar yetkazishi mumkin.
+
+Siz UyDosh’dan foydalanishni istalgan vaqtda to‘xtatishingiz mumkin. Shuningdek, ushbu Shartlar va Maxfiylik siyosatimizda bayon qilinganidek akkauntni o‘chirishni so‘rashingiz mumkin.
+
+O‘z mohiyatiga ko‘ra tugatishdan keyin ham amal qilishi kerak bo‘lgan bo‘limlar, jumladan egalik, kafolatlardan voz kechish, javobgarlikni cheklash, zararni qoplash, nizolar bilan bog‘liq qoidalar va ma’lumotlarni saqlash qoidalari amal qilishda davom etadi.
+
+25. Qo‘llaniladigan huquq
+
+Ushbu Shartlar O‘zbekiston Respublikasi qonunlari bilan tartibga solinadi, agar mamlakatingiz yoki hududingizdagi majburiy iste’molchilar huquqlarini himoya qilish qonunlari boshqacha talab qilmasa.
+
+Siz ushbu Shartlar yoki Xizmatdan kelib chiqadigan yoki ular bilan bog‘liq nizolar O‘zbekiston Respublikasining vakolatli sudlari tomonidan hal qilinishiga rozilik bildirasiz, agar amaldagi qonun boshqa forumni talab qilmasa.
+
+26. Til
+
+Ushbu Shartlar ingliz, rus, o‘zbek yoki boshqa tillarda mavjud bo‘lishi mumkin.
+
+Agar tarjima qilingan versiyalar o‘rtasida ziddiyat yoki nomuvofiqlik bo‘lsa, amaldagi qonunchilik boshqacha talab qilmasa, ingliz tilidagi versiya ustuvor hisoblanadi.
+
+27. Ushbu Shartlarga o‘zgartirishlar
+
+Biz ushbu Shartlarni vaqti-vaqti bilan yangilashimiz mumkin.
+
+O‘zgarishlar kiritilganda, biz “Oxirgi yangilangan sana”ni yangilashimiz va kerak bo‘lsa, sizni ilova, elektron pochta, veb-sayt yoki boshqa oqilona usullar orqali xabardor qilishimiz mumkin.
+
+Yangilangan Shartlar kuchga kirgandan keyin UyDosh’dan foydalanishda davom etsangiz, yangilangan Shartlarga rozilik bildirgan hisoblanasiz.
+
+Agar yangilangan Shartlarga rozi bo‘lmasangiz, Xizmatdan foydalanishni to‘xtatishingiz kerak.
+
+28. Biz bilan bog‘lanish
+
+Agar ushbu Shartlar yoki Xizmat bilan bog‘liq savollar, shikoyatlar, murojaatlar yoki so‘rovlaringiz bo‘lsa, biz bilan quyidagi manzillar orqali bog‘lanishingiz mumkin:
+
+UyDosh Support
+Xizmat ko‘rsatuvchi / Dasturchi: Artur Musin
+Maqomi: Individual dasturchi
+Email: uydoshtech@gmail.com
+Maxfiylik bo‘yicha aloqa: [uydoshtech@gmail.com]
+Veb-sayt: [https://uydoshtech.github.io/]
+Akkauntni o‘chirish sahifasi: [https://uydoshtech.github.io/delete-account.html]
+
+Iltimos, so‘rovingizni tushunishimiz va unga javob berishimiz uchun yetarli ma’lumot taqdim eting.
+        </div>
+
+        <div class="legal-text" data-terms-lang="ru" hidden>Условия использования UyDosh
+
+Дата вступления в силу: 27 июня 2026 года
+Последнее обновление: 27 июня 2026 года
+
+Добро пожаловать в UyDosh.
+
+Настоящие Условия использования (“Условия”) регулируют ваш доступ к мобильному приложению UyDosh, веб-сайту, сервисам, функциям, контенту, объявлениям, инструментам обмена сообщениями, уведомлениям и связанным сервисам, а также их использование вами (совместно — “Сервис”).
+
+Сервис управляется Artur Musin, индивидуальным разработчиком (“UyDosh”, “мы”, “нас” или “наш”).
+
+Создавая аккаунт, получая доступ к Сервису, публикуя контент, отправляя сообщения или используя любую часть UyDosh, вы соглашаетесь с настоящими Условиями, нашей Политикой конфиденциальности и Правилами сообщества. Если вы не согласны, вы не должны использовать Сервис.
+
+1. О UyDosh
+
+UyDosh — это платформа, которая помогает пользователям находить, публиковать, организовывать и обсуждать объявления, связанные с жильём, а также связанную с ними информацию.
+
+UyDosh может включать объявления об аренде, функции поиска соседей, профили пользователей, личные сообщения, сохранённые объявления, push-уведомления, инструменты подачи жалоб и другие функции, связанные с поиском жилья и коммуникацией.
+
+UyDosh является только платформой. Мы не владеем, не сдаём в аренду, не продаём, не проверяем, не управляем и не гарантируем какие-либо объекты недвижимости, комнаты, квартиры, общежития, арендодателей, арендаторов, пользователей, объявления, цены, адреса, фотографии или доступность, отображаемые через Сервис.
+
+2. Право на использование
+
+Вы можете использовать UyDosh только в том случае, если вы юридически способны принять настоящие Условия и использовать Сервис в соответствии с применимым законодательством.
+
+Вы не должны использовать UyDosh, если вам запрещено пользоваться Сервисом по законам вашей страны или региона.
+
+Если вы используете Сервис от имени другого лица, компании, организации, арендодателя, агентства или группы, вы подтверждаете, что у вас есть полномочия делать это.
+
+3. Аккаунты и регистрация
+
+Для доступа к некоторым функциям вам может потребоваться создать аккаунт или войти с использованием поддерживаемых способов, таких как Apple Sign-In, Google Sign-In, привязка Telegram или другие методы аутентификации, доступные в UyDosh.
+
+Вы соглашаетесь предоставлять точную и актуальную информацию при создании или обновлении аккаунта. Вы несёте ответственность за безопасность своего аккаунта и за все действия, совершаемые через ваш аккаунт.
+
+Вы не должны:
+
+* создавать аккаунт с использованием ложной, вводящей в заблуждение или украденной информации;
+* выдавать себя за другое лицо или организацию;
+* использовать аккаунт другого пользователя без разрешения;
+* продавать, сдавать в аренду, передавать или делиться доступом к своему аккаунту;
+* использовать UyDosh для обхода блокировки, приостановки, модерационного действия или юридического ограничения.
+
+Мы можем приостановить, ограничить или удалить ваш аккаунт, если считаем, что вы нарушили настоящие Условия, создали риск для других пользователей, злоупотребили Сервисом или использовали Сервис незаконно.
+
+4. Принятие Условий и Правил сообщества
+
+Перед тем как вы сможете создавать, загружать, публиковать или отправлять пользовательский контент через UyDosh, от вас может потребоваться принять настоящие Условия, нашу Политику конфиденциальности и Правила сообщества.
+
+Публикуя объявление, загружая фотографию, отправляя сообщение, привязывая Telegram, подавая жалобу или используя интерактивные функции, вы подтверждаете, что понимаете и соглашаетесь соблюдать эти правила.
+
+Мы можем время от времени обновлять настоящие Условия или Правила сообщества. Если изменения являются существенными, мы можем уведомить вас через приложение, электронную почту, веб-сайт или иными разумными способами.
+
+Продолжение использования Сервиса после вступления обновлённых Условий в силу означает, что вы принимаете обновлённые Условия.
+
+5. Пользовательский контент
+
+“Пользовательский контент” означает любой контент, который пользователи создают, загружают, отправляют, публикуют, пересылают или иным образом делают доступным через UyDosh, включая объявления, описания, цены, адреса, фотографии, видео, информацию профиля, сообщения, комментарии, жалобы, отчёты и другие материалы.
+
+Вы несёте ответственность за свой Пользовательский контент.
+
+Вы заявляете и гарантируете, что:
+
+* у вас есть право отправлять и публиковать ваш Пользовательский контент;
+* ваш Пользовательский контент является точным, насколько вам известно;
+* ваш Пользовательский контент не нарушает закон, договор, права третьих лиц, право на конфиденциальность, права интеллектуальной собственности или настоящие Условия;
+* ваш Пользовательский контент не содержит ложных, вводящих в заблуждение, мошеннических, дискриминационных, оскорбительных или незаконных материалов.
+
+Вы сохраняете право собственности на свой Пользовательский контент. Однако, отправляя Пользовательский контент в UyDosh, вы предоставляете нам неисключительную, всемирную, безвозмездную, передаваемую и сублицензируемую лицензию на размещение, хранение, воспроизведение, обработку, модерацию, отображение, публикацию, перевод, изменение для форматирования, размытие, редактирование, распространение и использование вашего Пользовательского контента в той мере, в какой это необходимо для работы, улучшения, защиты и продвижения Сервиса.
+
+Эта лицензия прекращается после удаления вашего Пользовательского контента из Сервиса, за исключением случаев, когда дальнейшее использование необходимо для резервного копирования, соблюдения закона, предотвращения мошенничества, обеспечения безопасности, разрешения споров, истории модерации или законных деловых целей.
+
+6. Отказ от гарантий по объявлениям о жилье
+
+UyDosh не гарантирует точность, полноту, законность, безопасность, доступность, цену, местоположение, право собственности, качество, состояние или пригодность любого объявления.
+
+Объявления могут быть созданы пользователями, отредактированы, промодерированы, обобщены, переведены, категоризированы или обработаны автоматически.
+
+Вы понимаете и соглашаетесь, что:
+
+* UyDosh не является агентством недвижимости;
+* UyDosh не является арендодателем, арендатором, брокером, эскроу-агентом, управляющей компанией или юридическим консультантом;
+* UyDosh не гарантирует, что какая-либо квартира, комната, общежитие или недвижимость является реальной, доступной, безопасной, законной или подходящей;
+* UyDosh не гарантирует, что какой-либо пользователь, арендодатель, арендатор, агент или сосед является надёжным, проверенным или юридически уполномоченным;
+* любое соглашение, оплата, встреча, просмотр, арендная договорённость, депозит или сделка совершаются на ваш собственный риск.
+
+Вы несёте ответственность за проверку всей информации до принятия решений, отправки денег, передачи документов, посещения объекта, подписания договора или вступления в какие-либо договорённости с другим пользователем или третьей стороной.
+
+7. Правила безопасности и противодействия мошенничеству
+
+Вы соглашаетесь использовать UyDosh безопасно и ответственно.
+
+Вы не должны:
+
+* публиковать фальшивые, вводящие в заблуждение, дублирующиеся, приманочные или мошеннические объявления;
+* запрашивать, отправлять или содействовать подозрительным предоплатам;
+* искажать информацию о праве собственности, доступности, местоположении, цене или условиях объекта;
+* использовать украденные фотографии или фотографии из других объявлений без разрешения;
+* публиковать персональные данные другого лица без разрешения;
+* просить пользователей переводить общение в небезопасные каналы с целью мошенничества;
+* использовать UyDosh для обмана, преследования, угроз, эксплуатации или введения других пользователей в заблуждение.
+
+UyDosh может предоставлять советы по безопасности, предупреждения, AI-проверки, размытие фотографий, модерацию контента, инструменты жалоб и другие функции безопасности. Эти функции предназначены для повышения безопасности пользователей, но они не гарантируют, что весь вредный, ложный, незаконный или неприемлемый контент будет обнаружен или удалён.
+
+Пользователи должны самостоятельно проверять объявления и людей перед встречами, платежами, подписанием документов или передачей личных документов.
+
+8. Запрещённый контент и поведение
+
+Вы не должны использовать UyDosh для создания, загрузки, публикации, отправки, продвижения или распространения контента или поведения, которое является:
+
+* ложным, вводящим в заблуждение, мошенническим или обманным;
+* незаконным или связанным с незаконной деятельностью;
+* дискриминационным, ненавистническим, оскорбительным, угрожающим, насильственным или преследующим;
+* сексуально откровенным, порнографическим, эксплуатационным или неприемлемым для Сервиса;
+* спамом, массовыми сообщениями, скрейпингом, фишингом, вредоносным ПО или иной злоупотребляющей автоматизацией;
+* контентом, нарушающим конфиденциальность или права интеллектуальной собственности другого лица;
+* контентом, содержащим личные документы, платёжные карты, пароли, коды аутентификации или чувствительную персональную информацию без разрешения;
+* контентом, продвигающим небезопасные жилищные практики, незаконную аренду или незаконную дискриминацию;
+* контентом, пытающимся обойти модерацию, жалобы, ограничения аккаунта или технические меры защиты;
+* контентом, который иным образом вреден для UyDosh, пользователей или общества.
+
+Мы можем удалять, ограничивать, скрывать, размывать, редактировать, маркировать или отказываться публиковать контент, который, по нашему мнению, нарушает настоящие Условия, Правила сообщества, применимое законодательство или ожидания безопасности пользователей.
+
+9. Фотографии, AI-обработка и размытие
+
+UyDosh может использовать автоматизированные инструменты, ручную проверку или AI-обработку для улучшения объявлений, выявления проблем безопасности, категоризации контента, размытия чувствительной информации, снижения рисков конфиденциальности или улучшения качества Сервиса.
+
+Например, UyDosh может размывать или скрывать лица, документы, номерные знаки, персональную информацию или другие чувствительные визуальные элементы на загруженных фотографиях.
+
+Однако AI-инструменты не являются идеальными. Они могут не обнаружить некоторый чувствительный контент или могут некорректно изменить контент. Вы остаётесь ответственными за то, чтобы загружаемый или публикуемый вами контент не нарушал конфиденциальность, закон, права третьих лиц или настоящие Условия.
+
+Загружая фотографии или другие медиа, вы подтверждаете, что имеете право загружать и использовать их в Сервисе.
+
+10. Функции Telegram и способы связи
+
+UyDosh может позволять пользователям подключать Telegram-аккаунты, получать Telegram-уведомления либо использовать Telegram-ссылки и другие способы связи.
+
+Telegram является сторонним сервисом. Использование Telegram регулируется собственными условиями и политикой конфиденциальности Telegram.
+
+Если вы считаете, что контент или контактная информация, отображаемые в UyDosh, нарушают ваши права, содержат ваши персональные данные, включают ваши материалы, защищённые авторским правом, или должны быть удалены, вы можете пожаловаться через приложение или связаться с нами.
+
+11. Сообщения и коммуникация
+
+UyDosh может позволять пользователям общаться через личные сообщения, чаты, кнопки связи, Telegram-ссылки, номера телефонов или другие инструменты коммуникации.
+
+Вы несёте ответственность за свою коммуникацию с другими пользователями.
+
+Вы не должны использовать сообщения или функции связи UyDosh для того, чтобы:
+
+* преследовать, угрожать, оскорблять или унижать других;
+* отправлять спам, рекламу, мошеннические предложения, фишинг, вредоносное ПО или незаконные предложения;
+* запрашивать подозрительные платежи или чувствительные документы;
+* распространять незаконный, оскорбительный или вредный контент;
+* выдавать себя за другое лицо или организацию;
+* обходить модерацию или инструменты безопасности.
+
+Мы можем предоставлять инструменты для жалоб на сообщения, блокировки пользователей, ограничения нарушающих аккаунтов, рассмотрения жалоб или принятия иных мер безопасности.
+
+UyDosh не несёт ответственности за соглашения, платежи, встречи, ущерб, убытки или споры, возникающие из коммуникации между пользователями.
+
+12. Жалобы, блокировка и модерация
+
+UyDosh может предоставлять инструменты для подачи жалоб на объявления, пользователей, фотографии, сообщения, мошенничество, оскорбительный контент, незаконный контент или другие проблемы.
+
+Вы также можете иметь возможность блокировать пользователей. Когда вы блокируете пользователя, этому пользователю может быть ограничена возможность связываться с вами или взаимодействовать с вами через определённые функции Сервиса.
+
+Мы можем рассматривать жалобы и принимать меры по своему усмотрению, включая:
+
+* удаление или скрытие контента;
+* размытие или редактирование контента;
+* предупреждение пользователей;
+* ограничение функций;
+* приостановку или удаление аккаунтов;
+* предотвращение публикации объявлений;
+* сохранение информации для безопасности, предотвращения мошенничества, соблюдения закона или разрешения споров;
+* связь с пользователями или органами власти, когда это уместно.
+
+Мы не обязаны проверять весь контент до его появления в Сервисе и не гарантируем, что весь вредный или запрещённый контент будет обнаружен или удалён.
+
+Ложные, злоупотребляющие или недобросовестные жалобы могут привести к ограничениям аккаунта.
+
+13. Удаление аккаунта
+
+Вы можете запросить удаление своего аккаунта через приложение или через способ удаления аккаунта, предоставленный UyDosh.
+
+Когда вы удаляете аккаунт, мы удалим или анонимизируем данные аккаунта, связанные с вашим аккаунтом, с учётом разумных технических ограничений и законных оснований для хранения.
+
+Мы можем сохранять определённую информацию, когда это необходимо для:
+
+* безопасности и предотвращения мошенничества;
+* соблюдения закона;
+* разрешения споров;
+* обеспечения исполнения настоящих Условий;
+* резервного копирования и восстановления после сбоев;
+* финансовых, налоговых или регуляторных обязательств;
+* предотвращения злоупотреблений, спама или повторных нарушений.
+
+Некоторый контент может оставаться видимым, если он был передан другим пользователям, скопирован другими лицами, включён в сообщения, сохранён в резервных копиях или необходим по законным причинам. Где возможно, мы удалим или анонимизируем персональные идентификаторы.
+
+Для получения дополнительной информации о том, как мы собираем, используем, храним и удаляем данные, ознакомьтесь с нашей Политикой конфиденциальности.
+
+14. Конфиденциальность
+
+Ваша конфиденциальность важна для нас.
+
+Наша Политика конфиденциальности объясняет, какую информацию мы собираем, как мы её используем, как мы её передаём, как долго мы её храним и какие права у вас могут быть.
+
+Используя UyDosh, вы соглашаетесь с тем, что мы можем собирать и использовать информацию так, как описано в нашей Политике конфиденциальности.
+
+15. Сторонние сервисы
+
+UyDosh может использовать или интегрироваться со сторонними сервисами, включая провайдеров аутентификации, хостинг-провайдеров, инструменты аналитики, инструменты crash reporting, сервисы push-уведомлений, картографические сервисы, Telegram, платёжных провайдеров, AI-инструменты или другие сервисы.
+
+Использование вами сторонних сервисов может регулироваться их собственными условиями и политиками конфиденциальности. UyDosh не несёт ответственности за сторонние сервисы, контент, политики, действия, доступность или безопасность.
+
+Мы можем изменять, приостанавливать или удалять сторонние интеграции в любое время.
+
+16. Интеллектуальная собственность
+
+UyDosh, включая его название, логотип, дизайн, программное обеспечение, функции, интерфейс, структуру базы данных, текст, графику и другие материалы, принадлежит UyDosh или его лицензиарам и защищён законами об интеллектуальной собственности и другими законами.
+
+Вы не можете копировать, изменять, распространять, продавать, проводить обратную разработку, скрейпить, воспроизводить или создавать производные работы на основе UyDosh или любой части Сервиса, если мы не дали вам письменное разрешение или если это не разрешено законом.
+
+Вы не должны использовать бренд, логотипы, скриншоты или материалы UyDosh вводящим в заблуждение или несанкционированным образом.
+
+17. Обратная связь
+
+Если вы отправляете нам отзывы, идеи, предложения, сообщения об ошибках, запросы функций или другие комментарии, вы предоставляете нам право использовать их без ограничений и без компенсации вам.
+
+Мы можем использовать обратную связь для улучшения, разработки, продвижения или изменения UyDosh.
+
+18. Ограничения использования
+
+Вы соглашаетесь не:
+
+* использовать UyDosh в незаконных, вредных, мошеннических или злоупотребляющих целях;
+* вмешиваться в безопасность или работу Сервиса;
+* пытаться получить доступ к аккаунтам, системам, данным, API или функциям без разрешения;
+* скрейпить, сканировать, копировать, индексировать или извлекать данные из UyDosh без разрешения;
+* использовать ботов, скрипты, автоматизацию или инструменты массовой регистрации без разрешения;
+* обходить модерацию, лимиты запросов, контроль доступа или технические меры защиты;
+* загружать вредоносное ПО, вредоносный код или опасные файлы;
+* использовать UyDosh для недобросовестной конкуренции, клонирования Сервиса или сбора пользовательских данных;
+* нарушать применимое законодательство, права третьих лиц или настоящие Условия.
+
+19. Доступность и изменения Сервиса
+
+Мы можем обновлять, изменять, приостанавливать, ограничивать или прекращать любую часть UyDosh в любое время.
+
+Мы не гарантируем, что Сервис всегда будет доступен, работать без перебоев, быть безопасным, безошибочным или совместимым с каждым устройством, операционной системой, сетью или регионом.
+
+Мы можем выпускать бета-функции, экспериментальные инструменты, AI-функции или функции с ограниченным доступом. Такие функции могут изменяться, перестать работать или быть удалены в любое время.
+
+20. Отсутствие профессиональной консультации
+
+Информация в UyDosh предоставляется только для общих информационных и коммуникационных целей.
+
+UyDosh не предоставляет юридические, финансовые, риелторские, безопасностные, налоговые, инвестиционные, строительные, инженерные или профессиональные консультации.
+
+Перед принятием юридических, финансовых, арендных, имущественных или безопасностных решений вам следует обратиться к квалифицированным специалистам.
+
+21. Отказ от гарантий
+
+Сервис предоставляется “как есть” и “по мере доступности”.
+
+В максимально допустимой законом степени UyDosh отказывается от всех гарантий, явных, подразумеваемых или предусмотренных законом, включая гарантии точности, доступности, надёжности, коммерческой пригодности, пригодности для определённой цели, правового титула, ненарушения прав, безопасности и пригодности.
+
+Мы не гарантируем, что:
+
+* объявления являются точными, реальными, законными, доступными или безопасными;
+* пользователи являются проверенными, честными, надёжными или юридически уполномоченными;
+* фотографии, описания, цены или адреса являются правильными;
+* AI-инструменты, фильтры, категории, уведомления или рекомендации являются точными;
+* жалобы или обращения всегда приведут к действию;
+* Сервис будет работать без перебоев, безопасно или без ошибок.
+
+Вы используете UyDosh на свой собственный риск.
+
+22. Ограничение ответственности
+
+В максимально допустимой законом степени UyDosh и его оператор, аффилированные лица, поставщики услуг, подрядчики, партнёры и представители не несут ответственности за косвенные, случайные, специальные, последующие, штрафные или примерные убытки, а также за потерю прибыли, данных, деловой репутации, бизнес-возможности, жилищной возможности, репутации или иных нематериальных потерь.
+
+UyDosh не несёт ответственности за ущерб, убытки, споры, мошенничество, травмы, платежи, депозиты, встречи, соглашения, проблемы с недвижимостью или поведение пользователей, возникающие из объявлений, коммуникации или взаимодействия между пользователями или третьими сторонами.
+
+В максимально допустимой законом степени наша общая ответственность по любому требованию, возникающему из Сервиса или настоящих Условий либо связанному с ними, не будет превышать большую из следующих сумм:
+
+* сумму, которую вы заплатили UyDosh за Сервис в течение трёх месяцев до возникновения требования; или
+* 100 долларов США.
+
+В некоторых юрисдикциях определённые ограничения ответственности не допускаются, поэтому некоторые из этих ограничений могут к вам не применяться.
+
+23. Возмещение убытков
+
+Вы соглашаетесь защищать, возмещать убытки и освобождать от ответственности UyDosh, его оператора, поставщиков услуг, подрядчиков, партнёров и представителей в отношении любых претензий, ущерба, убытков, обязательств, расходов и издержек, включая разумные юридические расходы, возникающие из или связанные с:
+
+* вашим использованием Сервиса;
+* вашим Пользовательским контентом;
+* вашим нарушением настоящих Условий;
+* вашим нарушением закона или прав третьих лиц;
+* вашим взаимодействием, соглашениями, платежами или спорами с другими пользователями или третьими сторонами;
+* вашим мошенничеством, искажением информации, небрежностью или неправомерным поведением.
+
+24. Приостановка и прекращение доступа
+
+Мы можем приостановить, ограничить или прекратить ваш доступ к UyDosh в любое время, если считаем, что:
+
+* вы нарушили настоящие Условия или Правила сообщества;
+* ваш контент или поведение создаёт риск для других пользователей;
+* ваш аккаунт связан с мошенничеством, спамом, злоупотреблением или незаконной деятельностью;
+* мы обязаны сделать это по закону, политике платформы или причинам безопасности;
+* дальнейший доступ может навредить UyDosh, пользователям или третьим лицам.
+
+Вы можете прекратить использование UyDosh в любое время. Вы также можете запросить удаление аккаунта, как описано в настоящих Условиях и нашей Политике конфиденциальности.
+
+Разделы, которые по своей природе должны сохранять силу после прекращения доступа, продолжают действовать, включая положения о собственности, отказе от гарантий, ограничении ответственности, возмещении убытков, положениях, связанных со спорами, и хранении данных.
+
+25. Применимое право
+
+Настоящие Условия регулируются законодательством Республики Узбекистан, если обязательные законы о защите прав потребителей в вашей стране или регионе не требуют иного.
+
+Вы соглашаетесь, что споры, возникающие из настоящих Условий или Сервиса либо связанные с ними, будут разрешаться компетентными судами Республики Узбекистан, если применимое законодательство не требует иной юрисдикции.
+
+26. Язык
+
+Настоящие Условия могут быть доступны на английском, русском, узбекском или других языках.
+
+Если между переводами есть конфликт или несоответствие, английская версия имеет преимущественную силу, если применимое законодательство не требует иного.
+
+27. Изменения настоящих Условий
+
+Мы можем время от времени обновлять настоящие Условия.
+
+При внесении изменений мы можем обновить дату “Последнего обновления” и, когда это уместно, уведомить вас через приложение, электронную почту, веб-сайт или иные разумные способы.
+
+Если вы продолжаете использовать UyDosh после вступления обновлённых Условий в силу, вы соглашаетесь с обновлёнными Условиями.
+
+Если вы не согласны с обновлёнными Условиями, вы должны прекратить использование Сервиса.
+
+28. Связаться с нами
+
+Если у вас есть вопросы, жалобы, обращения или запросы, связанные с настоящими Условиями или Сервисом, вы можете связаться с нами:
+
+UyDosh Support
+Поставщик сервиса / Разработчик: Artur Musin
+Статус: Индивидуальный разработчик
+Email: uydoshtech@gmail.com
+Контакт по вопросам конфиденциальности: [uydoshtech@gmail.com]
+Веб-сайт: [https://uydoshtech.github.io/]
+Страница удаления аккаунта: [https://uydoshtech.github.io/delete-account.html]
+
+Пожалуйста, предоставьте достаточно информации, чтобы мы могли понять и рассмотреть ваш запрос.
+        </div>
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links">
+          <a href="index.html" data-label="home">Home</a>
+          <a href="privacy-policy.html" data-label="privacy">Privacy Policy</a>
+          <a href="https://uydoshtech.github.io/delete-account.html" data-label="delete">Delete account</a>
+          <a href="mailto:uydoshtech@gmail.com" data-label="contact">Contact</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      const LABELS = {
+        uz: {
+          title: "Foydalanish shartlari — UyDosh",
+          updated: "Oxirgi yangilanish: 2026-yil 27-iyun",
+          home: "Bosh sahifa",
+          privacy: "Maxfiylik",
+          delete: "Akкаунtni o‘chirish",
+          contact: "Aloqa",
+        },
+        ru: {
+          title: "Условия использования — UyDosh",
+          updated: "Последнее обновление: 27 июня 2026 г.",
+          home: "Главная",
+          privacy: "Политика конфиденциальности",
+          delete: "Удалить аккаунт",
+          contact: "Контакты",
+        },
+        en: {
+          title: "Terms of Service — UyDosh",
+          updated: "Last updated: June 27, 2026",
+          home: "Home",
+          privacy: "Privacy Policy",
+          delete: "Delete Account",
+          contact: "Contact",
+        },
+      };
+
+      function normalizeLang(lang) {
+        if (lang === "en" || lang === "ru" || lang === "uz") return lang;
+        return "en";
+      }
+
+      function applyLang(lang) {
+        const active = normalizeLang(lang);
+        const labels = LABELS[active] || LABELS.en;
+
+        document.documentElement.lang = active;
+        document.title = labels.title;
+
+        for (const el of document.querySelectorAll("[data-label]")) {
+          const key = el.getAttribute("data-label");
+          if (labels[key]) el.textContent = labels[key];
+        }
+
+        for (const block of document.querySelectorAll("[data-terms-lang]")) {
+          block.hidden = block.getAttribute("data-terms-lang") !== active;
+        }
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.setAttribute(
+            "aria-pressed",
+            btn.getAttribute("data-lang") === active ? "true" : "false"
+          );
+        }
+
+        try {
+          localStorage.setItem("uydosh_lang", active);
+        } catch {}
+      }
+
+      (function initLang() {
+        let initial = "en";
+        try {
+          initial = localStorage.getItem("uydosh_lang") || "en";
+        } catch {}
+        applyLang(initial);
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+        }
+      })();
+    </script>
+  </body>
+</html>
