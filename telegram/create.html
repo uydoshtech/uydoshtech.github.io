@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>UyDosh — Post listing</title>
+    <meta name="description" content="Post a listing on UyDosh — Telegram Mini App." />
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script src="../assets/theme-init.js?v=20260711-1"></script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260707-107" />
+    <link rel="stylesheet" href="../assets/telegram-create.css?v=20260707-125" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header data-uydosh-mini-app-header></header>
+
+      <div id="loading" class="status" aria-busy="true" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+      </div>
+
+      <div id="form-root" hidden>
+        <div class="wizard-header">
+          <div class="progress" id="progress" aria-hidden="true"></div>
+          <div class="step-head">
+            <h1 id="step-title"></h1>
+          </div>
+        </div>
+        <div id="step-panels"></div>
+      </div>
+
+      <div id="form-error" class="form-error-banner" role="alert" hidden></div>
+
+      <div id="success-root" class="success-panel" hidden>
+        <h2 id="success-title" data-i18n="create.success">Объявление отправлено!</h2>
+        <p id="success-hint" data-i18n="create.successHint">После модерации оно появится в ленте.</p>
+        <p id="success-photo-warning" class="success-photo-warning" hidden></p>
+        <div class="success-actions">
+          <a class="btn-link ghost-blue" id="success-feed" href="/telegram/">
+            <span class="btn-link-icon" id="success-feed-icon" aria-hidden="true" data-icon="list"></span>
+            <span id="success-feed-label" data-i18n="create.backToFeed">К объявлениям</span>
+          </a>
+          <a class="btn-link primary" id="success-view" href="/telegram/account.html">
+            <span class="btn-link-icon" id="success-view-icon" aria-hidden="true" data-icon="person"></span>
+            <span id="success-view-label" data-i18n="create.backToAccount">К моим объявлениям</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer id="wizard-footer" class="wizard-footer" hidden>
+      <div class="wizard-footer-inner">
+        <button type="button" class="wizard-btn wizard-btn-back" id="wizard-back" data-haptic="none" hidden>
+          <span class="wizard-btn-icon" aria-hidden="true" data-icon="chevronLeft"></span>
+          <span id="wizard-back-label" data-i18n="create.back">Back</span>
+        </button>
+        <button type="button" class="wizard-btn wizard-btn-next full" id="wizard-next">
+          <span id="wizard-next-label" data-i18n="create.next">Next</span>
+          <span class="wizard-btn-icon" id="wizard-next-icon" aria-hidden="true" data-icon="chevronRight"></span>
+          <span class="wizard-btn-spinner" id="wizard-next-spinner" hidden></span>
+        </button>
+      </div>
+    </footer>
+
+    <input type="file" id="photo-input" accept="image/*" multiple hidden />
+
+    <script src="../assets/uydosh-core.js?v=20260709-102"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260710-1"></script>
+    <script src="../assets/uydosh-api.js?v=20260709-117" defer></script>
+    <script src="../assets/uydosh-icons.js?v=20260709-110" defer></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260709-4" defer></script>
+    <script src="../assets/uydosh-badges.js?v=20260709-68" defer></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260710-1" defer></script>
+    <script src="../assets/telegram-create.js?v=20260709-128" defer></script>
+  </body>
+</html>

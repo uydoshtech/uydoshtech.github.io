@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.uydosh.app",
+      "sha256_cert_fingerprints": [
+        "6A:22:07:CB:6C:4D:45:44:56:51:DD:6F:07:BF:34:E1:C9:BD:48:3D:AE:E2:DD:FD:99:A0:AD:51:68:62:53:F8"
+      ]
+    }
+  }
+]

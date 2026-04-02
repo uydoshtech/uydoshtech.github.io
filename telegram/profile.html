@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>UyDosh — Profile</title>
+    <meta name="description" content="Your UyDosh profile — Telegram Mini App." />
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script src="../assets/theme-init.js?v=20260711-1"></script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260707-107" />
+    <link rel="stylesheet" href="../assets/telegram-profile.css?v=20260710-1" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header
+        data-uydosh-mini-app-header
+        data-uydosh-header-subtitle="profile.title"
+      ></header>
+
+      <div id="loading" class="status" aria-busy="true" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+      </div>
+
+      <div id="form-root" hidden>
+        <p class="profile-intro content-gutter" data-i18n="profile.subtitle"></p>
+
+        <div class="view-tabs" role="tablist" aria-label="Profile">
+          <button type="button" class="view-tab" role="tab" data-profile-tab="basic" data-haptic="selection" aria-selected="true">
+            <span class="view-tab-icon" aria-hidden="true" data-icon="person"></span>
+            <span data-i18n="profile.tabs.basic"></span>
+          </button>
+          <button type="button" class="view-tab" role="tab" data-profile-tab="lifestyle" data-haptic="selection" aria-selected="false">
+            <span class="view-tab-icon" aria-hidden="true" data-icon="sparkles"></span>
+            <span data-i18n="profile.tabs.lifestyle"></span>
+          </button>
+        </div>
+
+        <div id="tab-basic" class="content-gutter">
+          <div class="field">
+            <div class="field-label" data-i18n="profile.studentQuestion"></div>
+            <div class="chips">
+              <button type="button" class="chip" id="student-yes" data-haptic="selection" aria-pressed="false" data-i18n="profile.studentYes"></button>
+              <button type="button" class="chip" id="student-no" data-haptic="selection" aria-pressed="false" data-i18n="profile.studentNo"></button>
+            </div>
+          </div>
+
+          <div class="field" id="university-field" hidden>
+            <div class="field-label" data-i18n="profile.universityLabel"></div>
+            <div id="university-picked" class="university-picked" hidden>
+              <span class="icon" aria-hidden="true" data-icon="graduationCap"></span>
+              <span class="university-picked-name" id="university-picked-name"></span>
+            </div>
+            <div class="university-search-wrap">
+              <input
+                type="text"
+                id="university-search"
+                data-i18n="profile.universitySearchPlaceholder"
+                data-i18n-attr="placeholder"
+                autocomplete="off"
+              />
+              <div class="station-list" id="university-list" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-lifestyle" class="content-gutter" hidden>
+          <div id="lifestyle-fields"></div>
+          <div class="profile-more-note" data-i18n="profile.lifestyle.moreComingSoon"></div>
+        </div>
+      </div>
+
+      <div id="form-error" class="form-error-banner" role="alert" hidden></div>
+      <div id="form-success" class="form-success-banner" role="status" hidden></div>
+    </div>
+
+    <footer id="profile-footer" class="profile-footer" hidden>
+      <div class="profile-footer-inner">
+        <button type="button" class="wizard-btn wizard-btn-next" id="save-btn" data-haptic="medium">
+          <span id="save-btn-label" data-i18n="profile.save"></span>
+          <span class="wizard-btn-spinner" id="save-btn-spinner" hidden></span>
+        </button>
+      </div>
+    </footer>
+
+    <script src="../assets/uydosh-core.js?v=20260709-102"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260710-1"></script>
+    <script src="../assets/uydosh-api.js?v=20260709-117" defer></script>
+    <script src="../assets/uydosh-icons.js?v=20260709-110" defer></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260709-4" defer></script>
+    <script src="../assets/uydosh-badges.js?v=20260709-68" defer></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260710-1" defer></script>
+    <script src="../assets/telegram-profile.js?v=20260709-2" defer></script>
+  </body>
+</html>

@@ -1,0 +1,573 @@
+/*
+ * Shared base styles for the Telegram Mini App pages (telegram/index.html,
+ * telegram/create.html, telegram/profile.html, telegram/account.html).
+ * Keep this file limited to declarations that are byte-identical across pages;
+ * page-specific tokens/overrides (e.g. `.chip`/`.station-item` sizing) belong
+ * in each page's own <style> block.
+ */
+:root {
+  color-scheme: light dark;
+  --bg: var(--tg-bg, #061525);
+  --fg: var(--tg-fg, rgba(255, 255, 255, 0.92));
+  --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
+  --card: var(--tg-card, rgba(255, 255, 255, 0.06));
+  --stroke: rgba(255, 255, 255, 0.12);
+  --brand: #ff0000;
+  --brand2: #60a5fa;
+  --price-green: #35c26b;
+  /*
+   * `--feed-content-gutter` is the standard horizontal inset (from the
+   * viewport edge) for the mini-app header, filter ribbon, and view-tabs —
+   * shared by every page so they all line up. Originally the feed
+   * (telegram-index.css) was the only page overriding this to 20px while
+   * every other page silently fell back to the 25px default baked into each
+   * `var(--feed-content-gutter, 25px)` call site, which made the header/tabs
+   * sit ~5px further from the edge on those pages than on the feed. Set the
+   * feed's value here instead so it's the shared default; pages may still
+   * override it (and/or `--feed-wrap-gutter`) before this is computed if a
+   * screen genuinely needs a different gutter.
+   */
+  --feed-content-gutter: 20px;
+  /*
+   * `.wrap` contributes `--feed-wrap-gutter` (14px) of padding already; this
+   * is the extra inset needed on top of that so content lines up with the
+   * wider gutter above.
+   */
+  --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px));
+}
+@media (prefers-color-scheme: light) {
+  :root:not([style*="--tg-bg"]) {
+    --bg: #f6f7fb;
+    --fg: rgba(15, 23, 42, 0.92);
+    --muted: rgba(15, 23, 42, 0.7);
+    --card: rgba(15, 23, 42, 0.04);
+    --stroke: rgba(15, 23, 42, 0.12);
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 14px;
+}
+
+/*
+ * "Ghost" button — transparent fill with a 2px brand-blue outline, for a
+ * secondary-but-still-eye-catching action (vs. the plain neutral `.btn`'s
+ * translucent-gray fill/hairline border). Currently used by the
+ * create-listing review step's "share phone number" button
+ * (`.phone-share-btn` in telegram-create.css layers its own sizing/icon-color
+ * tweaks on top) — reuse this instead of recreating the outline treatment
+ * ad hoc for any other outlined-but-branded action button.
+ */
+.btn-ghost {
+  appearance: none;
+  border: 2px solid var(--brand2);
+  background: transparent;
+  border-radius: 999px;
+  color: var(--fg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-ghost:active {
+  opacity: 0.85;
+}
+.btn-ghost .icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.btn-ghost .icon svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+.btn-ghost .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+
+/*
+ * Chip / pill toggle button — shared by the feed filter ribbon
+ * (telegram/index.html), the create-listing wizard (telegram/create.html),
+ * and the profile form (telegram/profile.html). Sizing (font-size/padding)
+ * varies by page's information density, so that stays a small override in
+ * each page's own <style> block instead of living here.
+ */
+.chip {
+  appearance: none;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.08);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip .chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.chip .chip-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+/*
+ * Some chips (e.g. the create-listing "search area" Metro/District toggle)
+ * use the shared stroke-based `.icon` glyphs from uydosh-icons.js
+ * (iconPin/iconMetro) instead of the fill-based `.chip-icon` badges — those
+ * glyphs ship without a `stroke` color or explicit size, relying on the
+ * usage site to supply both, same as `.chip-icon` above.
+ */
+.chip .icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.chip .icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.chip .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+.chip .chip-label {
+  line-height: 1;
+}
+.chip:active {
+  opacity: 0.88;
+}
+.chip[aria-pressed="true"] {
+  border-color: var(--brand2);
+  background: color-mix(in srgb, var(--brand2) 12%, transparent);
+  color: var(--fg);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/*
+ * Selectable list row — the create-listing wizard's metro station/district
+ * pickers (telegram-create.js) and the profile page's university autosuggest
+ * list (telegram-profile.js). The icon/checkbox/transfer sub-elements are
+ * only present when a page's markup actually includes them — harmless no-ops
+ * on pages (like profile) that render plain text rows.
+ */
+.station-item {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  border-radius: 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.station-item .icon {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.station-item .station-item-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.station-item .icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.station-item .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+.station-item-transfer {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.station-item .checkbox-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.station-item .checkbox-icon .chip-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.station-item .checkbox-icon-checked {
+  display: none;
+}
+.station-item[aria-pressed="true"] .checkbox-icon-checked {
+  display: inline-flex;
+}
+.station-item[aria-pressed="true"] .checkbox-icon-unchecked {
+  display: none;
+}
+.station-item[aria-pressed="true"] {
+  border-color: var(--brand2);
+  background: rgba(127, 127, 127, 0.1);
+  color: var(--fg);
+}
+.station-item-select-all {
+  font-weight: 700;
+  margin-bottom: 6px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--stroke);
+  border-radius: 10px 10px 0 0;
+}
+
+/* Generic spinner rotation — used by every loading/busy spinner across the Mini App. */
+@keyframes uydosh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/*
+ * Primary/secondary footer action button — the create-listing wizard's
+ * Back/Next bar (telegram/create.html) and the profile page's Save button
+ * (telegram/profile.html). `.wizard-btn-back`/`.wizard-btn-next` pick the
+ * look; a lone button (like profile's Save) just uses `.wizard-btn-next`.
+ */
+.wizard-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  min-height: 48px;
+  padding: 14px 18px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.wizard-btn[hidden] {
+  display: none;
+}
+.wizard-btn:active:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+.wizard-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.wizard-btn-back {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid transparent;
+}
+.wizard-btn-next {
+  background: var(--brand2);
+  color: #fff;
+  border: 1px solid transparent;
+}
+.wizard-btn-next.full {
+  flex: 1;
+}
+.wizard-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.wizard-btn-icon[hidden] {
+  display: none;
+}
+.wizard-btn-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+/* Plain rotating ring (not the branded logo spin used for full-page/panel
+   loaders) — reads better at this small, inline-with-text button size and
+   tints via `currentColor` to match whatever text color the button already
+   has (white on solid brand buttons, themed `--fg` on ghost ones). */
+.wizard-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: uydosh-spin 0.7s linear infinite;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/*
+ * Metro-line selector ribbon — shared by the feed filter bar (expanded +
+ * compact rows) and the create-listing wizard's metro-line picker (markup
+ * built by `metroLineChipsHtml` in uydosh-icons.js). Every chip starts as a
+ * bare "M" badge and only reveals its line name, with a slide + fade
+ * animation, once selected.
+ */
+.chip-line {
+  --line-color: var(--stroke);
+  border-color: color-mix(in srgb, var(--line-color) 55%, var(--stroke));
+  color: var(--fg);
+  gap: 0;
+  padding: 6px 10px;
+  transition: border-color 220ms ease, border-width 220ms ease,
+    background 220ms ease, padding 220ms ease;
+}
+.chip-line[aria-pressed="true"] {
+  padding: 5px 9px;
+  border-color: var(--line-color);
+  border-width: 2px;
+  background: color-mix(in srgb, var(--line-color) 12%, rgba(127, 127, 127, 0.08));
+}
+/* Denser variant for the feed's collapsed/compact filter row. */
+.chip-line-compact {
+  padding: 7px 9px;
+}
+.chip-line-compact[aria-pressed="true"] {
+  padding: 6px 8px;
+}
+.metro-m-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line-color);
+  background: #fff;
+  color: var(--line-color);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: Arial, ui-sans-serif, system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chip-line[aria-pressed="true"] .metro-m-badge {
+  transform: scale(1.08);
+}
+@media (prefers-color-scheme: dark) {
+  .metro-m-badge {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+/*
+ * District filter button (telegram-feed.js `districtChipHtml`) reuses the
+ * metro line chip's badge/reveal animation wholesale, just with a per-district
+ * `--line-color` (set inline, one color per location id — see
+ * `UyDosh.districtColor`, kept in sync with the mobile map's district-layer
+ * palette) instead of a per-line one, and a pin icon instead of "M" text.
+ * Unlike metro lines (whose color is fixed/known up front), this one button
+ * cycles through every district, so we don't know which color to show until
+ * a district is actually selected — it stays neutral grey like the other
+ * filter chips until then (no `--line-color` set, falling back to
+ * `.chip-line`'s default).
+ */
+/* The pin icon itself stays dark while nothing's selected (unlike the "M"
+   badges, its color isn't tied to --line-color yet) so it stays visible
+   against the badge's white background instead of fading into the neutral
+   grey border; once a district is picked, it switches to that district's
+   color like the metro badges do. */
+.chip-district .metro-m-badge {
+  color: #1f2937;
+}
+.chip-district[aria-pressed="true"] .metro-m-badge {
+  color: var(--line-color);
+}
+/*
+ * Metro-line filter button (telegram-feed.js `metroLineChipHtml`) — the
+ * feed's single cycling equivalent of the fixed four-button ribbon built by
+ * `metroLineChipsHtml`. Reuses the same grey-until-selected treatment as
+ * `.chip-district` above since this one button also cycles through several
+ * values instead of representing one fixed, always-known line/color.
+ */
+.chip-metro-cycle .metro-m-badge {
+  color: #1f2937;
+}
+.chip-metro-cycle[aria-pressed="true"] .metro-m-badge {
+  color: var(--line-color);
+}
+.district-pin-badge svg {
+  width: 11px;
+  height: 11px;
+  display: block;
+}
+/* Ribbon container grows to fit the revealed label; the label itself slides
+   in from the left while fading (with a slight overshoot) so the text feels
+   like it "pops" into place rather than just fading. Collapsing back to the
+   icon-only state reverses this quickly, with no delay. */
+.chip-line .chip-label-collapse {
+  display: grid;
+  grid-template-columns: 0fr;
+  min-width: 0;
+  margin-left: 0;
+  overflow: hidden;
+  transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chip-line .chip-label-collapse > .chip-label {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 160ms ease, transform 180ms ease;
+}
+.chip-line[aria-pressed="true"] .chip-label-collapse {
+  grid-template-columns: 1fr;
+  margin-left: 6px;
+}
+.chip-line[aria-pressed="true"] .chip-label-collapse > .chip-label {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 260ms ease 100ms, transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms;
+}
+/*
+ * Full (non-compact) district/metro filter buttons carry a "Район"/"Метро"
+ * placeholder label even before anything's picked (see districtChipHtml's/
+ * metroLineChipHtml's `compact` branch in uydosh-icons.js) — keep that label
+ * expanded from the start there instead of collapsing it like the compact
+ * ribbon's icon-only default, since it's meant to read as a filter control
+ * up front, not just reveal a value once selected.
+ */
+.chip-district:not(.chip-line-compact) .chip-label-collapse,
+.chip-metro-cycle:not(.chip-line-compact) .chip-label-collapse {
+  grid-template-columns: 1fr;
+  margin-left: 6px;
+}
+.chip-district:not(.chip-line-compact) .chip-label-collapse > .chip-label,
+.chip-metro-cycle:not(.chip-line-compact) .chip-label-collapse > .chip-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip-line,
+  .chip-line .metro-m-badge,
+  .chip-line .chip-label-collapse,
+  .chip-line .chip-label-collapse > .chip-label {
+    transition: none;
+  }
+}
+
+/*
+ * Standard content gutter — apply this class to any element that sits
+ * directly inside `.wrap` and should line up with the mini-app header,
+ * filter ribbon, and view-tabs instead of the tighter list-item gutter.
+ * Use this instead of re-deriving the `--feed-content-gutter` /
+ * `--feed-wrap-gutter` calc by hand on every new screen.
+ */
+.content-gutter {
+  padding-left: var(--content-gutter-offset);
+  padding-right: var(--content-gutter-offset);
+}
+
+/*
+ * Segmented tab bar — used for the feed's List/Map switch and the account
+ * page's My listings/Favorites switch. Uses the same standard gutter offset
+ * as `.content-gutter` (as a margin, since the tab bar isn't flush with
+ * `.wrap`'s edges) so the tab bar's edges line up with the header/ribbon.
+ */
+.view-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 var(--content-gutter-offset) 10px;
+}
+.view-tab {
+  appearance: none;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.06);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.view-tab-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+.view-tab-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.view-tab-icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+.view-tab[aria-selected="true"] {
+  color: var(--fg);
+  border-color: var(--brand2);
+  background: rgba(127, 127, 127, 0.1);
+}
+/* Feed's List/Map switch only (`telegram/index.html`) — tint each tab's own
+   icon once active instead of the shared `--fg` text color, so "list" reads
+   blue (matching the tab border / add-listing FAB) and "map" reads red
+   (matching the map pin glyph itself), while the label text stays neutral. */
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="list"] {
+  color: var(--brand2);
+}
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="mapPin"] {
+  color: var(--brand);
+}
+/* Account's My listings/Favorites switch (`telegram/account.html`) — same
+   per-icon tint idea as the feed tabs above: "house" reads brand blue, and
+   "heart" switches to a filled heart in the same red used by the favorite
+   button on each row (`FAVORITE_ICON_COLOR_ACTIVE` in uydosh-map-pins.js) so
+   the tab visually matches an "active" favorite elsewhere on the page. */
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="house"] {
+  color: var(--brand2);
+}
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="heartOutline"] {
+  color: #f44336;
+}
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="heartOutline"] svg * {
+  fill: currentColor;
+}
+.view-tab:active { opacity: 0.9; }

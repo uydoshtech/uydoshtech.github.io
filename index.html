@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="meta.title">UyDosh — Ijara toping. Ulaning. Ko‘ching.</title>
+    <meta
+      name="description"
+      content="UyDosh ijara uylarni topish, suhbatlashish va sizga mos e’lonlar paydo bo‘lganda xabardor bo‘lishga yordam beradi."
+      data-i18n-attr="content"
+      data-i18n="meta.description"
+    />
+
+    <meta property="og:title" content="UyDosh" data-i18n-attr="content" data-i18n="meta.ogTitle" />
+    <meta property="og:description" content="Ijara toping. Ulaning. Ko‘ching." data-i18n-attr="content" data-i18n="meta.ogDescription" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://uydoshtech.github.io/" />
+    <meta property="og:image" content="https://uydoshtech.github.io/images/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="images/uydosh-logo.svg" as="image" />
+    <link rel="stylesheet" href="assets/site.css?v=20260711-1" />
+
+    <style>
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 64px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        flex: 1 1 auto;
+        max-width: 100%;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-size: 14px;
+        color: var(--muted);
+        white-space: nowrap;
+        text-align: center;
+      }
+      .pill:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: var(--fg);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.12fr 0.88fr;
+        gap: 28px;
+        align-items: center;
+        padding: 28px 0 18px;
+      }
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 720px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        nav {
+          justify-content: flex-start;
+        }
+        .pill {
+          font-size: 14px;
+          padding: 8px 10px;
+        }
+      }
+      .kicker {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        padding: 6px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-size: 15px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: linear-gradient(135deg, var(--brand2), var(--brand));
+        box-shadow: 0 0 0 5px rgba(225, 29, 46, 0.08);
+      }
+      h1 {
+        font-size: clamp(34px, 4vw, 52px);
+        margin: 14px 0 12px;
+        line-height: 1.03;
+        letter-spacing: -0.03em;
+      }
+      .sub {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.55;
+        color: var(--muted);
+        max-width: 56ch;
+      }
+      .ctaRow {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+      .buildInfo {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+        min-height: 1em;
+      }
+      .buildInfo code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .ver {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        white-space: nowrap;
+      }
+      .verLast {
+        color: #22c55e;
+        font-weight: 800;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--fg);
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.07);
+        text-decoration: none;
+      }
+      .btn.primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        box-shadow: 0 14px 40px rgba(34, 197, 94, 0.28);
+      }
+      .btn.testflight {
+        border-color: rgba(96, 165, 250, 0.45);
+        background: rgba(96, 165, 250, 0.14);
+      }
+      .btn.testflight:hover {
+        background: rgba(96, 165, 250, 0.22);
+      }
+      .mock {
+        border-radius: 22px;
+        border: 1px solid var(--stroke);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.08),
+          rgba(255, 255, 255, 0.03)
+        );
+        padding: 14px;
+        box-shadow: var(--shadow);
+        width: min(320px, 100%);
+        justify-self: end;
+      }
+      .carousel {
+        position: relative;
+      }
+      .mock img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .carouselUI {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        display: grid;
+        gap: 8px;
+        pointer-events: none;
+      }
+      .carouselDots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        pointer-events: auto;
+      }
+      .carouselDot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        background: rgba(255, 255, 255, 0.18);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        cursor: pointer;
+        padding: 0;
+      }
+      .carouselDot[aria-current="true"] {
+        background: rgba(255, 255, 255, 0.92);
+        border-color: rgba(255, 255, 255, 0.92);
+      }
+      .carouselProgress {
+        height: 3px;
+        border-radius: 99px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      }
+      .carouselProgressBar {
+        height: 100%;
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: left;
+        background: linear-gradient(90deg, rgba(96, 165, 250, 0.95), rgba(225, 29, 46, 0.95));
+      }
+      @keyframes carouselProgress {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .carouselProgressBar {
+          transform: scaleX(1);
+        }
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 900px) {
+        .grid3 {
+          grid-template-columns: 1fr;
+        }
+        .mock {
+          justify-self: center;
+        }
+      }
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 16px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.55;
+      }
+      .section {
+        margin-top: 28px;
+        padding-top: 22px;
+        border-top: 1px solid rgba(255, 255, 255, 0.09);
+      }
+      .section h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+      .bullets {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+        max-width: 80ch;
+      }
+      footer {
+        margin-top: 40px;
+        color: var(--muted);
+        font-size: 15px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <img src="images/uydosh-logo.svg" alt="UyDosh logo" />
+          <div>
+            <strong>UyDosh</strong><br />
+            <span
+              style="color: var(--muted); font-size: 15px"
+              data-i18n="header.tagline"
+              >Давайте жить вместе!</span
+            >
+          </div>
+        </div>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="true" aria-label="O'zbekcha">
+              <span class="flag" aria-hidden="true">🇺🇿</span>
+            </button>
+            <button type="button" data-lang="ru" aria-pressed="false" aria-label="Русский">
+              <span class="flag" aria-hidden="true">🇷🇺</span>
+            </button>
+            <button type="button" data-lang="en" aria-pressed="false" aria-label="English">
+              <span class="flag" aria-hidden="true">🇬🇧</span>
+            </button>
+          </div>
+          <a class="pill" href="listings.html" data-i18n="nav.listings">E’lonlar</a>
+          <a class="pill" href="privacy-policy.html" data-i18n="nav.privacy">Maxfiylik</a>
+          <a class="pill" href="terms-of-service.html" data-i18n="nav.terms">Foydalanish shartlari</a>
+          <a class="pill" href="https://uydoshtech.github.io/delete-account.html" data-i18n="nav.delete">Akкаунтni o‘chirish</a>
+          <a class="pill" href="mailto:uydoshtech@gmail.com" data-i18n="nav.contact">Aloqa</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <div class="kicker">
+              <span class="dot"></span>
+              <span data-i18n="hero.kicker">Tez va haqiqiy muloqot uchun</span>
+            </div>
+            <h1 data-i18n="hero.title">Ijara toping. Ulaning. Ko‘ching.</h1>
+            <p class="sub" data-i18n="hero.subtitle">
+              UyDosh e’lonlarni topish, odamlar bilan yozishish va sizga mos
+              variant paydo bo‘lganda xabarnoma olishga yordam beradi.
+            </p>
+            <div class="ctaRow">
+              <a
+                class="btn primary"
+                href="https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk"
+                download="uydosh.apk"
+                data-i18n="cta.apk"
+                >Android APK yuklab olish</a
+              >
+              <a
+                class="btn testflight"
+                href="https://testflight.apple.com/join/y2pFAA3k"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-i18n="cta.testflight"
+                >TestFlight — iOS beta</a
+              >
+              <a class="btn" href="privacy-policy.html" data-i18n="cta.privacy"
+                >Maxfiylik siyosatini o‘qish</a
+              >
+            </div>
+            <div
+              class="buildInfo"
+              id="apkBuildInfo"
+              data-i18n-dynamic="apk.build"
+              hidden
+            ></div>
+          </div>
+
+          <div class="mock" aria-label="UyDosh app screenshot">
+            <div class="carousel" data-carousel-root="uydosh-screens">
+              <img
+                src="images/uydosh_1.webp"
+                width="1200"
+                height="2601"
+                alt="UyDosh app home screen"
+                data-i18n="hero.imageAlt"
+                data-i18n-attr="alt"
+                loading="lazy"
+                data-carousel="uydosh-screens"
+              />
+              <div class="carouselUI" aria-hidden="true">
+                <div class="carouselDots" data-carousel-dots></div>
+                <div class="carouselProgress">
+                  <div class="carouselProgressBar" data-carousel-progress></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid3" aria-label="Key benefits">
+          <div class="card">
+            <h3 data-i18n="benefits.search.title">Qulay qidiruv</h3>
+            <p data-i18n="benefits.search.body">
+              Kerakli filtrlardan foydalaning va vaqtni tejang.
+            </p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="benefits.chat.title">Suhbat va kelishuv</h3>
+            <p data-i18n="benefits.chat.body">
+              Tez bog‘laning, savol bering, tafsilotlarni kelishib oling.
+            </p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="benefits.alerts.title">Mos e’lonlar haqida xabar</h3>
+            <p data-i18n="benefits.alerts.body">
+              Sizga mos yangi e’lonlar paydo bo‘lsa, bildirishnoma oling.
+            </p>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 data-i18n="how.title">Qanday ishlaydi</h2>
+          <ul class="bullets">
+            <li data-i18n="how.b1">E’lonlarni ko‘ring va bir bosishda tafsilotlarni oching.</li>
+            <li data-i18n="how.b2">Sotuvchi/xonadoshlar bilan yozishing va hammasini bir joyda saqlang.</li>
+            <li data-i18n="how.b3">Mos variantlarni o‘tkazib yubormaslik uchun ogohlantirishlarni yoqing.</li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <h2 data-i18n="support.title">Yordam</h2>
+          <ul class="bullets">
+            <li>
+              <span data-i18n="support.email">Email</span>:
+              <a href="mailto:uydoshtech@gmail.com">uydoshtech@gmail.com</a>
+            </li>
+            <li>
+              <span data-i18n="support.deleteLabel">Akкаунtni o‘chirish bo‘yicha yo‘riqnoma</span>:
+              <a href="https://uydoshtech.github.io/delete-account.html" data-i18n="support.deleteLink">Akкаунtni o‘chirish</a>
+            </li>
+          </ul>
+        </section>
+      </main>
+
+      <footer>
+        <div>
+          © <span id="y"></span> UyDosh
+          <span
+            id="footerBuildInfo"
+            data-i18n-dynamic="footer.build"
+            hidden
+          ></span>
+        </div>
+        <div class="links">
+          <a href="privacy-policy.html" data-i18n="footer.privacy">Maxfiylik</a>
+          <a href="terms-of-service.html" data-i18n="footer.terms">Foydalanish shartlari</a>
+          <a href="https://uydoshtech.github.io/delete-account.html" data-i18n="footer.delete">Akкаунtni o‘chirish</a>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="footer.contact">Aloqa</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      // Simple screenshot carousel (no dependencies)
+      (() => {
+        const img = document.querySelector('img[data-carousel="uydosh-screens"]');
+        if (!img) return;
+
+        const root = img.closest('[data-carousel-root="uydosh-screens"]') || img.parentElement;
+        const dotsEl = root?.querySelector?.("[data-carousel-dots]") || null;
+        const progressEl = root?.querySelector?.("[data-carousel-progress]") || null;
+        const DURATION_MS = 3500;
+        const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+        const sources = [
+          "images/uydosh_1.webp",
+          "images/uydosh_2.webp",
+          "images/uydosh_3.webp",
+          "images/uydosh_4.webp",
+          "images/uydosh_5.webp",
+          "images/uydosh_6.webp",
+        ];
+
+        let idx = Math.max(0, sources.indexOf(img.getAttribute("src") || ""));
+        let timer = null;
+
+        const syncDots = () => {
+          if (!dotsEl) return;
+          for (const [i, btn] of Array.from(dotsEl.children).entries()) {
+            btn.setAttribute("aria-current", i === idx ? "true" : "false");
+          }
+        };
+
+        const resetProgress = () => {
+          if (!progressEl || reduceMotion) return;
+          progressEl.style.animation = "none";
+          // force reflow so animation restarts
+          void progressEl.offsetHeight;
+          progressEl.style.animation = `carouselProgress ${DURATION_MS}ms linear infinite`;
+          progressEl.style.animationPlayState = timer ? "running" : "paused";
+        };
+
+        const show = (nextIdx) => {
+          idx = (nextIdx + sources.length) % sources.length;
+          img.src = sources[idx];
+          syncDots();
+          resetProgress();
+        };
+
+        const start = () => {
+          if (reduceMotion) return;
+          if (timer) return;
+          timer = window.setInterval(() => show(idx + 1), DURATION_MS);
+          if (progressEl) progressEl.style.animationPlayState = "running";
+          resetProgress();
+        };
+
+        const stop = () => {
+          if (!timer) return;
+          window.clearInterval(timer);
+          timer = null;
+          if (progressEl) progressEl.style.animationPlayState = "paused";
+        };
+
+        // Preload next image to reduce flicker
+        const preloadNext = () => {
+          const pre = new Image();
+          pre.src = sources[(idx + 1) % sources.length];
+        };
+
+        // Dots UI
+        if (dotsEl) {
+          dotsEl.innerHTML = "";
+          sources.forEach((_, i) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "carouselDot";
+            b.setAttribute("aria-label", `Screenshot ${i + 1} of ${sources.length}`);
+            b.setAttribute("aria-current", i === idx ? "true" : "false");
+            b.addEventListener("click", () => {
+              show(i);
+              stop();
+              start();
+            });
+            dotsEl.appendChild(b);
+          });
+        }
+
+        img.addEventListener("load", preloadNext);
+        img.addEventListener("mouseenter", stop);
+        img.addEventListener("mouseleave", start);
+        img.addEventListener("focus", stop);
+        img.addEventListener("blur", start);
+
+        // Keyboard: left/right to navigate when focused
+        img.tabIndex = 0;
+        img.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            show(idx - 1);
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            show(idx + 1);
+          }
+        });
+
+        // Progress keyframes injected via JS-friendly name
+        // (kept in CSS via a stable name)
+
+        // Start after first paint
+        syncDots();
+        resetProgress();
+        requestAnimationFrame(start);
+      })();
+
+      const STRINGS = {
+        uz: {
+          "meta.title": "UyDosh — Ijara toping. Ulaning. Ko‘ching.",
+          "meta.description":
+            "UyDosh ijara uylarni topish, suhbatlashish va sizga mos e’lonlar paydo bo‘lganda xabardor bo‘lishga yordam beradi.",
+          "meta.ogTitle": "UyDosh",
+          "meta.ogDescription": "Ijara toping. Ulaning. Ko‘ching.",
+          "header.tagline": "Keling Birga Yashaymiz!",
+          "nav.listings": "E’lonlar",
+          "nav.privacy": "Maxfiylik",
+          "nav.terms": "Foydalanish shartlari",
+          "nav.delete": "Akкаунtni o‘chirish",
+          "nav.contact": "Aloqa",
+          "hero.kicker": "Tez va haqiqiy muloqot uchun",
+          "hero.title": "Ijara toping. Ulaning. Ko‘ching.",
+          "hero.subtitle":
+            "UyDosh e’lonlarni topish, odamlar bilan yozishish va sizga mos variant paydo bo‘lganda xabarnoma olishga yordam beradi.",
+          "cta.apk": "Android APK yuklab olish",
+          "cta.testflight": "TestFlight — iOS beta",
+          "cta.privacy": "Maxfiylik siyosatini o‘qish",
+          "hero.imageAlt": "UyDosh ilovasi bosh sahifasi",
+          "benefits.search.title": "Qulay qidiruv",
+          "benefits.search.body": "Kerakli filtrlardan foydalaning va vaqtni tejang.",
+          "benefits.chat.title": "Suhbat va kelishuv",
+          "benefits.chat.body": "Tez bog‘laning, savol bering, tafsilotlarni kelishib oling.",
+          "benefits.alerts.title": "Mos e’lonlar haqida xabar",
+          "benefits.alerts.body":
+            "Sizga mos yangi e’lonlar paydo bo‘lsa, bildirishnoma oling.",
+          "how.title": "Qanday ishlaydi",
+          "how.b1": "E’lonlarni ko‘ring va bir bosishda tafsilotlarni oching.",
+          "how.b2": "Sotuvchi/xonadoshlar bilan yozishing va hammasini bir joyda saqlang.",
+          "how.b3": "Mos variantlarni o‘tkazib yubormaslik uchun ogohlantirishlarni yoqing.",
+          "support.title": "Yordam",
+          "support.email": "Email",
+          "support.deleteLabel": "Akкаунtni o‘chirish bo‘yicha yo‘riqnoma",
+          "support.deleteLink": "Akкаунtni o‘chirish",
+          "footer.privacy": "Maxfiylik",
+          "footer.terms": "Foydalanish shartlari",
+          "footer.delete": "Akкаунtni o‘chirish",
+          "footer.contact": "Aloqa",
+          "apk.build": "APK versiya: {ver} · Sana: {date} · {commit}",
+          "footer.build": "· Versiya: {ver} · Yig‘ilish: {date}",
+        },
+        ru: {
+          "meta.title": "UyDosh — Найдите аренду. Свяжитесь. Заселяйтесь.",
+          "meta.description":
+            "UyDosh помогает быстрее находить аренду и соседей по комнате: поиск, чат и уведомления по вашим критериям.",
+          "meta.ogTitle": "UyDosh",
+          "meta.ogDescription": "Найдите аренду. Свяжитесь. Заселяйтесь.",
+          "header.tagline": "Давайте жить вместе!",
+          "nav.listings": "Объявления",
+          "nav.privacy": "Конфиденциальность",
+          "nav.terms": "Условия использования",
+          "nav.delete": "Удалить аккаунт",
+          "nav.contact": "Контакты",
+          "hero.kicker": "Для быстрых и честных разговоров",
+          "hero.title": "Найдите аренду. Свяжитесь. Заселяйтесь.",
+          "hero.subtitle":
+            "UyDosh помогает находить объявления, переписываться и получать уведомления, когда появляется подходящий вариант.",
+          "cta.apk": "Скачать Android APK",
+          "cta.testflight": "TestFlight — бета для iOS",
+          "cta.privacy": "Читать политику",
+          "hero.imageAlt": "Главный экран приложения UyDosh",
+          "benefits.search.title": "Удобный поиск",
+          "benefits.search.body": "Фильтруйте по важному и не тратьте время зря.",
+          "benefits.chat.title": "Чат и координация",
+          "benefits.chat.body": "Быстро задавайте вопросы, уточняйте детали и решайте.",
+          "benefits.alerts.title": "Уведомления по критериям",
+          "benefits.alerts.body": "Получайте уведомления, когда появляется подходящее объявление.",
+          "how.title": "Как это работает",
+          "how.b1": "Просматривайте объявления и открывайте детали в один тап.",
+          "how.b2": "Пишите хозяевам/соседям и храните всё в одном месте.",
+          "how.b3": "Настройте уведомления, чтобы не пропустить новые совпадения.",
+          "support.title": "Поддержка",
+          "support.email": "Email",
+          "support.deleteLabel": "Инструкция по удалению аккаунта",
+          "support.deleteLink": "Удалить аккаунт",
+          "footer.privacy": "Конфиденциальность",
+          "footer.terms": "Условия",
+          "footer.delete": "Удалить аккаунт",
+          "footer.contact": "Контакты",
+          "apk.build": "Версия APK: {ver} · Дата: {date} · {commit}",
+          "footer.build": "· Версия: {ver} · Сборка: {date}",
+        },
+        en: {
+          "meta.title": "UyDosh — Find rentals. Connect. Move in.",
+          "meta.description":
+            "UyDosh helps you find rentals and connect with roommates faster—search listings, chat, and get alerts for what you need.",
+          "meta.ogTitle": "UyDosh",
+          "meta.ogDescription": "Find rentals. Connect. Move in.",
+          "header.tagline": "Let's Live Together!",
+          "nav.listings": "Listings",
+          "nav.privacy": "Privacy Policy",
+          "nav.terms": "Terms",
+          "nav.delete": "Delete Account",
+          "nav.contact": "Contact",
+          "hero.kicker": "Built for fast, real conversations",
+          "hero.title": "Find rentals. Connect. Move in.",
+          "hero.subtitle":
+            "UyDosh helps you discover listings, chat with people, and get alerts when something that matches your needs appears.",
+          "cta.apk": "Download Android APK",
+          "cta.testflight": "iOS beta (TestFlight)",
+          "cta.privacy": "Read privacy policy",
+          "hero.imageAlt": "UyDosh app home screen",
+          "benefits.search.title": "Search that’s actually useful",
+          "benefits.search.body": "Filter by what matters and save time on dead-end options.",
+          "benefits.chat.title": "Chat and coordinate",
+          "benefits.chat.body": "Connect quickly to ask questions, share details, and decide.",
+          "benefits.alerts.title": "Alerts for your criteria",
+          "benefits.alerts.body": "Get notified when a listing matches what you’re looking for.",
+          "how.title": "How it works",
+          "how.b1": "Browse listings and open details in one tap.",
+          "how.b2": "Message sellers/roommates and keep everything in one place.",
+          "how.b3": "Set up alerts so you don’t miss new matches.",
+          "support.title": "Support",
+          "support.email": "Email",
+          "support.deleteLabel": "Account deletion instructions",
+          "support.deleteLink": "Delete Account",
+          "footer.privacy": "Privacy",
+          "footer.terms": "Terms",
+          "footer.delete": "Delete account",
+          "footer.contact": "Contact",
+          "apk.build": "APK version: {ver} · Built: {date} · {commit}",
+          "footer.build": "· Version: {ver} · Build: {date}",
+        },
+      };
+
+      function normalizeLang(lang) {
+        if (lang === "en" || lang === "ru" || lang === "uz") return lang;
+        return "uz";
+      }
+
+      let currentLang = "uz";
+      let buildInfo = null; // { date: Date, commit: string|null, verHtml: string|null }
+
+      function applyLang(lang) {
+        const active = normalizeLang(lang);
+        currentLang = active;
+        const dict = STRINGS[active] || STRINGS.uz;
+
+        document.documentElement.lang = active;
+
+        for (const el of document.querySelectorAll("[data-i18n]")) {
+          const key = el.getAttribute("data-i18n");
+          const value = dict[key];
+          if (value == null) continue;
+
+          const attr = el.getAttribute("data-i18n-attr");
+          if (attr) el.setAttribute(attr, value);
+          else el.textContent = value;
+        }
+
+        // Also update <title> which is not rendered as textContent in all cases
+        const titleEl = document.querySelector("title[data-i18n]");
+        if (titleEl) titleEl.textContent = dict[titleEl.getAttribute("data-i18n")] || titleEl.textContent;
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.setAttribute("aria-pressed", btn.getAttribute("data-lang") === active ? "true" : "false");
+        }
+
+        renderBuildInfo();
+
+        try {
+          localStorage.setItem("uydosh_lang", active);
+        } catch {}
+      }
+
+      function formatBuildDate(date, lang) {
+        const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ";
+        try {
+          return new Intl.DateTimeFormat(locale, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }).format(date);
+        } catch {
+          return date.toISOString().slice(0, 10);
+        }
+      }
+
+      function renderBuildInfo() {
+        if (!buildInfo) return;
+        const dict = STRINGS[currentLang] || STRINGS.uz;
+        const dateStr = formatBuildDate(buildInfo.date, currentLang);
+        const verHtml = buildInfo.verHtml || "";
+        const commitHtml = buildInfo.commit
+          ? `<code>${buildInfo.commit}</code>`
+          : "";
+
+        const apkEl = document.getElementById("apkBuildInfo");
+        if (apkEl) {
+          const tpl = dict["apk.build"] || "";
+          apkEl.innerHTML = tpl
+            .replace("{ver}", verHtml)
+            .replace("{date}", dateStr)
+            .replace("{commit}", commitHtml)
+            .replace(/\s·\s*$/, "");
+          apkEl.hidden = false;
+        }
+
+        const footEl = document.getElementById("footerBuildInfo");
+        if (footEl) {
+          const tpl = dict["footer.build"] || "";
+          footEl.textContent = tpl.replace("{date}", dateStr).replace("{ver}", verHtml.replace(/<[^>]*>/g, ""));
+          footEl.hidden = false;
+        }
+      }
+
+      (function fetchBuildInfo() {
+        const url =
+          "https://api.github.com/repos/uydoshtech/uydoshtech.github.io/releases/tags/android-latest";
+        fetch(url, { headers: { Accept: "application/vnd.github+json" } })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((release) => {
+            if (!release || !release.published_at) return;
+            const date = new Date(release.published_at);
+            if (isNaN(date.getTime())) return;
+
+            let commit = null;
+            const body = typeof release.body === "string" ? release.body : "";
+            const m = body.match(/@([a-f0-9]{7,40})/i);
+            if (m) commit = m[1].slice(0, 7);
+
+            let verHtml = null;
+            const name = typeof release.name === "string" ? release.name : "";
+            const nm = name.match(/(\d+\.\d+\.\d+)\+(\d+)/);
+            if (nm) {
+              const sem = nm[1];
+              const build = nm[2];
+              verHtml = `<span class="ver">${sem}.<span class="verLast">${build}</span></span>`;
+            }
+
+            buildInfo = { date, commit, verHtml };
+            renderBuildInfo();
+          })
+          .catch(() => {
+            /* stay hidden on failure */
+          });
+      })();
+
+      (function initLang() {
+        let initial = "uz";
+        try {
+          initial = localStorage.getItem("uydosh_lang") || "uz";
+        } catch {}
+        applyLang(initial);
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+        }
+      })();
+    </script>
+  </body>
+</html>
