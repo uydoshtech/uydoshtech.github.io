@@ -1,108 +1,515 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delete Your UyDosh Account</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #ffffff;
-      color: #444;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
-      line-height: 1.6;
-    }
-    h1 {
-      color: #0055a5;
-      text-align: center;
-    }
-    h2 {
-      color: #444;
-      margin-top: 30px;
-    }
-    ol {
-      margin-left: 20px;
-    }
-    p {
-      margin-bottom: 15px;
-    }
-    a {
-      color: #0055a5;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .note {
-      background-color: #eef6fc;
-      border-left: 4px solid #0055a5;
-      padding: 10px;
-      margin: 20px 0;
-    }
-    figure.screenshot {
-      margin: 24px 0;
-      text-align: center;
-    }
-    figure.screenshot img {
-      max-width: 248px;
-      width: 100%;
-      height: auto;
-      border: 1px solid #ececec;
-      border-radius: 8px;
-      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
-      filter: brightness(1.04);
-    }
-    figure.screenshot figcaption {
-      margin-top: 12px;
-      font-size: 0.9rem;
-      color: #666;
-      line-height: 1.5;
-    }
-  </style>
-</head>
-<body>
-  <h1>Delete Your UyDosh Account</h1>
-
-  <p>You can request to delete your UyDosh account and all associated personal data. Please follow the steps below:</p>
-
-  <h2>Steps to Delete Your Account:</h2>
-  <ol>
-    <li>Log in to your UyDosh account via the app or website.</li>
-    <li>Go to <strong>Profile → Delete Account</strong>.</li>
-    <li>Click the <strong>Delete Account</strong> button and confirm your request.</li>
-    <li>Your account will be scheduled for deletion.</li>
-  </ol>
-
-  <figure class="screenshot">
-    <img
-      src="images/profile_screen.png"
-      width="990"
-      height="1740"
-      alt="UyDosh Profile screen showing the account menu where you can open Settings and continue to Delete Account."
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="meta.title">UyDosh — Akкаунtni o‘chirish</title>
+    <meta
+      name="description"
+      content="UyDosh akkauntingizni va unga bog‘liq shaxsiy ma’lumotlarni o‘chirish bo‘yicha ko‘rsatmalar."
+      data-i18n-attr="content"
+      data-i18n="meta.description"
     />
-    <figcaption>
-      In the app, open your <strong>Profile</strong> tab, then use the menu to reach <strong>Settings</strong> and <strong>Delete Account</strong>, as shown above.
-    </figcaption>
-  </figure>
 
-  <h2>Data That Will Be Deleted:</h2>
-  <ul>
-    <li>Name, email, phone number, and profile photo.</li>
-    <li>All your listings and posts.</li>
-    <li>Messages and chat history.</li>
-  </ul>
+    <link rel="icon" href="images/uydosh-logo.svg" type="image/svg+xml" />
+    <link rel="preload" href="images/uydosh-logo.svg" as="image" />
 
-  <h2>Data That May Be Retained:</h2>
-  <p>Anonymous aggregated data (e.g., usage statistics) may be kept for analytics and improving the service.</p>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b1220;
+        --fg: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --brand: #e11d2e;
+        --brand2: #2dd4bf;
+        --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+      }
 
-  <div class="note">
-    <strong>Deletion Timeline:</strong> All personal data will be permanently deleted within 30 days of your request.
-  </div>
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --fg: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.7);
+          --card: rgba(15, 23, 42, 0.04);
+          --stroke: rgba(15, 23, 42, 0.12);
+          --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+        }
+      }
 
-  <p>If you encounter any issues or need help deleting your account, please <a href="mailto:uydoshtech@gmail.com">contact our support team</a>.</p>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial;
+        background: radial-gradient(
+            1200px 500px at 15% 0%,
+            rgba(45, 212, 191, 0.22),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 600px at 85% 10%,
+            rgba(225, 29, 46, 0.22),
+            transparent 60%
+          ),
+          var(--bg);
+        color: var(--fg);
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
 
-  <p>Regards, UyDosh Team</p>
-</body>
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 64px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px 0 18px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 220px;
+      }
+      .brand img {
+        width: 60px;
+        height: 60px;
+        display: block;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .brand strong {
+        font-size: 16px;
+        letter-spacing: 0.2px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .pill:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: var(--fg);
+      }
+      .lang {
+        display: inline-flex;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .lang button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        padding: 7px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .lang button .flag {
+        font-size: 14px;
+        line-height: 1;
+        transform: translateY(-0.5px);
+      }
+      .lang button[aria-pressed="true"] {
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .lang button:hover {
+        color: var(--fg);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .content {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(26px, 3.2vw, 36px);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 18px 0 8px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 14px;
+      }
+      ol,
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      figure.screenshot {
+        margin: 16px 0 6px;
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+      }
+      figure.screenshot img {
+        width: min(320px, 100%);
+        height: auto;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      figure.screenshot figcaption {
+        max-width: 80ch;
+        text-align: center;
+      }
+
+      .note {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(45, 212, 191, 0.28);
+        background: linear-gradient(
+          180deg,
+          rgba(45, 212, 191, 0.16),
+          rgba(255, 255, 255, 0.02)
+        );
+      }
+      .note strong {
+        color: var(--fg);
+      }
+
+      footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <a href="index.html" style="display: inline-flex; gap: 12px; align-items: center">
+            <img src="images/uydosh-logo.svg" alt="UyDosh logo" />
+            <div>
+              <strong>UyDosh</strong><br />
+              <span
+                style="color: var(--muted); font-size: 13px"
+                data-i18n="header.tagline"
+                >Ijara & xonadoshlar</span
+              >
+            </div>
+          </a>
+        </div>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="true">
+              <span class="flag" aria-hidden="true">🇺🇿</span> UZ
+            </button>
+            <button type="button" data-lang="ru" aria-pressed="false">
+              <span class="flag" aria-hidden="true">🇷🇺</span> RU
+            </button>
+            <button type="button" data-lang="en" aria-pressed="false">
+              <span class="flag" aria-hidden="true">🇬🇧</span> EN
+            </button>
+          </div>
+          <a class="pill" href="index.html" data-i18n="nav.home">Bosh sahifa</a>
+          <a class="pill" href="privacy-policy.html" data-i18n="nav.privacy">Maxfiylik</a>
+          <a class="pill" href="mailto:uydoshtech@gmail.com" data-i18n="nav.contact">Aloqa</a>
+        </nav>
+      </header>
+
+      <main class="content">
+        <h1 data-i18n="title">Akкаунtni o‘chirish — UyDosh</h1>
+        <p data-i18n="intro">
+          UyDosh akkauntingizni va unga bog‘liq shaxsiy ma’lumotlarni o‘chirishni
+          so‘rashingiz mumkin. Iltimos, quyidagi bosqichlarni bajaring:
+        </p>
+
+        <h2 data-i18n="steps.title">Akкаунtni o‘chirish bosqichlari</h2>
+        <ol>
+          <li data-i18n="steps.1">Ilovada UyDosh akkauntingizga kiring.</li>
+          <li data-i18n="steps.2">
+            <strong>Profil → Akкаунtni o‘chirish</strong> bo‘limiga o‘ting.
+          </li>
+          <li data-i18n="steps.3">
+            <strong>Akкаунtni o‘chirish</strong> tugmasini bosing va tasdiqlang.
+          </li>
+          <li data-i18n="steps.4">Akкаунtingiz o‘chirishga rejalashtiriladi.</li>
+        </ol>
+
+        <figure class="screenshot">
+          <img
+            src="images/profile_screen.png"
+            width="990"
+            height="1740"
+            alt="UyDosh profile screen showing how to reach Delete Account."
+            data-i18n="screenshot.alt"
+            data-i18n-attr="alt"
+            loading="lazy"
+          />
+          <figcaption data-i18n="screenshot.caption">
+            Ilovada <strong>Profil</strong> bo‘limini oching, so‘ng menyu orqali
+            <strong>Sozlamalar</strong> va <strong>Akкаунtni o‘chirish</strong>
+            bo‘limiga o‘ting.
+          </figcaption>
+        </figure>
+
+        <h2 data-i18n="deleted.title">Qaysi ma’lumotlar o‘chiriladi</h2>
+        <ul>
+          <li data-i18n="deleted.1">Ism, email, telefon raqami va profil rasmi.</li>
+          <li data-i18n="deleted.2">Barcha e’lonlaringiz.</li>
+          <li data-i18n="deleted.3">Xabarlar va chat tarixi.</li>
+        </ul>
+
+        <h2 data-i18n="retained.title">Qaysi ma’lumotlar saqlanishi mumkin</h2>
+        <p data-i18n="retained.body">
+          Anonim yig‘ma ma’lumotlar (masalan, foydalanish statistikasi) servisni
+          yaxshilash uchun saqlanishi mumkin.
+        </p>
+
+        <div class="note">
+          <strong data-i18n="timeline.label">O‘chirish muddati:</strong>
+          <span data-i18n="timeline.body">
+            so‘rovingizdan keyin barcha shaxsiy ma’lumotlar 30 kun ichida butunlay
+            o‘chiriladi.
+          </span>
+        </div>
+
+        <p style="margin-top: 14px">
+          <span data-i18n="support.needHelp">Muammo bo‘lsa yoki yordam kerak bo‘lsa,</span>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="support.contact">qo‘llab-quvvatlashga yozing</a>.
+        </p>
+
+        <p data-i18n="signoff">Hurmat bilan, UyDosh jamoasi</p>
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links">
+          <a href="privacy-policy.html" data-i18n="footer.privacy">Maxfiylik</a>
+          <a href="index.html" data-i18n="footer.home">Bosh sahifa</a>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="footer.contact">Aloqa</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      const STRINGS = {
+        uz: {
+          "meta.title": "UyDosh — Akкаунtni o‘chirish",
+          "meta.description":
+            "UyDosh akkauntingizni va unga bog‘liq shaxsiy ma’lumotlarni o‘chirish bo‘yicha ko‘rsatmalar.",
+          "header.tagline": "Ijara & xonadoshlar",
+          "nav.home": "Bosh sahifa",
+          "nav.privacy": "Maxfiylik",
+          "nav.contact": "Aloqa",
+          title: "Akкаунtni o‘chirish — UyDosh",
+          intro:
+            "UyDosh akkauntingizni va unga bog‘liq shaxsiy ma’lumotlarni o‘chirishni so‘rashingiz mumkin. Iltimos, quyidagi bosqichlarni bajaring:",
+          "steps.title": "Akкаунtni o‘chirish bosqichlari",
+          "steps.1": "Ilovada UyDosh akkauntingizga kiring.",
+          "steps.2": "Profil → Akкаунtni o‘chirish bo‘limiga o‘ting.",
+          "steps.3": "Akкаунtni o‘chirish tugmasini bosing va tasdiqlang.",
+          "steps.4": "Akкаунtingiz o‘chirishga rejalashtiriladi.",
+          "screenshot.alt": "UyDosh profil ekranida akkauntni o‘chirish bo‘limiga o‘tish ko‘rsatilgan.",
+          "screenshot.caption":
+            "Ilovada Profil bo‘limini oching, so‘ng menyu orqali Sozlamalar va Akкаунtni o‘chirish bo‘limiga o‘ting.",
+          "deleted.title": "Qaysi ma’lumotlar o‘chiriladi",
+          "deleted.1": "Ism, email, telefon raqami va profil rasmi.",
+          "deleted.2": "Barcha e’lonlaringiz.",
+          "deleted.3": "Xabarlar va chat tarixi.",
+          "retained.title": "Qaysi ma’lumotlar saqlanishi mumkin",
+          "retained.body":
+            "Anonim yig‘ma ma’lumotlar (masalan, foydalanish statistikasi) servisni yaxshilash uchun saqlanishi mumkin.",
+          "timeline.label": "O‘chirish muddati:",
+          "timeline.body":
+            " so‘rovingizdan keyin barcha shaxsiy ma’lumotlar 30 kun ichida butunlay o‘chiriladi.",
+          "support.needHelp": "Muammo bo‘lsa yoki yordam kerak bo‘lsa,",
+          "support.contact": "qo‘llab-quvvatlashga yozing",
+          signoff: "Hurmat bilan, UyDosh jamoasi",
+          "footer.privacy": "Maxfiylik",
+          "footer.home": "Bosh sahifa",
+          "footer.contact": "Aloqa",
+        },
+        ru: {
+          "meta.title": "UyDosh — Удаление аккаунта",
+          "meta.description":
+            "Инструкция по удалению аккаунта UyDosh и связанных персональных данных.",
+          "header.tagline": "Аренда и соседи",
+          "nav.home": "Главная",
+          "nav.privacy": "Политика конфиденциальности",
+          "nav.contact": "Контакты",
+          title: "Удаление аккаунта — UyDosh",
+          intro:
+            "Вы можете запросить удаление аккаунта UyDosh и всех связанных персональных данных. Пожалуйста, выполните шаги ниже:",
+          "steps.title": "Шаги для удаления аккаунта",
+          "steps.1": "Войдите в свой аккаунт UyDosh в приложении.",
+          "steps.2": "Перейдите в Профиль → Удалить аккаунт.",
+          "steps.3": "Нажмите Удалить аккаунт и подтвердите запрос.",
+          "steps.4": "Ваш аккаунт будет поставлен в очередь на удаление.",
+          "screenshot.alt": "Экран профиля UyDosh с переходом к удалению аккаунта.",
+          "screenshot.caption":
+            "Откройте раздел Профиль, затем через меню перейдите в Настройки и Удалить аккаунт.",
+          "deleted.title": "Какие данные будут удалены",
+          "deleted.1": "Имя, email, номер телефона и фото профиля.",
+          "deleted.2": "Все ваши объявления.",
+          "deleted.3": "Сообщения и история чатов.",
+          "retained.title": "Какие данные могут быть сохранены",
+          "retained.body":
+            "Анонимные агрегированные данные (например, статистика использования) могут сохраняться для аналитики и улучшения сервиса.",
+          "timeline.label": "Срок удаления:",
+          "timeline.body": " все персональные данные будут полностью удалены в течение 30 дней после запроса.",
+          "support.needHelp": "Если возникли проблемы или нужна помощь,",
+          "support.contact": "напишите в поддержку",
+          signoff: "С уважением, команда UyDosh",
+          "footer.privacy": "Конфиденциальность",
+          "footer.home": "Главная",
+          "footer.contact": "Контакты",
+        },
+        en: {
+          "meta.title": "UyDosh — Delete account",
+          "meta.description":
+            "Instructions to request deletion of your UyDosh account and associated personal data.",
+          "header.tagline": "Rentals & roommates",
+          "nav.home": "Home",
+          "nav.privacy": "Privacy Policy",
+          "nav.contact": "Contact",
+          title: "Delete your account — UyDosh",
+          intro:
+            "You can request to delete your UyDosh account and all associated personal data. Please follow the steps below:",
+          "steps.title": "Steps to delete your account",
+          "steps.1": "Log in to your UyDosh account in the app.",
+          "steps.2": "Go to Profile → Delete Account.",
+          "steps.3": "Tap Delete Account and confirm your request.",
+          "steps.4": "Your account will be scheduled for deletion.",
+          "screenshot.alt": "UyDosh profile screen showing how to reach Delete Account.",
+          "screenshot.caption":
+            "Open the Profile tab, then use the menu to reach Settings and Delete Account.",
+          "deleted.title": "Data that will be deleted",
+          "deleted.1": "Name, email, phone number, and profile photo.",
+          "deleted.2": "All your listings.",
+          "deleted.3": "Messages and chat history.",
+          "retained.title": "Data that may be retained",
+          "retained.body":
+            "Anonymous aggregated data (e.g., usage statistics) may be kept for analytics and improving the service.",
+          "timeline.label": "Deletion timeline:",
+          "timeline.body": " all personal data will be permanently deleted within 30 days of your request.",
+          "support.needHelp": "If you run into issues or need help,",
+          "support.contact": "contact support",
+          signoff: "Regards, UyDosh Team",
+          "footer.privacy": "Privacy",
+          "footer.home": "Home",
+          "footer.contact": "Contact",
+        },
+      };
+
+      function normalizeLang(lang) {
+        if (lang === "en" || lang === "ru" || lang === "uz") return lang;
+        return "uz";
+      }
+
+      function applyLang(lang) {
+        const active = normalizeLang(lang);
+        const dict = STRINGS[active] || STRINGS.uz;
+
+        document.documentElement.lang = active;
+
+        for (const el of document.querySelectorAll("[data-i18n]")) {
+          const key = el.getAttribute("data-i18n");
+          const value = dict[key];
+          if (value == null) continue;
+
+          const attr = el.getAttribute("data-i18n-attr");
+          if (attr) el.setAttribute(attr, value);
+          else el.textContent = value;
+        }
+
+        const titleEl = document.querySelector("title[data-i18n]");
+        if (titleEl) {
+          const k = titleEl.getAttribute("data-i18n");
+          if (dict[k]) titleEl.textContent = dict[k];
+        }
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.setAttribute(
+            "aria-pressed",
+            btn.getAttribute("data-lang") === active ? "true" : "false"
+          );
+        }
+
+        try {
+          localStorage.setItem("uydosh_lang", active);
+        } catch {}
+      }
+
+      (function initLang() {
+        let initial = "uz";
+        try {
+          initial = localStorage.getItem("uydosh_lang") || "uz";
+        } catch {}
+        applyLang(initial);
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+        }
+      })();
+    </script>
+  </body>
 </html>
