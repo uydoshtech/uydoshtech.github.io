@@ -405,13 +405,14 @@
 
           <div class="mock" aria-label="UyDosh app screenshot">
             <img
-              src="images/home_screen.jpg"
+              src="images/uydosh_1.PNG"
               width="1181"
               height="2560"
               alt="UyDosh app home screen"
               data-i18n="hero.imageAlt"
               data-i18n-attr="alt"
               loading="lazy"
+              data-carousel="uydosh-screens"
             />
           </div>
         </section>
@@ -473,6 +474,67 @@
 
     <script>
       document.getElementById("y").textContent = new Date().getFullYear();
+
+      // Simple screenshot carousel (no dependencies)
+      (() => {
+        const img = document.querySelector('img[data-carousel="uydosh-screens"]');
+        if (!img) return;
+
+        const sources = [
+          "images/uydosh_1.PNG",
+          "images/uydosh_2.PNG",
+          "images/uydosh_3.PNG",
+          "images/uydosh_4.PNG",
+          "images/uydosh_5.PNG",
+          "images/uydosh_6.PNG",
+        ];
+
+        let idx = Math.max(0, sources.indexOf(img.getAttribute("src") || ""));
+        let timer = null;
+
+        const show = (nextIdx) => {
+          idx = (nextIdx + sources.length) % sources.length;
+          img.src = sources[idx];
+        };
+
+        const start = () => {
+          if (timer) return;
+          timer = window.setInterval(() => show(idx + 1), 3500);
+        };
+
+        const stop = () => {
+          if (!timer) return;
+          window.clearInterval(timer);
+          timer = null;
+        };
+
+        // Preload next image to reduce flicker
+        const preloadNext = () => {
+          const pre = new Image();
+          pre.src = sources[(idx + 1) % sources.length];
+        };
+
+        img.addEventListener("load", preloadNext);
+        img.addEventListener("mouseenter", stop);
+        img.addEventListener("mouseleave", start);
+        img.addEventListener("focus", stop);
+        img.addEventListener("blur", start);
+
+        // Keyboard: left/right to navigate when focused
+        img.tabIndex = 0;
+        img.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            show(idx - 1);
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            show(idx + 1);
+          }
+        });
+
+        // Start after first paint
+        requestAnimationFrame(start);
+      })();
 
       const STRINGS = {
         uz: {
