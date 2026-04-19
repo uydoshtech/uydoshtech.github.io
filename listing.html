@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UyDosh — E’lon</title>
+    <meta name="description" content="UyDosh e’lon tafsilotlari." />
+    <meta property="og:title" content="UyDosh — E’lon" id="og-title" />
+    <meta property="og:description" content="Ijara e’loni tafsilotlari." id="og-desc" />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="images/uydosh-logo.svg" id="og-image" />
+    <link rel="icon" href="images/uydosh-logo.svg" type="image/svg+xml" />
+
+    <style>
+      :root {
+        color-scheme: light dark;
+        --blue: #00426e;
+        --bg: #061525;
+        --fg: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --brand: #e11d2e;
+        --brand2: #60a5fa;
+        --accent: #22c55e;
+        --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --fg: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.7);
+          --card: rgba(15, 23, 42, 0.04);
+          --stroke: rgba(15, 23, 42, 0.12);
+          --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        background:
+          radial-gradient(1200px 500px at 15% 0%, rgba(0, 66, 110, 0.36), transparent 58%),
+          radial-gradient(900px 600px at 85% 10%, rgba(96, 165, 250, 0.22), transparent 62%),
+          radial-gradient(800px 620px at 92% 82%, rgba(225, 29, 46, 0.12), transparent 62%),
+          var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+      }
+      a { color: inherit; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 80px; }
+      header {
+        display: flex; flex-wrap: wrap; align-items: flex-start;
+        justify-content: space-between; gap: 16px; padding: 10px 0 18px;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; }
+      .brand img { width: 56px; height: 56px; display: block; border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); background: rgba(255, 255, 255, 0.04); }
+      .brand strong { font-size: 16px; letter-spacing: 0.2px; }
+      nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        justify-content: flex-end; min-width: 0; flex: 1 1 auto; max-width: 100%; }
+      .lang { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 6px;
+        border-radius: 999px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.02); }
+      .lang button { appearance: none; border: 0; background: transparent; color: var(--muted);
+        font-weight: 700; font-size: 12px; letter-spacing: 0.08em; padding: 7px 10px;
+        border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+      .lang button[aria-pressed="true"] { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
+      .lang button:hover { color: var(--fg); background: rgba(255, 255, 255, 0.06); }
+      .pill { display: inline-flex; align-items: center; justify-content: center;
+        padding: 9px 12px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px; font-size: 15px; color: var(--muted); }
+      .pill:hover { background: rgba(255, 255, 255, 0.06); text-decoration: none; color: var(--fg); }
+      .pill.active { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
+
+      .back {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: var(--muted); font-size: 14px; margin: 4px 0 18px;
+      }
+      .back:hover { color: var(--fg); }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 860px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      /* Gallery */
+      .gallery {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(225, 29, 46, 0.08));
+        box-shadow: var(--shadow);
+      }
+      .gallery .main {
+        aspect-ratio: 4 / 3;
+        display: block;
+        position: relative;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .gallery .main img {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+      }
+      .gallery .nav-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        width: 40px; height: 40px; border-radius: 999px;
+        background: rgba(0, 0, 0, 0.5); color: #fff; border: 0;
+        font-size: 20px; cursor: pointer; display: grid; place-items: center;
+        backdrop-filter: blur(6px);
+      }
+      .gallery .nav-btn:hover { background: rgba(0, 0, 0, 0.7); }
+      .gallery .nav-btn.prev { left: 10px; }
+      .gallery .nav-btn.next { right: 10px; }
+      .gallery .counter {
+        position: absolute; bottom: 10px; right: 10px;
+        padding: 4px 10px; border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 12px; font-weight: 600;
+      }
+      .gallery .thumbs {
+        display: flex; gap: 8px; padding: 10px; overflow-x: auto; scrollbar-width: thin;
+      }
+      .gallery .thumbs button {
+        flex: 0 0 auto; border: 2px solid transparent; border-radius: 10px;
+        padding: 0; background: transparent; cursor: pointer; overflow: hidden;
+        width: 84px; height: 64px;
+      }
+      .gallery .thumbs button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .gallery .thumbs button[aria-current="true"] { border-color: #fff; }
+
+      .details { display: flex; flex-direction: column; gap: 14px; }
+      h1 { font-size: clamp(22px, 2.6vw, 30px); margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
+      .price-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+      .price { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+      .price small { font-weight: 500; font-size: 14px; color: var(--muted); margin-left: 2px; }
+      .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+      .badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 11px; border-radius: 999px;
+        font-size: 12px; font-weight: 600;
+        border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+      }
+      .badge.featured {
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        border-color: transparent; color: #fff;
+      }
+
+      .meta-grid {
+        display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 14px;
+        font-size: 14px;
+      }
+      .meta-grid dt { color: var(--muted); margin: 0; }
+      .meta-grid dd { margin: 0; font-weight: 600; }
+
+      .section h2 {
+        font-size: 16px; font-weight: 700; margin: 6px 0 10px;
+      }
+      .description {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        font-size: 15px;
+        color: var(--fg);
+      }
+      .amenities { display: flex; flex-wrap: wrap; gap: 8px; }
+      .amenity {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 11px; border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 13px; color: var(--fg);
+      }
+
+      .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 11px 16px; border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--fg); font-weight: 600; font-size: 15px;
+        cursor: pointer;
+      }
+      .btn:hover { background: rgba(255, 255, 255, 0.08); text-decoration: none; }
+      .btn.primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        box-shadow: 0 14px 40px rgba(34, 197, 94, 0.28);
+        color: white;
+      }
+
+      /* Skeleton + status */
+      .skel {
+        border-radius: 10px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+        background-size: 200% 100%;
+        animation: shimmer 1.2s linear infinite;
+      }
+      @media (prefers-color-scheme: light) {
+        .skel {
+          background: linear-gradient(90deg, rgba(15,23,42,0.05), rgba(15,23,42,0.12), rgba(15,23,42,0.05));
+          background-size: 200% 100%;
+        }
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      .skel.gallery-skel { aspect-ratio: 4/3; width: 100%; }
+      .skel.line { height: 14px; }
+      .skel.line.w40 { width: 40%; }
+      .skel.line.w60 { width: 60%; }
+      .skel.line.w80 { width: 80%; }
+      .skel.line.short { height: 10px; }
+
+      .status-page {
+        text-align: center; padding: 60px 0; color: var(--muted);
+      }
+      .status-page h2 { color: var(--fg); }
+      .status-page .btn { margin-top: 14px; }
+
+      footer {
+        margin-top: 40px;
+        color: var(--muted); font-size: 14px;
+        display: flex; gap: 12px; flex-wrap: wrap;
+        justify-content: space-between; align-items: center;
+      }
+      .links { display: flex; gap: 14px; flex-wrap: wrap; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a class="brand" href="index.html">
+          <img src="images/uydosh-logo.svg" alt="UyDosh logo" />
+          <div>
+            <strong>UyDosh</strong><br />
+            <span style="color: var(--muted); font-size: 14px" data-i18n="brand.tagline">Ijara & xonadoshlar</span>
+          </div>
+        </a>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="true"><span class="flag" aria-hidden="true">🇺🇿</span> UZ</button>
+            <button type="button" data-lang="ru" aria-pressed="false"><span class="flag" aria-hidden="true">🇷🇺</span> RU</button>
+            <button type="button" data-lang="en" aria-pressed="false"><span class="flag" aria-hidden="true">🇬🇧</span> EN</button>
+          </div>
+          <a class="pill" href="index.html" data-i18n="nav.home">Asosiy</a>
+          <a class="pill" href="listings.html" data-i18n="nav.listings">E’lonlar</a>
+        </nav>
+      </header>
+
+      <a class="back" href="listings.html" data-i18n="detail.back">← E’lonlar</a>
+
+      <main id="root">
+        <!-- Skeleton while loading -->
+        <div class="layout" id="skeleton-view">
+          <div>
+            <div class="skel gallery-skel" style="border-radius: 20px;"></div>
+          </div>
+          <div class="details">
+            <div class="skel line w80"></div>
+            <div class="skel line w40"></div>
+            <div class="skel line w60 short"></div>
+            <div class="skel line w80 short"></div>
+            <div class="skel line w60 short"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links">
+          <a href="index.html" data-i18n="nav.home">Asosiy</a>
+          <a href="listings.html" data-i18n="nav.listings">E’lonlar</a>
+          <a href="privacy-policy.html" data-i18n="nav.privacy">Maxfiylik</a>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="nav.contact">Aloqa</a>
+        </div>
+      </footer>
+    </div>
+
+    <script src="assets/uydosh-web.js"></script>
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+
+      const APK_URL = 'https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk';
+
+      const params = new URLSearchParams(location.search);
+      const listingId = params.get('id');
+
+      const rootEl = document.getElementById('root');
+
+      const state = {
+        listing: null,
+        photos: [],
+        photoIdx: 0,
+      };
+
+      function sortedPhotos(listing) {
+        const photos = Array.isArray(listing?.photos) ? [...listing.photos] : [];
+        photos.sort((a, b) => {
+          if (a.is_primary && !b.is_primary) return -1;
+          if (!a.is_primary && b.is_primary) return 1;
+          return (a.photo_order ?? 0) - (b.photo_order ?? 0);
+        });
+        return photos;
+      }
+
+      function renderNotFound() {
+        rootEl.innerHTML = `
+          <div class="status-page">
+            <h2 data-i18n="detail.notFound">${UyDosh.escapeHtml(UyDosh.t('detail.notFound'))}</h2>
+            <a class="btn" href="listings.html" data-i18n="nav.listings">${UyDosh.escapeHtml(UyDosh.t('nav.listings'))}</a>
+          </div>
+        `;
+      }
+
+      function renderError(retry) {
+        rootEl.innerHTML = `
+          <div class="status-page">
+            <h2>${UyDosh.escapeHtml(UyDosh.t('feed.error'))}</h2>
+            <button class="btn" id="retry" type="button">${UyDosh.escapeHtml(UyDosh.t('feed.retry'))}</button>
+          </div>
+        `;
+        document.getElementById('retry')?.addEventListener('click', retry);
+      }
+
+      function buildGalleryHtml() {
+        if (state.photos.length === 0) {
+          return `
+            <div class="gallery" aria-label="UyDosh">
+              <div class="main" style="display: grid; place-items: center; color: var(--muted); font-weight: 700; letter-spacing: 0.12em;">
+                UyDosh
+              </div>
+            </div>
+          `;
+        }
+        const current = state.photos[state.photoIdx];
+        const counter = state.photos.length > 1
+          ? `<div class="counter">${state.photoIdx + 1} / ${state.photos.length}</div>` : '';
+        const navButtons = state.photos.length > 1 ? `
+          <button class="nav-btn prev" type="button" aria-label="Previous" data-gal="prev">‹</button>
+          <button class="nav-btn next" type="button" aria-label="Next" data-gal="next">›</button>
+        ` : '';
+        const thumbs = state.photos.length > 1 ? `
+          <div class="thumbs">
+            ${state.photos.map((p, i) => `
+              <button type="button" data-gal-idx="${i}" aria-current="${i === state.photoIdx ? 'true' : 'false'}">
+                <img loading="lazy" src="${UyDosh.escapeHtml(UyDosh.photoUrl(p))}" alt="">
+              </button>
+            `).join('')}
+          </div>
+        ` : '';
+
+        return `
+          <div class="gallery">
+            <div class="main">
+              <img id="gallery-main-img" src="${UyDosh.escapeHtml(UyDosh.photoUrl(current))}" alt="${UyDosh.escapeHtml(state.listing?.title || '')}" />
+              ${navButtons}
+              ${counter}
+            </div>
+            ${thumbs}
+          </div>
+        `;
+      }
+
+      function bindGallery() {
+        const prev = rootEl.querySelector('[data-gal="prev"]');
+        const next = rootEl.querySelector('[data-gal="next"]');
+        prev?.addEventListener('click', () => showPhoto(state.photoIdx - 1));
+        next?.addEventListener('click', () => showPhoto(state.photoIdx + 1));
+        for (const btn of rootEl.querySelectorAll('[data-gal-idx]')) {
+          btn.addEventListener('click', () => {
+            const i = Number(btn.getAttribute('data-gal-idx'));
+            if (!Number.isNaN(i)) showPhoto(i);
+          });
+        }
+      }
+
+      function showPhoto(i) {
+        if (state.photos.length === 0) return;
+        const n = state.photos.length;
+        state.photoIdx = ((i % n) + n) % n;
+        const imgEl = rootEl.querySelector('#gallery-main-img');
+        if (imgEl) imgEl.src = UyDosh.photoUrl(state.photos[state.photoIdx]);
+        const counterEl = rootEl.querySelector('.gallery .counter');
+        if (counterEl) counterEl.textContent = `${state.photoIdx + 1} / ${n}`;
+        for (const btn of rootEl.querySelectorAll('[data-gal-idx]')) {
+          btn.setAttribute('aria-current', String(Number(btn.getAttribute('data-gal-idx')) === state.photoIdx));
+        }
+      }
+
+      function render() {
+        const l = state.listing;
+        if (!l) return;
+        const lang = UyDosh.getLang();
+        document.documentElement.lang = lang;
+
+        const title = UyDosh.escapeHtml(l.title || '');
+        document.title = `UyDosh — ${l.title || '#' + l.id}`;
+        const ogTitle = document.getElementById('og-title');
+        const ogDesc = document.getElementById('og-desc');
+        const ogImage = document.getElementById('og-image');
+        if (ogTitle) ogTitle.setAttribute('content', `UyDosh — ${l.title || ''}`);
+        const desc = UyDosh.localizedDescription(l, lang);
+        if (ogDesc && desc) ogDesc.setAttribute('content', desc.slice(0, 160));
+        const primary = UyDosh.primaryPhoto(l);
+        if (ogImage && primary) ogImage.setAttribute('content', UyDosh.photoUrl(primary));
+
+        const price = UyDosh.formatPrice(l, lang);
+        const typeName = UyDosh.localized(l.listing_type, lang);
+        const locName = UyDosh.localized(l.location, lang);
+        const metro = UyDosh.localized(l.subway_station, lang);
+        const rooms = Number(l.rooms_number);
+
+        const badges = [];
+        if (UyDosh.isFeatured(l)) {
+          badges.push(`<span class="badge featured">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</span>`);
+        }
+        if (typeName) badges.push(`<span class="badge">${UyDosh.escapeHtml(typeName)}</span>`);
+        if (l.private_room) badges.push(`<span class="badge">${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
+        if (Number.isFinite(rooms) && rooms > 0) {
+          badges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
+        }
+
+        const metaRows = [];
+        if (typeName) metaRows.push([UyDosh.t('detail.type'), typeName]);
+        if (locName) metaRows.push([UyDosh.t('detail.location'), locName]);
+        if (metro) metaRows.push([UyDosh.t('detail.metro'), metro]);
+        if (l.move_in_date) metaRows.push([UyDosh.t('detail.moveIn'), UyDosh.formatDate(l.move_in_date, lang)]);
+        if (l.created_at) metaRows.push([UyDosh.t('detail.posted'), UyDosh.formatDate(l.created_at, lang)]);
+        const metaHtml = metaRows.length ? `
+          <dl class="meta-grid">
+            ${metaRows.map(([k, v]) => `<dt>${UyDosh.escapeHtml(k)}</dt><dd>${UyDosh.escapeHtml(v)}</dd>`).join('')}
+          </dl>
+        ` : '';
+
+        const amenities = Array.isArray(l.amenities) ? l.amenities : [];
+        const amenitiesHtml = amenities.length ? `
+          <section class="section">
+            <h2 data-i18n="detail.amenities">${UyDosh.escapeHtml(UyDosh.t('detail.amenities'))}</h2>
+            <div class="amenities">
+              ${amenities.map(a => `<span class="amenity">${UyDosh.escapeHtml(UyDosh.localized(a, lang))}</span>`).join('')}
+            </div>
+          </section>
+        ` : '';
+
+        const descHtml = desc ? `
+          <section class="section">
+            <h2 data-i18n="detail.description">${UyDosh.escapeHtml(UyDosh.t('detail.description'))}</h2>
+            <div class="description">${UyDosh.escapeHtml(desc)}</div>
+          </section>
+        ` : '';
+
+        rootEl.innerHTML = `
+          <div class="layout">
+            <div>
+              ${buildGalleryHtml()}
+            </div>
+            <div class="details">
+              <h1>${title}</h1>
+              ${price ? `<div class="price-row"><div class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></div></div>` : ''}
+              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+              ${metaHtml}
+              <div class="cta-row">
+                <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
+                <a class="btn" href="${APK_URL}" download="uydosh.apk" data-i18n="detail.downloadApk">${UyDosh.escapeHtml(UyDosh.t('detail.downloadApk'))}</a>
+              </div>
+            </div>
+          </div>
+          ${descHtml}
+          ${amenitiesHtml}
+        `;
+
+        bindGallery();
+      }
+
+      async function load() {
+        if (!listingId) { renderNotFound(); return; }
+        try {
+          const data = await UyDosh.fetchListing(listingId);
+          state.listing = data;
+          state.photos = sortedPhotos(data);
+          state.photoIdx = 0;
+          render();
+        } catch (err) {
+          console.error('Failed to load listing', err);
+          if (err?.status === 404) renderNotFound();
+          else renderError(() => { rootEl.innerHTML = '<div class="status-page" data-i18n="detail.loading">' + UyDosh.escapeHtml(UyDosh.t('detail.loading')) + '</div>'; load(); });
+        }
+      }
+
+      // Keyboard arrows for gallery navigation.
+      document.addEventListener('keydown', (e) => {
+        if (state.photos.length <= 1) return;
+        if (e.key === 'ArrowLeft') { e.preventDefault(); showPhoto(state.photoIdx - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); showPhoto(state.photoIdx + 1); }
+      });
+
+      UyDosh.initLangSwitcher();
+      document.addEventListener('uydosh:langchange', () => {
+        if (state.listing) render();
+        else UyDosh.applyI18n();
+      });
+
+      load();
+    </script>
+  </body>
+</html>
