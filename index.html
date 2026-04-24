@@ -238,6 +238,19 @@
         flex-wrap: wrap;
         margin-top: 18px;
       }
+      .buildInfo {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+        min-height: 1em;
+      }
+      .buildInfo code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+      }
       .btn {
         display: inline-flex;
         align-items: center;
@@ -462,6 +475,12 @@
                 >Maxfiylik siyosatini o‘qish</a
               >
             </div>
+            <div
+              class="buildInfo"
+              id="apkBuildInfo"
+              data-i18n-dynamic="apk.build"
+              hidden
+            ></div>
           </div>
 
           <div class="mock" aria-label="UyDosh app screenshot">
@@ -532,7 +551,14 @@
       </main>
 
       <footer>
-        <div>© <span id="y"></span> UyDosh</div>
+        <div>
+          © <span id="y"></span> UyDosh
+          <span
+            id="footerBuildInfo"
+            data-i18n-dynamic="footer.build"
+            hidden
+          ></span>
+        </div>
         <div class="links">
           <a href="privacy-policy.html" data-i18n="footer.privacy">Maxfiylik</a>
           <a href="delete-account.html" data-i18n="footer.delete">Akкаунtni o‘chirish</a>
@@ -693,6 +719,8 @@
           "footer.privacy": "Maxfiylik",
           "footer.delete": "Akкаунtni o‘chirish",
           "footer.contact": "Aloqa",
+          "apk.build": "APK yig‘ilgan sana: {date} · {commit}",
+          "footer.build": "· Yig‘ilish: {date}",
         },
         ru: {
           "meta.title": "UyDosh — Найдите аренду. Свяжитесь. Заселяйтесь.",
@@ -729,6 +757,8 @@
           "footer.privacy": "Конфиденциальность",
           "footer.delete": "Удалить аккаунт",
           "footer.contact": "Контакты",
+          "apk.build": "APK собран: {date} · {commit}",
+          "footer.build": "· Сборка: {date}",
         },
         en: {
           "meta.title": "UyDosh — Find rentals. Connect. Move in.",
@@ -765,6 +795,8 @@
           "footer.privacy": "Privacy",
           "footer.delete": "Delete account",
           "footer.contact": "Contact",
+          "apk.build": "APK built: {date} · {commit}",
+          "footer.build": "· Build: {date}",
         },
       };
 
@@ -773,8 +805,12 @@
         return "uz";
       }
 
+      let currentLang = "uz";
+      let buildInfo = null; // { date: Date, commit: string|null }
+
       function applyLang(lang) {
         const active = normalizeLang(lang);
+        currentLang = active;
         const dict = STRINGS[active] || STRINGS.uz;
 
         document.documentElement.lang = active;
@@ -797,10 +833,74 @@
           btn.setAttribute("aria-pressed", btn.getAttribute("data-lang") === active ? "true" : "false");
         }
 
+        renderBuildInfo();
+
         try {
           localStorage.setItem("uydosh_lang", active);
         } catch {}
       }
+
+      function formatBuildDate(date, lang) {
+        const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ";
+        try {
+          return new Intl.DateTimeFormat(locale, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }).format(date);
+        } catch {
+          return date.toISOString().slice(0, 10);
+        }
+      }
+
+      function renderBuildInfo() {
+        if (!buildInfo) return;
+        const dict = STRINGS[currentLang] || STRINGS.uz;
+        const dateStr = formatBuildDate(buildInfo.date, currentLang);
+        const commitHtml = buildInfo.commit
+          ? `<code>${buildInfo.commit}</code>`
+          : "";
+
+        const apkEl = document.getElementById("apkBuildInfo");
+        if (apkEl) {
+          const tpl = dict["apk.build"] || "";
+          apkEl.innerHTML = tpl
+            .replace("{date}", dateStr)
+            .replace("{commit}", commitHtml)
+            .replace(/\s·\s*$/, "");
+          apkEl.hidden = false;
+        }
+
+        const footEl = document.getElementById("footerBuildInfo");
+        if (footEl) {
+          const tpl = dict["footer.build"] || "";
+          footEl.textContent = tpl.replace("{date}", dateStr);
+          footEl.hidden = false;
+        }
+      }
+
+      (function fetchBuildInfo() {
+        const url =
+          "https://api.github.com/repos/uydoshtech/uydoshtech.github.io/releases/tags/android-latest";
+        fetch(url, { headers: { Accept: "application/vnd.github+json" } })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((release) => {
+            if (!release || !release.published_at) return;
+            const date = new Date(release.published_at);
+            if (isNaN(date.getTime())) return;
+
+            let commit = null;
+            const body = typeof release.body === "string" ? release.body : "";
+            const m = body.match(/@([a-f0-9]{7,40})/i);
+            if (m) commit = m[1].slice(0, 7);
+
+            buildInfo = { date, commit };
+            renderBuildInfo();
+          })
+          .catch(() => {
+            /* stay hidden on failure */
+          });
+      })();
 
       (function initLang() {
         let initial = "uz";
