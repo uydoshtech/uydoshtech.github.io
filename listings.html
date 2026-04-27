@@ -279,8 +279,10 @@
           ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${UyDosh.escapeHtml(title)}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${featured}${typeBadge}</div>`
           : `<div class="thumb empty">${featured}${typeBadge}</div>`;
 
+        // Use the canonical shared URL shape: /listing/<id>
+        // GitHub Pages will rewrite it to listing.html?id=<id> via 404.html.
         return `
-          <a class="card" href="listing.html?id=${encodeURIComponent(listing.id)}">
+          <a class="card" href="/listing/${encodeURIComponent(listing.id)}">
             ${thumb}
             <div class="body">
               <div class="title">${title}</div>
