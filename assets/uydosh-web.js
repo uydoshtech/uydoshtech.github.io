@@ -116,7 +116,7 @@ async function fetchJson(path, params) {
     // or a hostname is not configured in DNS yet, browsers will fail the request.
     // Fall back to a small, pre-generated dataset so the site still renders.
     if (path === '/listings') {
-      const fallback = await fetch('assets/top_listings.json', {
+      const fallback = await fetch('/assets/top_listings.json', {
         method: 'GET',
         headers: { Accept: 'application/json' },
       });
