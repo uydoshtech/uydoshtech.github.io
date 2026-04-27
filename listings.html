@@ -233,14 +233,16 @@
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
 
-      const PAGE_SIZE = 20;
+      // Keep the web landing page fast: show only the top 10 newest listings.
+      const PAGE_SIZE = 10;
       const gridEl = document.getElementById('grid');
       const statusEl = document.getElementById('status');
       const sentinelEl = document.getElementById('sentinel');
 
       const state = {
         page: 0,
-        totalPages: Infinity,
+        // We intentionally load only a single page on the website.
+        totalPages: 1,
         loading: false,
         errored: false,
         reachedEnd: false,
@@ -351,15 +353,14 @@
           const data = await UyDosh.fetchListings({ page: nextPage, limit: PAGE_SIZE });
           const listings = Array.isArray(data?.listings) ? data.listings : [];
           state.page = nextPage;
-          state.totalPages = Number(data?.totalPages) || state.totalPages;
+          // We still parse totalPages for robustness, but we only ever load 1 page.
+          state.totalPages = 1;
           state.items.push(...listings);
           if (nextPage === 1) gridEl.innerHTML = '';
           appendListings(listings);
           clearStatus();
-          if (state.page >= state.totalPages || listings.length === 0) {
-            state.reachedEnd = true;
-            showEnd();
-          }
+          state.reachedEnd = true;
+          showEnd();
         } catch (err) {
           console.error('Failed to load listings', err);
           state.errored = true;
@@ -370,13 +371,7 @@
         }
       }
 
-      // Infinite scroll via IntersectionObserver.
-      const io = new IntersectionObserver((entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) loadMore();
-        }
-      }, { rootMargin: '600px 0px' });
-      io.observe(sentinelEl);
+      // No infinite scroll on the landing site (top 10 only).
 
       UyDosh.initLangSwitcher();
       document.addEventListener('uydosh:langchange', () => {
