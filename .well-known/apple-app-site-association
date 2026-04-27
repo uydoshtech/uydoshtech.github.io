@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "D5THR62Q33.com.uydosh.app.uyDosh",
+        "paths": [
+          "/listing/*"
+        ]
+      }
+    ]
+  }
+}
