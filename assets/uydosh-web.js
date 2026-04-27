@@ -8,6 +8,25 @@
 // this site is served from https://uydoshtech.github.io the API MUST be reachable
 // over HTTPS. Put Cloudflare/ALB in front and point API_BASE at the HTTPS URL.
 const API_BASE = (() => {
+  // 1) Fast override via query param:
+  //    /listings.html?api=https://xxxxx.trycloudflare.com
+  //    Useful for quick testing before you have a real api.<domain>.
+  try {
+    const qs = new URLSearchParams(location.search);
+    const api = qs.get('api');
+    if (api && /^https?:\/\//i.test(api)) {
+      const clean = api.replace(/\/$/, '');
+      try { localStorage.setItem('uydosh_api_base', clean); } catch { /* ignore */ }
+      return clean;
+    }
+  } catch { /* ignore */ }
+
+  // 2) Sticky override from localStorage (set by ?api=... above).
+  try {
+    const saved = localStorage.getItem('uydosh_api_base');
+    if (saved && /^https?:\/\//i.test(saved)) return saved.replace(/\/$/, '');
+  } catch { /* storage blocked */ }
+
   // Allow overriding via <meta name="uydosh-api-base" content="https://..."> for
   // quick environment switching without editing this file.
   const meta = document.querySelector('meta[name="uydosh-api-base"]');
@@ -105,25 +124,10 @@ async function fetchJson(path, params) {
       url.searchParams.set(k, String(v));
     }
   }
-  let res;
-  try {
-    res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-  } catch (err) {
-    // GitHub Pages is served over HTTPS. If the API is only reachable over HTTP
-    // or a hostname is not configured in DNS yet, browsers will fail the request.
-    // Fall back to a small, pre-generated dataset so the site still renders.
-    if (path === '/listings') {
-      const fallback = await fetch('/assets/top_listings.json', {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      });
-      if (fallback.ok) return fallback.json();
-    }
-    throw err;
-  }
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
   if (!res.ok) {
     const err = new Error(`HTTP ${res.status}`);
     err.status = res.status;
