@@ -105,10 +105,25 @@ async function fetchJson(path, params) {
       url.searchParams.set(k, String(v));
     }
   }
-  const res = await fetch(url.toString(), {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-  });
+  let res;
+  try {
+    res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  } catch (err) {
+    // GitHub Pages is served over HTTPS. If the API is only reachable over HTTP
+    // or a hostname is not configured in DNS yet, browsers will fail the request.
+    // Fall back to a small, pre-generated dataset so the site still renders.
+    if (path === '/listings') {
+      const fallback = await fetch('assets/top_listings.json', {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+      if (fallback.ok) return fallback.json();
+    }
+    throw err;
+  }
   if (!res.ok) {
     const err = new Error(`HTTP ${res.status}`);
     err.status = res.status;

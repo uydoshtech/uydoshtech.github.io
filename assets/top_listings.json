@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-04-27T01:23:36.660010Z",
+  "listings": [
+    {
+      "id": 13,
+      "title": "#ищемсожительницу",
+      "price": 100,
+      "rooms_number": null,
+      "private_room": false,
+      "featured_at": null,
+      "listing_type": {
+        "id": 2,
+        "name_uz": "Hamkor Kerak",
+        "name_ru": "Нужен Сосед",
+        "name_en": "Roommate Needed",
+        "code": "roommate_needed"
+      },
+      "subway_station": {
+        "id": 7,
+        "name_uz": "Chilanzar",
+        "name_ru": "Чиланзар",
+        "name_en": "Chilanzar",
+        "line": 1
+      },
+      "location": {
+        "id": 7,
+        "name_uz": "Chilanzar Tumani",
+        "name_ru": "Чиланзарский район",
+        "name_en": "Chilanzar District",
+        "short_name_uz": "Chilanzar",
+        "short_name_ru": "Чиланзар",
+        "short_name_en": "Chilanzar"
+      }
+    }
+  ]
+}
