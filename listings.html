@@ -9,6 +9,7 @@
     <meta property="og:description" content="Ijara e’lonlari va xonadoshlar." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="images/uydosh-logo.svg" />
+    <meta name="uydosh-api-base" content="https://api.uydosh.app" />
     <link rel="icon" href="images/uydosh-logo.svg" type="image/svg+xml" />
 
     <style>
@@ -138,6 +139,18 @@
       .card .meta { color: var(--muted); font-size: 13px; line-height: 1.45;
         display: flex; flex-wrap: wrap; gap: 6px 10px; }
       .card .meta span { display: inline-flex; align-items: center; gap: 4px; }
+      .card .meta .icon {
+        width: 14px; height: 14px;
+        display: inline-block;
+        color: var(--muted);
+        opacity: 0.95;
+        flex: 0 0 auto;
+      }
+      .card .meta .icon svg {
+        width: 14px; height: 14px;
+        display: block;
+      }
+      .card .meta .icon svg * { stroke: currentColor; fill: none; }
       .card .meta .dotsep::before { content: "•"; margin-right: 6px; opacity: 0.6; }
 
       .skeleton {
@@ -249,6 +262,30 @@
         items: [], // kept for re-rendering on language switch
       };
 
+      function iconPin() {
+        return `
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 21s7-4.8 7-11a7 7 0 1 0-14 0c0 6.2 7 11 7 11Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M12 10.5a2.5 2.5 0 1 0 0.001-5.001A2.5 2.5 0 0 0 12 10.5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+        `;
+      }
+
+      function iconMetro() {
+        return `
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M7 3h10a3 3 0 0 1 3 3v10a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6a3 3 0 0 1 3-3Z" stroke-width="2" stroke-linejoin="round"></path>
+              <path d="M8 17h0.01M16 17h0.01" stroke-width="3" stroke-linecap="round"></path>
+              <path d="M7 21l-2 2M17 21l2 2" stroke-width="2" stroke-linecap="round"></path>
+              <path d="M7 8h10" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </span>
+        `;
+      }
+
       function listingCardHtml(listing) {
         const lang = UyDosh.getLang();
         const photo = UyDosh.primaryPhoto(listing);
@@ -260,8 +297,12 @@
         const metro = UyDosh.localized(listing.subway_station, lang);
         const rooms = Number(listing.rooms_number);
         const metaParts = [];
-        if (locName) metaParts.push(`<span>${UyDosh.escapeHtml(locName)}</span>`);
-        if (metro) metaParts.push(`<span class="dotsep">🚇 ${UyDosh.escapeHtml(metro)}</span>`);
+        if (locName) {
+          metaParts.push(`<span>${iconPin()}${UyDosh.escapeHtml(locName)}</span>`);
+        }
+        if (metro) {
+          metaParts.push(`<span class="dotsep">${iconMetro()}${UyDosh.escapeHtml(metro)}</span>`);
+        }
         if (Number.isFinite(rooms) && rooms > 0) {
           metaParts.push(`<span class="dotsep">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
