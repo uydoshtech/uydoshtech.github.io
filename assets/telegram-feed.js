@@ -7,9 +7,11 @@ const PAGE_SIZE = 10;
 // <script> top-level `const` lives in a shared lexical scope and a second `const`
 // with the same name throws a SyntaxError that aborts this entire script.
 const DEFAULT_WITH_PHOTO = false;
-// Keep in sync with uydosh_client's listingBrowseCreatedWithinDays so the mini app
-// feed doesn't surface unbounded historical backlog (e.g. months-old Telegram posts).
-const FEED_CREATED_WITHIN_DAYS = 30;
+// Default period filter value; kept in sync with uydosh_client's
+// listingBrowseCreatedWithinDays so first-load behavior matches the app.
+const PERIOD_DEFAULT_DAYS = 30;
+const PERIOD_ALL_TIME = 0;
+const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
 const FILTER_SCROLL_COLLAPSE_PX = 100;
@@ -173,6 +175,9 @@ function readStoredFilters() {
           : DEFAULT_WITH_PHOTO,
       withPhotoExplicit: parsed.withPhotoExplicit === true,
       subwayLineId: Number(parsed.subwayLineId) || METRO_LINE_ANY,
+      createdWithinDays: PERIOD_OPTION_VALUES.includes(Number(parsed.createdWithinDays))
+        ? Number(parsed.createdWithinDays)
+        : PERIOD_DEFAULT_DAYS,
     };
   } catch {
     return null;
@@ -189,6 +194,7 @@ function persistFilters() {
         withPhoto: state.filters.withPhoto,
         withPhotoExplicit: state.withPhotoExplicit,
         subwayLineId: state.filters.subwayLineId,
+        createdWithinDays: state.filters.createdWithinDays,
       }),
     );
   } catch {
@@ -210,6 +216,7 @@ const state = {
     gender: storedFilters?.gender ?? GENDER_ANY,
     withPhoto: storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
     subwayLineId: storedFilters?.subwayLineId ?? METRO_LINE_ANY,
+    createdWithinDays: storedFilters?.createdWithinDays ?? PERIOD_DEFAULT_DAYS,
   },
   withPhotoExplicit: storedFilters?.withPhotoExplicit ?? false,
   filtersCollapsed: readFiltersCollapsed(),
@@ -254,12 +261,18 @@ function subwayLineQueryParam() {
   return id > 0 ? id : undefined;
 }
 
+function createdWithinDaysQueryParam() {
+  const days = state.filters.createdWithinDays;
+  return days > 0 ? days : undefined;
+}
+
 function logSearchEvent() {
   UyDosh.logMiniAppEvent('search', {
     listing_type_id: state.filters.listingTypeId,
     gender: state.filters.gender,
     with_photo: state.filters.withPhoto ? 'true' : 'false',
     subway_line_id: state.filters.subwayLineId,
+    created_within_days: state.filters.createdWithinDays,
   });
 }
 
@@ -280,7 +293,7 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
     gender: genderQueryParam(),
     withPhoto: withPhotoQueryParam(),
     subwayLineId: subwayLineQueryParam(),
-    createdWithinDays: FEED_CREATED_WITHIN_DAYS,
+    createdWithinDays: createdWithinDaysQueryParam(),
   }),
 });
 
@@ -316,6 +329,11 @@ function renderFilters() {
   const genderOptions = [
     { value: GENDER_MALE, label: UyDosh.t('filter.gender.male', lang) },
     { value: GENDER_FEMALE, label: UyDosh.t('filter.gender.female', lang) },
+  ];
+  const periodOptions = [
+    { value: 30, label: UyDosh.t('filter.period.30', lang) },
+    { value: 90, label: UyDosh.t('filter.period.90', lang) },
+    { value: PERIOD_ALL_TIME, label: UyDosh.t('filter.period.all', lang) },
   ];
   const collapsed = state.filtersCollapsed;
   const toggleLabel = collapsed
@@ -400,6 +418,18 @@ function renderFilters() {
     >${UyDosh.filterPhotoIcon({ pressed: false })}</button>
   `;
 
+  const periodChips = periodOptions.map((opt) => {
+    const pressed = state.filters.createdWithinDays === opt.value;
+    return `
+    <button
+      type="button"
+      class="chip chip-period"
+      data-period="${opt.value}"
+      aria-pressed="${pressed ? 'true' : 'false'}"
+    ><span class="chip-label">${UyDosh.escapeHtml(opt.label)}</span></button>
+  `;
+  }).join('');
+
   // Same icon-only-until-selected treatment as the compact row below: the
   // expanded metro row also stays as bare "M" badges and reveals the line
   // name (animated) only for the currently selected line.
@@ -464,6 +494,9 @@ function renderFilters() {
               <div class="filter-controls">
                 ${genderSwitch}
                 ${photoChip}
+                <div class="chips chips-period" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.period.aria', lang))}">
+                  ${periodChips}
+                </div>
               </div>
             </div>
             <div class="filter-row filter-row-metro">
@@ -555,6 +588,19 @@ function renderFilters() {
       filterTapHaptic();
       state.filters.withPhoto = !state.filters.withPhoto;
       state.withPhotoExplicit = true;
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+      if (state.view === 'map') feedMap.loadFeedMap();
+    });
+  });
+
+  filtersEl.querySelectorAll('[data-period]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = Number(btn.getAttribute('data-period'));
+      if (state.filters.createdWithinDays === next) return;
+      filterTapHaptic();
+      state.filters.createdWithinDays = next;
       persistFilters();
       logSearchEvent();
       resetAndLoad();
@@ -752,7 +798,7 @@ async function loadMore() {
       gender: genderQueryParam(),
       withPhoto: withPhotoQueryParam(),
       subwayLineId: subwayLineQueryParam(),
-      createdWithinDays: FEED_CREATED_WITHIN_DAYS,
+      createdWithinDays: createdWithinDaysQueryParam(),
     });
     const listings = Array.isArray(data?.listings) ? data.listings : [];
     updatePagination(data, listings, nextPage);
