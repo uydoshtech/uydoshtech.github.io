@@ -855,7 +855,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-63`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-64`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -2945,21 +2945,20 @@ function ensureMiniAppSafeAreaStyles() {
       justify-content: flex-start;
       flex-wrap: nowrap;
       gap: 12px;
-      margin-top: 0;
+      /* Safe-area inset lives OUTSIDE the bordered box (margin), not inside it (padding),
+         so the tile's border wraps only the brand row and never stretches up to
+         enclose Telegram's own status bar / native Close button chrome. */
+      margin-top: var(--uydosh-tg-inset-top, var(--tg-content-safe-area-inset-top, 0px));
       margin-left: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
       margin-right: calc(var(--feed-content-gutter, 25px) - max(5px, env(safe-area-inset-right, 0px)));
-      padding:
-        calc(4px + var(--uydosh-tg-inset-top, var(--tg-content-safe-area-inset-top, 0px)))
-        14px
-        12px
-        14px;
+      padding: 12px 14px;
       min-height: 44px;
       box-sizing: border-box;
       border: 1px solid var(--stroke);
       border-radius: 18px;
     }
     html.mini-app-desktop header {
-      padding-top: calc(4px + var(--uydosh-tg-inset-top, 0px));
+      margin-top: var(--uydosh-tg-inset-top, 0px);
     }
     html.mini-app .feed-sticky {
       margin-left: calc(-1 * var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
@@ -2974,7 +2973,7 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app-mobile header {
       align-items: center;
-      padding-top: calc(4px + var(--uydosh-tg-inset-top, ${TELEGRAM_MOBILE_HEADER_MIN_TOP}px));
+      margin-top: var(--uydosh-tg-inset-top, ${TELEGRAM_MOBILE_HEADER_MIN_TOP}px);
     }
     html.mini-app-mobile .feed-sticky {
       top: var(--uydosh-tg-filters-sticky-top, var(--uydosh-tg-sticky-top, ${TELEGRAM_MOBILE_HEADER_MIN_TOP}px));

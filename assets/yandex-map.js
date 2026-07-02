@@ -888,6 +888,38 @@
     placemark?.options.set(options);
   }
 
+  /**
+   * Some WebViews (observed in the Telegram iOS Mini App) occasionally fail to paint the
+   * freshly-generated canvas bitmap for a placemark/cluster feature on the very first frame
+   * after ObjectManager.add() — the feature exists and is clickable, it's just visually blank
+   * until something forces Yandex to re-request its icon. Re-applying the same icon options a
+   * moment after the initial render is a cheap, safe way to self-heal that without waiting for
+   * the user to stumble onto it (e.g. by toggling the map theme, which happens to trigger the
+   * same setObjectOptions call via refreshMapPinStates and "fixes" it as a side effect).
+   */
+  function forceRefreshAllPinIcons(container) {
+    const instance = activeMaps.get(container);
+    if (!instance) return;
+    const ctx = instance.pinVisualDefaults ?? pinVisualContext();
+    for (const pin of instance.pins || []) {
+      const listingId = Number(pin.id);
+      if (listingId > 0) applyFeatureIconOptions(instance, String(listingId), ctx);
+    }
+    for (const group of instance.pinGroups || []) {
+      if (group.pins.length > 1) {
+        applyFeatureIconOptions(instance, groupFeatureId(group), ctx);
+      }
+    }
+  }
+
+  function scheduleForceRefreshAllPinIcons(container) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => forceRefreshAllPinIcons(container), 250);
+      });
+    });
+  }
+
   function buildPinGroupMaps(pinGroups) {
     const groupsByFeatureId = new Map();
     for (const group of pinGroups) {
@@ -1135,6 +1167,7 @@
       activeMaps.set(container, mapInstance);
       trackedContainers.add(container);
       scheduleMapReflow(container);
+      scheduleForceRefreshAllPinIcons(container);
       if (validPins.length > 1) {
         try {
           const bounds = map.geoObjects.getBounds();
@@ -1164,6 +1197,7 @@
     activeMaps.set(container, mapInstance);
     trackedContainers.add(container);
     scheduleMapReflow(container);
+    scheduleForceRefreshAllPinIcons(container);
     return map;
   }
 

@@ -48,11 +48,14 @@
         align-items: center;
         justify-content: flex-start;
         gap: 12px;
-        margin-top: 0;
+        /* Keep the safe-area gap outside the border (margin), never inside it
+           (padding), so the tile never grows up to enclose Telegram's own
+           status bar / native Close button chrome before JS insets kick in. */
+        margin-top: var(--uydosh-tg-inset-top, calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--tg-content-safe-area-inset-top, 72px)));
         margin-left: calc(-1 * var(--feed-wrap-gutter, 14px));
         margin-right: calc(-1 * max(5px, env(safe-area-inset-right, 0px)));
         padding:
-          calc(4px + var(--uydosh-tg-inset-top, calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--tg-content-safe-area-inset-top, 72px))))
+          4px
           max(0px, env(safe-area-inset-right, 0px))
           14px
           max(0px, env(safe-area-inset-left, 0px));
@@ -1156,7 +1159,7 @@
       </svg>
     </button>
 
-    <script src="../assets/uydosh-web.js?v=20260703-63"></script>
+    <script src="../assets/uydosh-web.js?v=20260703-64"></script>
     <script src="../assets/telegram-feed-map.js?v=20260703-61"></script>
     <script src="../assets/telegram-feed.js?v=20260703-61"></script>
   </body>
