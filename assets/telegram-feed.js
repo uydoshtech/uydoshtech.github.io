@@ -418,17 +418,15 @@ function renderFilters() {
     >${UyDosh.filterPhotoIcon({ pressed: false })}</button>
   `;
 
-  const periodChips = periodOptions.map((opt) => {
-    const pressed = state.filters.createdWithinDays === opt.value;
-    return `
+  const currentPeriod = periodOptions.find((opt) => opt.value === state.filters.createdWithinDays) ?? periodOptions[0];
+  const periodChip = `
     <button
       type="button"
       class="chip chip-period"
-      data-period="${opt.value}"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-    ><span class="chip-label">${UyDosh.escapeHtml(opt.label)}</span></button>
+      data-period-cycle
+      aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.period.aria', lang))}: ${UyDosh.escapeHtml(currentPeriod.label)}"
+    ><span class="chip-label">${UyDosh.escapeHtml(currentPeriod.label)}</span></button>
   `;
-  }).join('');
 
   // Same icon-only-until-selected treatment as the compact row below: the
   // expanded metro row also stays as bare "M" badges and reveals the line
@@ -494,9 +492,7 @@ function renderFilters() {
               <div class="filter-controls">
                 ${genderSwitch}
                 ${photoChip}
-                <div class="chips chips-period" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.period.aria', lang))}">
-                  ${periodChips}
-                </div>
+                ${periodChip}
               </div>
             </div>
             <div class="filter-row filter-row-metro">
@@ -595,12 +591,12 @@ function renderFilters() {
     });
   });
 
-  filtersEl.querySelectorAll('[data-period]').forEach((btn) => {
+  filtersEl.querySelectorAll('[data-period-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const next = Number(btn.getAttribute('data-period'));
-      if (state.filters.createdWithinDays === next) return;
+      const currentIndex = PERIOD_OPTION_VALUES.indexOf(state.filters.createdWithinDays);
+      const nextIndex = (currentIndex + 1) % PERIOD_OPTION_VALUES.length;
       filterTapHaptic();
-      state.filters.createdWithinDays = next;
+      state.filters.createdWithinDays = PERIOD_OPTION_VALUES[nextIndex];
       persistFilters();
       logSearchEvent();
       resetAndLoad();
