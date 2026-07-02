@@ -145,6 +145,39 @@ function isRoommateNeededListing(listing) {
     || listingTypeCodeFromListing(listing) === 'roommate_needed';
 }
 
+function isRoomNeededListing(listing) {
+  return listingTypeIdFromListing(listing) === 1
+    || listingTypeCodeFromListing(listing) === 'room_needed';
+}
+
+// Branded artwork shown instead of the plain "UyDosh" placeholder for listings
+// with no photo (Telegram Mini App only), keyed by listing type + gender.
+// Add an entry here whenever a new type/gender illustration is provided; any
+// combination missing from this map just falls back to the plain "UyDosh" text.
+const NO_PHOTO_PLACEHOLDER_IMAGES = {
+  room_needed: {
+    1: '/images/no-photo-room-needed-male.jpg',
+    2: '/images/no-photo-room-needed-female.jpg',
+  },
+  roommate_needed: {
+    1: '/images/no-photo-roommate-needed-male.jpg',
+    2: '/images/no-photo-roommate-needed-female.jpg',
+  },
+};
+
+/** Works with both full listing objects and map pin objects (both expose gender + listing type). */
+function noPhotoPlaceholderImageUrl(listingOrPin) {
+  if (!listingOrPin) return '';
+  const typeCode = isRoomNeededListing(listingOrPin)
+    ? 'room_needed'
+    : isRoommateNeededListing(listingOrPin)
+      ? 'roommate_needed'
+      : '';
+  if (!typeCode) return '';
+  const gender = Number(listingOrPin.gender);
+  return NO_PHOTO_PLACEHOLDER_IMAGES[typeCode]?.[gender] ?? '';
+}
+
 /** Card/detail badge label; roommate_needed is gendered (ru: «Нужен сосед» / «Нужна соседка»). */
 function listingTypeBadgeLabel(listing, lang = getLang()) {
   if (!listing) return '';
@@ -382,9 +415,12 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
       </div>`
     : '';
 
+  const placeholderSrc = !photoSrc ? noPhotoPlaceholderImageUrl(pin) : '';
   const thumb = photoSrc
     ? `<div class="map-pin-tooltip-photo"><img loading="lazy" decoding="async" src="${escapeHtml(photoSrc)}" alt="" onerror="this.parentElement.classList.add('empty'); this.remove();" /></div>`
-    : `<div class="map-pin-tooltip-photo empty"></div>`;
+    : placeholderSrc
+      ? `<div class="map-pin-tooltip-photo placeholder"><img loading="lazy" decoding="async" src="${escapeHtml(placeholderSrc)}" alt="" /></div>`
+      : `<div class="map-pin-tooltip-photo empty"></div>`;
 
   const closeBtn = showClose
     ? `<button type="button" class="map-pin-tooltip-close" data-map-tooltip-close aria-label="${escapeHtml(t('map.tooltip.close', lang))}">×</button>`
@@ -3205,6 +3241,7 @@ window.UyDosh = {
   localizedDescription,
   photoUrl,
   primaryPhoto,
+  noPhotoPlaceholderImageUrl,
   cardPhotoDotsHtml,
   formatPrice,
   formatMapPinPrice,

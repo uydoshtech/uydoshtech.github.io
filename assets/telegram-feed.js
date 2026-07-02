@@ -628,9 +628,12 @@ function listingCardHtml(listing) {
       </div></div>`
     : '';
   const photoDots = UyDosh.cardPhotoDotsHtml(listing);
+  const placeholderSrc = !photoSrc ? UyDosh.noPhotoPlaceholderImageUrl(listing) : '';
   const thumb = photoSrc
     ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${featured}${typeBadge}${photoDots}</div>`
-    : `<div class="thumb empty">${featured}${typeBadge}</div>`;
+    : placeholderSrc
+      ? `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="${title}" />${featured}${typeBadge}</div>`
+      : `<div class="thumb empty">${featured}${typeBadge}</div>`;
 
   return `
     <a class="card" href="${UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id))}">
