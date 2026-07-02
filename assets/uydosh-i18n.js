@@ -1,0 +1,746 @@
+// UyDosh Web — uz/ru/en translation dictionary, t(), applyI18n(), the
+// language switcher UI, the light/dark theme toggle button, and escapeHtml().
+// Depends on uydosh-core.js (getLang/setLang). Load after it.
+
+const I18N = {
+  uz: {
+    'brand.tagline': 'Keling Birga Yashaymiz!',
+    'nav.listings': 'E’lonlar',
+    'nav.home': 'Asosiy',
+    'nav.privacy': 'Maxfiylik',
+    'nav.terms': 'Foydalanish shartlari',
+    'nav.delete': 'Akkauntni o‘chirish',
+    'nav.contact': 'Aloqa',
+    'feed.title': 'Yangi e’lonlar',
+    'feed.subtitle': 'Haqiqiy uy-joy va xonadoshlar — eng yangisi yuqorida.',
+    'feed.loading': 'Yuklanmoqda…',
+    'feed.empty': 'Hozircha e’lonlar yo‘q.',
+    'feed.error': 'Ma’lumotlarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring.',
+    'feed.retry': 'Qayta urinish',
+    'feed.end': 'Hammasi shu. Yangilari uchun ilovamizni oching.',
+    'feed.scrollToTop': 'Yuqoriga',
+    'card.featured': 'Yuqoriga chiqarilgan',
+    'card.privateRoom': 'Alohida xona',
+    'card.rooms': 'xona',
+    'card.perMonth': '/oy',
+    'card.type.roommateNeededMale': 'Hamkor kerak',
+    'card.type.roommateNeededFemale': 'Ayol hamkor kerak',
+    'card.genderBadge.male': 'Yigit',
+    'card.genderBadge.female': 'Qiz',
+    'detail.back': '← E’lonlar',
+    'detail.loading': 'Yuklanmoqda…',
+    'detail.notFound': 'E’lon topilmadi yoki olib tashlangan.',
+    'detail.description': 'Tavsif',
+    'detail.amenities': 'Qulayliklar',
+    'detail.openInApp': 'Ilovada ochish',
+    'detail.downloadApk': 'APK yuklab olish',
+    'detail.posted': 'Joylangan',
+    'detail.moveIn': 'Ko‘chib o‘tish',
+    'detail.type': 'Turi',
+    'detail.location': 'Joylashuv',
+    'detail.metro': 'Metro',
+    'detail.map': 'Xarita',
+    'detail.showMap': 'Xaritani ko‘rsatish',
+    'detail.hideMap': 'Xaritani yashirish',
+    'detail.openMapView': 'Xaritani ochish',
+    'detail.mapUnavailable': 'Xarita uchun joylashuv aniqlanmadi.',
+    'detail.mapLoadError': 'Xaritani yuklab bo‘lmadi.',
+    'detail.gallery.dots': 'Rasmlar',
+    'detail.gallery.photo': 'Rasm',
+    'detail.contactTelegram': 'Telegram orqali bog‘lanish',
+    'detail.contactPhone': 'Qo‘ng‘iroq qilish',
+    'view.list': 'Ro‘yxat',
+    'view.map': 'Xarita',
+    'map.loading': 'Xarita yuklanmoqda…',
+    'map.empty': 'Tanlangan filtrlarda xaritada ko‘rsatish uchun e’lon yo‘q.',
+    'map.error': 'Xaritani yuklab bo‘lmadi.',
+    'map.retry': 'Qayta urinish',
+    'map.themeToggleLight': 'Xaritani yorug‘ qilish',
+    'map.themeToggleDark': 'Xaritani tungi qilish',
+    'map.tooltip.close': 'Yopish',
+    'map.carousel.dots': 'E’lonlar',
+    'map.resultsCountAria': 'Xaritada {count} ta e’lon topildi',
+    'cta.openListings': 'E’lonlarni ko‘rish',
+    'filter.type.all': 'Hammasi',
+    'filter.type.roomNeeded': 'Xona qidiryapman',
+    'filter.type.roommateNeeded': 'Xonadosh qidiramiz',
+    'filter.type.groupForming': 'Guruh yigamiz',
+    'filter.type.aria': 'E’lon turi',
+    'filter.type.label': 'Tur:',
+    'filter.gender.label': 'Jins:',
+    'filter.gender.any': 'Hammasi',
+    'filter.gender.male': 'Erkak',
+    'filter.gender.female': 'Ayol',
+    'filter.gender.aria': 'Jins bo‘yicha filtr',
+    'filter.photo.label': 'Surat:',
+    'filter.photo.withPhoto': 'Suratli',
+    'filter.photo.aria': 'Suratli e’lonlar',
+    'filter.line.aria': 'Metro liniyasi',
+    'filter.period.30': '30 kun',
+    'filter.period.90': '90 kun',
+    'filter.period.all': 'Hammasi',
+    'filter.period.aria': 'Muddat bo‘yicha filtr',
+    'filter.collapse.aria': 'Filtrlarni yig‘ish',
+    'filter.expand.aria': 'Filtrlarni ochish',
+    'create.title': 'E’lon joylash',
+    'create.step.typeLocation': 'Tur va joy',
+    'create.step.details': 'Tafsilotlar',
+    'create.step.description': 'Matn va surat',
+    'create.step.review': 'Tekshirish',
+    'create.stepCounter': '{current} / {total}',
+    'create.listingType': 'E’lon turi',
+    'create.locationMode': 'Qidiruv hududi',
+    'create.locationMetro': 'Metro',
+    'create.locationDistrict': 'Tuman',
+    'create.metroLine': 'Metro liniyasi',
+    'create.metroStation': 'Bekat',
+    'create.metroStations': 'Bekatlar',
+    'create.district': 'Tuman',
+    'create.districts': 'Tumanlar',
+    'create.price': 'Narx',
+    'create.priceRange': 'Byudjet',
+    'create.gender': 'Kim uchun',
+    'create.amenities': 'Qulayliklar',
+    'create.moveInDate': 'Ko‘chib o‘tish',
+    'create.moveInAny': 'Istalgan sana',
+    'create.privateRoom': 'Alohida xona',
+    'create.titleLabel': 'Sarlavha',
+    'create.titlePlaceholder': 'Masalan: Yunusobod yaqinida xona',
+    'create.descriptionLabel': 'Tavsif',
+    'create.descriptionPlaceholder': 'Uy, qoidalar, qo‘shimcha shartlar…',
+    'create.photos': 'Suratlar',
+    'create.addPhoto': 'Surat qo‘shish',
+    'create.next': 'Keyingi',
+    'create.back': 'Orqaga',
+    'create.publish': 'Joylash',
+    'create.publishing': 'Joylanmoqda…',
+    'create.success': 'E’lon yuborildi!',
+    'create.successHint': 'Moderatsiyadan so‘ng e’lonlar ro‘yxatida paydo bo‘ladi.',
+    'create.successPhotoWarning': 'Ba’zi suratlarni yuklab bo‘lmadi. Ularni e’lon sahifasidan qo‘shishga urinib ko‘ring.',
+    'create.viewListing': 'E’longa o‘tish',
+    'create.backToFeed': 'E’lonlarga qaytish',
+    'create.errorAuth': 'Telegram orqali kirish amalga oshmadi. Mini ilovani qayta oching.',
+    'create.errorGeneric': 'E’lonni joylab bo‘lmadi. Qayta urinib ko‘ring.',
+    'create.errorPhotoProcess': 'Suratni qayta ishlab bo‘lmadi. Boshqa surat tanlang.',
+    'create.errorTitleRequired': 'Sarlavha majburiy',
+    'create.errorTitleTooLong': 'Sarlavha juda uzun (maks. 50 belgi)',
+    'create.errorDescriptionRequired': 'Tavsif majburiy',
+    'create.errorDescriptionTooLong': 'Tavsif juda uzun (maks. 1000 belgi)',
+    'create.errorLocationRequired': 'Joylashuvni tanlang',
+    'create.errorPriceRequired': 'Narxni ko‘rsating',
+    'create.errorGenderRequired': 'Jinsni tanlang',
+    'create.reviewType': 'Tur',
+    'create.reviewLocation': 'Joy',
+    'create.reviewPrice': 'Narx',
+    'create.reviewGender': 'Jins',
+    'create.reviewAmenities': 'Qulayliklar',
+    'create.reviewMoveIn': 'Ko‘chib o‘tish',
+    'create.reviewPrivateRoom': 'Alohida xona',
+    'create.reviewYes': 'Ha',
+    'create.reviewNo': 'Yo‘q',
+    'create.reviewNotSet': 'Ko‘rsatilmagan',
+    'create.perMonth': '/oy',
+    'create.postListing': 'E’lon joylash',
+    'create.priceMin': 'Min',
+    'create.priceMax': 'Maks',
+    'create.descriptionTemplateLabel': 'Shablon',
+    'create.descriptionTemplate.roomNeeded': 'Xona/qo‘shilish qidiryapman.\nFormat: (alohida/qo‘shilish).\nMuddat: (kirish sanasi + qancha).\nMuhim: (tinchlik/mehmon/uy hayvoni).',
+    'create.descriptionTemplate.roommateNeededMale': 'Qo‘shni yigit qidiryapman.\nFormat: (xonada 1–2).\nKim yashaydi: (necha kishi).\nSharoit: (xo‘jayinsiz/xo‘jayinli), (alohida/umumiy xona).\nMuddat: (kirish) + (qancha).',
+    'create.descriptionTemplate.roommateNeededFemale': 'Qo‘shni qiz qidiryapman.\nFormat: (xonada 1–2).\nKim yashaydi: (necha kishi).\nSharoit: (xo‘jayinsiz/xo‘jayinli), (alohida/umumiy xona).\nMuddat: (kirish) + (qancha).',
+    'create.descriptionTemplate.groupForming': 'Guruh bo‘lib ijara olish uchun odam yig‘yapmiz.\nKim kerak: (1–2 kishi, jins/yosh).\nHar kishi budjeti: (summa).\nHudud/metro: (qayerdan qidiramiz).\nFormat: (alohida/umumiy xonalar).\nKirish: (sana + muddat).\nMuhim: (tozalik/tinchlik/mehmon/uy hayvoni).',
+    'create.presetTitle.maleRoommate': '#YigitXonadoshQidiramiz',
+    'create.presetTitle.femaleRoommate': '#QizXonadoshQidiramiz',
+    'create.presetTitle.maleRoom': '#YigitXonadonQidiramiz',
+    'create.presetTitle.femaleRoom': '#QizXonadonQidiramiz',
+    'create.presetTitle.groupForming': 'Guruh Yigamiz',
+  },
+  ru: {
+    'brand.tagline': 'Давайте Жить Вместе!',
+    'nav.listings': 'Объявления',
+    'nav.home': 'Главная',
+    'nav.privacy': 'Конфиденциальность',
+    'nav.terms': 'Условия',
+    'nav.delete': 'Удалить аккаунт',
+    'nav.contact': 'Контакты',
+    'feed.title': 'Свежие объявления',
+    'feed.subtitle': 'Реальное жильё и соседи — самые новые сверху.',
+    'feed.loading': 'Загрузка…',
+    'feed.empty': 'Пока нет объявлений.',
+    'feed.error': 'Не удалось загрузить данные. Попробуйте позже.',
+    'feed.retry': 'Попробовать ещё раз',
+    'feed.end': 'Это всё. За новыми — в приложение.',
+    'feed.scrollToTop': 'Наверх',
+    'card.featured': 'В топе',
+    'card.privateRoom': 'Отдельная комната',
+    'card.rooms': 'комн.',
+    'card.perMonth': '/мес',
+    'card.type.roommateNeededMale': 'Нужен сосед',
+    'card.type.roommateNeededFemale': 'Нужна соседка',
+    'card.genderBadge.male': 'Парня',
+    'card.genderBadge.female': 'Девушка',
+    'detail.back': '← Объявления',
+    'detail.loading': 'Загрузка…',
+    'detail.notFound': 'Объявление не найдено или удалено.',
+    'detail.description': 'Описание',
+    'detail.amenities': 'Удобства',
+    'detail.openInApp': 'Открыть в приложении',
+    'detail.downloadApk': 'Скачать APK',
+    'detail.posted': 'Опубликовано',
+    'detail.moveIn': 'Заселение',
+    'detail.type': 'Тип',
+    'detail.location': 'Район',
+    'detail.metro': 'Метро',
+    'detail.map': 'Карта',
+    'detail.showMap': 'Показать карту',
+    'detail.hideMap': 'Скрыть карту',
+    'detail.openMapView': 'Открыть карту',
+    'detail.mapUnavailable': 'Не удалось определить местоположение для карты.',
+    'detail.mapLoadError': 'Не удалось загрузить карту.',
+    'detail.gallery.dots': 'Фото',
+    'detail.gallery.photo': 'Фото',
+    'detail.contactTelegram': 'Telegram',
+    'detail.contactPhone': 'Позвонить',
+    'view.list': 'Список',
+    'view.map': 'Карта',
+    'map.loading': 'Загрузка карты…',
+    'map.empty': 'Нет объявлений для карты с выбранными фильтрами.',
+    'map.error': 'Не удалось загрузить карту.',
+    'map.retry': 'Попробовать ещё раз',
+    'map.themeToggleLight': 'Сделать карту светлой',
+    'map.themeToggleDark': 'Сделать карту тёмной',
+    'map.tooltip.close': 'Закрыть',
+    'map.carousel.dots': 'Объявления',
+    'map.resultsCountAria': 'На карте найдено объявлений: {count}',
+    'cta.openListings': 'Смотреть объявления',
+    'filter.type.all': 'Все',
+    'filter.type.roomNeeded': 'Ищу комнату',
+    'filter.type.roommateNeeded': 'Ищем соседа',
+    'filter.type.groupForming': 'Собираем группу',
+    'filter.type.aria': 'Тип объявления',
+    'filter.type.label': 'Тип:',
+    'filter.gender.label': 'Пол:',
+    'filter.gender.any': 'Любой',
+    'filter.gender.male': 'М',
+    'filter.gender.female': 'Ж',
+    'filter.gender.aria': 'Фильтр по полу',
+    'filter.photo.label': 'Фото:',
+    'filter.photo.withPhoto': 'С фото',
+    'filter.photo.aria': 'Только с фото',
+    'filter.line.aria': 'Линия метро',
+    'filter.period.30': '30 дней',
+    'filter.period.90': '90 дней',
+    'filter.period.all': 'Все',
+    'filter.period.aria': 'Фильтр по периоду',
+    'filter.collapse.aria': 'Свернуть фильтры',
+    'filter.expand.aria': 'Развернуть фильтры',
+    'create.title': 'Разместить объявление',
+    'create.step.typeLocation': 'Тип и место',
+    'create.step.details': 'Детали',
+    'create.step.description': 'Текст и фото',
+    'create.step.review': 'Проверка',
+    'create.stepCounter': '{current} / {total}',
+    'create.listingType': 'Тип объявления',
+    'create.locationMode': 'Зона поиска',
+    'create.locationMetro': 'Метро',
+    'create.locationDistrict': 'Район',
+    'create.metroLine': 'Линия метро',
+    'create.metroStation': 'Станция',
+    'create.metroStations': 'Станции',
+    'create.district': 'Район',
+    'create.districts': 'Районы',
+    'create.price': 'Цена',
+    'create.priceRange': 'Бюджет',
+    'create.gender': 'Для кого',
+    'create.amenities': 'Удобства',
+    'create.moveInDate': 'Заселение',
+    'create.moveInAny': 'Любая дата',
+    'create.privateRoom': 'Отдельная комната',
+    'create.titleLabel': 'Заголовок',
+    'create.titlePlaceholder': 'Например: Комната у метро Юнусабад',
+    'create.descriptionLabel': 'Описание',
+    'create.descriptionPlaceholder': 'О квартире, правилах, условиях…',
+    'create.photos': 'Фото',
+    'create.addPhoto': 'Добавить фото',
+    'create.next': 'Далее',
+    'create.back': 'Назад',
+    'create.publish': 'Опубликовать',
+    'create.publishing': 'Публикация…',
+    'create.success': 'Объявление отправлено!',
+    'create.successHint': 'После модерации оно появится в ленте.',
+    'create.successPhotoWarning': 'Не удалось загрузить некоторые фото. Попробуйте добавить их со страницы объявления.',
+    'create.viewListing': 'Открыть объявление',
+    'create.backToFeed': 'К объявлениям',
+    'create.errorAuth': 'Не удалось войти через Telegram. Откройте мини-приложение заново.',
+    'create.errorGeneric': 'Не удалось опубликовать. Попробуйте ещё раз.',
+    'create.errorPhotoProcess': 'Не удалось обработать фото. Выберите другое изображение.',
+    'create.errorTitleRequired': 'Укажите заголовок',
+    'create.errorTitleTooLong': 'Заголовок слишком длинный (макс. 50 символов)',
+    'create.errorDescriptionRequired': 'Укажите описание',
+    'create.errorDescriptionTooLong': 'Описание слишком длинное (макс. 1000 символов)',
+    'create.errorLocationRequired': 'Выберите местоположение',
+    'create.errorPriceRequired': 'Укажите цену',
+    'create.errorGenderRequired': 'Выберите пол',
+    'create.reviewType': 'Тип',
+    'create.reviewLocation': 'Место',
+    'create.reviewPrice': 'Цена',
+    'create.reviewGender': 'Пол',
+    'create.reviewAmenities': 'Удобства',
+    'create.reviewMoveIn': 'Заселение',
+    'create.reviewPrivateRoom': 'Отдельная комната',
+    'create.reviewYes': 'Да',
+    'create.reviewNo': 'Нет',
+    'create.reviewNotSet': 'Не указано',
+    'create.perMonth': '/мес',
+    'create.postListing': 'Разместить',
+    'create.priceMin': 'Мин',
+    'create.priceMax': 'Макс',
+    'create.descriptionTemplateLabel': 'Шаблон',
+    'create.descriptionTemplate.roomNeeded': 'Ищу комнату/подселение.\nФормат: (отдельная/подселение).\nСрок: (заезд + на сколько).\nВажно: (тихо/гости/животные).',
+    'create.descriptionTemplate.roommateNeededMale': 'Ищу соседа.\nФормат: (1–2 в комнате).\nКто уже живёт: (сколько человек).\nУсловия: (с хозяйкой/без), (отдельная/общая комната).\nСрок: (заезд) + (на сколько).',
+    'create.descriptionTemplate.roommateNeededFemale': 'Ищу соседку.\nФормат: (1–2 в комнате).\nКто уже живёт: (сколько человек).\nУсловия: (с хозяйкой/без), (отдельная/общая комната).\nСрок: (заезд) + (на сколько).',
+    'create.descriptionTemplate.groupForming': 'Собираем группу для совместной аренды.\nКого ищем: (1–2 человека, пол/возраст).\nБюджет на человека: (сумма).\nРайон/метро: (где ищем).\nФормат: (отдельные/общие комнаты).\nЗаезд: (дата + срок).\nВажно: (чистота/тишина/гости/животные).',
+    'create.presetTitle.maleRoommate': '#ИщемСоседа',
+    'create.presetTitle.femaleRoommate': '#ИщемСоседку',
+    'create.presetTitle.maleRoom': '#ИщуКомнату',
+    'create.presetTitle.femaleRoom': '#ИщуКомнату',
+    'create.presetTitle.groupForming': 'Собираем Группу',
+  },
+  en: {
+    'brand.tagline': "Let's Live Together!",
+    'nav.listings': 'Listings',
+    'nav.home': 'Home',
+    'nav.privacy': 'Privacy',
+    'nav.terms': 'Terms',
+    'nav.delete': 'Delete account',
+    'nav.contact': 'Contact',
+    'feed.title': 'Fresh listings',
+    'feed.subtitle': 'Real rentals and roommates — newest first.',
+    'feed.loading': 'Loading…',
+    'feed.empty': 'No listings yet.',
+    'feed.error': 'Could not load listings. Please try again later.',
+    'feed.retry': 'Try again',
+    'feed.end': 'That’s everything. Get the app for alerts on new ones.',
+    'feed.scrollToTop': 'Scroll to top',
+    'card.featured': 'Featured',
+    'card.privateRoom': 'Private room',
+    'card.rooms': 'rooms',
+    'card.perMonth': '/mo',
+    'card.type.roommateNeededMale': 'Roommate needed',
+    'card.type.roommateNeededFemale': 'Female roommate needed',
+    'card.genderBadge.male': 'Guy',
+    'card.genderBadge.female': 'Girl',
+    'detail.back': '← Listings',
+    'detail.loading': 'Loading…',
+    'detail.notFound': 'Listing not found or removed.',
+    'detail.description': 'Description',
+    'detail.amenities': 'Amenities',
+    'detail.openInApp': 'Open in app',
+    'detail.downloadApk': 'Download APK',
+    'detail.posted': 'Posted',
+    'detail.moveIn': 'Move-in',
+    'detail.type': 'Type',
+    'detail.location': 'Area',
+    'detail.metro': 'Metro',
+    'detail.map': 'Map',
+    'detail.showMap': 'Show map',
+    'detail.hideMap': 'Hide map',
+    'detail.openMapView': 'Open map view',
+    'detail.mapUnavailable': 'Could not determine a map location.',
+    'detail.mapLoadError': 'Could not load the map.',
+    'detail.gallery.dots': 'Photos',
+    'detail.gallery.photo': 'Photo',
+    'detail.contactTelegram': 'Contact on Telegram',
+    'detail.contactPhone': 'Call',
+    'view.list': 'List',
+    'view.map': 'Map',
+    'map.loading': 'Loading map…',
+    'map.empty': 'No listings to show on the map for these filters.',
+    'map.error': 'Could not load the map.',
+    'map.retry': 'Try again',
+    'map.themeToggleLight': 'Make map light',
+    'map.themeToggleDark': 'Make map dark',
+    'map.tooltip.close': 'Close',
+    'map.carousel.dots': 'Listings',
+    'map.resultsCountAria': 'Found {count} listings on the map',
+    'cta.openListings': 'Browse listings',
+    'filter.type.all': 'All',
+    'filter.type.roomNeeded': 'Need room',
+    'filter.type.roommateNeeded': 'Need roommate',
+    'filter.type.groupForming': 'Forming group',
+    'filter.type.aria': 'Listing type',
+    'filter.type.label': 'Type:',
+    'filter.gender.label': 'Gender:',
+    'filter.gender.any': 'Any',
+    'filter.gender.male': 'M',
+    'filter.gender.female': 'F',
+    'filter.gender.aria': 'Gender filter',
+    'filter.photo.label': 'Photo:',
+    'filter.photo.withPhoto': 'Photos',
+    'filter.photo.aria': 'Listings with photos',
+    'filter.line.aria': 'Metro line',
+    'filter.period.30': '30 days',
+    'filter.period.90': '90 days',
+    'filter.period.all': 'All time',
+    'filter.period.aria': 'Time period filter',
+    'filter.collapse.aria': 'Collapse filters',
+    'filter.expand.aria': 'Expand filters',
+    'create.title': 'Post a listing',
+    'create.step.typeLocation': 'Type & area',
+    'create.step.details': 'Details',
+    'create.step.description': 'Text & photos',
+    'create.step.review': 'Review',
+    'create.stepCounter': '{current} / {total}',
+    'create.listingType': 'Listing type',
+    'create.locationMode': 'Search area',
+    'create.locationMetro': 'Metro',
+    'create.locationDistrict': 'District',
+    'create.metroLine': 'Metro line',
+    'create.metroStation': 'Station',
+    'create.metroStations': 'Stations',
+    'create.district': 'District',
+    'create.districts': 'Districts',
+    'create.price': 'Price',
+    'create.priceRange': 'Budget',
+    'create.gender': 'For',
+    'create.amenities': 'Amenities',
+    'create.moveInDate': 'Move-in',
+    'create.moveInAny': 'Any date',
+    'create.privateRoom': 'Private room',
+    'create.titleLabel': 'Title',
+    'create.titlePlaceholder': 'e.g. Room near Yunusabad metro',
+    'create.descriptionLabel': 'Description',
+    'create.descriptionPlaceholder': 'About the home, rules, conditions…',
+    'create.photos': 'Photos',
+    'create.addPhoto': 'Add photo',
+    'create.next': 'Next',
+    'create.back': 'Back',
+    'create.publish': 'Publish',
+    'create.publishing': 'Publishing…',
+    'create.success': 'Listing submitted!',
+    'create.successHint': 'It will appear in the feed after moderation.',
+    'create.successPhotoWarning': 'Some photos could not be uploaded. Try adding them from the listing page.',
+    'create.viewListing': 'View listing',
+    'create.backToFeed': 'Back to feed',
+    'create.errorAuth': 'Telegram sign-in failed. Reopen the mini app.',
+    'create.errorGeneric': 'Could not publish. Please try again.',
+    'create.errorPhotoProcess': 'Could not process the photo. Choose another image.',
+    'create.errorTitleRequired': 'Title is required',
+    'create.errorTitleTooLong': 'Title is too long (max 50 characters)',
+    'create.errorDescriptionRequired': 'Description is required',
+    'create.errorDescriptionTooLong': 'Description is too long (max 1000 characters)',
+    'create.errorLocationRequired': 'Select a location',
+    'create.errorPriceRequired': 'Set a price',
+    'create.errorGenderRequired': 'Select gender',
+    'create.reviewType': 'Type',
+    'create.reviewLocation': 'Location',
+    'create.reviewPrice': 'Price',
+    'create.reviewGender': 'Gender',
+    'create.reviewAmenities': 'Amenities',
+    'create.reviewMoveIn': 'Move-in',
+    'create.reviewPrivateRoom': 'Private room',
+    'create.reviewYes': 'Yes',
+    'create.reviewNo': 'No',
+    'create.reviewNotSet': 'Not set',
+    'create.perMonth': '/mo',
+    'create.postListing': 'Post listing',
+    'create.priceMin': 'Min',
+    'create.priceMax': 'Max',
+    'create.descriptionTemplateLabel': 'Template',
+    'create.descriptionTemplate.roomNeeded': 'Looking for a room/flatshare.\nFormat: (private/shared).\nTimeline: (move-in + duration).\nMust-haves: (quiet/guests/pets).',
+    'create.descriptionTemplate.roommateNeededMale': 'Looking for a male roommate.\nFormat: (1–2 per room).\nWho lives there: (how many people).\nConditions: (with/without landlord), (private/shared room).\nTimeline: (move-in + duration).',
+    'create.descriptionTemplate.roommateNeededFemale': 'Looking for a female roommate.\nFormat: (1–2 per room).\nWho lives there: (how many people).\nConditions: (with/without landlord), (private/shared room).\nTimeline: (move-in + duration).',
+    'create.descriptionTemplate.groupForming': 'Forming a group to rent together.\nLooking for: (1–2 people, gender/age).\nBudget per person: (amount).\nArea/metro: (where to search).\nFormat: (private/shared rooms).\nMove-in: (date + duration).\nImportant: (cleanliness/quiet/guests/pets).',
+    'create.presetTitle.maleRoommate': '#NeedRoommate',
+    'create.presetTitle.femaleRoommate': '#NeedRoommate',
+    'create.presetTitle.maleRoom': '#NeedRoom',
+    'create.presetTitle.femaleRoom': '#NeedRoom',
+    'create.presetTitle.groupForming': 'Forming Group',
+  },
+};
+
+function t(key, lang = getLang()) {
+  return I18N[lang]?.[key] ?? I18N.uz[key] ?? key;
+}
+
+function ensureLangSwitcherStyles() {
+  if (document.getElementById(LANG_SWITCHER_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = LANG_SWITCHER_STYLE_ID;
+  style.textContent = `
+    .lang.lang-dropdown {
+      position: relative;
+      display: inline-flex;
+      padding: 4px;
+      gap: 0;
+      border-radius: 999px;
+      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      background: rgba(127, 127, 127, 0.08);
+      flex-shrink: 0;
+    }
+    .lang.lang-dropdown > .lang-trigger {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 9px 6px 8px;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .lang.lang-dropdown > .lang-trigger:hover {
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+    }
+    .lang.lang-dropdown > .lang-trigger .flag {
+      font-size: 14px;
+      line-height: 1;
+    }
+    .lang.lang-dropdown .lang-chevron {
+      display: inline-flex;
+      align-items: center;
+      opacity: 0.65;
+      transition: transform 0.15s ease;
+    }
+    .lang.lang-dropdown.lang-open .lang-chevron {
+      transform: rotate(180deg);
+    }
+    .lang.lang-dropdown .lang-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 148px;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      background: var(--card, rgba(15, 23, 42, 0.98));
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      z-index: 100;
+    }
+    .lang.lang-dropdown .lang-menu button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: normal;
+    }
+    .lang.lang-dropdown .lang-menu button:hover {
+      background: rgba(127, 127, 127, 0.12);
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+    }
+    .lang.lang-dropdown .lang-menu button[aria-selected="true"] {
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+      background: rgba(127, 127, 127, 0.16);
+    }
+    .lang.lang-dropdown .lang-menu .lang-label {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function buildLangDropdown(group) {
+  if (group.querySelector('.lang-trigger')) return group;
+  group.classList.add('lang-dropdown');
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'lang-trigger';
+  trigger.setAttribute('aria-haspopup', 'listbox');
+  trigger.setAttribute('aria-expanded', 'false');
+
+  const flagSpan = document.createElement('span');
+  flagSpan.className = 'flag';
+  flagSpan.setAttribute('aria-hidden', 'true');
+
+  const chevron = document.createElement('span');
+  chevron.className = 'lang-chevron';
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.innerHTML =
+    '<svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true">' +
+    '<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>' +
+    '</svg>';
+
+  trigger.append(flagSpan, chevron);
+
+  const menu = document.createElement('div');
+  menu.className = 'lang-menu';
+  menu.setAttribute('role', 'listbox');
+  menu.hidden = true;
+
+  for (const lang of LANGS) {
+    const meta = LANG_META[lang];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('data-lang', lang);
+    btn.setAttribute('role', 'option');
+    btn.setAttribute('aria-label', meta.label);
+    btn.innerHTML =
+      `<span class="flag" aria-hidden="true">${meta.flag}</span>` +
+      `<span class="lang-label">${meta.label}</span>`;
+    menu.appendChild(btn);
+  }
+
+  group.replaceChildren(trigger, menu);
+  return group;
+}
+
+function syncLangDropdown(group, lang) {
+  const meta = LANG_META[lang];
+  if (!meta) return;
+  const trigger = group.querySelector('.lang-trigger');
+  if (!trigger) return;
+  const flag = trigger.querySelector('.flag');
+  if (flag) flag.textContent = meta.flag;
+  trigger.setAttribute('aria-label', meta.label);
+  for (const opt of group.querySelectorAll('.lang-menu button[data-lang]')) {
+    opt.setAttribute(
+      'aria-selected',
+      opt.getAttribute('data-lang') === lang ? 'true' : 'false',
+    );
+  }
+}
+
+function closeLangDropdown(group) {
+  const menu = group.querySelector('.lang-menu');
+  const trigger = group.querySelector('.lang-trigger');
+  if (!menu || !trigger) return;
+  menu.hidden = true;
+  trigger.setAttribute('aria-expanded', 'false');
+  group.classList.remove('lang-open');
+}
+
+function applyI18n(root = document) {
+  const lang = getLang();
+  root.documentElement && (root.documentElement.lang = lang);
+  for (const el of root.querySelectorAll('[data-i18n]')) {
+    const key = el.getAttribute('data-i18n');
+    const attr = el.getAttribute('data-i18n-attr');
+    const value = t(key, lang);
+    if (attr) el.setAttribute(attr, value);
+    else el.textContent = value;
+  }
+  for (const group of root.querySelectorAll('.lang.lang-dropdown')) {
+    syncLangDropdown(group, lang);
+  }
+}
+
+function initLangSwitcher() {
+  ensureLangSwitcherStyles();
+  for (const group of document.querySelectorAll('.lang')) {
+    buildLangDropdown(group);
+  }
+
+  if (!document.documentElement.dataset.uydoshLangBound) {
+    document.documentElement.dataset.uydoshLangBound = '1';
+    document.addEventListener('click', (e) => {
+      for (const group of document.querySelectorAll('.lang.lang-open')) {
+        if (!group.contains(e.target)) closeLangDropdown(group);
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      for (const group of document.querySelectorAll('.lang.lang-open')) {
+        closeLangDropdown(group);
+      }
+    });
+  }
+
+  for (const group of document.querySelectorAll('.lang.lang-dropdown')) {
+    const trigger = group.querySelector('.lang-trigger');
+    const menu = group.querySelector('.lang-menu');
+    if (!trigger || !menu || trigger.dataset.bound) continue;
+    trigger.dataset.bound = '1';
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = group.classList.contains('lang-open');
+      for (const other of document.querySelectorAll('.lang.lang-open')) {
+        closeLangDropdown(other);
+      }
+      if (!open) {
+        menu.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+        group.classList.add('lang-open');
+      }
+    });
+    for (const btn of group.querySelectorAll('.lang-menu button[data-lang]')) {
+      if (btn.dataset.bound) continue;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setLang(btn.getAttribute('data-lang'));
+        applyI18n();
+        closeLangDropdown(group);
+      });
+    }
+  }
+  applyI18n();
+}
+
+/** Sun/moon glyph for the header map-theme toggle (matches the old map control's icon). */
+function themeToggleButtonIconSvg(isDark) {
+  return isDark
+    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>`
+    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>`;
+}
+
+/** Sync every header theme-toggle button's icon/label with the current map theme. */
+function refreshThemeToggleButtons() {
+  const isDark = prefersDarkMapPins();
+  // Button shows the *target* mode's icon, so the label names the mode it switches to.
+  const label = t(isDark ? 'map.themeToggleLight' : 'map.themeToggleDark');
+  for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
+    btn.innerHTML = themeToggleButtonIconSvg(isDark);
+    btn.setAttribute('aria-label', label);
+    btn.title = label;
+  }
+}
+
+/** Wire up header theme-toggle button(s) — mirrors the map's old sun/moon control. */
+function initThemeToggle() {
+  for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
+    if (btn.dataset.bound) continue;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+      toggleManualTheme();
+    });
+  }
+  refreshThemeToggleButtons();
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('uydosh:themechange', refreshThemeToggleButtons);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+Object.assign(window.UyDosh, {
+  applyI18n,
+  initLangSwitcher,
+  initThemeToggle,
+  escapeHtml,
+  t,
+});

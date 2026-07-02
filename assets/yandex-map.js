@@ -611,7 +611,7 @@
   }
 
   // The light/dark toggle now lives in the app header (see initThemeToggle() in
-  // uydosh-web.js), not as a map control — this listener just keeps the map tiles
+  // uydosh-i18n.js), not as a map control — this listener just keeps the map tiles
   // and pin bitmaps in sync whenever that header button flips the theme.
   if (typeof document !== 'undefined') {
     document.addEventListener('uydosh:themechange', () => {

@@ -1,7 +1,7 @@
 UyDosh.initTelegramMiniApp();
 
 // LISTING_TYPE_ROOM_NEEDED / LISTING_TYPE_ROOMMATE_NEEDED are already global consts
-// declared by uydosh-web.js (loaded before this file) — do not redeclare them here,
+// declared by uydosh-icons.js (loaded before this file) — do not redeclare them here,
 // classic <script> top-level `const` lives in a shared lexical scope and a second
 // `const` with the same name throws a SyntaxError that aborts this entire script.
 const LOCATION_MODE_METRO = 'metro';

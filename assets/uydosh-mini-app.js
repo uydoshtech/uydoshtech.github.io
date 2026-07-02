@@ -1,0 +1,632 @@
+// UyDosh Web — Mini App bootstrap: URL routing helpers, Telegram theme/safe-area
+// handling, the mini-app header, and Firebase Analytics wiring.
+// Depends on all other uydosh-*.js modules. Load last.
+
+const MINI_APP_FEED_PATH = '/telegram/';
+
+/** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
+function isMiniApp() {
+  if (isMiniAppPage()) return true;
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.initData && String(tg.initData).length > 0) return true;
+    if (tg?.platform && tg.platform !== 'unknown') return true;
+  } catch { /* ignore */ }
+  return false;
+}
+
+function listingPageUrl(id) {
+  const lid = String(id ?? '').trim();
+  if (!lid) return MINI_APP_FEED_PATH;
+  if (isMiniApp()) {
+    return `/listing.html?id=${encodeURIComponent(lid)}&mini=1`;
+  }
+  return `/listing/${encodeURIComponent(lid)}`;
+}
+
+function feedPageUrl() {
+  return isMiniApp() ? MINI_APP_FEED_PATH : 'listings.html';
+}
+
+function createPageUrl() {
+  return MINI_APP_CREATE_PATH;
+}
+
+function applyTelegramTheme(tg) {
+  const p = tg?.themeParams;
+  if (!p) return;
+  const root = document.documentElement;
+  if (p.bg_color) root.style.setProperty('--tg-bg', p.bg_color);
+  if (p.text_color) root.style.setProperty('--tg-fg', p.text_color);
+  if (p.hint_color) root.style.setProperty('--tg-muted', p.hint_color);
+  if (p.button_color) root.style.setProperty('--tg-btn', p.button_color);
+  if (p.secondary_bg_color) root.style.setProperty('--tg-card', p.secondary_bg_color);
+}
+
+const MINI_APP_SAFE_AREA_STYLE_ID = 'uydosh-mini-app-safe-area-v2';
+const TELEGRAM_MOBILE_PLATFORMS = new Set(['ios', 'android', 'android_x']);
+const TELEGRAM_DESKTOP_PLATFORMS = new Set(['tdesktop', 'macos', 'unigram', 'weba', 'webk']);
+/** Minimum space below Telegram mobile header chrome (Close + title bar). */
+const TELEGRAM_MOBILE_HEADER_MIN_TOP = 72;
+/** Minimum left inset so brand/logo clears the floating Close control. */
+const TELEGRAM_MOBILE_HEADER_MIN_LEFT = 100;
+/** Minimum right inset so lang switcher clears Telegram menu controls. */
+const TELEGRAM_MOBILE_HEADER_MIN_RIGHT = 60;
+
+function normalizeTelegramPlatform(tg) {
+  return String(tg?.platform || 'unknown').toLowerCase();
+}
+
+/** True when the Mini App runs inside Telegram iOS/Android. */
+function isTelegramMobile(tg = window.Telegram?.WebApp) {
+  return TELEGRAM_MOBILE_PLATFORMS.has(normalizeTelegramPlatform(tg));
+}
+
+/** True when the Mini App runs inside Telegram Desktop or Web. */
+function isTelegramDesktop(tg = window.Telegram?.WebApp) {
+  return TELEGRAM_DESKTOP_PLATFORMS.has(normalizeTelegramPlatform(tg));
+}
+
+function applyTelegramPlatformClass(tg) {
+  const root = document.documentElement;
+  root.classList.remove('mini-app-mobile', 'mini-app-desktop');
+  if (!tg) return;
+  if (isTelegramMobile(tg)) {
+    root.classList.add('mini-app-mobile');
+  } else if (isTelegramDesktop(tg)) {
+    root.classList.add('mini-app-desktop');
+  }
+}
+
+/** Sum device + Telegram UI insets (see core.telegram.org/bots/webapps). */
+function sumTelegramInsets(device = {}, content = {}) {
+  return {
+    top: (Number(device.top) || 0) + (Number(content.top) || 0),
+    right: (Number(device.right) || 0) + (Number(content.right) || 0),
+    bottom: (Number(device.bottom) || 0) + (Number(content.bottom) || 0),
+    left: (Number(device.left) || 0) + (Number(content.left) || 0),
+  };
+}
+
+function applyTelegramSafeAreaInsets(tg) {
+  const root = document.documentElement;
+  const device = tg?.safeAreaInset ?? {};
+  const content = tg?.contentSafeAreaInset ?? {};
+  const insets = sumTelegramInsets(device, content);
+  // Sum device + content insets (Telegram docs); content-only top under-reports on mobile.
+  let top = insets.top || 0;
+  let right = insets.right || 0;
+  const bottom = insets.bottom || 0;
+  let left = insets.left || 0;
+  if (tg && isTelegramMobile(tg)) {
+    top = Math.max(top, TELEGRAM_MOBILE_HEADER_MIN_TOP);
+    left = Math.max(left, TELEGRAM_MOBILE_HEADER_MIN_LEFT);
+    right = Math.max(right, TELEGRAM_MOBILE_HEADER_MIN_RIGHT);
+  }
+  applyTelegramPlatformClass(tg);
+  root.style.setProperty('--uydosh-tg-inset-top', `${top}px`);
+  root.style.setProperty('--uydosh-tg-sticky-top', `${top}px`);
+  root.style.setProperty('--uydosh-tg-filters-sticky-top', `${top}px`);
+  root.style.setProperty('--uydosh-tg-inset-right', `${right}px`);
+  root.style.setProperty('--uydosh-tg-inset-bottom', `${bottom}px`);
+  root.style.setProperty('--uydosh-tg-inset-left', `${left}px`);
+}
+
+function parseMiniAppHeaderOptions(el) {
+  const options = {};
+  const subtitle = el?.getAttribute('data-uydosh-header-subtitle');
+  if (subtitle) options.subtitleKey = subtitle;
+  if (el?.getAttribute('data-uydosh-header-brand-link') === 'false') {
+    options.brandLink = false;
+  }
+  const iconSrc = el?.getAttribute('data-uydosh-header-icon');
+  if (iconSrc) options.iconSrc = iconSrc;
+  return options;
+}
+
+/** Shared Telegram mini-app header markup (brand + lang slot). */
+function miniAppHeaderHtml(options = {}) {
+  const {
+    subtitleKey = 'brand.tagline',
+    brandLink = true,
+    iconSrc = '/apple-touch-icon.png',
+  } = options;
+  const brandContent =
+    `<img src="${escapeHtml(iconSrc)}" width="44" height="44" alt="UyDosh" />` +
+    `<div><strong>UyDosh</strong><span data-i18n="${escapeHtml(subtitleKey)}"></span></div>`;
+  const brand = brandLink
+    ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
+    : `<div class="brand">${brandContent}</div>`;
+  const themeToggle = `<button type="button" class="theme-toggle-btn" data-uydosh-theme-toggle></button>`;
+  return `${brand}<div class="header-actions">${themeToggle}<div class="lang" role="group" aria-label="Language"></div></div>`;
+}
+
+/** Inject the shared mini-app header into a <header> or mount element. */
+function mountMiniAppHeader(target, options = {}) {
+  const header = target?.tagName === 'HEADER' ? target : target?.closest?.('header');
+  if (!header) return null;
+  header.innerHTML = miniAppHeaderHtml(options);
+  header.classList.add('uydosh-mini-app-header');
+  header.dataset.uydoshHeaderMounted = '1';
+  applyI18n(header);
+  initThemeToggle();
+  syncMobileHeaderLayout();
+  return header;
+}
+
+function mountAllMiniAppHeaders() {
+  for (const el of document.querySelectorAll('[data-uydosh-mini-app-header]')) {
+    if (el.dataset.uydoshHeaderMounted === '1') continue;
+    mountMiniAppHeader(el, parseMiniAppHeaderOptions(el));
+  }
+}
+
+/** Keep brand + lang in one header row on phone (undo legacy relocation). */
+function syncMobileHeaderLayout() {
+  if (!isTelegramMobile()) return;
+  const header = document.querySelector('header');
+  if (!header) return;
+  header.removeAttribute('hidden');
+  for (const row of document.querySelectorAll('.mobile-lang-row')) {
+    const lang = row.querySelector('.lang');
+    if (lang && !header.querySelector('.lang')) {
+      const nav = header.querySelector('nav');
+      (nav || header).appendChild(lang);
+    }
+    row.remove();
+  }
+  const orphanLang = document.querySelector('.feed-sticky > .lang, .wrap > .lang');
+  if (orphanLang && !header.contains(orphanLang)) {
+    const nav = header.querySelector('nav');
+    (nav || header).appendChild(orphanLang);
+  }
+}
+
+function ensureMiniAppSafeAreaStyles() {
+  let style = document.getElementById(MINI_APP_SAFE_AREA_STYLE_ID);
+  if (!style) {
+    style = document.createElement('style');
+    style.id = MINI_APP_SAFE_AREA_STYLE_ID;
+    document.head.appendChild(style);
+  }
+  style.textContent = `
+    html.mini-app {
+      --bg: var(--tg-bg, #061525);
+      --fg: var(--tg-fg, rgba(255, 255, 255, 0.92));
+      --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
+      --card: var(--tg-card, rgba(255, 255, 255, 0.06));
+    }
+    html.mini-app .wrap {
+      max-width: none;
+      margin: 0;
+      padding-top: 0;
+      padding-bottom: 32px;
+      --feed-wrap-gutter: max(5px, env(safe-area-inset-left, 0px));
+      padding-left: var(--feed-wrap-gutter);
+      padding-right: max(5px, env(safe-area-inset-right, 0px));
+    }
+    html.mini-app .grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    html.mini-app body {
+      background: var(--bg);
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px));
+    }
+    html.mini-app header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      gap: 12px;
+      /* Safe-area inset lives OUTSIDE the bordered box (margin), not inside it (padding),
+         so the tile's border wraps only the brand row and never stretches up to
+         enclose Telegram's own status bar / native Close button chrome. */
+      margin-top: var(--uydosh-tg-inset-top, var(--tg-content-safe-area-inset-top, 0px));
+      margin-left: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
+      margin-right: calc(var(--feed-content-gutter, 25px) - max(5px, env(safe-area-inset-right, 0px)));
+      padding: 12px 14px;
+      min-height: 44px;
+      box-sizing: border-box;
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+    }
+    html.mini-app-desktop header {
+      margin-top: var(--uydosh-tg-inset-top, 0px);
+    }
+    html.mini-app .feed-sticky {
+      margin-left: calc(-1 * var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
+      margin-right: calc(-1 * max(5px, env(safe-area-inset-right, 0px)));
+      padding-top: 8px;
+      padding-bottom: 0;
+      box-sizing: border-box;
+    }
+    html.mini-app-desktop .feed-sticky {
+      padding-left: var(--feed-content-gutter, 25px);
+      padding-right: var(--feed-content-gutter, 25px);
+    }
+    html.mini-app-mobile header {
+      align-items: center;
+      margin-top: var(--uydosh-tg-inset-top, ${TELEGRAM_MOBILE_HEADER_MIN_TOP}px);
+    }
+    html.mini-app-mobile .feed-sticky {
+      top: var(--uydosh-tg-filters-sticky-top, var(--uydosh-tg-sticky-top, ${TELEGRAM_MOBILE_HEADER_MIN_TOP}px));
+      padding-left: calc(var(--feed-content-gutter, 25px) + var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
+      padding-right: calc(var(--feed-content-gutter, 25px) + max(5px, env(safe-area-inset-right, 0px)));
+    }
+    html.mini-app header nav {
+      display: flex;
+      align-items: center;
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 10px;
+    }
+    html.mini-app .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 0 1 auto;
+      text-decoration: none;
+    }
+    html.mini-app .brand:hover { text-decoration: none; }
+    html.mini-app .brand img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      box-shadow: none;
+      background: transparent;
+    }
+    html.mini-app .brand strong {
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+    html.mini-app .brand span {
+      color: var(--muted);
+      font-size: 13px;
+      display: block;
+    }
+    html.mini-app .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    html.mini-app .lang.lang-dropdown > .lang-trigger {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+    html.mini-app .theme-toggle-btn {
+      appearance: none;
+      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    html.mini-app .theme-toggle-btn:hover {
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+    }
+    html.mini-app .theme-toggle-btn:active {
+      opacity: 0.85;
+    }
+    html.mini-app .theme-toggle-btn svg {
+      display: block;
+    }
+    html.mini-app [data-hide-in-mini-app] {
+      display: none !important;
+    }
+    html.mini-app.has-detail-contact .wrap {
+      padding-bottom: calc(88px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+    }
+    .detail-contact-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      padding:
+        10px max(16px, env(safe-area-inset-left, 0px))
+        calc(10px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)))
+        max(16px, env(safe-area-inset-right, 0px));
+      background: color-mix(in srgb, var(--bg) 90%, transparent);
+      border-top: 1px solid var(--stroke);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .detail-contact-bar[hidden] {
+      display: none !important;
+    }
+    .detail-contact-bar-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .detail-contact-bar-inner-row {
+      display: flex;
+      gap: 10px;
+    }
+    .detail-contact-bar-inner-row .detail-contact-btn {
+      flex: 1 1 0;
+    }
+    .detail-contact-btn {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 0;
+      background: linear-gradient(135deg, #229ED9, #2AABEE);
+      box-shadow: 0 10px 28px rgba(34, 158, 217, 0.35);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .detail-contact-btn:active {
+      opacity: 0.92;
+    }
+    .detail-contact-btn .icon svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+    .detail-contact-btn-phone {
+      background: linear-gradient(135deg, #25C06D, #1FAE60);
+      box-shadow: 0 10px 28px rgba(37, 192, 109, 0.35);
+    }
+  `;
+}
+
+const FIREBASE_VERSION = '11.6.0';
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAv3KDcxTbeLCuyh7QVVk-MwxR4fnC96yM',
+  authDomain: 'uydosh-cd0fe.firebaseapp.com',
+  projectId: 'uydosh-cd0fe',
+  storageBucket: 'uydosh-cd0fe.firebasestorage.app',
+  messagingSenderId: '626930983094',
+  appId: '1:626930983094:web:0e1a429bcdf9602f580617',
+  measurementId: 'G-EH9C2VMSD8',
+};
+
+let _logEventFn = null;
+let _analyticsInitPromise = null;
+
+/** Truncates a string to `max` chars for safe GA4/Firebase param/property values. */
+function _clip(value, max) {
+  if (value == null) return undefined;
+  const s = String(value);
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+/** Telegram WebApp context attached to every Mini App analytics event (max extraction). */
+function getTelegramAnalyticsContext() {
+  const tg = window.Telegram?.WebApp;
+  const initDataUnsafe = tg?.initDataUnsafe || {};
+  const user = initDataUnsafe.user;
+  const chat = initDataUnsafe.chat;
+  return {
+    platform: tg?.platform || 'unknown',
+    tg_version: tg?.version || '',
+    color_scheme: tg?.colorScheme || '',
+    user_language: user?.language_code || '',
+    start_param: initDataUnsafe.start_param || '',
+    chat_type: initDataUnsafe.chat_type || '',
+    is_expanded: tg?.isExpanded ? 1 : 0,
+    ...(user?.id != null ? { tg_user_id: user.id } : {}),
+    ...(user?.username ? { tg_username: _clip(user.username, 100) } : {}),
+    ...(user?.first_name ? { tg_first_name: _clip(user.first_name, 100) } : {}),
+    ...(user?.last_name ? { tg_last_name: _clip(user.last_name, 100) } : {}),
+    ...(user?.photo_url ? { tg_photo_url: _clip(user.photo_url, 100) } : {}),
+    ...(user?.is_premium != null
+      ? { is_premium: user.is_premium ? 1 : 0 }
+      : {}),
+    ...(user?.is_bot != null ? { tg_is_bot: user.is_bot ? 1 : 0 } : {}),
+    ...(user?.allows_write_to_pm != null
+      ? { allows_write_pm: user.allows_write_to_pm ? 1 : 0 }
+      : {}),
+    ...(user?.added_to_attachment_menu != null
+      ? { added_to_menu: user.added_to_attachment_menu ? 1 : 0 }
+      : {}),
+    ...(initDataUnsafe.query_id ? { tg_query_id: _clip(initDataUnsafe.query_id, 100) } : {}),
+    ...(initDataUnsafe.chat_instance
+      ? { tg_chat_instance: _clip(initDataUnsafe.chat_instance, 100) }
+      : {}),
+    ...(initDataUnsafe.auth_date ? { tg_auth_date: initDataUnsafe.auth_date } : {}),
+    ...(initDataUnsafe.can_send_after != null
+      ? { tg_can_send_after: initDataUnsafe.can_send_after }
+      : {}),
+    ...(chat?.id != null ? { tg_chat_id: chat.id } : {}),
+    ...(chat?.type ? { tg_chat_kind: chat.type } : {}),
+  };
+}
+
+/** Sets Telegram identity fields as GA4/Firebase user properties (persist on the user, not just one event). */
+function setTelegramAnalyticsUserProperties(analyticsMod, analytics) {
+  const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!user) return;
+  const props = {
+    tg_username: _clip(user.username, 36),
+    tg_first_name: _clip(user.first_name, 36),
+    tg_last_name: _clip(user.last_name, 36),
+    tg_language: _clip(user.language_code, 36),
+    tg_platform: _clip(window.Telegram?.WebApp?.platform, 36),
+    ...(user.is_premium != null ? { tg_is_premium: user.is_premium ? '1' : '0' } : {}),
+    ...(user.is_bot != null ? { tg_is_bot: user.is_bot ? '1' : '0' } : {}),
+  };
+  for (const k of Object.keys(props)) {
+    if (props[k] === undefined) delete props[k];
+  }
+  if (Object.keys(props).length > 0) {
+    analyticsMod.setUserProperties(analytics, props);
+  }
+}
+
+/** Loads Firebase Analytics once; no-op outside Telegram Mini App. */
+function initMiniAppAnalytics() {
+  if (!isMiniApp()) return Promise.resolve(false);
+  if (_analyticsInitPromise) return _analyticsInitPromise;
+
+  _analyticsInitPromise = (async () => {
+    try {
+      const appMod = await import(
+        `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`
+      );
+      const analyticsMod = await import(
+        `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-analytics.js`
+      );
+      if (!(await analyticsMod.isSupported())) {
+        console.warn('[UyDosh] Firebase Analytics not supported in this environment');
+        return false;
+      }
+      const app = appMod.initializeApp(FIREBASE_CONFIG);
+      const analytics = analyticsMod.getAnalytics(app);
+      _logEventFn = (name, params) => analyticsMod.logEvent(analytics, name, params);
+
+      const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      if (tgUserId != null) {
+        analyticsMod.setUserId(analytics, String(tgUserId));
+      }
+      setTelegramAnalyticsUserProperties(analyticsMod, analytics);
+
+      _logEventFn('app_opened', {
+        source: 'telegram_mini_app',
+        ...getTelegramAnalyticsContext(),
+      });
+      return true;
+    } catch (err) {
+      console.warn('[UyDosh] Firebase Analytics init failed', err);
+      return false;
+    }
+  })();
+
+  return _analyticsInitPromise;
+}
+
+/** Log a custom GA4/Firebase event (Telegram Mini App only). */
+function logMiniAppEvent(name, params) {
+  if (!isMiniApp()) return;
+  const payload = {
+    source: 'telegram_mini_app',
+    ...getTelegramAnalyticsContext(),
+    ...params,
+  };
+  initMiniAppAnalytics().then((ok) => {
+    if (ok && _logEventFn) _logEventFn(name, payload);
+  });
+}
+
+/** Log a screen view for the Mini App feed or listing detail. */
+function logMiniAppScreen(screenName, params) {
+  logMiniAppEvent('screen_view', {
+    firebase_screen: screenName,
+    firebase_screen_class: 'telegram_mini_app',
+    screen_name: screenName,
+    ...params,
+  });
+}
+
+/** Call on mini-app pages after telegram-web-app.js is loaded. */
+function initTelegramMiniApp() {
+  // Persist the bot-selected `?lang=` for the rest of this session so
+  // in-app navigation (links without `?lang=`) keeps using it too.
+  if (isMiniAppPage()) {
+    try {
+      const urlLang = new URLSearchParams(location.search).get('lang');
+      if (urlLang && LANGS.includes(urlLang)) setLang(urlLang);
+    } catch { /* ignore */ }
+  }
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    getTelegramInitData();
+    try { tg.ready(); } catch { /* ignore */ }
+    try { tg.expand(); } catch { /* ignore */ }
+    initTelegramLocationManager();
+    applyTelegramTheme(tg);
+    applyStoredManualTheme();
+    applyTelegramSafeAreaInsets(tg);
+    if (typeof tg.onEvent === 'function') {
+      tg.onEvent('themeChanged', () => {
+        applyTelegramTheme(tg);
+        applyStoredManualTheme();
+      });
+      tg.onEvent('contentSafeAreaChanged', () => {
+        applyTelegramSafeAreaInsets(tg);
+        syncMobileHeaderLayout();
+        reflowActiveMaps();
+      });
+      tg.onEvent('safeAreaChanged', () => {
+        applyTelegramSafeAreaInsets(tg);
+        syncMobileHeaderLayout();
+        reflowActiveMaps();
+      });
+      tg.onEvent('viewportChanged', () => {
+        applyTelegramSafeAreaInsets(tg);
+        syncMobileHeaderLayout();
+        reflowActiveMaps();
+      });
+    }
+    requestAnimationFrame(() => {
+      applyTelegramSafeAreaInsets(tg);
+      syncMobileHeaderLayout();
+    });
+    setTimeout(() => {
+      applyTelegramSafeAreaInsets(tg);
+      syncMobileHeaderLayout();
+    }, 150);
+  }
+  if (!isMiniApp()) return false;
+  document.documentElement.classList.add('mini-app');
+  applyStoredManualTheme();
+  ensureMiniAppSafeAreaStyles();
+  applyTelegramSafeAreaInsets(tg);
+  mountAllMiniAppHeaders();
+  syncMobileHeaderLayout();
+  for (const el of document.querySelectorAll('[data-hide-in-mini-app]')) {
+    el.setAttribute('hidden', '');
+  }
+  for (const el of document.querySelectorAll('[data-mini-app-home]')) {
+    el.setAttribute('href', MINI_APP_FEED_PATH);
+  }
+  // Custom back links are hidden in Mini App — Telegram header BackButton handles navigation.
+  // for (const el of document.querySelectorAll('[data-mini-app-back]')) {
+  //   el.setAttribute('href', MINI_APP_FEED_PATH);
+  // }
+  initMiniAppAnalytics().then((ok) => {
+    if (!ok) return;
+    const path = location.pathname || '';
+    if (/create\.html/i.test(path) || /\/telegram\/create\/?$/i.test(path)) {
+      logMiniAppScreen('telegram_create_listing');
+    } else if (!/listing\.html/i.test(path)) {
+      logMiniAppScreen('telegram_feed');
+    }
+  });
+  return true;
+}
+
+Object.assign(window.UyDosh, {
+  isMiniApp,
+  isTelegramMobile,
+  isTelegramDesktop,
+  listingPageUrl,
+  feedPageUrl,
+  createPageUrl,
+  initTelegramMiniApp,
+  mountMiniAppHeader,
+  mountAllMiniAppHeaders,
+  miniAppHeaderHtml,
+  initMiniAppAnalytics,
+  logMiniAppEvent,
+  logMiniAppScreen,
+  MINI_APP_FEED_PATH,
+});

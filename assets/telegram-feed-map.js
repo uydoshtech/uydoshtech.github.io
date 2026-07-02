@@ -1,5 +1,5 @@
 // UyDosh — Telegram Mini App feed map view (listings on Yandex Map + pin tooltips).
-// Loaded from telegram/index.html after uydosh-web.js.
+// Loaded from telegram/index.html after the uydosh-*.js modules.
 
 (function () {
   const MAP_LOAD_TIMEOUT_MS = 18000;

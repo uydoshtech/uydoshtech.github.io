@@ -3,7 +3,7 @@ window.Telegram?.WebApp?.MainButton?.hide();
 
 const PAGE_SIZE = 10;
 // LISTING_TYPE_*, GENDER_*, METRO_LINE_ANY are already global consts declared by
-// uydosh-web.js (loaded before this file) — do not redeclare them here, classic
+// uydosh-icons.js (loaded before this file) — do not redeclare them here, classic
 // <script> top-level `const` lives in a shared lexical scope and a second `const`
 // with the same name throws a SyntaxError that aborts this entire script.
 const DEFAULT_WITH_PHOTO = false;

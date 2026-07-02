@@ -1,0 +1,782 @@
+// UyDosh Web — canvas-drawn Yandex Map pin/group/cluster/user-location icons,
+// the manual light/dark map theme toggle, visited-listings tracking, Telegram
+// geolocation, and the phone/Telegram contact bar shown on listing details.
+// Depends on uydosh-icons.js (listing type colors/consts). Load after it.
+
+/** Match mobile app listing-type badge colors (dark theme). */
+const LISTING_TYPE_COLORS = {
+  1: '#64B5F6', // room_needed
+  2: '#FF9800', // roommate_needed
+  3: '#9B6DFF', // group_forming
+};
+
+/** Material-style SVG paths for listing-type map pin glyphs (viewBox 0 0 24 24). */
+const LISTING_TYPE_MAP_PIN_ICON_PATHS = {
+  1: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z',
+  2: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 2.05 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
+  '2_absent': 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+  3: 'M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.62c0-1.17.68-2.25 1.76-2.73 1.17-.52 2.61-.9 4.24-.9zM12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM18.59 15.41A5.978 5.978 0 0 0 18 15c-1.66 0-3 1.34-3 3 0 .35.06.68.16 1H18v-3.59zM6.16 16c.1-.32.16-.65.16-1 0-1.66-1.34-3-3-3-.59 0-1.14.17-1.59.41V18h4.43z',
+  default: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z',
+};
+
+// Yandex Maps JS 2.1 uses iconImageSize as on-screen CSS px (not Flutter bitmap px).
+const MAP_PIN_ICON_SIZE = 24;
+const MAP_PIN_ICON_SIZE_SELECTED = 28;
+const mapPinIconCache = new Map();
+
+/** Match Flutter map pin fills (yandex_map_widget_icons.dart). */
+const MAP_PIN_FILL = {
+  default: '#000000',
+  dark: '#142A45',
+  visited: '#9E9E9E',
+  visitedDark: '#757575',
+  selected: '#673AB7',
+};
+
+const VISITED_LISTINGS_STORAGE_KEY = 'uydosh_visited_listing_ids';
+
+/**
+ * Manual light/dark override (mini app map sun/moon toggle) — beats Telegram theme + system
+ * preference. The stored value names the *map* tile theme; by design the app UI (cards, header,
+ * filters, …) always runs the opposite palette, so a dark map pairs with a light interface and
+ * vice versa — see uiThemeForMapTheme().
+ */
+const MANUAL_THEME_STORAGE_KEY = 'uydosh_manual_theme';
+const UI_THEME_VARS = {
+  dark: {
+    '--bg': '#061525',
+    '--fg': 'rgba(255, 255, 255, 0.92)',
+    '--muted': 'rgba(255, 255, 255, 0.7)',
+    '--card': 'rgba(255, 255, 255, 0.06)',
+    '--stroke': 'rgba(255, 255, 255, 0.12)',
+  },
+  light: {
+    '--bg': '#f6f7fb',
+    '--fg': 'rgba(15, 23, 42, 0.92)',
+    '--muted': 'rgba(15, 23, 42, 0.7)',
+    '--card': 'rgba(15, 23, 42, 0.04)',
+    '--stroke': 'rgba(15, 23, 42, 0.12)',
+  },
+};
+
+/** UI palette is always the inverse of the chosen map theme. */
+function uiThemeForMapTheme(mapTheme) {
+  return mapTheme === 'dark' ? 'light' : 'dark';
+}
+
+function getManualTheme() {
+  try {
+    const saved = localStorage.getItem(MANUAL_THEME_STORAGE_KEY);
+    return saved === 'light' || saved === 'dark' ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function applyManualThemeVars(mapTheme) {
+  const vars = UI_THEME_VARS[uiThemeForMapTheme(mapTheme)];
+  if (!vars) return;
+  const root = document.documentElement;
+  for (const [prop, value] of Object.entries(vars)) {
+    root.style.setProperty(prop, value);
+  }
+}
+
+/** Re-apply a saved manual theme on load, before/after Telegram theme colors land. */
+function applyStoredManualTheme() {
+  const theme = getManualTheme();
+  if (theme) applyManualThemeVars(theme);
+}
+
+function setManualTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') return;
+  try {
+    localStorage.setItem(MANUAL_THEME_STORAGE_KEY, theme);
+  } catch {
+    /* ignore */
+  }
+  applyManualThemeVars(theme);
+  document.dispatchEvent(new CustomEvent('uydosh:themechange', { detail: { theme } }));
+}
+
+function toggleManualTheme() {
+  const next = prefersDarkMapPins() ? 'light' : 'dark';
+  setManualTheme(next);
+  return next;
+}
+
+function prefersDarkMapPins() {
+  const manual = getManualTheme();
+  if (manual) return manual === 'dark';
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
+  } catch {
+    return false;
+  }
+}
+
+function loadVisitedListingIds() {
+  if (typeof sessionStorage === 'undefined') return new Set();
+  try {
+    const raw = sessionStorage.getItem(VISITED_LISTINGS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.map(Number).filter((id) => id > 0));
+  } catch {
+    return new Set();
+  }
+}
+
+function markListingVisited(listingId) {
+  const id = Number(listingId);
+  if (!id) return false;
+  const visited = loadVisitedListingIds();
+  if (visited.has(id)) return false;
+  visited.add(id);
+  try {
+    sessionStorage.setItem(
+      VISITED_LISTINGS_STORAGE_KEY,
+      JSON.stringify([...visited]),
+    );
+  } catch {
+    /* ignore */
+  }
+  return true;
+}
+
+function resolveMapPinIconStyle(pin, {
+  selectedListingId = null,
+  visitedListingIds = null,
+  darkMap = null,
+  selected = false,
+} = {}) {
+  const listingId = Number(pin?.id);
+  const isDark = darkMap ?? prefersDarkMapPins();
+  const visited = visitedListingIds ?? loadVisitedListingIds();
+  const isSelected =
+    selected ||
+    (selectedListingId != null && listingId > 0 && listingId === Number(selectedListingId));
+
+  if (isSelected) {
+    return { variant: 'selected', selected: true, visited: false, darkMap: isDark };
+  }
+  if (listingId > 0 && visited.has(listingId)) {
+    return { variant: 'visited', selected: false, visited: true, darkMap: isDark };
+  }
+  if (isDark) {
+    return { variant: 'dark', selected: false, visited: false, darkMap: true };
+  }
+  return { variant: 'default', selected: false, visited: false, darkMap: false };
+}
+
+function mapPinFillColor(style) {
+  if (style.selected) return MAP_PIN_FILL.selected;
+  if (style.visited) {
+    return style.darkMap ? MAP_PIN_FILL.visitedDark : MAP_PIN_FILL.visited;
+  }
+  if (style.darkMap) return MAP_PIN_FILL.dark;
+  return MAP_PIN_FILL.default;
+}
+
+function resolveListingTypeIdFromPin(pin) {
+  const typeId = Number(pin?.listing_type_id);
+  if (typeId > 0) return typeId;
+  const code = String(pin?.listing_type_code ?? '').trim();
+  if (code === 'room_needed') return 1;
+  if (code === 'roommate_needed') return 2;
+  if (code === 'group_forming') return 3;
+  return 0;
+}
+
+function resolveMapPinIconKey(pin) {
+  const typeId = resolveListingTypeIdFromPin(pin);
+  if (typeId === 2) {
+    const hostResident = pin?.host_resident;
+    const absentHost =
+      hostResident === false ||
+      hostResident === 0 ||
+      hostResident === 'false';
+    if (absentHost) return '2_absent';
+  }
+  return typeId > 0 ? String(typeId) : 'default';
+}
+
+function drawMapPinIconPath(ctx, pathD, centerX, centerY, iconSize) {
+  const path = new Path2D(pathD);
+  const scale = iconSize / 24;
+  ctx.save();
+  ctx.translate(centerX - iconSize / 2, centerY - iconSize / 2);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill(path);
+  ctx.restore();
+}
+
+function drawRoundRect(ctx, x, y, width, height, radius) {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+
+/**
+ * Canvas bitmap for Yandex Maps placemarks (mobile parity):
+ * black/blue/gray/purple fill + white listing-type glyph + white outline.
+ */
+function createMapPinIcon(pin, options = {}) {
+  if (typeof document === 'undefined') return null;
+
+  const style = resolveMapPinIconStyle(pin, options);
+  const iconKey = resolveMapPinIconKey(pin);
+  const fillColor = mapPinFillColor(style);
+  const pinSize = style.selected ? MAP_PIN_ICON_SIZE_SELECTED : MAP_PIN_ICON_SIZE;
+  const cacheKey = `${iconKey}:${style.variant}:${pinSize}`;
+  const cached = mapPinIconCache.get(cacheKey);
+  if (cached) return cached;
+
+  const canvas = document.createElement('canvas');
+  // Draw at 1× logical px — Yandex Maps + Telegram WebView treat data-URL bitmaps
+  // as iconImageSize in CSS px; a retina canvas makes pins ~devicePixelRatio too large.
+  canvas.width = pinSize;
+  canvas.height = pinSize;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  const center = pinSize / 2;
+  const radius = pinSize * 0.39;
+  const outlineWidth = style.selected ? 2 : 1.5;
+  const shadowOffsetY = style.selected ? 2 : 1;
+  const shadowAlpha = style.selected ? 0.35 : 0.18;
+
+  ctx.beginPath();
+  ctx.arc(center, center + shadowOffsetY, radius + outlineWidth, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius + outlineWidth, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  const pathD =
+    LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
+    LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
+  drawMapPinIconPath(ctx, pathD, center, center, pinSize * (style.selected ? 0.54 : 0.52));
+
+  const result = {
+    href: canvas.toDataURL('image/png'),
+    size: [pinSize, pinSize],
+    offset: [-pinSize / 2, -pinSize / 2],
+    zIndex: style.selected ? 1000 : 100,
+  };
+  mapPinIconCache.set(cacheKey, result);
+  return result;
+}
+
+const MAP_GROUP_PIN_WIDTH = 54;
+const MAP_GROUP_PIN_HEIGHT = 28;
+const MAP_GROUP_PIN_WIDTH_SELECTED = 58;
+const MAP_GROUP_PIN_HEIGHT_SELECTED = 30;
+const mapGroupPinIconCache = new Map();
+
+function resolveMapGroupPinStyle(group, {
+  selectedListingId = null,
+  selectedListingGroupIds = null,
+  visitedListingIds = null,
+  darkMap = null,
+  selected = false,
+} = {}) {
+  const isDark = darkMap ?? prefersDarkMapPins();
+  const visited = visitedListingIds ?? loadVisitedListingIds();
+  const groupIds = new Set(
+    (selectedListingGroupIds || [])
+      .map(Number)
+      .filter((id) => id > 0),
+  );
+  const selectedId = selectedListingId != null ? Number(selectedListingId) : null;
+  const pins = Array.isArray(group?.pins) ? group.pins : [];
+  const isSelected =
+    selected ||
+    pins.some((pin) => {
+      const listingId = Number(pin?.id);
+      if (listingId <= 0) return false;
+      return listingId === selectedId || groupIds.has(listingId);
+    });
+  if (isSelected) {
+    return { variant: 'selected', selected: true, visited: false, darkMap: isDark };
+  }
+  const allVisited = pins.length > 0 && pins.every((pin) => {
+    const listingId = Number(pin?.id);
+    return listingId > 0 && visited.has(listingId);
+  });
+  if (allVisited) {
+    return { variant: 'visited', selected: false, visited: true, darkMap: isDark };
+  }
+  if (isDark) {
+    return { variant: 'dark', selected: false, visited: false, darkMap: true };
+  }
+  return { variant: 'default', selected: false, visited: false, darkMap: false };
+}
+
+function mapGroupPinFillColor(style) {
+  if (style.selected) return MAP_PIN_FILL.selected;
+  if (style.visited) {
+    return style.darkMap ? MAP_PIN_FILL.visitedDark : MAP_PIN_FILL.visited;
+  }
+  if (style.darkMap) return MAP_PIN_FILL.dark;
+  return MAP_PIN_FILL.default;
+}
+
+/**
+ * Pill-shaped composite pin icon with listing count (mobile parity).
+ */
+function createMapGroupPinIcon(group, options = {}) {
+  if (typeof document === 'undefined') return null;
+  const pins = Array.isArray(group?.pins) ? group.pins : [];
+  const count = pins.length;
+  if (count <= 1) return createMapPinIcon(pins[0], options);
+
+  const style = resolveMapGroupPinStyle(group, options);
+  const representativePin = pins[0];
+  const iconKey = resolveMapPinIconKey(representativePin);
+  const fillColor = mapGroupPinFillColor(style);
+  const width = style.selected ? MAP_GROUP_PIN_WIDTH_SELECTED : MAP_GROUP_PIN_WIDTH;
+  const height = style.selected ? MAP_GROUP_PIN_HEIGHT_SELECTED : MAP_GROUP_PIN_HEIGHT;
+  const cacheKey = `group:${count}:${iconKey}:${style.variant}:${width}x${height}`;
+  const cached = mapGroupPinIconCache.get(cacheKey);
+  if (cached) return cached;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const pillHeight = height;
+  const pillWidth = width;
+  const radius = pillHeight / 2;
+  const outlineWidth = style.selected ? 2 : 1.5;
+
+  ctx.beginPath();
+  drawRoundRect(
+    ctx,
+    centerX - pillWidth / 2,
+    centerY - pillHeight / 2 + 1,
+    pillWidth,
+    pillHeight,
+    radius,
+  );
+  ctx.fillStyle = style.selected ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 0, 0, 0.24)';
+  ctx.fill();
+
+  ctx.beginPath();
+  drawRoundRect(
+    ctx,
+    centerX - (pillWidth / 2) - outlineWidth,
+    centerY - (pillHeight / 2) - outlineWidth,
+    pillWidth + outlineWidth * 2,
+    pillHeight + outlineWidth * 2,
+    radius + outlineWidth,
+  );
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  ctx.beginPath();
+  drawRoundRect(
+    ctx,
+    centerX - pillWidth / 2,
+    centerY - pillHeight / 2,
+    pillWidth,
+    pillHeight,
+    radius,
+  );
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  const label = count > 99 ? '99+' : String(count);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `900 ${label.length > 2 ? 10 : 12}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const labelWidth = ctx.measureText(label).width;
+  const iconSize = style.selected ? 13 : 12;
+  const gap = 3;
+  const contentWidth = labelWidth + gap + iconSize;
+  const contentLeft = centerX - contentWidth / 2;
+  ctx.fillText(label, contentLeft, centerY + 0.5);
+
+  const pathD =
+    LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
+    LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
+  drawMapPinIconPath(ctx, pathD, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize);
+
+  const result = {
+    href: canvas.toDataURL('image/png'),
+    size: [width, height],
+    offset: [-width / 2, -height / 2],
+    zIndex: style.selected ? 1000 : 100,
+  };
+  mapGroupPinIconCache.set(cacheKey, result);
+  return result;
+}
+
+const USER_LOCATION_PIN_SIZE = 22;
+const USER_LOCATION_PIN_FILL = '#F44336';
+const MAP_CLUSTER_PIN_SIZE = 32;
+let userLocationPinIconCache = null;
+let mapClusterPinIconCache = null;
+
+/** Compact violet cluster bubble (replaces oversized islands#violetClusterIcons preset). */
+function createMapClusterPinIcon() {
+  if (typeof document === 'undefined') return null;
+  if (mapClusterPinIconCache) return mapClusterPinIconCache;
+
+  const size = MAP_CLUSTER_PIN_SIZE;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const center = size / 2;
+  const radius = size * 0.34;
+  const outlineWidth = 1.5;
+
+  ctx.beginPath();
+  ctx.arc(center, center + 1, radius + outlineWidth, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius + outlineWidth, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#673AB7';
+  ctx.fill();
+
+  mapClusterPinIconCache = {
+    href: canvas.toDataURL('image/png'),
+    size: [size, size],
+    offset: [-size / 2, -size / 2],
+  };
+  return mapClusterPinIconCache;
+}
+
+/** Red dot with white ring — matches mobile user-location pin. */
+function createUserLocationPinIcon() {
+  if (typeof document === 'undefined') return null;
+  if (userLocationPinIconCache) return userLocationPinIconCache;
+
+  const pinSize = USER_LOCATION_PIN_SIZE;
+  const canvas = document.createElement('canvas');
+  canvas.width = pinSize;
+  canvas.height = pinSize;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const center = pinSize / 2;
+  const outerRadius = pinSize * 0.39;
+  const innerRadius = outerRadius - 2;
+
+  ctx.beginPath();
+  ctx.arc(center, center + 2, outerRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, outerRadius, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, innerRadius, 0, Math.PI * 2);
+  ctx.fillStyle = USER_LOCATION_PIN_FILL;
+  ctx.fill();
+
+  userLocationPinIconCache = {
+    href: canvas.toDataURL('image/png'),
+    size: [pinSize, pinSize],
+    offset: [-pinSize / 2, -pinSize / 2],
+    zIndex: 2000,
+  };
+  return userLocationPinIconCache;
+}
+
+function initTelegramLocationManager() {
+  const loc = window.Telegram?.WebApp?.LocationManager;
+  if (!loc || typeof loc.init !== 'function') {
+    return Promise.resolve(null);
+  }
+  if (loc.isInited) return Promise.resolve(loc);
+  return new Promise((resolve) => {
+    loc.init(() => resolve(loc));
+  });
+}
+
+function requestUserLocationFromBrowser() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('browser_geolocation_unavailable'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = Number(position?.coords?.latitude);
+        const longitude = Number(position?.coords?.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          reject(new Error('browser_geolocation_invalid'));
+          return;
+        }
+        resolve({ latitude, longitude });
+      },
+      (err) => reject(err || new Error('browser_geolocation_denied')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  });
+}
+
+/** Telegram LocationManager first (Mini App), then browser Geolocation API. */
+async function requestUserLocation() {
+  if (isMiniApp()) {
+    const loc = await initTelegramLocationManager();
+    if (loc?.isLocationAvailable) {
+      const telegramLocation = await new Promise((resolve, reject) => {
+        loc.getLocation((data) => {
+          const latitude = Number(data?.latitude);
+          const longitude = Number(data?.longitude);
+          if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+            resolve({ latitude, longitude });
+            return;
+          }
+          reject(new Error('telegram_location_denied'));
+        });
+      });
+      return telegramLocation;
+    }
+  }
+  return requestUserLocationFromBrowser();
+}
+
+function openTelegramLocationSettings() {
+  const loc = window.Telegram?.WebApp?.LocationManager;
+  if (!loc || typeof loc.openSettings !== 'function') return false;
+  loc.openSettings();
+  return true;
+}
+
+/** Strip leading @ and normalize a Telegram username/handle. */
+function normalizeTelegramUsername(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const withoutAt = raw.startsWith('@') ? raw.slice(1) : raw;
+  return withoutAt.trim();
+}
+
+/** Resolve the listing owner's Telegram handle from a listing detail payload. */
+function listingContactTelegram(listing) {
+  return normalizeTelegramUsername(listing?.contact_telegram);
+}
+
+/** Strip formatting from a phone number, keeping digits and a leading "+" only. */
+function normalizePhoneNumber(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const cleaned = raw.replace(/[^0-9+]/g, '');
+  return cleaned.replace(/(?!^)\+/g, '');
+}
+
+/** Resolve the listing owner's extracted contact phone number. */
+function listingContactPhone(listing) {
+  return normalizePhoneNumber(listing?.contact_phone);
+}
+
+function telegramUserUrl(username) {
+  const clean = normalizeTelegramUsername(username);
+  return clean ? `https://t.me/${encodeURIComponent(clean)}` : '';
+}
+
+function telPhoneUrl(phone) {
+  const clean = normalizePhoneNumber(phone);
+  return clean ? `tel:${clean}` : '';
+}
+
+/** Open a Telegram user chat (Mini App uses openTelegramLink). */
+function openTelegramContact(handle) {
+  const url = telegramUserUrl(handle);
+  if (!url) return false;
+  const tg = window.Telegram?.WebApp;
+  if (isMiniApp() && typeof tg?.openTelegramLink === 'function') {
+    tg.openTelegramLink(url);
+  } else if (typeof tg?.openLink === 'function') {
+    tg.openLink(url);
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+  return true;
+}
+
+/**
+ * Start a phone call. `Telegram.WebApp.openLink`/`openTelegramLink` reject
+ * the `tel:` scheme ("Url protocol is not supported"), so this always goes
+ * through `window.open`, which reliably hands off to the OS dialer from
+ * inside the Telegram in-app browser on both iOS and Android.
+ */
+function openPhoneContact(phone) {
+  const url = telPhoneUrl(phone);
+  if (!url) return false;
+  window.open(url, '_blank');
+  return true;
+}
+
+function iconTelegram(color = '#fff') {
+  return iconSvg(color, `
+    <path d="M21.5 4.5 2.8 11.2c-1.1.4-1.1 1.1-.2 1.4l4.8 1.5 1.8 5.6c.2.6.1.8.7.8.5 0 .7-.2 1-.5l2.4-2.3 5 3.7c.9.5 1.6.2 1.8-.9L22.8 6c.3-1.2-.5-1.7-1.3-1.5Z" fill="currentColor" stroke="none"></path>
+    <path d="m8.6 13.8 9.7-6.1c.5-.3.9-.1.5.2l-7.9 7.2-.3 3.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+function iconPhone(color = '#fff') {
+  return iconSvg(color, `
+    <path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.2 1.1L6.6 10.8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+/** Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct call. */
+function detailContactBarHtml(username, phone) {
+  const cleanHandle = normalizeTelegramUsername(username);
+  const cleanPhone = normalizePhoneNumber(phone);
+  if (!cleanHandle && !cleanPhone) return '';
+
+  const telegramBtn = cleanHandle
+    ? `
+      <button type="button" class="detail-contact-btn" data-detail-contact-telegram data-telegram-username="${escapeHtml(cleanHandle)}">
+        ${iconTelegram('#fff')}
+        <span data-i18n="detail.contactTelegram">${escapeHtml(t('detail.contactTelegram'))}</span>
+      </button>
+    `
+    : '';
+  const phoneBtn = cleanPhone
+    ? `
+      <button type="button" class="detail-contact-btn detail-contact-btn-phone" data-detail-contact-phone data-phone-number="${escapeHtml(cleanPhone)}">
+        ${iconPhone('#fff')}
+        <span data-i18n="detail.contactPhone">${escapeHtml(t('detail.contactPhone'))}</span>
+      </button>
+    `
+    : '';
+
+  const rowClass = cleanHandle && cleanPhone ? ' detail-contact-bar-inner-row' : '';
+  return `
+    <div class="detail-contact-bar-inner${rowClass}">
+      ${telegramBtn}
+      ${phoneBtn}
+    </div>
+  `;
+}
+
+function bindDetailContactBar(container, { listingId, onOpen, onCall } = {}) {
+  const telegramBtn = container?.querySelector('[data-detail-contact-telegram]');
+  telegramBtn?.addEventListener('click', () => {
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    const handle = telegramBtn.getAttribute('data-telegram-username');
+    if (!openTelegramContact(handle)) return;
+    if (typeof onOpen === 'function') onOpen(handle);
+    else if (listingId != null) {
+      logMiniAppEvent('telegram_contact_tapped', {
+        listing_id: Number(listingId),
+        source: 'telegram_mini_app',
+      });
+    }
+  });
+
+  const phoneBtn = container?.querySelector('[data-detail-contact-phone]');
+  phoneBtn?.addEventListener('click', () => {
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    const phone = phoneBtn.getAttribute('data-phone-number');
+    if (!openPhoneContact(phone)) return;
+    if (typeof onCall === 'function') onCall(phone);
+    else if (listingId != null) {
+      logMiniAppEvent('phone_contact_tapped', {
+        listing_id: Number(listingId),
+        source: 'telegram_mini_app',
+      });
+    }
+  });
+}
+
+/** Pre-render all pin bitmap variants so the first map paint avoids canvas work. */
+function warmMapPinIconCache({ darkMap = null } = {}) {
+  if (typeof document === 'undefined') return;
+  createUserLocationPinIcon();
+  createMapClusterPinIcon();
+  const isDark = darkMap ?? prefersDarkMapPins();
+  const stubPins = [
+    { id: 101, listing_type_id: 1 },
+    { id: 102, listing_type_id: 2 },
+    { id: 103, listing_type_id: 2, host_resident: false },
+    { id: 104, listing_type_id: 3 },
+    { id: 105, listing_type_id: 0 },
+  ];
+  const visited = new Set([101]);
+  for (const pin of stubPins) {
+    createMapPinIcon(pin, { darkMap: isDark });
+    createMapPinIcon(pin, { darkMap: true });
+    createMapPinIcon(pin, { visitedListingIds: visited, darkMap: isDark });
+    createMapPinIcon(pin, { selectedListingId: pin.id, darkMap: isDark });
+  }
+  for (const count of [2, 3, 5, 12]) {
+    createMapGroupPinIcon(
+      { pins: stubPins.slice(0, Math.min(count, stubPins.length)) },
+      { darkMap: isDark },
+    );
+    createMapGroupPinIcon(
+      { pins: stubPins.slice(0, Math.min(count, stubPins.length)) },
+      { selectedListingId: 101, darkMap: isDark },
+    );
+  }
+}
+
+Object.assign(window.UyDosh, {
+  createMapPinIcon,
+  createMapGroupPinIcon,
+  createMapClusterPinIcon,
+  createUserLocationPinIcon,
+  requestUserLocation,
+  openTelegramLocationSettings,
+  normalizeTelegramUsername,
+  listingContactTelegram,
+  telegramUserUrl,
+  openTelegramContact,
+  iconTelegram,
+  normalizePhoneNumber,
+  listingContactPhone,
+  telPhoneUrl,
+  openPhoneContact,
+  iconPhone,
+  detailContactBarHtml,
+  bindDetailContactBar,
+  warmMapPinIconCache,
+  loadVisitedListingIds,
+  markListingVisited,
+  prefersDarkMapPins,
+  getManualTheme,
+  setManualTheme,
+  toggleManualTheme,
+  applyStoredManualTheme,
+});
