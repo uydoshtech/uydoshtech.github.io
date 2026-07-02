@@ -212,6 +212,7 @@ const state = {
   filtersCollapsed: readFiltersCollapsed(),
   view: 'list',
   mapPins: [],
+  mapResultTotal: 0,
   mapLoading: false,
   mapLoaded: false,
   mapModule: null,

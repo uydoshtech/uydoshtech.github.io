@@ -668,6 +668,79 @@
       }
     });
   }
+
+  /**
+   * Small pill showing the total found-listings count, centered between the
+   * geolocation control (top-left) and the theme toggle button (top-right).
+   * Rendered as a plain DOM overlay (not a ymaps control) so its size/position
+   * are easy to keep in sync with those two controls' 34px / 10px-gutter sizing.
+   * Mini app only — the theme toggle (its right anchor) only exists there too.
+   */
+  const RESULTS_COUNT_TILE_CLASS = 'uydosh-map-results-count';
+  const RESULTS_COUNT_STYLE_ID = 'uydosh-map-results-count-styles';
+  const RESULTS_COUNT_CONTROL_SIZE = 34;
+  const RESULTS_COUNT_CONTROL_GUTTER = 10;
+
+  function ensureResultsCountStyles() {
+    if (document.getElementById(RESULTS_COUNT_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = RESULTS_COUNT_STYLE_ID;
+    style.textContent = `
+      .${RESULTS_COUNT_TILE_CLASS} {
+        position: absolute;
+        top: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        height: ${RESULTS_COUNT_CONTROL_SIZE}px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: ${RESULTS_COUNT_CONTROL_SIZE / 2}px;
+        background: #fff;
+        color: ${THEME_TOGGLE_ICON_COLOR};
+        font: 700 13px/1 system-ui, -apple-system, sans-serif;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function resultsCountLabel(count) {
+    return count > 999 ? '999+' : String(count);
+  }
+
+  function attachResultsCountTile(container, total) {
+    if (!container) return;
+    const existing = container.querySelector(`.${RESULTS_COUNT_TILE_CLASS}`);
+    const count = Number(total);
+    if (!window.UyDosh?.isMiniApp?.() || !Number.isFinite(count) || count <= 0) {
+      existing?.remove();
+      return;
+    }
+
+    ensureResultsCountStyles();
+    if (getComputedStyle(container).position === 'static') {
+      container.style.position = 'relative';
+    }
+
+    const tile = existing ?? document.createElement('div');
+    if (!existing) {
+      tile.className = RESULTS_COUNT_TILE_CLASS;
+      tile.setAttribute('role', 'status');
+      container.appendChild(tile);
+    }
+    tile.textContent = resultsCountLabel(count);
+    tile.setAttribute(
+      'aria-label',
+      window.UyDosh?.t?.('map.resultsCountAria')?.replace('{count}', String(count)) ??
+        String(count),
+    );
+  }
+
   const MAP_CLUSTER_GRID_SIZE = 64;
   let clusterListingCountLayout = null;
 
@@ -937,6 +1010,7 @@
     selectedListingGroupIds = [],
     visitedListingIds,
     darkMap,
+    total = null,
   }) {
     await destroyMap(container);
     const validPins = (pins || []).filter((pin) => {
@@ -970,6 +1044,7 @@
     const mapInstance = { map };
     attachUserLocationControl(ymaps, map, mapInstance);
     attachThemeToggleControl(ymaps, map, mapInstance);
+    attachResultsCountTile(container, total ?? validPins.length);
 
     const pinVisualDefaults = pinVisualContext({
       selectedListingId,

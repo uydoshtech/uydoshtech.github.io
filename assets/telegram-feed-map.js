@@ -259,7 +259,9 @@
         if (generation !== mapLoadGeneration) return;
 
         const pins = Array.isArray(data?.pins) ? data.pins : [];
+        const total = Number(data?.total);
         state.mapPins = pins;
+        state.mapResultTotal = Number.isFinite(total) ? total : pins.length;
         if (pins.length === 0) {
           await UyDosh.loadYandexMapModule().then((m) => m.destroyMap(feedMapEl)).catch(() => {});
           if (generation !== mapLoadGeneration) return;
@@ -283,6 +285,7 @@
         const map = await UyDosh.withTimeout(
           mapModule.renderPinsMap(feedMapEl, {
             pins,
+            total: state.mapResultTotal,
             lang: UyDosh.getLang(),
             visitedListingIds: UyDosh.loadVisitedListingIds(),
             onPinClick: (pin) => {
