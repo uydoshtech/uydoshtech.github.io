@@ -366,10 +366,10 @@
       html.mini-app [data-hide-in-mini-app] { display: none !important; }
       html.mini-app footer { justify-content: center; }
 
-      /* Listing details: a tight 10px horizontal margin everywhere, except
+      /* Listing details: a tight 20px horizontal margin everywhere, except
          the photo gallery which bleeds full-width edge to edge. */
-      html.mini-app .wrap { padding-left: 10px; padding-right: 10px; }
-      html.mini-app .gallery-col { margin-left: -10px; margin-right: -10px; }
+      html.mini-app .wrap { padding-left: 20px; padding-right: 20px; }
+      html.mini-app .gallery-col { margin-left: -20px; margin-right: -20px; }
       html.mini-app .gallery-col .gallery,
       html.mini-app .gallery-col .gallery-skel {
         border-radius: 0;
@@ -1147,9 +1147,9 @@
               ${buildGalleryHtml()}
             </div>
             <div class="details">
+              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
               <h1>${title}</h1>
               ${price ? `<div class="price-row"><div class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></div></div>` : ''}
-              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
               ${mapHtml}
               ${amenitiesHtml}
               ${metaHtml}
