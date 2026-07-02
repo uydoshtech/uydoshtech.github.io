@@ -502,7 +502,6 @@
     if (!container) return;
     const instance = activeMaps.get(container);
     if (instance) {
-      if (instance.themeToggleButton) themeToggleButtons.delete(instance.themeToggleButton);
       try {
         instance.map?.destroy?.();
       } catch { /* ignore */ }
@@ -611,56 +610,11 @@
     container.classList.toggle(MAP_TILES_DARK_CLASS, !!isDark);
   }
 
-  const THEME_TOGGLE_ICON_COLOR = '#1f2933';
-  const themeToggleButtons = new Set();
-
-  function themeToggleIconSvg(isDark) {
-    return isDark
-      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${THEME_TOGGLE_ICON_COLOR}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>`
-      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${THEME_TOGGLE_ICON_COLOR}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>`;
-  }
-
-  function themeToggleIconDataUrl(isDark) {
-    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(themeToggleIconSvg(isDark))}`;
-  }
-
-  function themeToggleTitle(isDark) {
-    // Button shows the *target* mode's icon, so the tooltip names the mode it switches to.
-    return window.UyDosh?.t?.(isDark ? 'map.themeToggleLight' : 'map.themeToggleDark') || 'Тема';
-  }
-
-  function refreshThemeToggleButton(button) {
-    const isDark = window.UyDosh?.prefersDarkMapPins?.() ?? false;
-    try {
-      button.data.set('image', themeToggleIconDataUrl(isDark));
-      button.data.set('title', themeToggleTitle(isDark));
-    } catch { /* ignore */ }
-  }
-
-  /** Manual light/dark toggle, stacked directly under the geolocation control. Mini app only. */
-  function attachThemeToggleControl(ymaps, map, instance) {
-    if (!ymaps.control?.Button || !window.UyDosh?.isMiniApp?.()) return;
-    const isDark = window.UyDosh?.prefersDarkMapPins?.() ?? false;
-    const button = new ymaps.control.Button({
-      data: {
-        image: themeToggleIconDataUrl(isDark),
-        title: themeToggleTitle(isDark),
-      },
-      options: { selectOnClick: false, maxWidth: 34 },
-    });
-    button.events.add('click', () => {
-      window.UyDosh?.toggleManualTheme?.();
-    });
-    map.controls.add(button, { float: 'right' });
-    themeToggleButtons.add(button);
-    if (instance) instance.themeToggleButton = button;
-  }
-
+  // The light/dark toggle now lives in the app header (see initThemeToggle() in
+  // uydosh-web.js), not as a map control — this listener just keeps the map tiles
+  // and pin bitmaps in sync whenever that header button flips the theme.
   if (typeof document !== 'undefined') {
     document.addEventListener('uydosh:themechange', () => {
-      for (const button of themeToggleButtons) {
-        refreshThemeToggleButton(button);
-      }
       const isDark = window.UyDosh?.prefersDarkMapPins?.() ?? false;
       for (const container of trackedContainers) {
         refreshMapPinStates(container, { darkMap: isDark });
@@ -670,12 +624,12 @@
   }
 
   /**
-   * Small pill showing the total found-listings count, centered between the
-   * geolocation control (top-left) and the theme toggle button (top-right).
-   * Rendered as a plain DOM overlay (not a ymaps control) so its size/position
-   * are easy to keep in sync with those two controls' 34px / 10px-gutter sizing.
-   * Mini app only — the theme toggle (its right anchor) only exists there too.
+   * Small pill showing the total found-listings count, centered at the top of the map
+   * above the geolocation control. Rendered as a plain DOM overlay (not a ymaps control)
+   * so its size/position are easy to keep in sync with that control's 34px / 10px-gutter
+   * sizing. Mini app only.
    */
+  const MAP_CONTROL_ICON_COLOR = '#1f2933';
   const RESULTS_COUNT_TILE_CLASS = 'uydosh-map-results-count';
   const RESULTS_COUNT_STYLE_ID = 'uydosh-map-results-count-styles';
   const RESULTS_COUNT_CONTROL_SIZE = 34;
@@ -699,7 +653,7 @@
         justify-content: center;
         border-radius: ${RESULTS_COUNT_CONTROL_SIZE / 2}px;
         background: #fff;
-        color: ${THEME_TOGGLE_ICON_COLOR};
+        color: ${MAP_CONTROL_ICON_COLOR};
         font: 700 13px/1 system-ui, -apple-system, sans-serif;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
         pointer-events: none;
@@ -1026,7 +980,6 @@
     applyMapTileTheme(container, window.UyDosh?.prefersDarkMapPins?.() ?? false);
     const instance = { map };
     attachUserLocationControl(ymaps, map, instance);
-    attachThemeToggleControl(ymaps, map, instance);
     activeMaps.set(container, instance);
     trackedContainers.add(container);
     scheduleMapReflow(container);
@@ -1075,7 +1028,6 @@
 
     const mapInstance = { map };
     attachUserLocationControl(ymaps, map, mapInstance);
-    attachThemeToggleControl(ymaps, map, mapInstance);
     attachResultsCountTile(container, total ?? validPins.length);
 
     const pinVisualDefaults = pinVisualContext({

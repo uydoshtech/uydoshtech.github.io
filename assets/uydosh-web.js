@@ -80,6 +80,16 @@ function isMiniAppPage() {
 }
 
 function getLang() {
+  // Mini App: the UyDosh bot always attaches `?lang=` for the language the
+  // user picked in the bot's language picker — it must win over a stale
+  // localStorage value from a previous session (e.g. the user picked a
+  // different language in the bot since last opening the mini app).
+  if (isMiniAppPage()) {
+    try {
+      const urlLang = new URLSearchParams(location.search).get('lang');
+      if (urlLang && LANGS.includes(urlLang)) return urlLang;
+    } catch { /* ignore */ }
+  }
   try {
     const saved = localStorage.getItem('uydosh_lang');
     if (saved && LANGS.includes(saved)) return saved;
@@ -855,7 +865,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-64`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-65`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -1546,6 +1556,42 @@ function initLangSwitcher() {
     }
   }
   applyI18n();
+}
+
+/** Sun/moon glyph for the header map-theme toggle (matches the old map control's icon). */
+function themeToggleButtonIconSvg(isDark) {
+  return isDark
+    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>`
+    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>`;
+}
+
+/** Sync every header theme-toggle button's icon/label with the current map theme. */
+function refreshThemeToggleButtons() {
+  const isDark = prefersDarkMapPins();
+  // Button shows the *target* mode's icon, so the label names the mode it switches to.
+  const label = t(isDark ? 'map.themeToggleLight' : 'map.themeToggleDark');
+  for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
+    btn.innerHTML = themeToggleButtonIconSvg(isDark);
+    btn.setAttribute('aria-label', label);
+    btn.title = label;
+  }
+}
+
+/** Wire up header theme-toggle button(s) — mirrors the map's old sun/moon control. */
+function initThemeToggle() {
+  for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
+    if (btn.dataset.bound) continue;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+      toggleManualTheme();
+    });
+  }
+  refreshThemeToggleButtons();
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('uydosh:themechange', refreshThemeToggleButtons);
 }
 
 function escapeHtml(s) {
@@ -2865,7 +2911,8 @@ function miniAppHeaderHtml(options = {}) {
   const brand = brandLink
     ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
     : `<div class="brand">${brandContent}</div>`;
-  return `${brand}<div class="lang" role="group" aria-label="Language"></div>`;
+  const themeToggle = `<button type="button" class="theme-toggle-btn" data-uydosh-theme-toggle></button>`;
+  return `${brand}<div class="header-actions">${themeToggle}<div class="lang" role="group" aria-label="Language"></div></div>`;
 }
 
 /** Inject the shared mini-app header into a <header> or mount element. */
@@ -2876,6 +2923,7 @@ function mountMiniAppHeader(target, options = {}) {
   header.classList.add('uydosh-mini-app-header');
   header.dataset.uydoshHeaderMounted = '1';
   applyI18n(header);
+  initThemeToggle();
   syncMobileHeaderLayout();
   return header;
 }
@@ -3012,12 +3060,40 @@ function ensureMiniAppSafeAreaStyles() {
       font-size: 13px;
       display: block;
     }
-    html.mini-app .lang.lang-dropdown {
+    html.mini-app .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-left: auto;
+      flex-shrink: 0;
     }
     html.mini-app .lang.lang-dropdown > .lang-trigger {
       font-size: 11px;
       letter-spacing: 0.06em;
+    }
+    html.mini-app .theme-toggle-btn {
+      appearance: none;
+      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    html.mini-app .theme-toggle-btn:hover {
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+    }
+    html.mini-app .theme-toggle-btn:active {
+      opacity: 0.85;
+    }
+    html.mini-app .theme-toggle-btn svg {
+      display: block;
     }
     html.mini-app [data-hide-in-mini-app] {
       display: none !important;
@@ -3170,6 +3246,14 @@ function logMiniAppScreen(screenName, params) {
 
 /** Call on mini-app pages after telegram-web-app.js is loaded. */
 function initTelegramMiniApp() {
+  // Persist the bot-selected `?lang=` for the rest of this session so
+  // in-app navigation (links without `?lang=`) keeps using it too.
+  if (isMiniAppPage()) {
+    try {
+      const urlLang = new URLSearchParams(location.search).get('lang');
+      if (urlLang && LANGS.includes(urlLang)) setLang(urlLang);
+    } catch { /* ignore */ }
+  }
   const tg = window.Telegram?.WebApp;
   if (tg) {
     getTelegramInitData();
@@ -3245,6 +3329,7 @@ window.UyDosh = {
   setLang,
   applyI18n,
   initLangSwitcher,
+  initThemeToggle,
   localized,
   localizedShort,
   localizedDescription,
