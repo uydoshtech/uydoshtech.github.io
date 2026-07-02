@@ -1081,7 +1081,7 @@ const I18N = {
     'detail.mapLoadError': 'Не удалось загрузить карту.',
     'detail.gallery.dots': 'Фото',
     'detail.gallery.photo': 'Фото',
-    'detail.contactTelegram': 'Связаться в Telegram',
+    'detail.contactTelegram': 'Telegram',
     'detail.contactPhone': 'Позвонить',
     'view.list': 'Список',
     'view.map': 'Карта',
@@ -3261,20 +3261,74 @@ const FIREBASE_CONFIG = {
 let _logEventFn = null;
 let _analyticsInitPromise = null;
 
-/** Telegram WebApp context attached to every Mini App analytics event. */
+/** Truncates a string to `max` chars for safe GA4/Firebase param/property values. */
+function _clip(value, max) {
+  if (value == null) return undefined;
+  const s = String(value);
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+/** Telegram WebApp context attached to every Mini App analytics event (max extraction). */
 function getTelegramAnalyticsContext() {
   const tg = window.Telegram?.WebApp;
-  const user = tg?.initDataUnsafe?.user;
+  const initDataUnsafe = tg?.initDataUnsafe || {};
+  const user = initDataUnsafe.user;
+  const chat = initDataUnsafe.chat;
   return {
     platform: tg?.platform || 'unknown',
     tg_version: tg?.version || '',
+    color_scheme: tg?.colorScheme || '',
     user_language: user?.language_code || '',
-    start_param: tg?.initDataUnsafe?.start_param || '',
+    start_param: initDataUnsafe.start_param || '',
+    chat_type: initDataUnsafe.chat_type || '',
+    is_expanded: tg?.isExpanded ? 1 : 0,
     ...(user?.id != null ? { tg_user_id: user.id } : {}),
+    ...(user?.username ? { tg_username: _clip(user.username, 100) } : {}),
+    ...(user?.first_name ? { tg_first_name: _clip(user.first_name, 100) } : {}),
+    ...(user?.last_name ? { tg_last_name: _clip(user.last_name, 100) } : {}),
+    ...(user?.photo_url ? { tg_photo_url: _clip(user.photo_url, 100) } : {}),
     ...(user?.is_premium != null
       ? { is_premium: user.is_premium ? 1 : 0 }
       : {}),
+    ...(user?.is_bot != null ? { tg_is_bot: user.is_bot ? 1 : 0 } : {}),
+    ...(user?.allows_write_to_pm != null
+      ? { allows_write_pm: user.allows_write_to_pm ? 1 : 0 }
+      : {}),
+    ...(user?.added_to_attachment_menu != null
+      ? { added_to_menu: user.added_to_attachment_menu ? 1 : 0 }
+      : {}),
+    ...(initDataUnsafe.query_id ? { tg_query_id: _clip(initDataUnsafe.query_id, 100) } : {}),
+    ...(initDataUnsafe.chat_instance
+      ? { tg_chat_instance: _clip(initDataUnsafe.chat_instance, 100) }
+      : {}),
+    ...(initDataUnsafe.auth_date ? { tg_auth_date: initDataUnsafe.auth_date } : {}),
+    ...(initDataUnsafe.can_send_after != null
+      ? { tg_can_send_after: initDataUnsafe.can_send_after }
+      : {}),
+    ...(chat?.id != null ? { tg_chat_id: chat.id } : {}),
+    ...(chat?.type ? { tg_chat_kind: chat.type } : {}),
   };
+}
+
+/** Sets Telegram identity fields as GA4/Firebase user properties (persist on the user, not just one event). */
+function setTelegramAnalyticsUserProperties(analyticsMod, analytics) {
+  const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!user) return;
+  const props = {
+    tg_username: _clip(user.username, 36),
+    tg_first_name: _clip(user.first_name, 36),
+    tg_last_name: _clip(user.last_name, 36),
+    tg_language: _clip(user.language_code, 36),
+    tg_platform: _clip(window.Telegram?.WebApp?.platform, 36),
+    ...(user.is_premium != null ? { tg_is_premium: user.is_premium ? '1' : '0' } : {}),
+    ...(user.is_bot != null ? { tg_is_bot: user.is_bot ? '1' : '0' } : {}),
+  };
+  for (const k of Object.keys(props)) {
+    if (props[k] === undefined) delete props[k];
+  }
+  if (Object.keys(props).length > 0) {
+    analyticsMod.setUserProperties(analytics, props);
+  }
 }
 
 /** Loads Firebase Analytics once; no-op outside Telegram Mini App. */
@@ -3302,6 +3356,7 @@ function initMiniAppAnalytics() {
       if (tgUserId != null) {
         analyticsMod.setUserId(analytics, String(tgUserId));
       }
+      setTelegramAnalyticsUserProperties(analyticsMod, analytics);
 
       _logEventFn('app_opened', {
         source: 'telegram_mini_app',
