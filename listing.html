@@ -13,12 +13,14 @@
     <meta name="uydosh-yandex-maps-key" content="70aaf6ac-5a4b-4a69-a5a5-c16536483324" />
     <script>
       // Apply a saved manual theme (mini app sun/moon toggle) before first paint to avoid a flash.
+      // The saved value names the MAP theme; the UI always runs the opposite palette
+      // (dark map + light interface, or light map + dark interface).
       (function () {
         try {
-          var theme = localStorage.getItem('uydosh_manual_theme');
-          var vars = theme === 'light'
+          var mapTheme = localStorage.getItem('uydosh_manual_theme');
+          var vars = mapTheme === 'dark'
             ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
-            : theme === 'dark'
+            : mapTheme === 'light'
               ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
               : null;
           if (vars) {

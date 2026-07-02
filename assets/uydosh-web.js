@@ -925,8 +925,8 @@ const I18N = {
     'map.empty': 'Tanlangan filtrlarda xaritada ko‘rsatish uchun e’lon yo‘q.',
     'map.error': 'Xaritani yuklab bo‘lmadi.',
     'map.retry': 'Qayta urinish',
-    'map.themeToggleLight': 'Yorug‘ mavzuga o‘tish',
-    'map.themeToggleDark': 'Tungi mavzuga o‘tish',
+    'map.themeToggleLight': 'Xaritani yorug‘ qilish',
+    'map.themeToggleDark': 'Xaritani tungi qilish',
     'map.tooltip.close': 'Yopish',
     'map.carousel.dots': 'E’lonlar',
     'map.resultsCountAria': 'Xaritada {count} ta e’lon topildi',
@@ -1071,8 +1071,8 @@ const I18N = {
     'map.empty': 'Нет объявлений для карты с выбранными фильтрами.',
     'map.error': 'Не удалось загрузить карту.',
     'map.retry': 'Попробовать ещё раз',
-    'map.themeToggleLight': 'Включить светлую тему',
-    'map.themeToggleDark': 'Включить тёмную тему',
+    'map.themeToggleLight': 'Сделать карту светлой',
+    'map.themeToggleDark': 'Сделать карту тёмной',
     'map.tooltip.close': 'Закрыть',
     'map.carousel.dots': 'Объявления',
     'map.resultsCountAria': 'На карте найдено объявлений: {count}',
@@ -1217,8 +1217,8 @@ const I18N = {
     'map.empty': 'No listings to show on the map for these filters.',
     'map.error': 'Could not load the map.',
     'map.retry': 'Try again',
-    'map.themeToggleLight': 'Switch to light theme',
-    'map.themeToggleDark': 'Switch to dark theme',
+    'map.themeToggleLight': 'Make map light',
+    'map.themeToggleDark': 'Make map dark',
     'map.tooltip.close': 'Close',
     'map.carousel.dots': 'Listings',
     'map.resultsCountAria': 'Found {count} listings on the map',
@@ -1807,9 +1807,14 @@ const MAP_PIN_FILL = {
 
 const VISITED_LISTINGS_STORAGE_KEY = 'uydosh_visited_listing_ids';
 
-/** Manual light/dark override (mini app theme toggle) — beats Telegram theme + system preference. */
+/**
+ * Manual light/dark override (mini app map sun/moon toggle) — beats Telegram theme + system
+ * preference. The stored value names the *map* tile theme; by design the app UI (cards, header,
+ * filters, …) always runs the opposite palette, so a dark map pairs with a light interface and
+ * vice versa — see uiThemeForMapTheme().
+ */
 const MANUAL_THEME_STORAGE_KEY = 'uydosh_manual_theme';
-const MANUAL_THEME_VARS = {
+const UI_THEME_VARS = {
   dark: {
     '--bg': '#061525',
     '--fg': 'rgba(255, 255, 255, 0.92)',
@@ -1826,6 +1831,11 @@ const MANUAL_THEME_VARS = {
   },
 };
 
+/** UI palette is always the inverse of the chosen map theme. */
+function uiThemeForMapTheme(mapTheme) {
+  return mapTheme === 'dark' ? 'light' : 'dark';
+}
+
 function getManualTheme() {
   try {
     const saved = localStorage.getItem(MANUAL_THEME_STORAGE_KEY);
@@ -1835,8 +1845,8 @@ function getManualTheme() {
   }
 }
 
-function applyManualThemeVars(theme) {
-  const vars = MANUAL_THEME_VARS[theme];
+function applyManualThemeVars(mapTheme) {
+  const vars = UI_THEME_VARS[uiThemeForMapTheme(mapTheme)];
   if (!vars) return;
   const root = document.documentElement;
   for (const [prop, value] of Object.entries(vars)) {

@@ -6,7 +6,7 @@ const PAGE_SIZE = 10;
 // uydosh-web.js (loaded before this file) — do not redeclare them here, classic
 // <script> top-level `const` lives in a shared lexical scope and a second `const`
 // with the same name throws a SyntaxError that aborts this entire script.
-const DEFAULT_WITH_PHOTO = true;
+const DEFAULT_WITH_PHOTO = false;
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
 const FILTER_SCROLL_COLLAPSE_PX = 100;
