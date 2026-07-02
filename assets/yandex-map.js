@@ -584,6 +584,33 @@
     map.controls.add(control);
   }
 
+  /**
+   * Yandex Maps 2.1 has no native dark tile theme (unlike v3's `theme` option), so we fake it
+   * with a CSS filter on the tile ("ground") pane only — placemarks/controls live in sibling
+   * panes and are left untouched. The versioned `ymaps-2-1-XX-` class prefix changes with every
+   * API release, hence the wildcard attribute selector instead of a hardcoded class name.
+   */
+  const MAP_TILES_DARK_CLASS = 'uydosh-map-tiles-dark';
+  const MAP_TILE_THEME_STYLE_ID = 'uydosh-map-tile-theme-styles';
+
+  function ensureMapTileThemeStyles() {
+    if (document.getElementById(MAP_TILE_THEME_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = MAP_TILE_THEME_STYLE_ID;
+    style.textContent = `
+      .${MAP_TILES_DARK_CLASS} [class*="ymaps-"][class*="-ground-pane"] {
+        filter: invert(100%) hue-rotate(180deg) brightness(0.94) contrast(0.88);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function applyMapTileTheme(container, isDark) {
+    if (!container) return;
+    ensureMapTileThemeStyles();
+    container.classList.toggle(MAP_TILES_DARK_CLASS, !!isDark);
+  }
+
   const THEME_TOGGLE_ICON_COLOR = '#1f2933';
   const themeToggleButtons = new Set();
 
@@ -637,6 +664,7 @@
       const isDark = window.UyDosh?.prefersDarkMapPins?.() ?? false;
       for (const container of trackedContainers) {
         refreshMapPinStates(container, { darkMap: isDark });
+        applyMapTileTheme(container, isDark);
       }
     });
   }
@@ -890,6 +918,7 @@
     if (mapPin.latitude == null) mapPin.latitude = latitude;
     if (mapPin.longitude == null) mapPin.longitude = longitude;
     map.geoObjects.add(createPlacemark(ymaps, mapPin, { selected }));
+    applyMapTileTheme(container, window.UyDosh?.prefersDarkMapPins?.() ?? false);
     const instance = { map };
     attachUserLocationControl(ymaps, map, instance);
     attachThemeToggleControl(ymaps, map, instance);
@@ -948,6 +977,7 @@
       visitedListingIds,
       darkMap,
     });
+    applyMapTileTheme(container, pinVisualDefaults.darkMap);
     window.UyDosh?.warmMapPinIconCache?.({ darkMap: pinVisualDefaults.darkMap });
 
     const pinsById = new Map();

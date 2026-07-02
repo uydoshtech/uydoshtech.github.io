@@ -819,7 +819,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-61`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-63`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -893,6 +893,7 @@ const I18N = {
     'map.themeToggleDark': 'Tungi mavzuga o‘tish',
     'map.tooltip.close': 'Yopish',
     'map.carousel.dots': 'E’lonlar',
+    'map.resultsCountAria': 'Xaritada {count} ta e’lon topildi',
     'cta.openListings': 'E’lonlarni ko‘rish',
     'filter.type.all': 'Hammasi',
     'filter.type.roomNeeded': 'Xona qidiryapman',
@@ -1038,6 +1039,7 @@ const I18N = {
     'map.themeToggleDark': 'Включить тёмную тему',
     'map.tooltip.close': 'Закрыть',
     'map.carousel.dots': 'Объявления',
+    'map.resultsCountAria': 'На карте найдено объявлений: {count}',
     'cta.openListings': 'Смотреть объявления',
     'filter.type.all': 'Все',
     'filter.type.roomNeeded': 'Ищу комнату',
@@ -1183,6 +1185,7 @@ const I18N = {
     'map.themeToggleDark': 'Switch to dark theme',
     'map.tooltip.close': 'Close',
     'map.carousel.dots': 'Listings',
+    'map.resultsCountAria': 'Found {count} listings on the map',
     'cta.openListings': 'Browse listings',
     'filter.type.all': 'All',
     'filter.type.roomNeeded': 'Need room',
