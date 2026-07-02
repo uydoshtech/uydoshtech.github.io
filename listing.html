@@ -338,6 +338,7 @@
         100% { background-position: -200% 0; }
       }
       .skel.gallery-skel { aspect-ratio: 4/3; width: 100%; }
+      .skel.gallery-skel-rounded { border-radius: 20px; }
       .skel.line { height: 14px; }
       .skel.line.w40 { width: 40%; }
       .skel.line.w60 { width: 60%; }
@@ -364,6 +365,18 @@
       html.mini-app .back,
       html.mini-app [data-hide-in-mini-app] { display: none !important; }
       html.mini-app footer { justify-content: center; }
+
+      /* Listing details: a tight 10px horizontal margin everywhere, except
+         the photo gallery which bleeds full-width edge to edge. */
+      html.mini-app .wrap { padding-left: 10px; padding-right: 10px; }
+      html.mini-app .gallery-col { margin-left: -10px; margin-right: -10px; }
+      html.mini-app .gallery-col .gallery,
+      html.mini-app .gallery-col .gallery-skel {
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        box-shadow: none;
+      }
 
       .map-section {
         border: 1px solid var(--stroke);
@@ -533,8 +546,8 @@
       <main id="root">
         <!-- Skeleton while loading -->
         <div class="layout" id="skeleton-view">
-          <div>
-            <div class="skel gallery-skel" style="border-radius: 20px;"></div>
+          <div class="gallery-col">
+            <div class="skel gallery-skel gallery-skel-rounded"></div>
           </div>
           <div class="details">
             <div class="skel line w80"></div>
@@ -1123,7 +1136,7 @@
 
         rootEl.innerHTML = `
           <div class="layout">
-            <div>
+            <div class="gallery-col">
               ${buildGalleryHtml()}
             </div>
             <div class="details">

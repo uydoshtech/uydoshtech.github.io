@@ -7,6 +7,9 @@ const PAGE_SIZE = 10;
 // <script> top-level `const` lives in a shared lexical scope and a second `const`
 // with the same name throws a SyntaxError that aborts this entire script.
 const DEFAULT_WITH_PHOTO = false;
+// Keep in sync with uydosh_client's listingBrowseCreatedWithinDays so the mini app
+// feed doesn't surface unbounded historical backlog (e.g. months-old Telegram posts).
+const FEED_CREATED_WITHIN_DAYS = 30;
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
 const FILTER_SCROLL_COLLAPSE_PX = 100;
@@ -277,6 +280,7 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
     gender: genderQueryParam(),
     withPhoto: withPhotoQueryParam(),
     subwayLineId: subwayLineQueryParam(),
+    createdWithinDays: FEED_CREATED_WITHIN_DAYS,
   }),
 });
 
@@ -748,6 +752,7 @@ async function loadMore() {
       gender: genderQueryParam(),
       withPhoto: withPhotoQueryParam(),
       subwayLineId: subwayLineQueryParam(),
+      createdWithinDays: FEED_CREATED_WITHIN_DAYS,
     });
     const listings = Array.isArray(data?.listings) ? data.listings : [];
     updatePagination(data, listings, nextPage);

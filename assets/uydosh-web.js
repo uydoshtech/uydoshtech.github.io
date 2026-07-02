@@ -792,12 +792,13 @@ async function resizeImageFileForUpload(file, {
 
 const MINI_APP_CREATE_PATH = '/telegram/create.html';
 
-function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, subwayLineId } = {}) {
+function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, subwayLineId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
   if (subwayLineId) params.subwayLineId = subwayLineId;
+  if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
   return fetchJson('/listings', params);
 }
 
@@ -805,12 +806,13 @@ function fetchListing(id) {
   return fetchJson(`/listings/${encodeURIComponent(id)}`);
 }
 
-function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, subwayLineId } = {}) {
+function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, subwayLineId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
   if (subwayLineId) params.subwayLineId = subwayLineId;
+  if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
   return fetchJson('/listings/map', params);
 }
 
