@@ -931,6 +931,7 @@ const I18N = {
     'detail.gallery.dots': 'Rasmlar',
     'detail.gallery.photo': 'Rasm',
     'detail.contactTelegram': 'Telegram orqali bog‘lanish',
+    'detail.contactPhone': 'Qo‘ng‘iroq qilish',
     'view.list': 'Ro‘yxat',
     'view.map': 'Xarita',
     'map.loading': 'Xarita yuklanmoqda…',
@@ -1081,6 +1082,7 @@ const I18N = {
     'detail.gallery.dots': 'Фото',
     'detail.gallery.photo': 'Фото',
     'detail.contactTelegram': 'Связаться в Telegram',
+    'detail.contactPhone': 'Позвонить',
     'view.list': 'Список',
     'view.map': 'Карта',
     'map.loading': 'Загрузка карты…',
@@ -1231,6 +1233,7 @@ const I18N = {
     'detail.gallery.dots': 'Photos',
     'detail.gallery.photo': 'Photo',
     'detail.contactTelegram': 'Contact on Telegram',
+    'detail.contactPhone': 'Call',
     'view.list': 'List',
     'view.map': 'Map',
     'map.loading': 'Loading map…',
@@ -2426,9 +2429,27 @@ function listingContactTelegram(listing) {
   return normalizeTelegramUsername(listing?.contact_telegram);
 }
 
+/** Strip formatting from a phone number, keeping digits and a leading "+" only. */
+function normalizePhoneNumber(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const cleaned = raw.replace(/[^0-9+]/g, '');
+  return cleaned.replace(/(?!^)\+/g, '');
+}
+
+/** Resolve the listing owner's extracted contact phone number. */
+function listingContactPhone(listing) {
+  return normalizePhoneNumber(listing?.contact_phone);
+}
+
 function telegramUserUrl(username) {
   const clean = normalizeTelegramUsername(username);
   return clean ? `https://t.me/${encodeURIComponent(clean)}` : '';
+}
+
+function telPhoneUrl(phone) {
+  const clean = normalizePhoneNumber(phone);
+  return clean ? `tel:${clean}` : '';
 }
 
 /** Open a Telegram user chat (Mini App uses openTelegramLink). */
@@ -2446,6 +2467,19 @@ function openTelegramContact(handle) {
   return true;
 }
 
+/**
+ * Start a phone call. `Telegram.WebApp.openLink`/`openTelegramLink` reject
+ * the `tel:` scheme ("Url protocol is not supported"), so this always goes
+ * through `window.open`, which reliably hands off to the OS dialer from
+ * inside the Telegram in-app browser on both iOS and Android.
+ */
+function openPhoneContact(phone) {
+  const url = telPhoneUrl(phone);
+  if (!url) return false;
+  window.open(url, '_blank');
+  return true;
+}
+
 function iconTelegram(color = '#fff') {
   return iconSvg(color, `
     <path d="M21.5 4.5 2.8 11.2c-1.1.4-1.1 1.1-.2 1.4l4.8 1.5 1.8 5.6c.2.6.1.8.7.8.5 0 .7-.2 1-.5l2.4-2.3 5 3.7c.9.5 1.6.2 1.8-.9L22.8 6c.3-1.2-.5-1.7-1.3-1.5Z" fill="currentColor" stroke="none"></path>
@@ -2453,30 +2487,67 @@ function iconTelegram(color = '#fff') {
   `);
 }
 
-/** Sticky Mini App footer CTA to message the listing owner on Telegram. */
-function detailContactBarHtml(username) {
-  const clean = normalizeTelegramUsername(username);
-  if (!clean) return '';
-  return `
-    <div class="detail-contact-bar-inner">
-      <button type="button" class="detail-contact-btn" data-detail-contact-telegram data-telegram-username="${escapeHtml(clean)}">
+function iconPhone(color = '#fff') {
+  return iconSvg(color, `
+    <path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.2 1.1L6.6 10.8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+/** Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct call. */
+function detailContactBarHtml(username, phone) {
+  const cleanHandle = normalizeTelegramUsername(username);
+  const cleanPhone = normalizePhoneNumber(phone);
+  if (!cleanHandle && !cleanPhone) return '';
+
+  const telegramBtn = cleanHandle
+    ? `
+      <button type="button" class="detail-contact-btn" data-detail-contact-telegram data-telegram-username="${escapeHtml(cleanHandle)}">
         ${iconTelegram('#fff')}
         <span data-i18n="detail.contactTelegram">${escapeHtml(t('detail.contactTelegram'))}</span>
       </button>
+    `
+    : '';
+  const phoneBtn = cleanPhone
+    ? `
+      <button type="button" class="detail-contact-btn detail-contact-btn-phone" data-detail-contact-phone data-phone-number="${escapeHtml(cleanPhone)}">
+        ${iconPhone('#fff')}
+        <span data-i18n="detail.contactPhone">${escapeHtml(t('detail.contactPhone'))}</span>
+      </button>
+    `
+    : '';
+
+  const rowClass = cleanHandle && cleanPhone ? ' detail-contact-bar-inner-row' : '';
+  return `
+    <div class="detail-contact-bar-inner${rowClass}">
+      ${telegramBtn}
+      ${phoneBtn}
     </div>
   `;
 }
 
-function bindDetailContactBar(container, { listingId, onOpen } = {}) {
-  const btn = container?.querySelector('[data-detail-contact-telegram]');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
+function bindDetailContactBar(container, { listingId, onOpen, onCall } = {}) {
+  const telegramBtn = container?.querySelector('[data-detail-contact-telegram]');
+  telegramBtn?.addEventListener('click', () => {
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
-    const handle = btn.getAttribute('data-telegram-username');
+    const handle = telegramBtn.getAttribute('data-telegram-username');
     if (!openTelegramContact(handle)) return;
     if (typeof onOpen === 'function') onOpen(handle);
     else if (listingId != null) {
       logMiniAppEvent('telegram_contact_tapped', {
+        listing_id: Number(listingId),
+        source: 'telegram_mini_app',
+      });
+    }
+  });
+
+  const phoneBtn = container?.querySelector('[data-detail-contact-phone]');
+  phoneBtn?.addEventListener('click', () => {
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    const phone = phoneBtn.getAttribute('data-phone-number');
+    if (!openPhoneContact(phone)) return;
+    if (typeof onCall === 'function') onCall(phone);
+    else if (listingId != null) {
+      logMiniAppEvent('phone_contact_tapped', {
         listing_id: Number(listingId),
         source: 'telegram_mini_app',
       });
@@ -3137,6 +3208,13 @@ function ensureMiniAppSafeAreaStyles() {
       max-width: 1000px;
       margin: 0 auto;
     }
+    .detail-contact-bar-inner-row {
+      display: flex;
+      gap: 10px;
+    }
+    .detail-contact-bar-inner-row .detail-contact-btn {
+      flex: 1 1 0;
+    }
     .detail-contact-btn {
       width: 100%;
       display: inline-flex;
@@ -3161,6 +3239,10 @@ function ensureMiniAppSafeAreaStyles() {
       width: 22px;
       height: 22px;
       display: block;
+    }
+    .detail-contact-btn-phone {
+      background: linear-gradient(135deg, #25C06D, #1FAE60);
+      box-shadow: 0 10px 28px rgba(37, 192, 109, 0.35);
     }
   `;
 }
@@ -3417,6 +3499,11 @@ window.UyDosh = {
   telegramUserUrl,
   openTelegramContact,
   iconTelegram,
+  normalizePhoneNumber,
+  listingContactPhone,
+  telPhoneUrl,
+  openPhoneContact,
+  iconPhone,
   detailContactBarHtml,
   bindDetailContactBar,
   warmMapPinIconCache,
