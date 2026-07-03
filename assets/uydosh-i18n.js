@@ -521,8 +521,8 @@ function ensureLangSwitcherStyles() {
       line-height: 1;
     }
     .lang.lang-dropdown > .lang-trigger .flag.flag-avatar {
-      width: 24px;
-      height: 24px;
+      width: 29px;
+      height: 29px;
       border-radius: 50%;
       border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
       overflow: hidden;
