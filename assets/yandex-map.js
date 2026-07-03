@@ -459,15 +459,21 @@
   }
 
   /**
-   * Above this zoom level, district name pills are hidden (but boundary outlines stay put) —
-   * once zoomed in this close the pill mostly just covers streets/pins without adding context.
+   * District name pills only render within this zoom range (boundary outlines stay visible
+   * outside of it either way):
+   *  - below the min, the whole city is on screen and ~12 pills would overlap into a jumble;
+   *  - above the max, we're zoomed in close enough that a pill mostly just covers streets/pins
+   *    without adding context.
+   * Min mirrors the mobile app's `_minDistrictLabelZoom` (yandex_map_widget.dart).
    */
+  const DISTRICT_LABEL_MIN_ZOOM = 11.5;
   const DISTRICT_LABEL_MAX_ZOOM = 15;
 
   function refreshDistrictLabelVisibility(instance) {
     const layer = instance?.districtLayer;
     if (!instance?.map || !layer?.labelObjects?.length) return;
-    const visible = instance.map.getZoom() <= DISTRICT_LABEL_MAX_ZOOM;
+    const zoom = instance.map.getZoom();
+    const visible = zoom >= DISTRICT_LABEL_MIN_ZOOM && zoom <= DISTRICT_LABEL_MAX_ZOOM;
     for (const label of layer.labelObjects) {
       label.options.set('visible', visible);
     }
@@ -894,10 +900,11 @@
   }
 
   /**
-   * Small pill showing the total found-listings count, centered at the top of the map
-   * above the geolocation control. Rendered as a plain DOM overlay (not a ymaps control)
-   * so its size/position are easy to keep in sync with that control's 34px / 10px-gutter
-   * sizing. Mini app only.
+   * Small badge showing the total found-listings count, top-right of the map, sitting
+   * directly to the left of the native geolocation control. Rendered as a plain DOM
+   * overlay (not a ymaps control) so its size/position are easy to keep in sync with
+   * that control's 34px / 10px-gutter sizing — same height and a compact, roughly
+   * square shape (not a stretched pill) to visually match it. Mini app only.
    */
   const MAP_CONTROL_ICON_COLOR = '#1f2933';
   const RESULTS_COUNT_TILE_CLASS = 'uydosh-map-results-count';
@@ -913,15 +920,15 @@
       .${RESULTS_COUNT_TILE_CLASS} {
         position: absolute;
         top: ${RESULTS_COUNT_CONTROL_GUTTER}px;
-        left: 50%;
-        transform: translateX(-50%);
+        right: ${RESULTS_COUNT_CONTROL_GUTTER * 2 + RESULTS_COUNT_CONTROL_SIZE}px;
         z-index: 20;
         height: ${RESULTS_COUNT_CONTROL_SIZE}px;
-        padding: 0 12px;
+        min-width: ${RESULTS_COUNT_CONTROL_SIZE}px;
+        padding: 0 8px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: ${RESULTS_COUNT_CONTROL_SIZE / 2}px;
+        border-radius: 8px;
         background: #fff;
         color: ${MAP_CONTROL_ICON_COLOR};
         font: 700 13px/1 system-ui, -apple-system, sans-serif;
@@ -969,13 +976,15 @@
    * Floating round buttons (bottom-right of the map) to toggle the district-boundaries
    * layer and cycle the metro-stations layer — mirrors the mobile app's map layer
    * buttons. Mini app only; rendered as a plain DOM overlay. Bottom-right keeps them
-   * clear of the results-count tile (top-center) and the native geolocation control
-   * (top-right).
+   * clear of the results-count tile (top-right) and the native geolocation control
+   * (top-right). Lifted well above the gutter so they don't sit on top of Yandex's
+   * own copyright/logo bar at the very bottom of the map.
    */
   const LAYER_CONTROLS_CLASS = 'uydosh-map-layer-controls';
   const LAYER_CONTROL_BTN_CLASS = 'uydosh-map-layer-btn';
   const LAYER_CONTROLS_STYLE_ID = 'uydosh-map-layer-controls-styles';
   const LAYER_CONTROL_MUTED_COLOR = '#94a3b8';
+  const LAYER_CONTROLS_BOTTOM_GUTTER = 34;
 
   const METRO_LAYER_BUTTON_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none">
     <path d="M7 3h10a3 3 0 0 1 3 3v10a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
@@ -997,7 +1006,7 @@
     style.textContent = `
       .${LAYER_CONTROLS_CLASS} {
         position: absolute;
-        bottom: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        bottom: ${LAYER_CONTROLS_BOTTOM_GUTTER}px;
         right: ${RESULTS_COUNT_CONTROL_GUTTER}px;
         z-index: 20;
         display: flex;
