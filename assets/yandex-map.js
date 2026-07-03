@@ -417,16 +417,26 @@
     const lat = Number(station?.latitude);
     const lon = Number(station?.longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-    const color = window.UyDosh?.metroLineColor?.(station?.line) || '#616161';
     const name = window.UyDosh?.localized?.(station, lang) || '';
+    const customIcon = window.UyDosh?.createMetroStationPinIcon?.(station?.line);
+    const iconOptions = customIcon?.href
+      ? {
+          iconLayout: 'default#image',
+          iconImageHref: customIcon.href,
+          iconImageSize: customIcon.size,
+          iconImageOffset: customIcon.offset,
+        }
+      : {
+          preset: 'islands#circleIcon',
+          iconColor: window.UyDosh?.metroLineColor?.(station?.line) || '#616161',
+        };
     return new ymaps.Placemark([lat, lon], {
       hintContent: name,
     }, {
-      preset: 'islands#circleIcon',
-      iconColor: color,
+      ...iconOptions,
       hasHint: true,
       hasBalloon: false,
-      zIndex: 50,
+      zIndex: customIcon?.zIndex ?? 50,
     });
   }
 
@@ -445,6 +455,21 @@
       case 'line3': return 3;
       case 'line4': return 4;
       default: return null;
+    }
+  }
+
+  /**
+   * Above this zoom level, district name pills are hidden (but boundary outlines stay put) —
+   * once zoomed in this close the pill mostly just covers streets/pins without adding context.
+   */
+  const DISTRICT_LABEL_MAX_ZOOM = 15;
+
+  function refreshDistrictLabelVisibility(instance) {
+    const layer = instance?.districtLayer;
+    if (!instance?.map || !layer?.labelObjects?.length) return;
+    const visible = instance.map.getZoom() <= DISTRICT_LABEL_MAX_ZOOM;
+    for (const label of layer.labelObjects) {
+      label.options.set('visible', visible);
     }
   }
 
@@ -468,14 +493,19 @@
       const ymaps = window.ymaps;
       const lang = window.UyDosh?.getLang?.() || 'ru';
       layer.objects = [];
+      layer.labelObjects = [];
       for (const district of districts) {
         layer.objects.push(createDistrictPolygon(ymaps, district));
         const label = createDistrictLabelPlacemark(ymaps, district, lang);
-        if (label) layer.objects.push(label);
+        if (label) {
+          layer.objects.push(label);
+          layer.labelObjects.push(label);
+        }
       }
     }
     if (layer.visible) {
       for (const obj of layer.objects) layer.collection.add(obj);
+      refreshDistrictLabelVisibility(instance);
     }
   }
 
@@ -936,9 +966,11 @@
   }
 
   /**
-   * Floating round buttons (top-left of the map) to toggle the district-boundaries
+   * Floating round buttons (bottom-right of the map) to toggle the district-boundaries
    * layer and cycle the metro-stations layer — mirrors the mobile app's map layer
-   * buttons. Mini app only; rendered as a plain DOM overlay next to the results tile.
+   * buttons. Mini app only; rendered as a plain DOM overlay. Bottom-right keeps them
+   * clear of the results-count tile (top-center) and the native geolocation control
+   * (top-right).
    */
   const LAYER_CONTROLS_CLASS = 'uydosh-map-layer-controls';
   const LAYER_CONTROL_BTN_CLASS = 'uydosh-map-layer-btn';
@@ -965,8 +997,8 @@
     style.textContent = `
       .${LAYER_CONTROLS_CLASS} {
         position: absolute;
-        top: ${RESULTS_COUNT_CONTROL_GUTTER}px;
-        left: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        bottom: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        right: ${RESULTS_COUNT_CONTROL_GUTTER}px;
         z-index: 20;
         display: flex;
         flex-direction: column;
@@ -1422,7 +1454,7 @@
     }
 
     const mapInstance = { map };
-    mapInstance.districtLayer = { visible: false, objects: null, collection: new ymaps.GeoObjectCollection() };
+    mapInstance.districtLayer = { visible: false, objects: null, labelObjects: null, collection: new ymaps.GeoObjectCollection() };
     mapInstance.metroLayer = { mode: 'off', objectsByLine: null, collection: new ymaps.GeoObjectCollection() };
     map.geoObjects.add(mapInstance.districtLayer.collection);
     map.geoObjects.add(mapInstance.metroLayer.collection);
@@ -1430,6 +1462,10 @@
     attachUserLocationControl(ymaps, map, mapInstance);
     attachResultsCountTile(container, total ?? validPins.length);
     attachLayerControls(container, mapInstance);
+    map.events.add('boundschange', (event) => {
+      if (event.get('newZoom') === event.get('oldZoom')) return;
+      refreshDistrictLabelVisibility(mapInstance);
+    });
 
     const pinVisualDefaults = pinVisualContext({
       selectedListingId,

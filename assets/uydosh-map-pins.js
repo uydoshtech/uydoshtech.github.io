@@ -484,6 +484,84 @@ function createMapClusterPinIcon() {
   return mapClusterPinIconCache;
 }
 
+const METRO_STATION_PIN_SIZE = 20;
+const metroStationPinIconCache = new Map();
+
+/** Subway glyph stroke paths (viewBox 0 0 24 24) — mirrors iconMetro() in uydosh-icons.js. */
+const METRO_PIN_GLYPH_PATHS = [
+  { d: 'M7 3h10a3 3 0 0 1 3 3v10a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6a3 3 0 0 1 3-3Z', lineWidth: 2 },
+  { d: 'M7 8h10', lineWidth: 2 },
+  { d: 'M7 21l-2 2M17 21l2 2', lineWidth: 2 },
+  { d: 'M8 17h0.01M16 17h0.01', lineWidth: 3 },
+];
+
+function drawMetroPinGlyph(ctx, centerX, centerY, iconSize) {
+  const scale = iconSize / 24;
+  ctx.save();
+  ctx.translate(centerX - iconSize / 2, centerY - iconSize / 2);
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const { d, lineWidth } of METRO_PIN_GLYPH_PATHS) {
+    ctx.lineWidth = lineWidth;
+    ctx.stroke(new Path2D(d));
+  }
+  ctx.restore();
+}
+
+/**
+ * Canvas-drawn map pin for metro stations: a small line-colored circle with a white subway
+ * glyph on top (mobile parity — see `Icons.directions_subway_rounded` in
+ * yandex_map_widget_icons.dart). Line 4 gets a black outline instead of white since its
+ * orange fill doesn't contrast well against a white ring.
+ */
+function createMetroStationPinIcon(line) {
+  if (typeof document === 'undefined') return null;
+  const lineId = Number(line) || 0;
+  const cacheKey = String(lineId);
+  const cached = metroStationPinIconCache.get(cacheKey);
+  if (cached) return cached;
+
+  const fillColor = metroLineColor(lineId) || '#616161';
+  const outlineColor = lineId === 4 ? '#000000' : '#ffffff';
+  const pinSize = METRO_STATION_PIN_SIZE;
+  const canvas = document.createElement('canvas');
+  canvas.width = pinSize;
+  canvas.height = pinSize;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  const center = pinSize / 2;
+  const radius = pinSize * 0.39;
+  const outlineWidth = 1.5;
+
+  ctx.beginPath();
+  ctx.arc(center, center + 1, radius + outlineWidth, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius + outlineWidth, 0, Math.PI * 2);
+  ctx.fillStyle = outlineColor;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  drawMetroPinGlyph(ctx, center, center, pinSize * 0.56);
+
+  const result = {
+    href: canvas.toDataURL('image/png'),
+    size: [pinSize, pinSize],
+    offset: [-pinSize / 2, -pinSize / 2],
+    zIndex: 50,
+  };
+  metroStationPinIconCache.set(cacheKey, result);
+  return result;
+}
+
 /** Red dot with white ring — matches mobile user-location pin. */
 function createUserLocationPinIcon() {
   if (typeof document === 'undefined') return null;
@@ -800,6 +878,7 @@ Object.assign(window.UyDosh, {
   createMapPinIcon,
   createMapGroupPinIcon,
   createMapClusterPinIcon,
+  createMetroStationPinIcon,
   createUserLocationPinIcon,
   requestUserLocation,
   openTelegramLocationSettings,
