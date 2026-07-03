@@ -663,6 +663,40 @@ function iconPhone(color = '#fff') {
   `);
 }
 
+function iconShare(color = '#fff') {
+  return iconSvg(color, `
+    <circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+    <circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+    <circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+    <path d="M8.3 10.6 15.8 6.4M8.3 13.4l7.5 4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+  `);
+}
+
+/**
+ * Open Telegram's native share/forward dialog for a URL + caption. Falls
+ * back to the OS share sheet (regular browser visits to this page outside
+ * the Mini App) or a plain window.open of the t.me share link.
+ */
+function shareListingLink(url, text) {
+  if (!url) return false;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text || '')}`;
+  const tg = window.Telegram?.WebApp;
+  if (isMiniApp() && typeof tg?.openTelegramLink === 'function') {
+    tg.openTelegramLink(shareUrl);
+    return true;
+  }
+  if (typeof navigator.share === 'function') {
+    navigator.share({ title: text, text, url }).catch(() => { /* user cancelled */ });
+    return true;
+  }
+  if (typeof tg?.openLink === 'function') {
+    tg.openLink(shareUrl);
+    return true;
+  }
+  window.open(shareUrl, '_blank', 'noopener,noreferrer');
+  return true;
+}
+
 /** Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct call. */
 function detailContactBarHtml(username, phone) {
   const cleanHandle = normalizeTelegramUsername(username);
@@ -774,6 +808,8 @@ Object.assign(window.UyDosh, {
   telPhoneUrl,
   openPhoneContact,
   iconPhone,
+  iconShare,
+  shareListingLink,
   detailContactBarHtml,
   bindDetailContactBar,
   warmMapPinIconCache,
