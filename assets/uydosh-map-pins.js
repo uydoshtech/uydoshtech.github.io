@@ -495,29 +495,28 @@ const METRO_PIN_GLYPH_PATHS = [
   { d: 'M8 17h0.01M16 17h0.01', lineWidth: 3 },
 ];
 
-function drawMetroPinGlyph(ctx, centerX, centerY, iconSize) {
+function metroPinGlyphSvg(centerX, centerY, iconSize) {
   const scale = iconSize / 24;
-  ctx.save();
-  ctx.translate(centerX - iconSize / 2, centerY - iconSize / 2);
-  ctx.scale(scale, scale);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  for (const { d, lineWidth } of METRO_PIN_GLYPH_PATHS) {
-    ctx.lineWidth = lineWidth;
-    ctx.stroke(new Path2D(d));
-  }
-  ctx.restore();
+  const tx = centerX - iconSize / 2;
+  const ty = centerY - iconSize / 2;
+  const paths = METRO_PIN_GLYPH_PATHS.map(
+    ({ d, lineWidth }) =>
+      `<path d="${d}" fill="none" stroke="#ffffff" stroke-width="${lineWidth}" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ).join('');
+  return `<g transform="translate(${tx} ${ty}) scale(${scale})">${paths}</g>`;
 }
 
 /**
- * Canvas-drawn map pin for metro stations: a small line-colored circle with a white subway
- * glyph on top (mobile parity — see `Icons.directions_subway_rounded` in
- * yandex_map_widget_icons.dart). Line 4 gets a black outline instead of white since its
- * orange fill doesn't contrast well against a white ring.
+ * SVG-based map pin for metro stations: a small line-colored circle with a white subway glyph
+ * on top (mobile parity — see `Icons.directions_subway_rounded` in yandex_map_widget_icons.dart).
+ * Line 4 gets a black outline instead of white since its orange fill doesn't contrast well
+ * against a white ring.
+ *
+ * Uses an inline SVG (rather than a canvas-rasterized PNG) so the icon stays crisp on
+ * high-density screens: Yandex Maps scales `iconImageHref` to `iconImageSize` in CSS px, and a
+ * vector source has no fixed pixel grid to upscale/blur, unlike a small PNG raster.
  */
 function createMetroStationPinIcon(line) {
-  if (typeof document === 'undefined') return null;
   const lineId = Number(line) || 0;
   const cacheKey = String(lineId);
   const cached = metroStationPinIconCache.get(cacheKey);
@@ -526,34 +525,20 @@ function createMetroStationPinIcon(line) {
   const fillColor = metroLineColor(lineId) || '#616161';
   const outlineColor = lineId === 4 ? '#000000' : '#ffffff';
   const pinSize = METRO_STATION_PIN_SIZE;
-  const canvas = document.createElement('canvas');
-  canvas.width = pinSize;
-  canvas.height = pinSize;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
   const center = pinSize / 2;
   const radius = pinSize * 0.39;
   const outlineWidth = 1.5;
 
-  ctx.beginPath();
-  ctx.arc(center, center + 1, radius + outlineWidth, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(center, center, radius + outlineWidth, 0, Math.PI * 2);
-  ctx.fillStyle = outlineColor;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(center, center, radius, 0, Math.PI * 2);
-  ctx.fillStyle = fillColor;
-  ctx.fill();
-
-  drawMetroPinGlyph(ctx, center, center, pinSize * 0.56);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${pinSize}" height="${pinSize}" viewBox="0 0 ${pinSize} ${pinSize}">` +
+    `<circle cx="${center}" cy="${center + 1}" r="${radius + outlineWidth}" fill="rgba(0,0,0,0.2)"/>` +
+    `<circle cx="${center}" cy="${center}" r="${radius + outlineWidth}" fill="${outlineColor}"/>` +
+    `<circle cx="${center}" cy="${center}" r="${radius}" fill="${fillColor}"/>` +
+    metroPinGlyphSvg(center, center, pinSize * 0.56) +
+    `</svg>`;
 
   const result = {
-    href: canvas.toDataURL('image/png'),
+    href: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
     size: [pinSize, pinSize],
     offset: [-pinSize / 2, -pinSize / 2],
     zIndex: 50,

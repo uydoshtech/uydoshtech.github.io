@@ -943,11 +943,13 @@
   }
 
   /**
-   * Small badge showing the total found-listings count, top-right of the map, sitting
-   * directly to the left of the native geolocation control. Rendered as a plain DOM
-   * overlay (not a ymaps control) so its size/position are easy to keep in sync with
-   * that control's 34px / 10px-gutter sizing — same height and a compact, roughly
-   * square shape (not a stretched pill) to visually match it. Mini app only.
+   * Small badge showing the total found-listings count, top-right of the map. The native
+   * geolocation control renders top-LEFT (Yandex's default placement), so this tile sits
+   * alone in the top-right corner — same edge gutter as that control's default 10px so the
+   * two stay visually symmetric. Rendered as a plain DOM overlay (not a ymaps control) so
+   * its size/position are easy to keep in sync with that control's 34px sizing — same
+   * height and a compact, roughly square shape (not a stretched pill) to visually match it.
+   * Mini app only.
    */
   const MAP_CONTROL_ICON_COLOR = '#1f2933';
   const RESULTS_COUNT_TILE_CLASS = 'uydosh-map-results-count';
@@ -963,7 +965,7 @@
       .${RESULTS_COUNT_TILE_CLASS} {
         position: absolute;
         top: ${RESULTS_COUNT_CONTROL_GUTTER}px;
-        right: ${RESULTS_COUNT_CONTROL_GUTTER * 2 + RESULTS_COUNT_CONTROL_SIZE}px;
+        right: ${RESULTS_COUNT_CONTROL_GUTTER}px;
         z-index: 20;
         height: ${RESULTS_COUNT_CONTROL_SIZE}px;
         min-width: ${RESULTS_COUNT_CONTROL_SIZE}px;
@@ -1020,7 +1022,7 @@
    * layer and cycle the metro-stations layer — mirrors the mobile app's map layer
    * buttons. Mini app only; rendered as a plain DOM overlay. Bottom-right keeps them
    * clear of the results-count tile (top-right) and the native geolocation control
-   * (top-right). Lifted well above the gutter so they don't sit on top of Yandex's
+   * (top-left). Lifted well above the gutter so they don't sit on top of Yandex's
    * own copyright/logo bar at the very bottom of the map.
    */
   const LAYER_CONTROLS_CLASS = 'uydosh-map-layer-controls';
