@@ -13,6 +13,7 @@
    * @param {HTMLElement|null} [options.elements.feedMapEl]
    * @param {HTMLElement|null} [options.elements.feedMapTooltipEl]
    * @param {HTMLElement|null} [options.elements.feedMapStatusEl]
+   * @param {HTMLElement|null} [options.elements.feedMapLocateBannerEl]
    * @param {HTMLElement|null} [options.elements.fabCreateEl]
    * @param {object} options.state Mutable feed state; map fields are owned by this controller.
    * @param {() => void} [options.onHaptic]
@@ -31,11 +32,14 @@
       feedMapEl = null,
       feedMapTooltipEl = null,
       feedMapStatusEl = null,
+      feedMapLocateBannerEl = null,
       fabCreateEl = null,
     } = elements;
 
     let mapLoadGeneration = 0;
     let panelHeightRaf = 0;
+    // Offered at most once per page session — see showLocateBanner() for why.
+    let locateBannerOffered = false;
 
     /**
      * The map panel's CSS `height` is a `calc(100dvh - ... - <fixed px>)` guess
@@ -134,6 +138,33 @@
     function currentSelectedMapPin() {
       return state.selectedMapPins[state.selectedMapPinIndex] ?? state.selectedMapPins[0] ?? null;
     }
+
+    /**
+     * Shown at most once per page session when the silent auto-locate attempt
+     * (autoRequestUserLocation in yandex-map.js) comes back empty — several Telegram
+     * clients only reliably prompt for location permission (or recover from a prior
+     * denial via openSettings()) when triggered by a genuine tap. The pre-existing
+     * native geolocation control on the map remains available as a permanent retry
+     * path, so it's safe to only nudge with this banner once rather than nagging on
+     * every map open.
+     */
+    function showLocateBanner() {
+      if (!feedMapLocateBannerEl || locateBannerOffered) return;
+      locateBannerOffered = true;
+      feedMapLocateBannerEl.hidden = false;
+    }
+
+    function hideLocateBanner() {
+      if (!feedMapLocateBannerEl) return;
+      feedMapLocateBannerEl.hidden = true;
+    }
+
+    feedMapLocateBannerEl?.addEventListener('click', () => {
+      onHaptic();
+      hideLocateBanner();
+      UyDosh.logMiniAppEvent('map_locate_banner_tap');
+      state.mapModule?.locateUserFromTap(feedMapEl);
+    });
 
     function hideMapPinTooltip() {
       state.selectedMapPins = [];
@@ -280,6 +311,7 @@
       const generation = ++mapLoadGeneration;
       state.mapLoading = true;
       hideMapPinTooltip();
+      hideLocateBanner();
       setFeedMapStatus(UyDosh.t('map.loading'), true);
       const filterParams = getFilterParams();
       try {
@@ -333,6 +365,7 @@
             onMapClick: () => {
               hideMapPinTooltip();
             },
+            onLocationUnavailable: showLocateBanner,
           }),
           MAP_LOAD_TIMEOUT_MS,
           'Map render timed out',
@@ -370,6 +403,7 @@
     function onLeaveMapView() {
       setFeedMapStatus('', false);
       hideMapPinTooltip();
+      hideLocateBanner();
     }
 
     function onLangChange() {

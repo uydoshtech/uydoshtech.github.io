@@ -545,6 +545,58 @@
         align-items: center;
         gap: 10px;
       }
+      /*
+       * Tap-driven fallback for the silent auto-locate attempt. Several Telegram clients
+       * only reliably show the native location permission prompt (or recover from a prior
+       * denial via openSettings(), which Telegram restricts to user-gesture callbacks) when
+       * triggered by an explicit tap — see autoRequestUserLocation()/locateUserFromTap() in
+       * yandex-map.js. Shown only when the gesture-less attempt comes back empty.
+       */
+      .map-locate-banner {
+        position: absolute;
+        left: 50%;
+        top: 12px;
+        transform: translateX(-50%);
+        z-index: 21;
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        max-width: calc(100% - 24px);
+        padding: 8px 14px;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+        cursor: pointer;
+        animation: map-tooltip-in 220ms ease-out;
+      }
+      .map-locate-banner[hidden] {
+        display: none !important;
+      }
+      .map-locate-banner:active {
+        opacity: 0.88;
+      }
+      .map-locate-banner-icon {
+        display: inline-flex;
+        flex-shrink: 0;
+        width: 15px;
+        height: 15px;
+        color: var(--brand);
+      }
+      .map-locate-banner-icon svg {
+        width: 15px;
+        height: 15px;
+        display: block;
+      }
+      .map-locate-banner-icon svg * {
+        stroke: currentColor;
+        fill: none;
+      }
       .feed-map-status .btn {
         display: inline-flex;
         align-items: center;
@@ -1123,6 +1175,20 @@
         </div>
         <div class="feed-map-panel" id="feed-map-panel" aria-label="Map">
           <div class="map-container" id="feed-map"></div>
+          <button
+            type="button"
+            class="map-locate-banner"
+            id="feed-map-locate-banner"
+            hidden
+          >
+            <span class="map-locate-banner-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" stroke-width="2" stroke-linejoin="round"></path>
+                <circle cx="12" cy="9.5" r="2.25" stroke-width="2"></circle>
+              </svg>
+            </span>
+            <span data-i18n="map.locate.cta">Показать моё местоположение</span>
+          </button>
           <div class="map-pin-tooltip" id="feed-map-tooltip" hidden></div>
           <div class="feed-map-status" id="feed-map-status" hidden></div>
         </div>
@@ -1155,13 +1221,13 @@
     </button>
 
     <script src="../assets/uydosh-core.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-api.js?v=20260703-70"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260703-70"></script>
+    <script src="../assets/uydosh-api.js?v=20260703-71"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260703-71"></script>
     <script src="../assets/uydosh-icons.js?v=20260703-67"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260703-72"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260703-70"></script>
-    <script src="../assets/telegram-feed-map.js?v=20260703-62"></script>
-    <script src="../assets/telegram-feed.js?v=20260703-62"></script>
+    <script src="../assets/telegram-feed-map.js?v=20260703-63"></script>
+    <script src="../assets/telegram-feed.js?v=20260703-63"></script>
   </body>
 </html>

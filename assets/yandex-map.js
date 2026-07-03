@@ -822,6 +822,7 @@
     instance.map.geoObjects.add(instance.userLocationPlacemark);
   }
 
+  /** Returns the resolved position on success (so callers can report it), or null on failure. */
   async function focusUserLocation(map, ymaps, instance) {
     try {
       const position = await window.UyDosh.requestUserLocation();
@@ -832,13 +833,13 @@
         position.longitude,
       );
       map.panTo([position.latitude, position.longitude], { duration: 250 });
-      return true;
+      return position;
     } catch (err) {
       console.warn('[UyDoshMap] User location unavailable', err);
       if (window.UyDosh?.isMiniApp?.()) {
         window.UyDosh.openTelegramLocationSettings?.();
       }
-      return false;
+      return null;
     }
   }
 
@@ -865,8 +866,14 @@
    * geolocation support, etc.) are expected and swallowed here — this is a best-effort
    * background request, not a user-initiated action, so it must never surface an error
    * banner or open Telegram's location settings.
+   *
+   * In practice this silent call often comes back empty: several Telegram clients only
+   * reliably surface the native permission prompt (or recover from a prior denial via
+   * `openSettings()`, which Telegram documents as callable only from a user gesture) when
+   * triggered by an explicit tap. `onUnavailable` lets the caller show a one-tap fallback
+   * banner (see `locateUserFromTap`) instead of failing silently forever.
    */
-  async function autoRequestUserLocation(container, ymaps, instance) {
+  async function autoRequestUserLocation(container, ymaps, instance, { onUnavailable } = {}) {
     try {
       const position = await window.UyDosh.requestUserLocation();
       if (activeMaps.get(container) !== instance) return;
@@ -874,7 +881,24 @@
       window.UyDosh.reportTelegramMiniAppLocation?.(position.latitude, position.longitude);
     } catch (err) {
       console.warn('[UyDoshMap] Auto user location unavailable', err);
+      if (activeMaps.get(container) === instance) onUnavailable?.();
     }
+  }
+
+  /**
+   * Tap-driven fallback for `autoRequestUserLocation`, wired to the "Show my location"
+   * banner. A location obtained this way is still reported (unlike the native
+   * GeolocationControl click, which stays silent) since this banner only exists to
+   * complete the same automatic on-open flow that the gesture-less attempt couldn't.
+   */
+  async function locateUserFromTap(container) {
+    const instance = activeMaps.get(container);
+    const ymaps = window.ymaps;
+    if (!instance?.map || !ymaps) return false;
+    const position = await focusUserLocation(instance.map, ymaps, instance);
+    if (!position) return false;
+    window.UyDosh.reportTelegramMiniAppLocation?.(position.latitude, position.longitude);
+    return true;
   }
 
   /**
@@ -1446,6 +1470,7 @@
     lang,
     onPinClick,
     onMapClick,
+    onLocationUnavailable,
     selectedListingId = null,
     selectedListingGroupIds = [],
     visitedListingIds,
@@ -1488,7 +1513,7 @@
     map.geoObjects.add(mapInstance.metroLayer.collection);
     activeMaps.set(container, mapInstance);
     attachUserLocationControl(ymaps, map, mapInstance);
-    autoRequestUserLocation(container, ymaps, mapInstance);
+    autoRequestUserLocation(container, ymaps, mapInstance, { onUnavailable: onLocationUnavailable });
     attachResultsCountTile(container, total ?? validPins.length);
     attachLayerControls(container, mapInstance);
     map.events.add('boundschange', (event) => {
@@ -1628,6 +1653,7 @@
     yandexMapsLang,
     renderSinglePinMap,
     renderPinsMap,
+    locateUserFromTap,
     refreshMapPinStates,
     destroyMap,
     reflowMap,
