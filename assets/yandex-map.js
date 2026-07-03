@@ -859,6 +859,25 @@
   }
 
   /**
+   * Silently drop the user's position pin as soon as the feed map opens, without waiting
+   * for a tap on the geolocation control and without panning away from the listings the
+   * map already framed. Unlike `focusUserLocation`, failures (permission denied, no
+   * geolocation support, etc.) are expected and swallowed here — this is a best-effort
+   * background request, not a user-initiated action, so it must never surface an error
+   * banner or open Telegram's location settings.
+   */
+  async function autoRequestUserLocation(container, ymaps, instance) {
+    try {
+      const position = await window.UyDosh.requestUserLocation();
+      if (activeMaps.get(container) !== instance) return;
+      setUserLocationPlacemark(instance, ymaps, position.latitude, position.longitude);
+      window.UyDosh.reportTelegramMiniAppLocation?.(position.latitude, position.longitude);
+    } catch (err) {
+      console.warn('[UyDoshMap] Auto user location unavailable', err);
+    }
+  }
+
+  /**
    * Yandex Maps 2.1 has no native dark tile theme (unlike v3's `theme` option), so we fake it
    * with a CSS filter on the tile ("ground") pane only — placemarks/controls live in sibling
    * panes and are left untouched. The versioned `ymaps-2-1-XX-` class prefix changes with every
@@ -1469,6 +1488,7 @@
     map.geoObjects.add(mapInstance.metroLayer.collection);
     activeMaps.set(container, mapInstance);
     attachUserLocationControl(ymaps, map, mapInstance);
+    autoRequestUserLocation(container, ymaps, mapInstance);
     attachResultsCountTile(container, total ?? validPins.length);
     attachLayerControls(container, mapInstance);
     map.events.add('boundschange', (event) => {

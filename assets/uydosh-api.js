@@ -176,6 +176,31 @@ async function authenticateTelegramMiniApp() {
   return payload;
 }
 
+/**
+ * Records the Mini App user's device location, verified server-side via initData (no
+ * session required). Fire-and-forget: swallows failures since it's called from a
+ * best-effort background flow (see autoRequestUserLocation in yandex-map.js) and must
+ * never surface an error to the user.
+ */
+async function reportTelegramMiniAppLocation(latitude, longitude) {
+  const initData = getTelegramInitData();
+  if (!initData) return false;
+  try {
+    const res = await fetch(`${API_BASE}/app/telegram-mini-app-location`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ init_data: initData, latitude, longitude }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('[UyDosh] Failed to report Mini App location', err);
+    return false;
+  }
+}
+
 function fetchSubwayStationsByLine(lineId, lang = getLang()) {
   return fetchJson(`/subway-stations/line/${encodeURIComponent(lineId)}`, { language: lang });
 }
@@ -384,7 +409,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-70`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-72`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -417,6 +442,7 @@ Object.assign(window.UyDosh, {
   readFileAsDataUrl,
   resizeImageFileForUpload,
   authenticateTelegramMiniApp,
+  reportTelegramMiniAppLocation,
   getTelegramInitData,
   clearTelegramInitData,
   isTelegramInitDataUsable,
