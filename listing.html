@@ -232,7 +232,7 @@
       h1 { font-size: clamp(22px, 2.6vw, 30px); margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
       .price {
         display: inline-flex; align-items: baseline; flex-shrink: 0;
-        gap: 3px; margin-top: 3px; padding: 5px 12px; border-radius: 999px;
+        gap: 3px; margin: 3px 0 0; padding: 5px 12px; border-radius: 999px;
         border: 1px solid var(--price-green);
         background: color-mix(in srgb, var(--price-green) 12%, transparent);
         font-size: 15px; font-weight: 800; letter-spacing: -0.01em;
@@ -1255,7 +1255,7 @@
               ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
               <div class="title-row">
                 <h1>${title}</h1>
-                ${price ? `<div class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></div>` : ''}
+                ${price ? `<h2 class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></h2>` : ''}
               </div>
               ${mapHtml}
               ${amenitiesHtml}
