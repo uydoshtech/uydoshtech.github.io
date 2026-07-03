@@ -520,6 +520,23 @@ function ensureLangSwitcherStyles() {
       font-size: 14px;
       line-height: 1;
     }
+    .lang.lang-dropdown > .lang-trigger .flag.flag-avatar {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0;
+      flex-shrink: 0;
+    }
+    .lang.lang-dropdown > .lang-trigger .flag.flag-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     .lang.lang-dropdown .lang-chevron {
       display: inline-flex;
       align-items: center;
@@ -621,13 +638,37 @@ function buildLangDropdown(group) {
   return group;
 }
 
+/** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
+function telegramMiniAppUserAvatarUrl() {
+  try {
+    return window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '';
+  } catch {
+    return '';
+  }
+}
+
 function syncLangDropdown(group, lang) {
   const meta = LANG_META[lang];
   if (!meta) return;
   const trigger = group.querySelector('.lang-trigger');
   if (!trigger) return;
   const flag = trigger.querySelector('.flag');
-  if (flag) flag.textContent = meta.flag;
+  if (flag) {
+    // Inside Telegram, the trigger shows the user's own avatar instead of the
+    // currently selected language's flag — the flag list only appears once
+    // the dropdown is opened.
+    const avatarUrl = telegramMiniAppUserAvatarUrl();
+    const currentAvatarImg = flag.querySelector('img.lang-avatar-img');
+    if (avatarUrl) {
+      if (currentAvatarImg?.getAttribute('src') !== avatarUrl) {
+        flag.classList.add('flag-avatar');
+        flag.innerHTML = `<img class="lang-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('flag-avatar'); this.parentElement.textContent='${meta.flag}';" />`;
+      }
+    } else if (currentAvatarImg || flag.textContent !== meta.flag) {
+      flag.classList.remove('flag-avatar');
+      flag.textContent = meta.flag;
+    }
+  }
   trigger.setAttribute('aria-label', meta.label);
   for (const opt of group.querySelectorAll('.lang-menu button[data-lang]')) {
     opt.setAttribute(
