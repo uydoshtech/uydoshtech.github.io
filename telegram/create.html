@@ -166,6 +166,13 @@
       .chip-line {
         --line-color: var(--stroke);
         border-color: color-mix(in srgb, var(--line-color) 55%, var(--stroke));
+        gap: 0;
+        padding: 6px 10px;
+        transition: border-color 220ms ease, border-width 220ms ease,
+          background 220ms ease, padding 220ms ease;
+      }
+      .chip-line[aria-pressed="true"] {
+        padding: 5px 9px;
       }
       .metro-m-badge {
         width: 18px;
@@ -179,6 +186,52 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .chip-line[aria-pressed="true"] .metro-m-badge {
+        transform: scale(1.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        .metro-m-badge {
+          background: rgba(255, 255, 255, 0.96);
+        }
+      }
+
+      /* Reveal-on-select animation for the line-name label, matching the
+         feed filter ribbon: metro chips start as bare "M" badges and only
+         reveal their line name once selected. */
+      .chip-line .chip-label-collapse {
+        display: grid;
+        grid-template-columns: 0fr;
+        min-width: 0;
+        margin-left: 0;
+        overflow: hidden;
+        transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1),
+          margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .chip-line .chip-label-collapse > .chip-label {
+        overflow: hidden;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 160ms ease;
+      }
+      .chip-line[aria-pressed="true"] .chip-label-collapse {
+        grid-template-columns: 1fr;
+        margin-left: 6px;
+      }
+      .chip-line[aria-pressed="true"] .chip-label-collapse > .chip-label {
+        opacity: 1;
+        transition: opacity 240ms ease 100ms;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .chip-line,
+        .chip-line .metro-m-badge,
+        .chip-line .chip-label-collapse,
+        .chip-line .chip-label-collapse > .chip-label {
+          transition: none;
+        }
       }
       select, input[type="text"], input[type="number"], input[type="date"], textarea {
         width: 100%;
@@ -802,6 +855,6 @@
     <script src="../assets/uydosh-map-pins.js?v=20260703-67"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260703-67"></script>
-    <script src="../assets/telegram-create.js?v=20260703-60"></script>
+    <script src="../assets/telegram-create.js?v=20260703-68"></script>
   </body>
 </html>

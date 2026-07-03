@@ -323,14 +323,16 @@ function renderStep0(lang) {
       </button>`;
   }).join('');
 
+  // Icon-only until selected, matching the feed filter ribbon: only the
+  // currently selected line reveals its name (see `.chip-label-collapse` in
+  // telegram/create.html for the reveal animation).
   const lineChips = UyDosh.METRO_LINE_IDS.map((lineId) => {
     const pressed = state.form.subwayLineId === lineId;
     const color = UyDosh.metroLineColor(lineId) || 'currentColor';
     const label = UyDosh.metroLineLabel(lineId, lang);
     return `
-      <button type="button" class="chip chip-line" data-subway-line="${lineId}" style="--line-color:${color}" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.metroLineBadgeHtml(lineId)}
-        <span>${UyDosh.escapeHtml(label)}</span>
+      <button type="button" class="chip chip-line" data-subway-line="${lineId}" style="--line-color:${color}" aria-pressed="${pressed ? 'true' : 'false'}" aria-label="${UyDosh.escapeHtml(label)}">
+        ${UyDosh.metroLineBadgeHtml(lineId)}<span class="chip-label-collapse"><span class="chip-label">${UyDosh.escapeHtml(label)}</span></span>
       </button>`;
   }).join('');
 
