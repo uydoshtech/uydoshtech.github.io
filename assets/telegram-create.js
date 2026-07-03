@@ -739,22 +739,60 @@ function bindStepEvents() {
     });
   });
 
-  stepPanelsEl.querySelector('[data-price-single]')?.addEventListener('input', (e) => {
+  // Price sliders are updated in place (text + the other slider's `.value`
+  // only) instead of calling renderStep() on every 'input' tick. Replacing
+  // the <input type="range"> DOM node mid-drag kills the browser's native
+  // pointer-capture/drag session on it, which is what made the handle jump
+  // around erratically while dragging with a finger or mouse.
+  function clearPriceFieldError(fieldEl) {
+    if (!fieldEl?.classList.contains('has-error')) return;
+    fieldEl.classList.remove('has-error');
+    fieldEl.querySelector('.field-inline-error')?.remove();
+  }
+
+  const priceSingleInput = stepPanelsEl.querySelector('[data-price-single]');
+  priceSingleInput?.addEventListener('input', (e) => {
     state.form.price = Number(e.target.value);
-    if (state.form.price >= PRICE_MIN) showFormError('');
-    renderStep();
+    const field = priceSingleInput.closest('.field');
+    const valueEl = field?.querySelector('.price-value');
+    if (valueEl) valueEl.textContent = `$${state.form.price}`;
+    if (state.form.price >= PRICE_MIN) {
+      showFormError('');
+      clearPriceFieldError(field);
+    }
   });
-  stepPanelsEl.querySelector('[data-price-min]')?.addEventListener('input', (e) => {
+
+  const priceMinInput = stepPanelsEl.querySelector('[data-price-min]');
+  const priceMaxInput = stepPanelsEl.querySelector('[data-price-max]');
+  function syncPriceRangeDisplay() {
+    const field = priceMinInput?.closest('.field');
+    const valueEl = field?.querySelector('.price-value');
+    if (valueEl) valueEl.textContent = `$${state.form.priceMin} – $${state.form.priceMax}`;
+    return field;
+  }
+  priceMinInput?.addEventListener('input', (e) => {
     state.form.priceMin = Number(e.target.value);
-    if (state.form.priceMin > state.form.priceMax) state.form.priceMax = state.form.priceMin;
-    if (priceBoundsForRequest().min >= PRICE_MIN) showFormError('');
-    renderStep();
+    if (state.form.priceMin > state.form.priceMax) {
+      state.form.priceMax = state.form.priceMin;
+      if (priceMaxInput) priceMaxInput.value = String(state.form.priceMax);
+    }
+    const field = syncPriceRangeDisplay();
+    if (priceBoundsForRequest().min >= PRICE_MIN) {
+      showFormError('');
+      clearPriceFieldError(field);
+    }
   });
-  stepPanelsEl.querySelector('[data-price-max]')?.addEventListener('input', (e) => {
+  priceMaxInput?.addEventListener('input', (e) => {
     state.form.priceMax = Number(e.target.value);
-    if (state.form.priceMax < state.form.priceMin) state.form.priceMin = state.form.priceMax;
-    if (priceBoundsForRequest().min >= PRICE_MIN) showFormError('');
-    renderStep();
+    if (state.form.priceMax < state.form.priceMin) {
+      state.form.priceMin = state.form.priceMax;
+      if (priceMinInput) priceMinInput.value = String(state.form.priceMin);
+    }
+    const field = syncPriceRangeDisplay();
+    if (priceBoundsForRequest().min >= PRICE_MIN) {
+      showFormError('');
+      clearPriceFieldError(field);
+    }
   });
 
   stepPanelsEl.querySelectorAll('[data-gender]').forEach((btn) => {
