@@ -266,6 +266,21 @@
         height: 14px;
         display: block;
       }
+      .badge .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .badge .icon svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      .badge .icon svg * {
+        stroke: currentColor;
+        fill: none;
+      }
       .badge.featured {
         background: linear-gradient(135deg, #e11d2e, #f97316);
         border-color: transparent; color: #fff;
@@ -1144,7 +1159,9 @@
         }
         const genderBadge = UyDosh.genderBadgeHtml(l, lang);
         if (genderBadge) badges.push(genderBadge);
-        if (l.private_room) badges.push(`<span class="badge">${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
+        if (l.private_room) {
+          badges.push(`<span class="badge">${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
+        }
         if (Number.isFinite(rooms) && rooms > 0) {
           badges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
