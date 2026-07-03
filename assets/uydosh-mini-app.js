@@ -536,6 +536,26 @@ function logMiniAppScreen(screenName, params) {
   });
 }
 
+/**
+ * `t.me/<bot>?startapp=listing_123` direct links (used by the in-app Share
+ * button) launch the Mini App at its configured menu-button URL — the feed —
+ * with `listing_123` passed through as `start_param` (mirrored in the
+ * `tgWebAppStartParam` query param). Redirect straight to that listing
+ * instead of flashing the feed first.
+ */
+function redirectFromMiniAppStartParam() {
+  if (/listing\.html/i.test(location.pathname)) return false;
+  const tg = window.Telegram?.WebApp;
+  const startParam =
+    tg?.initDataUnsafe?.start_param ||
+    new URLSearchParams(location.search).get('tgWebAppStartParam') ||
+    '';
+  const match = /^listing_(\d+)$/.exec(String(startParam).trim());
+  if (!match) return false;
+  location.replace(listingPageUrl(match[1]));
+  return true;
+}
+
 /** Call on mini-app pages after telegram-web-app.js is loaded. */
 function initTelegramMiniApp() {
   // Persist the bot-selected `?lang=` for the rest of this session so
@@ -551,6 +571,7 @@ function initTelegramMiniApp() {
     getTelegramInitData();
     try { tg.ready(); } catch { /* ignore */ }
     try { tg.expand(); } catch { /* ignore */ }
+    if (redirectFromMiniAppStartParam()) return true;
     initTelegramLocationManager();
     applyTelegramTheme(tg);
     applyStoredManualTheme();
@@ -625,6 +646,7 @@ Object.assign(window.UyDosh, {
   feedPageUrl,
   createPageUrl,
   initTelegramMiniApp,
+  redirectFromMiniAppStartParam,
   mountMiniAppHeader,
   mountAllMiniAppHeaders,
   miniAppHeaderHtml,
