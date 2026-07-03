@@ -589,9 +589,14 @@ function normalizeTelegramUsername(value) {
   return withoutAt.trim();
 }
 
+/** Telegram handles for which the contact button is intentionally hidden on the detail screen. */
+const DETAIL_CONTACT_TELEGRAM_BLOCKLIST = new Set(['roommateuz']);
+
 /** Resolve the listing owner's Telegram handle from a listing detail payload. */
 function listingContactTelegram(listing) {
-  return normalizeTelegramUsername(listing?.contact_telegram);
+  const handle = normalizeTelegramUsername(listing?.contact_telegram);
+  if (handle && DETAIL_CONTACT_TELEGRAM_BLOCKLIST.has(handle.toLowerCase())) return '';
+  return handle;
 }
 
 /** Strip formatting from a phone number, keeping digits and a leading "+" only. */

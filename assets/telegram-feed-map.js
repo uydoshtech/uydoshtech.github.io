@@ -35,6 +35,44 @@
     } = elements;
 
     let mapLoadGeneration = 0;
+    let panelHeightRaf = 0;
+
+    /**
+     * The map panel's CSS `height` is a `calc(100dvh - ... - <fixed px>)` guess
+     * (see telegram-shared.css) that assumes a constant header/filters/tabs
+     * height above it. That assumption breaks whenever the filters ribbon is
+     * expanded (extra chip rows), the header wraps, or the platform's dvh
+     * doesn't match the real visible viewport — the panel (and the pin
+     * tooltip anchored to its bottom) then extends past the actual bottom of
+     * the screen. Measure the real remaining space instead and pin the panel
+     * height to it, so the map — and anything anchored to its bottom edge —
+     * always stays within the visible viewport.
+     */
+    function syncFeedMapPanelHeight() {
+      if (!feedMapPanel || !feedMapPanel.classList.contains('active')) return;
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
+      const top = feedMapPanel.getBoundingClientRect().top;
+      if (!Number.isFinite(top)) return;
+      const insetBottom = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--uydosh-tg-inset-bottom'),
+      ) || 0;
+      const bottomGap = Math.max(16, insetBottom + 12);
+      const available = viewportHeight - top - bottomGap;
+      if (!Number.isFinite(available) || available <= 0) return;
+      feedMapPanel.style.height = `${available}px`;
+    }
+
+    function scheduleSyncFeedMapPanelHeight() {
+      if (panelHeightRaf) cancelAnimationFrame(panelHeightRaf);
+      panelHeightRaf = requestAnimationFrame(() => {
+        panelHeightRaf = 0;
+        syncFeedMapPanelHeight();
+      });
+    }
+
+    window.addEventListener('resize', scheduleSyncFeedMapPanelHeight, { passive: true });
+    window.visualViewport?.addEventListener('resize', scheduleSyncFeedMapPanelHeight, { passive: true });
 
     function setFeedMapStatus(message, visible = true) {
       if (!feedMapStatusEl) return;
@@ -79,6 +117,7 @@
       feedMapPanel?.classList.toggle('active', isMap);
       document.body.classList.toggle('view-map', isMap);
       if (fabCreateEl) fabCreateEl.hidden = isMap;
+      if (isMap) scheduleSyncFeedMapPanelHeight();
     }
 
     function normalizeMapPinSelection(pinOrPins) {
@@ -349,6 +388,8 @@
       onEnterMapView,
       onLeaveMapView,
       onLangChange,
+      syncFeedMapPanelHeight,
+      scheduleSyncFeedMapPanelHeight,
     };
   }
 

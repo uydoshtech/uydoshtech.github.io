@@ -296,6 +296,9 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
     createdWithinDays: createdWithinDaysQueryParam(),
   }),
 });
+// Exposed so uydosh-mini-app.js can re-measure the map panel height on
+// Telegram viewport/safe-area events (keyboard, orientation, expand()).
+window.UyDoshFeedMap = feedMap;
 
 function updateViewTabs() {
   for (const tab of viewTabs) {
@@ -533,6 +536,13 @@ function renderFilters() {
       }
       persistFiltersCollapsed();
       setFiltersCollapsedVisual(nextCollapsed);
+      if (state.view === 'map') {
+        // The collapse/expand row swap animates via CSS grid-template-rows
+        // (see .filters-slide); re-measure once now and once after the
+        // transition so the map panel height tracks the ribbon's final size.
+        feedMap.scheduleSyncFeedMapPanelHeight();
+        setTimeout(() => feedMap.scheduleSyncFeedMapPanelHeight(), 340);
+      }
     });
   });
 

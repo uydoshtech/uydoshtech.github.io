@@ -564,16 +564,19 @@ function initTelegramMiniApp() {
         applyTelegramSafeAreaInsets(tg);
         syncMobileHeaderLayout();
         reflowActiveMaps();
+        window.UyDoshFeedMap?.scheduleSyncFeedMapPanelHeight?.();
       });
       tg.onEvent('safeAreaChanged', () => {
         applyTelegramSafeAreaInsets(tg);
         syncMobileHeaderLayout();
         reflowActiveMaps();
+        window.UyDoshFeedMap?.scheduleSyncFeedMapPanelHeight?.();
       });
       tg.onEvent('viewportChanged', () => {
         applyTelegramSafeAreaInsets(tg);
         syncMobileHeaderLayout();
         reflowActiveMaps();
+        window.UyDoshFeedMap?.scheduleSyncFeedMapPanelHeight?.();
       });
     }
     requestAnimationFrame(() => {
