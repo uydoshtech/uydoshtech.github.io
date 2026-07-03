@@ -36,10 +36,10 @@ const MAP_PIN_FILL = {
 const VISITED_LISTINGS_STORAGE_KEY = 'uydosh_visited_listing_ids';
 
 /**
- * Manual light/dark override (mini app map sun/moon toggle) — beats Telegram theme + system
- * preference. The stored value names the *map* tile theme; by design the app UI (cards, header,
- * filters, …) always runs the opposite palette, so a dark map pairs with a light interface and
- * vice versa — see uiThemeForMapTheme().
+ * Manual light/dark override (mini app header sun/moon toggle) — beats Telegram theme + system
+ * preference. This only controls the app's own interface palette (cards, header, filters, …);
+ * the Yandex map (tiles + pins) is intentionally excluded and always stays in its light
+ * appearance — see prefersDarkMapPins() in this file and applyMapTileTheme() in yandex-map.js.
  */
 const MANUAL_THEME_STORAGE_KEY = 'uydosh_manual_theme';
 const UI_THEME_VARS = {
@@ -59,11 +59,6 @@ const UI_THEME_VARS = {
   },
 };
 
-/** UI palette is always the inverse of the chosen map theme. */
-function uiThemeForMapTheme(mapTheme) {
-  return mapTheme === 'dark' ? 'light' : 'dark';
-}
-
 function getManualTheme() {
   try {
     const saved = localStorage.getItem(MANUAL_THEME_STORAGE_KEY);
@@ -73,8 +68,8 @@ function getManualTheme() {
   }
 }
 
-function applyManualThemeVars(mapTheme) {
-  const vars = UI_THEME_VARS[uiThemeForMapTheme(mapTheme)];
+function applyManualThemeVars(uiTheme) {
+  const vars = UI_THEME_VARS[uiTheme];
   if (!vars) return;
   const root = document.documentElement;
   for (const [prop, value] of Object.entries(vars)) {
@@ -99,21 +94,31 @@ function setManualTheme(theme) {
   document.dispatchEvent(new CustomEvent('uydosh:themechange', { detail: { theme } }));
 }
 
+/** Currently active app UI theme: manual override if set, else system preference. */
+function currentUiTheme() {
+  const manual = getManualTheme();
+  if (manual) return manual;
+  if (typeof window === 'undefined') return 'dark';
+  try {
+    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
+  } catch {
+    return 'dark';
+  }
+}
+
 function toggleManualTheme() {
-  const next = prefersDarkMapPins() ? 'light' : 'dark';
+  const next = currentUiTheme() === 'dark' ? 'light' : 'dark';
   setManualTheme(next);
   return next;
 }
 
+/**
+ * The Yandex map (tiles + pins) always renders in its light appearance — by design it never
+ * switches to a dark style, regardless of the app's UI theme, system preference, or Telegram
+ * theme. See applyMapTileTheme() in yandex-map.js.
+ */
 function prefersDarkMapPins() {
-  const manual = getManualTheme();
-  if (manual) return manual === 'dark';
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
-  } catch {
-    return false;
-  }
+  return false;
 }
 
 function loadVisitedListingIds() {
@@ -820,4 +825,5 @@ Object.assign(window.UyDosh, {
   setManualTheme,
   toggleManualTheme,
   applyStoredManualTheme,
+  currentUiTheme,
 });

@@ -7,16 +7,16 @@
     <meta name="description" content="Post a listing on UyDosh — Telegram Mini App." />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <script>
-      // Apply a saved manual theme (mini app sun/moon toggle) before first paint to avoid a flash.
-      // The saved value names the MAP theme; the UI always runs the opposite palette
-      // (dark map + light interface, or light map + dark interface).
+      // Apply a saved manual UI theme (mini app header sun/moon toggle) before first paint to
+      // avoid a flash. This only affects the app's own interface colors — the map's light/dark
+      // rendering is independent and is never controlled by this toggle.
       (function () {
         try {
-          var mapTheme = localStorage.getItem('uydosh_manual_theme');
-          var vars = mapTheme === 'dark'
-            ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
-            : mapTheme === 'light'
-              ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
+          var uiTheme = localStorage.getItem('uydosh_manual_theme');
+          var vars = uiTheme === 'dark'
+            ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
+            : uiTheme === 'light'
+              ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
               : null;
           if (vars) {
             var root = document.documentElement;
@@ -849,10 +849,10 @@
     <input type="file" id="photo-input" accept="image/*" multiple hidden />
 
     <script src="../assets/uydosh-core.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-api.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260703-69"></script>
+    <script src="../assets/uydosh-api.js?v=20260703-68"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260703-70"></script>
     <script src="../assets/uydosh-icons.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-map-pins.js?v=20260703-69"></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260703-71"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260703-68"></script>
     <script src="../assets/telegram-create.js?v=20260703-68"></script>

@@ -56,11 +56,16 @@ const I18N = {
     'map.empty': 'Tanlangan filtrlarda xaritada ko‘rsatish uchun e’lon yo‘q.',
     'map.error': 'Xaritani yuklab bo‘lmadi.',
     'map.retry': 'Qayta urinish',
-    'map.themeToggleLight': 'Xaritani yorug‘ qilish',
-    'map.themeToggleDark': 'Xaritani tungi qilish',
+    'theme.toggleLight': 'Yorug‘ rejimga o‘tish',
+    'theme.toggleDark': 'Tungi rejimga o‘tish',
     'map.tooltip.close': 'Yopish',
     'map.carousel.dots': 'E’lonlar',
     'map.resultsCountAria': 'Xaritada {count} ta e’lon topildi',
+    'map.layers.districts.show': 'Tumanlarni ko‘rsatish',
+    'map.layers.districts.hide': 'Tumanlarni yashirish',
+    'map.layers.metro.show': 'Metro bekatlarini ko‘rsatish',
+    'map.layers.metro.line': 'Metro: {line} liniyasi',
+    'map.layers.metro.all': 'Metro: barcha liniyalar',
     'cta.openListings': 'E’lonlarni ko‘rish',
     'filter.type.all': 'Hammasi',
     'filter.type.roomNeeded': 'Xona qidiryapman',
@@ -208,11 +213,16 @@ const I18N = {
     'map.empty': 'Нет объявлений для карты с выбранными фильтрами.',
     'map.error': 'Не удалось загрузить карту.',
     'map.retry': 'Попробовать ещё раз',
-    'map.themeToggleLight': 'Сделать карту светлой',
-    'map.themeToggleDark': 'Сделать карту тёмной',
+    'theme.toggleLight': 'Включить светлую тему',
+    'theme.toggleDark': 'Включить тёмную тему',
     'map.tooltip.close': 'Закрыть',
     'map.carousel.dots': 'Объявления',
     'map.resultsCountAria': 'На карте найдено объявлений: {count}',
+    'map.layers.districts.show': 'Показать районы',
+    'map.layers.districts.hide': 'Скрыть районы',
+    'map.layers.metro.show': 'Показать станции метро',
+    'map.layers.metro.line': 'Метро: линия «{line}»',
+    'map.layers.metro.all': 'Метро: все линии',
     'cta.openListings': 'Смотреть объявления',
     'filter.type.all': 'Все',
     'filter.type.roomNeeded': 'Ищу комнату',
@@ -360,11 +370,16 @@ const I18N = {
     'map.empty': 'No listings to show on the map for these filters.',
     'map.error': 'Could not load the map.',
     'map.retry': 'Try again',
-    'map.themeToggleLight': 'Make map light',
-    'map.themeToggleDark': 'Make map dark',
+    'theme.toggleLight': 'Switch to light mode',
+    'theme.toggleDark': 'Switch to dark mode',
     'map.tooltip.close': 'Close',
     'map.carousel.dots': 'Listings',
     'map.resultsCountAria': 'Found {count} listings on the map',
+    'map.layers.districts.show': 'Show districts',
+    'map.layers.districts.hide': 'Hide districts',
+    'map.layers.metro.show': 'Show metro stations',
+    'map.layers.metro.line': 'Metro: {line} line',
+    'map.layers.metro.all': 'Metro: all lines',
     'cta.openListings': 'Browse listings',
     'filter.type.all': 'All',
     'filter.type.roomNeeded': 'Need room',
@@ -695,18 +710,21 @@ function initLangSwitcher() {
   applyI18n();
 }
 
-/** Sun/moon glyph for the header map-theme toggle (matches the old map control's icon). */
+/** Sun/moon glyph for the header app-theme toggle (matches the old map control's icon). */
 function themeToggleButtonIconSvg(isDark) {
   return isDark
     ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>`
     : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>`;
 }
 
-/** Sync every header theme-toggle button's icon/label with the current map theme. */
+/**
+ * Sync every header theme-toggle button's icon/label with the current app UI theme (not the
+ * map's theme — the map deliberately ignores this toggle, see prefersDarkMapPins()).
+ */
 function refreshThemeToggleButtons() {
-  const isDark = prefersDarkMapPins();
+  const isDark = currentUiTheme() === 'dark';
   // Button shows the *target* mode's icon, so the label names the mode it switches to.
-  const label = t(isDark ? 'map.themeToggleLight' : 'map.themeToggleDark');
+  const label = t(isDark ? 'theme.toggleLight' : 'theme.toggleDark');
   for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
     btn.innerHTML = themeToggleButtonIconSvg(isDark);
     btn.setAttribute('aria-label', label);

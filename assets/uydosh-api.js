@@ -180,6 +180,11 @@ function fetchSubwayStationsByLine(lineId, lang = getLang()) {
   return fetchJson(`/subway-stations/line/${encodeURIComponent(lineId)}`, { language: lang });
 }
 
+/** All Tashkent metro stations (every line) — used by the mini app map's metro layer. */
+function fetchSubwayStations(lang = getLang()) {
+  return fetchJson('/subway-stations', { language: lang });
+}
+
 function fetchLocations({ page = 1, limit = 200, language = getLang() } = {}) {
   return fetchJson('/locations', { page, limit, language });
 }
@@ -379,7 +384,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-65`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260703-67`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -402,6 +407,7 @@ Object.assign(window.UyDosh, {
   fetchListing,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
+  fetchSubwayStations,
   fetchLocations,
   fetchAmenitiesOrdered,
   createListing,

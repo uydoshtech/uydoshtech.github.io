@@ -280,6 +280,245 @@
     };
   }
 
+  /** Static Tashkent district boundary polygons (generated from the mobile app's dataset). */
+  const DISTRICT_BOUNDARIES_PATH = '/assets/data/tashkent-districts.json';
+  let districtBoundariesPromise = null;
+
+  function loadDistrictBoundaries() {
+    if (districtBoundariesPromise) return districtBoundariesPromise;
+    districtBoundariesPromise = fetch(DISTRICT_BOUNDARIES_PATH, { headers: { Accept: 'application/json' } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => (Array.isArray(data?.districts) ? data.districts : []))
+      .catch((err) => {
+        districtBoundariesPromise = null;
+        throw err;
+      });
+    return districtBoundariesPromise;
+  }
+
+  /** Matches the mobile app's `_districtLayerColor` palette (yandex_map_widget_map_objects.dart). */
+  const DISTRICT_LAYER_COLORS = [
+    '#E53935', '#8E24AA', '#3949AB', '#1E88E5', '#00ACC1', '#43A047',
+    '#7CB342', '#FDD835', '#FFB300', '#FB8C00', '#6D4C41', '#546E7A',
+  ];
+
+  function districtLayerColor(locationId) {
+    const idx = Math.abs(Number(locationId) - 1) % DISTRICT_LAYER_COLORS.length;
+    return DISTRICT_LAYER_COLORS[idx];
+  }
+
+  function districtLocalizedName(district, lang) {
+    if (lang === 'uz') return district.nameUz || district.nameRu || district.nameEn || '';
+    if (lang === 'en') return district.nameEn || district.nameRu || district.nameUz || '';
+    return district.nameRu || district.nameUz || district.nameEn || '';
+  }
+
+  function hexWithAlpha(hex, alpha) {
+    const clean = String(hex || '#000000').replace('#', '');
+    const a = Math.round(Math.min(1, Math.max(0, alpha)) * 255).toString(16).padStart(2, '0');
+    return `#${clean}${a}`;
+  }
+
+  /** Signed-area centroid of a simple polygon ring; falls back to the point average when degenerate. */
+  function ringCentroid(ring) {
+    if (!Array.isArray(ring) || ring.length === 0) return null;
+    let area = 0;
+    let cx = 0;
+    let cy = 0;
+    for (let i = 0; i < ring.length; i++) {
+      const [x0, y0] = ring[i];
+      const [x1, y1] = ring[(i + 1) % ring.length];
+      const cross = x0 * y1 - x1 * y0;
+      area += cross;
+      cx += (x0 + x1) * cross;
+      cy += (y0 + y1) * cross;
+    }
+    area *= 0.5;
+    if (Math.abs(area) < 1e-9) {
+      let sx = 0;
+      let sy = 0;
+      for (const [x, y] of ring) {
+        sx += x;
+        sy += y;
+      }
+      return [sx / ring.length, sy / ring.length];
+    }
+    return [cx / (6 * area), cy / (6 * area)];
+  }
+
+  let districtLabelLayoutClass = null;
+  function ensureDistrictLabelLayout(ymaps) {
+    if (districtLabelLayoutClass) return districtLabelLayoutClass;
+    const Layout = ymaps.templateLayoutFactory.createClass(
+      '<div class="uydosh-district-label"></div>',
+      {
+        build: function () {
+          Layout.superclass.build.call(this);
+          const props = this.getData().properties;
+          const el = this.getElement()?.firstChild;
+          if (!el) return;
+          el.textContent = props.get('label') || '';
+          el.style.background = props.get('color') || '#546E7A';
+        },
+      },
+    );
+    districtLabelLayoutClass = Layout;
+    return Layout;
+  }
+
+  function createDistrictPolygon(ymaps, district) {
+    const color = districtLayerColor(district.locationId);
+    return new ymaps.Polygon([district.outerRing], {}, {
+      fillColor: hexWithAlpha(color, 0.22),
+      strokeColor: hexWithAlpha(color, 0.85),
+      strokeWidth: 2,
+      zIndex: 5,
+      interactivityModel: 'default#transparent',
+    });
+  }
+
+  function createDistrictLabelPlacemark(ymaps, district, lang) {
+    const center = ringCentroid(district.outerRing);
+    if (!center) return null;
+    return new ymaps.Placemark(center, {
+      label: districtLocalizedName(district, lang),
+      color: districtLayerColor(district.locationId),
+    }, {
+      iconLayout: ensureDistrictLabelLayout(ymaps),
+      iconShape: { type: 'Rectangle', coordinates: [[-40, -10], [40, 10]] },
+      hasHint: false,
+      hasBalloon: false,
+      interactivityModel: 'default#transparent',
+      zIndex: 10,
+    });
+  }
+
+  /** All Tashkent metro stations, cached per language (static infrastructure data). */
+  const subwayStationsPromiseByLang = new Map();
+  function loadAllSubwayStations(lang) {
+    const key = lang || 'ru';
+    let promise = subwayStationsPromiseByLang.get(key);
+    if (!promise) {
+      promise = Promise.resolve(window.UyDosh?.fetchSubwayStations?.(key))
+        .then((stations) => (Array.isArray(stations) ? stations : []))
+        .catch((err) => {
+          subwayStationsPromiseByLang.delete(key);
+          throw err;
+        });
+      subwayStationsPromiseByLang.set(key, promise);
+    }
+    return promise;
+  }
+
+  function createMetroStationPlacemark(ymaps, station, lang) {
+    const lat = Number(station?.latitude);
+    const lon = Number(station?.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    const color = window.UyDosh?.metroLineColor?.(station?.line) || '#616161';
+    const name = window.UyDosh?.localized?.(station, lang) || '';
+    return new ymaps.Placemark([lat, lon], {
+      hintContent: name,
+    }, {
+      preset: 'islands#circleIcon',
+      iconColor: color,
+      hasHint: true,
+      hasBalloon: false,
+      zIndex: 50,
+    });
+  }
+
+  /** off → line1 → line2 → line3 → line4 → all → off (matches the mobile app's metro layer cycle). */
+  const METRO_LAYER_MODE_SEQUENCE = ['off', 'line1', 'line2', 'line3', 'line4', 'all'];
+
+  function nextMetroLayerMode(mode) {
+    const idx = METRO_LAYER_MODE_SEQUENCE.indexOf(mode);
+    return METRO_LAYER_MODE_SEQUENCE[(idx + 1) % METRO_LAYER_MODE_SEQUENCE.length] || 'off';
+  }
+
+  function metroLayerModeLineId(mode) {
+    switch (mode) {
+      case 'line1': return 1;
+      case 'line2': return 2;
+      case 'line3': return 3;
+      case 'line4': return 4;
+      default: return null;
+    }
+  }
+
+  async function setDistrictLayerVisible(container, visible) {
+    const instance = activeMaps.get(container);
+    const layer = instance?.districtLayer;
+    if (!instance?.map || !layer) return;
+    layer.visible = visible;
+    if (!visible) {
+      layer.collection.removeAll();
+      return;
+    }
+    if (!layer.objects) {
+      let districts = [];
+      try {
+        districts = await loadDistrictBoundaries();
+      } catch (err) {
+        console.warn('[UyDoshMap] Failed to load district boundaries', err);
+      }
+      if (layer.visible !== true || !activeMaps.has(container)) return;
+      const ymaps = window.ymaps;
+      const lang = window.UyDosh?.getLang?.() || 'ru';
+      layer.objects = [];
+      for (const district of districts) {
+        layer.objects.push(createDistrictPolygon(ymaps, district));
+        const label = createDistrictLabelPlacemark(ymaps, district, lang);
+        if (label) layer.objects.push(label);
+      }
+    }
+    if (layer.visible) {
+      for (const obj of layer.objects) layer.collection.add(obj);
+    }
+  }
+
+  async function setMetroLayerMode(container, mode) {
+    const instance = activeMaps.get(container);
+    const layer = instance?.metroLayer;
+    if (!instance?.map || !layer) return;
+    layer.mode = mode;
+    if (mode === 'off') {
+      layer.collection.removeAll();
+      return;
+    }
+    if (!layer.objectsByLine) {
+      let stations = [];
+      try {
+        stations = await loadAllSubwayStations(window.UyDosh?.getLang?.() || 'ru');
+      } catch (err) {
+        console.warn('[UyDoshMap] Failed to load subway stations', err);
+      }
+      if (!activeMaps.has(container)) return;
+      const ymaps = window.ymaps;
+      const lang = window.UyDosh?.getLang?.() || 'ru';
+      const byLine = new Map();
+      for (const station of stations) {
+        const placemark = createMetroStationPlacemark(ymaps, station, lang);
+        if (!placemark) continue;
+        const line = Number(station.line) || 0;
+        if (!byLine.has(line)) byLine.set(line, []);
+        byLine.get(line).push(placemark);
+      }
+      layer.objectsByLine = byLine;
+    }
+    if (layer.mode !== mode || !activeMaps.has(container)) return;
+    layer.collection.removeAll();
+    const lineId = metroLayerModeLineId(mode);
+    const lines = lineId != null ? [lineId] : [...layer.objectsByLine.keys()];
+    for (const line of lines) {
+      for (const placemark of layer.objectsByLine.get(line) || []) {
+        layer.collection.add(placemark);
+      }
+    }
+  }
+
   function pinColor(listingTypeId) {
     const colors = window.UyDosh?.listingTypeColor?.(listingTypeId);
     return colors || '#e11d2e';
@@ -610,9 +849,10 @@
     container.classList.toggle(MAP_TILES_DARK_CLASS, !!isDark);
   }
 
-  // The light/dark toggle now lives in the app header (see initThemeToggle() in
-  // uydosh-i18n.js), not as a map control — this listener just keeps the map tiles
-  // and pin bitmaps in sync whenever that header button flips the theme.
+  // The light/dark toggle lives in the app header (see initThemeToggle() in uydosh-i18n.js)
+  // and only affects the app's own UI colors — prefersDarkMapPins() always returns false, so
+  // this listener is a deliberate no-op for the map tiles/pins, kept only in case that ever
+  // changes again.
   if (typeof document !== 'undefined') {
     document.addEventListener('uydosh:themechange', () => {
       const isDark = window.UyDosh?.prefersDarkMapPins?.() ?? false;
@@ -693,6 +933,161 @@
       window.UyDosh?.t?.('map.resultsCountAria')?.replace('{count}', String(count)) ??
         String(count),
     );
+  }
+
+  /**
+   * Floating round buttons (top-left of the map) to toggle the district-boundaries
+   * layer and cycle the metro-stations layer — mirrors the mobile app's map layer
+   * buttons. Mini app only; rendered as a plain DOM overlay next to the results tile.
+   */
+  const LAYER_CONTROLS_CLASS = 'uydosh-map-layer-controls';
+  const LAYER_CONTROL_BTN_CLASS = 'uydosh-map-layer-btn';
+  const LAYER_CONTROLS_STYLE_ID = 'uydosh-map-layer-controls-styles';
+  const LAYER_CONTROL_MUTED_COLOR = '#94a3b8';
+
+  const METRO_LAYER_BUTTON_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none">
+    <path d="M7 3h10a3 3 0 0 1 3 3v10a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+    <path d="M8 17h0.01M16 17h0.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+    <path d="M7 21l-2 2M17 21l2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M7 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+  </svg>`;
+
+  const DISTRICTS_LAYER_BUTTON_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none">
+    <path d="M12 3 3 8l9 5 9-5-9-5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+    <path d="M3 12l9 5 9-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M3 16l9 5 9-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>`;
+
+  function ensureLayerControlsStyles() {
+    if (document.getElementById(LAYER_CONTROLS_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = LAYER_CONTROLS_STYLE_ID;
+    style.textContent = `
+      .${LAYER_CONTROLS_CLASS} {
+        position: absolute;
+        top: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        left: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .${LAYER_CONTROL_BTN_CLASS} {
+        appearance: none;
+        border: none;
+        border-radius: 50%;
+        width: ${RESULTS_COUNT_CONTROL_SIZE}px;
+        height: ${RESULTS_COUNT_CONTROL_SIZE}px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+      }
+      .${LAYER_CONTROL_BTN_CLASS}:active {
+        opacity: 0.85;
+      }
+      .${LAYER_CONTROL_BTN_CLASS} svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+      .uydosh-district-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        color: #fff;
+        font: 700 10px/1.4 system-ui, -apple-system, sans-serif;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createLayerControlButton() {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = LAYER_CONTROL_BTN_CLASS;
+    return btn;
+  }
+
+  function attachLayerControls(container, instance) {
+    if (!container || !window.UyDosh?.isMiniApp?.()) return;
+    ensureLayerControlsStyles();
+    if (getComputedStyle(container).position === 'static') {
+      container.style.position = 'relative';
+    }
+
+    const existing = container.querySelector(`.${LAYER_CONTROLS_CLASS}`);
+    existing?.remove();
+    const wrap = document.createElement('div');
+    wrap.className = LAYER_CONTROLS_CLASS;
+    container.appendChild(wrap);
+
+    const metroBtn = createLayerControlButton();
+    metroBtn.innerHTML = METRO_LAYER_BUTTON_ICON_SVG;
+    const districtBtn = createLayerControlButton();
+    districtBtn.innerHTML = DISTRICTS_LAYER_BUTTON_ICON_SVG;
+    wrap.append(metroBtn, districtBtn);
+
+    function refreshMetroButton() {
+      const mode = instance.metroLayer.mode;
+      const lineId = metroLayerModeLineId(mode);
+      const lang = window.UyDosh?.getLang?.() || 'ru';
+      let color = LAYER_CONTROL_MUTED_COLOR;
+      let label = window.UyDosh?.t?.('map.layers.metro.show', lang) ?? 'Metro';
+      if (mode === 'all') {
+        color = MAP_CONTROL_ICON_COLOR;
+        label = window.UyDosh?.t?.('map.layers.metro.all', lang) ?? label;
+      } else if (lineId != null) {
+        color = window.UyDosh?.metroLineColor?.(lineId) || MAP_CONTROL_ICON_COLOR;
+        const lineName = window.UyDosh?.metroLineLabel?.(lineId, lang) || `Line ${lineId}`;
+        label = (window.UyDosh?.t?.('map.layers.metro.line', lang) ?? 'Metro: {line}').replace('{line}', lineName);
+      }
+      metroBtn.style.color = color;
+      metroBtn.style.background = mode === 'off' ? '#fff' : hexWithAlpha(color, 0.16);
+      metroBtn.setAttribute('aria-pressed', mode === 'off' ? 'false' : 'true');
+      metroBtn.setAttribute('aria-label', label);
+      metroBtn.title = label;
+    }
+
+    function refreshDistrictButton() {
+      const lang = window.UyDosh?.getLang?.() || 'ru';
+      const visible = instance.districtLayer.visible;
+      const label = window.UyDosh?.t?.(
+        visible ? 'map.layers.districts.hide' : 'map.layers.districts.show',
+        lang,
+      ) ?? (visible ? 'Hide districts' : 'Show districts');
+      districtBtn.style.color = visible ? MAP_CONTROL_ICON_COLOR : LAYER_CONTROL_MUTED_COLOR;
+      districtBtn.style.background = visible ? '#eef2ff' : '#fff';
+      districtBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+      districtBtn.setAttribute('aria-label', label);
+      districtBtn.title = label;
+    }
+
+    metroBtn.addEventListener('click', () => {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+      const nextMode = nextMetroLayerMode(instance.metroLayer.mode);
+      setMetroLayerMode(container, nextMode).finally(refreshMetroButton);
+      refreshMetroButton();
+    });
+
+    districtBtn.addEventListener('click', () => {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
+      const nextVisible = !instance.districtLayer.visible;
+      setDistrictLayerVisible(container, nextVisible).finally(refreshDistrictButton);
+      refreshDistrictButton();
+    });
+
+    refreshMetroButton();
+    refreshDistrictButton();
   }
 
   const MAP_CLUSTER_GRID_SIZE = 64;
@@ -1027,8 +1422,14 @@
     }
 
     const mapInstance = { map };
+    mapInstance.districtLayer = { visible: false, objects: null, collection: new ymaps.GeoObjectCollection() };
+    mapInstance.metroLayer = { mode: 'off', objectsByLine: null, collection: new ymaps.GeoObjectCollection() };
+    map.geoObjects.add(mapInstance.districtLayer.collection);
+    map.geoObjects.add(mapInstance.metroLayer.collection);
+    activeMaps.set(container, mapInstance);
     attachUserLocationControl(ymaps, map, mapInstance);
     attachResultsCountTile(container, total ?? validPins.length);
+    attachLayerControls(container, mapInstance);
 
     const pinVisualDefaults = pinVisualContext({
       selectedListingId,
