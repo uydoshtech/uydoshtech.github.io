@@ -400,7 +400,14 @@
          `html.mini-app .wrap` safe-area rule injected into <head> at runtime
          by uydosh-mini-app.js (same specificity would otherwise let the
          later-inserted rule win the cascade and collapse this padding). */
-      html.mini-app body .wrap { padding-left: 20px; padding-right: 20px; }
+      /* Header is hidden entirely in Mini App on this page (photo stays at
+         the top always) — restore the top safe-area clearance the header
+         used to provide, directly on the wrap instead. */
+      html.mini-app body .wrap {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: calc(var(--uydosh-tg-inset-top, 72px) + 12px);
+      }
       html.mini-app .gallery-col { margin-left: -20px; margin-right: -20px; }
       html.mini-app .gallery-col .gallery,
       html.mini-app .gallery-col .gallery-skel {
@@ -546,7 +553,10 @@
   </head>
   <body>
     <div class="wrap">
-      <header data-uydosh-mini-app-header>
+      <!-- Hidden in Mini App — the listing photo should sit right at the top,
+           with no logo/tagline/theme-toggle header above it (see
+           data-hide-in-mini-app). Still shown on the regular website. -->
+      <header data-hide-in-mini-app>
         <a class="brand" href="index.html" data-mini-app-home>
           <img src="apple-touch-icon.png" width="44" height="44" alt="UyDosh" />
           <div>
