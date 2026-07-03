@@ -873,12 +873,13 @@
    * triggered by an explicit tap. `onUnavailable` lets the caller show a one-tap fallback
    * banner (see `locateUserFromTap`) instead of failing silently forever.
    */
-  async function autoRequestUserLocation(container, ymaps, instance, { onUnavailable } = {}) {
+  async function autoRequestUserLocation(container, ymaps, instance, { onUnavailable, onResolved } = {}) {
     try {
       const position = await window.UyDosh.requestUserLocation();
       if (activeMaps.get(container) !== instance) return;
       setUserLocationPlacemark(instance, ymaps, position.latitude, position.longitude);
       window.UyDosh.reportTelegramMiniAppLocation?.(position.latitude, position.longitude);
+      onResolved?.(position);
     } catch (err) {
       console.warn('[UyDoshMap] Auto user location unavailable', err);
       if (activeMaps.get(container) === instance) onUnavailable?.();
@@ -894,11 +895,11 @@
   async function locateUserFromTap(container) {
     const instance = activeMaps.get(container);
     const ymaps = window.ymaps;
-    if (!instance?.map || !ymaps) return false;
+    if (!instance?.map || !ymaps) return null;
     const position = await focusUserLocation(instance.map, ymaps, instance);
-    if (!position) return false;
+    if (!position) return null;
     window.UyDosh.reportTelegramMiniAppLocation?.(position.latitude, position.longitude);
-    return true;
+    return position;
   }
 
   /**
@@ -1473,6 +1474,7 @@
     onPinClick,
     onMapClick,
     onLocationUnavailable,
+    onLocationResolved,
     selectedListingId = null,
     selectedListingGroupIds = [],
     visitedListingIds,
@@ -1515,7 +1517,10 @@
     map.geoObjects.add(mapInstance.metroLayer.collection);
     activeMaps.set(container, mapInstance);
     attachUserLocationControl(ymaps, map, mapInstance);
-    autoRequestUserLocation(container, ymaps, mapInstance, { onUnavailable: onLocationUnavailable });
+    autoRequestUserLocation(container, ymaps, mapInstance, {
+      onUnavailable: onLocationUnavailable,
+      onResolved: onLocationResolved,
+    });
     attachResultsCountTile(container, total ?? validPins.length);
     attachLayerControls(container, mapInstance);
     map.events.add('boundschange', (event) => {

@@ -181,24 +181,72 @@ async function authenticateTelegramMiniApp() {
  * session required). Fire-and-forget: swallows failures since it's called from a
  * best-effort background flow (see autoRequestUserLocation in yandex-map.js) and must
  * never surface an error to the user.
+ *
+ * @param {string} [contactRaw] Optional raw `response` string from a successful
+ *   `Telegram.WebApp.requestContact()` share (see `requestTelegramContactShare`),
+ *   verified independently server-side and stored on this same location row.
  */
-async function reportTelegramMiniAppLocation(latitude, longitude) {
+async function reportTelegramMiniAppLocation(latitude, longitude, contactRaw) {
   const initData = getTelegramInitData();
   if (!initData) return false;
   try {
+    const body = { init_data: initData, latitude, longitude };
+    if (contactRaw) body.contact = contactRaw;
     const res = await fetch(`${API_BASE}/app/telegram-mini-app-location`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ init_data: initData, latitude, longitude }),
+      body: JSON.stringify(body),
     });
     return res.ok;
   } catch (err) {
     console.warn('[UyDosh] Failed to report Mini App location', err);
     return false;
   }
+}
+
+const TG_CONTACT_SHARE_OFFERED_KEY = 'uydosh_tg_contact_share_offered';
+
+/**
+ * Whether we've already shown the "share phone number" prompt at least once on this
+ * device — persisted (unlike the one-per-page-session locate banner) so returning users
+ * aren't asked again on every app open regardless of whether they shared or declined.
+ */
+function hasOfferedTelegramContactShare() {
+  try {
+    return localStorage.getItem(TG_CONTACT_SHARE_OFFERED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markTelegramContactShareOffered() {
+  try {
+    localStorage.setItem(TG_CONTACT_SHARE_OFFERED_KEY, '1');
+  } catch { /* ignore */ }
+}
+
+/**
+ * Wraps `Telegram.WebApp.requestContact()` (native "share phone number" consent popup)
+ * in a Promise. Resolves with the raw, signable `response` string (never `responseUnsafe`
+ * — see Telegram docs) on share, or `null` if the user cancels/declines or the method is
+ * unavailable (e.g. desktop client, old app version).
+ */
+function requestTelegramContactShare() {
+  const tg = window.Telegram?.WebApp;
+  if (typeof tg?.requestContact !== 'function') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    try {
+      tg.requestContact((success, response) => {
+        resolve(success && response?.status === 'sent' ? response.response : null);
+      });
+    } catch (err) {
+      console.warn('[UyDosh] requestContact failed', err);
+      resolve(null);
+    }
+  });
 }
 
 function fetchSubwayStationsByLine(lineId, lang = getLang()) {
@@ -409,7 +457,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260704-74`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260704-75`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -443,6 +491,9 @@ Object.assign(window.UyDosh, {
   resizeImageFileForUpload,
   authenticateTelegramMiniApp,
   reportTelegramMiniAppLocation,
+  hasOfferedTelegramContactShare,
+  markTelegramContactShareOffered,
+  requestTelegramContactShare,
   getTelegramInitData,
   clearTelegramInitData,
   isTelegramInitDataUsable,
