@@ -86,15 +86,12 @@ function isRoomNeeded() {
   return state.form.listingTypeId === LISTING_TYPE_ROOM_NEEDED;
 }
 
-/// Both listing types offered by this wizard can be tagged with several
-/// metro stations (mirrors mobile's `_supportsMultiStation`, which also
-/// includes roommate-needed listings — only group-forming, not offered
-/// here, is excluded).
+/// Only demand-side (room-needed) listings can be tagged with several metro
+/// stations; roommate-needed listings describe one apartment near one
+/// station, so metro selection stays singular (mirrors `_supportsMultiLocation`
+/// below).
 function supportsMultiStation() {
-  return (
-    state.form.listingTypeId === LISTING_TYPE_ROOM_NEEDED ||
-    state.form.listingTypeId === LISTING_TYPE_ROOMMATE_NEEDED
-  );
+  return isRoomNeeded();
 }
 
 /// Only demand-side (room-needed) listings can span several districts;
