@@ -534,11 +534,28 @@
         border-radius: 16px;
         overflow: hidden;
         background: rgba(127, 127, 127, 0.06);
+        /* Stop a finger-drag on the map from also chaining into a page-level
+           bounce/rubber-band scroll (and the toolbar show/hide + viewport
+           resize that comes with it) — see touch-action note below for why
+           that combination is the main cause of panning stutter. */
+        overscroll-behavior: contain;
       }
       .feed-map-panel.active { display: block; }
       .feed-map-panel .map-container {
         width: 100%;
         height: 100%;
+        /* Without this, the browser has to wait to see whether a finger-drag
+           over the map is a page scroll or a map pan (default `touch-action:
+           auto`), and on some WebViews (Telegram iOS in particular) that
+           ambiguity intermittently resolves as "also scroll the page" —
+           triggering a toolbar show/hide + `100dvh` resize mid-gesture, whose
+           resize handler (syncFeedMapPanelHeight) then forces a synchronous
+           layout read on the very frames the map is trying to animate a pan.
+           `none` tells the browser up front that this element owns all touch
+           gestures, so Yandex Maps' own drag handling never competes with
+           native scrolling. Scoped to the map div only (not the whole panel)
+           so it doesn't also disable the pin tooltip carousel's own swipe. */
+        touch-action: none;
       }
       .feed-map-status {
         position: absolute;
@@ -1307,7 +1324,7 @@
     <script src="../assets/uydosh-map-pins.js?v=20260704-75"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260704-71"></script>
-    <script src="../assets/telegram-feed-map.js?v=20260704-64"></script>
-    <script src="../assets/telegram-feed.js?v=20260704-64"></script>
+    <script src="../assets/telegram-feed-map.js?v=20260704-65"></script>
+    <script src="../assets/telegram-feed.js?v=20260704-65"></script>
   </body>
 </html>
