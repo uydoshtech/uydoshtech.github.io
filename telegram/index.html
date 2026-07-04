@@ -227,6 +227,27 @@
         scrollbar-width: none;
       }
       .chips-compact::-webkit-scrollbar { display: none; }
+      /* DEBUG: outline every chip container in the collapsed filter ribbon
+         (red/green/yellow cycle) so their bounds are visible. Remove once
+         layout is verified. */
+      .chips-compact {
+        outline: 2px dashed orange;
+        outline-offset: 2px;
+      }
+      .chips-compact > * {
+        outline: 2px solid red;
+        outline-offset: 1px;
+      }
+      .chips-compact > *:nth-child(3n+2) {
+        outline-color: limegreen;
+      }
+      .chips-compact > *:nth-child(3n) {
+        outline-color: gold;
+      }
+      .filter-row-compact > .filters-toggle {
+        outline: 2px solid red;
+        outline-offset: 1px;
+      }
       .chips-compact .chip-gender[data-gender="1"][aria-pressed="true"] {
         color: #2196F3;
         border-color: #2196F3;
