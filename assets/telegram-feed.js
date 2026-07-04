@@ -630,7 +630,17 @@ function syncMetroLineChipPressedState() {
   });
 }
 
+// Bumped on every filter change / reset so a slow, still-in-flight `loadMore()`
+// request from a *previous* filter selection can recognize it's stale once it
+// resolves and discard itself instead of appending its (now wrong) results —
+// mirrors the `mapLoadGeneration` guard in telegram-feed-map.js. Without this,
+// rapidly switching filters (e.g. tapping through metro lines) could let an
+// older, slower response land after a newer one and clobber the grid with
+// results for a filter that's no longer selected.
+let loadGeneration = 0;
+
 function resetAndLoad({ skipFiltersRender = false } = {}) {
+  loadGeneration += 1;
   state.page = 0;
   state.totalPages = 1;
   state.items = [];
@@ -792,6 +802,7 @@ async function loadMore() {
     return;
   }
 
+  const requestGeneration = loadGeneration;
   state.loading = true;
   const nextPage = state.page + 1;
   if (nextPage === 1) {
@@ -810,6 +821,10 @@ async function loadMore() {
       subwayLineId: subwayLineQueryParam(),
       createdWithinDays: createdWithinDaysQueryParam(),
     });
+    // A newer filter/reset superseded this request while it was in flight —
+    // drop the stale response instead of appending results for a filter
+    // that's no longer selected (see `loadGeneration` comment above).
+    if (requestGeneration !== loadGeneration) return;
     const listings = Array.isArray(data?.listings) ? data.listings : [];
     updatePagination(data, listings, nextPage);
     state.page = nextPage;
@@ -823,12 +838,15 @@ async function loadMore() {
       showEnd();
     }
   } catch (err) {
+    if (requestGeneration !== loadGeneration) return;
     console.error('Failed to load listings', err);
     state.errored = true;
     if (state.page === 0) gridEl.innerHTML = '';
     showError();
   } finally {
-    state.loading = false;
+    if (requestGeneration === loadGeneration) {
+      state.loading = false;
+    }
   }
 }
 
