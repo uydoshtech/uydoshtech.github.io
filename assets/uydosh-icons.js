@@ -1,8 +1,44 @@
 // UyDosh Web — feed empty-state markup, listing type / gender / metro line
-// enums shared across pages, metro line formatting, and the base SVG icon
-// set (pin, metro, clock, calendar, lock, camera, article) plus the create-form
+// enums shared across pages, metro line formatting, the base SVG icon
+// set (pin, metro, clock, calendar, lock, camera, article), the shared
+// "chrome" icon set (list, mapPin, house, heartOutline, plus, chevrons,
+// person — see CHROME_ICONS/hydrateIcons) plus the create-form
 // description/title templates.
 // Depends on uydosh-i18n.js (t()). Load after it.
+
+/**
+ * Static "chrome" icons shared verbatim across mini-app pages — view-tab
+ * icons, wizard back/next, the create FAB, scroll-to-top, back links, and
+ * the account menu. Each is a self-contained `<svg>` (stroke/fill set on the
+ * root so it recolors via CSS `color`/`currentColor` wherever it's placed).
+ *
+ * HTML pages render these by adding `data-icon="name"` to the element that
+ * should hold the icon (see `hydrateIcons`), e.g.:
+ *   <span class="view-tab-icon" aria-hidden="true" data-icon="list"></span>
+ * JS call sites can instead call `iconChrome('name')` directly.
+ */
+const CHROME_ICONS = {
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01" stroke-width="3"></path></svg>',
+  mapPin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"></path><circle cx="12" cy="9.5" r="2.25"></circle></svg>',
+  house: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5"></path><path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5"></path></svg>',
+  heartOutline: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7-4.5-9-9A5 5 0 0 1 12 6a5 5 0 0 1 9 5.5c-2 4.5-9 9-9 9Z"></path></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>',
+  chevronUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>',
+  chevronLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>',
+  chevronRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>',
+  person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" stroke-linecap="round"></path></svg>',
+};
+
+function iconChrome(name) {
+  return CHROME_ICONS[name] || '';
+}
+
+/** Fills every `[data-icon]` element under `root` with its named chrome icon markup. */
+function hydrateIcons(root = document) {
+  root.querySelectorAll('[data-icon]').forEach((el) => {
+    el.innerHTML = iconChrome(el.getAttribute('data-icon'));
+  });
+}
 
 let feedEmptyStateStylesInjected = false;
 
@@ -295,6 +331,8 @@ function iconCheckboxPair() {
 }
 
 Object.assign(window.UyDosh, {
+  iconChrome,
+  hydrateIcons,
   feedEmptyStateHtml,
   metroLineColor,
   metroLineLabel,
@@ -324,3 +362,8 @@ Object.assign(window.UyDosh, {
   descriptionTemplateText,
   presetListingTitleText,
 });
+
+// This script loads at the bottom of the page (after the markup containing
+// `[data-icon]` placeholders), so the DOM is already parsed by the time this
+// runs — no DOMContentLoaded wait needed.
+hydrateIcons();

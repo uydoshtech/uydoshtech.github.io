@@ -13,6 +13,14 @@
   --brand: #e11d2e;
   --brand2: #60a5fa;
   --price-green: #35c26b;
+  /*
+   * `.wrap` contributes `--feed-wrap-gutter` (14px) of padding already; this is
+   * the extra inset needed on top of that so content lines up with the wider
+   * gutter used by the mini-app header, filter ribbon, and view-tabs (25px
+   * total). Pages may override `--feed-content-gutter`/`--feed-wrap-gutter`
+   * before this is computed to change the effective gutter site-wide.
+   */
+  --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px));
 }
 @media (prefers-color-scheme: light) {
   :root:not([style*="--tg-bg"]) {
@@ -52,16 +60,27 @@ a { color: inherit; text-decoration: none; }
 }
 
 /*
+ * Standard content gutter — apply this class to any element that sits
+ * directly inside `.wrap` and should line up with the mini-app header,
+ * filter ribbon, and view-tabs instead of the tighter list-item gutter.
+ * Use this instead of re-deriving the `--feed-content-gutter` /
+ * `--feed-wrap-gutter` calc by hand on every new screen.
+ */
+.content-gutter {
+  padding-left: var(--content-gutter-offset);
+  padding-right: var(--content-gutter-offset);
+}
+
+/*
  * Segmented tab bar — used for the feed's List/Map switch and the account
- * page's My listings/Favorites switch. The extra `--feed-content-gutter`
- * margin (beyond the base `.wrap`/`--feed-wrap-gutter` padding) matches the
- * wider gutter the mini-app header and filter ribbon use, so the tab bar's
- * edges line up with those instead of the tighter list-item gutter.
+ * page's My listings/Favorites switch. Uses the same standard gutter offset
+ * as `.content-gutter` (as a margin, since the tab bar isn't flush with
+ * `.wrap`'s edges) so the tab bar's edges line up with the header/ribbon.
  */
 .view-tabs {
   display: flex;
   gap: 6px;
-  margin: 0 calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px)) 10px;
+  margin: 0 var(--content-gutter-offset) 10px;
 }
 .view-tab {
   appearance: none;

@@ -35,9 +35,14 @@ function statusBadgeHtml(listing, lang) {
 function accountThumbHtml(listing) {
   const photo = UyDosh.primaryPhoto(listing);
   const photoSrc = photo ? UyDosh.photoUrl(photo) : '';
-  return photoSrc
-    ? `<div class="account-thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="" onerror="this.parentElement.classList.add('empty'); this.remove();" /></div>`
-    : `<div class="account-thumb empty"></div>`;
+  const placeholderSrc = !photoSrc ? UyDosh.noPhotoPlaceholderImageUrl(listing) : '';
+  if (photoSrc) {
+    return `<div class="account-thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="" onerror="this.parentElement.classList.add('empty'); this.remove();" /></div>`;
+  }
+  if (placeholderSrc) {
+    return `<div class="account-thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="" /></div>`;
+  }
+  return `<div class="account-thumb empty"></div>`;
 }
 
 function listingRowHtml(listing) {

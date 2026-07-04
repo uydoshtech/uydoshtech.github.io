@@ -30,7 +30,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260704-68" />
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260705-69" />
 
     <style>
       :root {
@@ -800,10 +800,10 @@
       }
       .feed-list-panel.hidden { display: none; }
       .feed-list-panel {
-        /* .wrap already contributes --feed-wrap-gutter of padding; only add the remainder
-           so list/grid content lines up with the filter ribbon and view tabs above it. */
-        padding-left: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px));
-        padding-right: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px));
+        /* Standard content gutter (see .content-gutter in telegram-shared.css) so
+           list/grid content lines up with the filter ribbon and view tabs above it. */
+        padding-left: var(--content-gutter-offset);
+        padding-right: var(--content-gutter-offset);
       }
       .feed-list-panel.is-empty {
         display: flex;
@@ -1142,21 +1142,11 @@
 
       <div class="view-tabs" role="tablist" aria-label="View">
         <button type="button" class="view-tab" role="tab" data-view="list" aria-selected="true">
-          <span class="view-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M8 6h13M8 12h13M8 18h13" stroke-width="2" stroke-linecap="round"></path>
-              <path d="M3 6h.01M3 12h.01M3 18h.01" stroke-width="3" stroke-linecap="round"></path>
-            </svg>
-          </span>
+          <span class="view-tab-icon" aria-hidden="true" data-icon="list"></span>
           <span data-i18n="view.list">Список</span>
         </button>
         <button type="button" class="view-tab" role="tab" data-view="map" aria-selected="false">
-          <span class="view-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" stroke-width="2" stroke-linejoin="round"></path>
-              <circle cx="12" cy="9.5" r="2.25" stroke-width="2"></circle>
-            </svg>
-          </span>
+          <span class="view-tab-icon" aria-hidden="true" data-icon="mapPin"></span>
           <span data-i18n="view.map">Карта</span>
         </button>
       </div>
@@ -1175,12 +1165,7 @@
             id="feed-map-locate-banner"
             hidden
           >
-            <span class="map-locate-banner-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" stroke-width="2" stroke-linejoin="round"></path>
-                <circle cx="12" cy="9.5" r="2.25" stroke-width="2"></circle>
-              </svg>
-            </span>
+            <span class="map-locate-banner-icon" aria-hidden="true" data-icon="mapPin"></span>
             <span data-i18n="map.locate.cta">Показать моё местоположение</span>
           </button>
           <div class="map-pin-tooltip" id="feed-map-tooltip" hidden></div>
@@ -1195,11 +1180,8 @@
       href="/telegram/create.html"
       data-i18n="create.postListing"
       data-i18n-attr="aria-label"
-    >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"></path>
-      </svg>
-    </a>
+      data-icon="plus"
+    ></a>
 
     <button
       type="button"
@@ -1208,19 +1190,16 @@
       aria-hidden="true"
       data-i18n="feed.scrollToTop"
       data-i18n-attr="aria-label"
-    >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 15l6-6 6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-      </svg>
-    </button>
+      data-icon="chevronUp"
+    ></button>
 
     <script src="../assets/uydosh-core.js?v=20260704-68"></script>
     <script src="../assets/uydosh-api.js?v=20260704-81"></script>
     <script src="../assets/uydosh-i18n.js?v=20260704-10"></script>
-    <script src="../assets/uydosh-icons.js?v=20260704-77"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-82"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260704-78"></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260705-83"></script>
     <script src="../assets/telegram-feed-map.js?v=20260704-66"></script>
     <script src="../assets/telegram-feed.js?v=20260704-66"></script>
   </body>

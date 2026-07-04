@@ -136,14 +136,6 @@ function accountMenuAvatarUrl() {
   }
 }
 
-function accountMenuPersonIconSvg() {
-  return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"></circle><path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>';
-}
-
-function accountMenuPlusIconSvg() {
-  return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path></svg>';
-}
-
 /**
  * Avatar-triggered account menu shown in the Mini App header — replaces the
  * public site's language switcher here since the bot already sets the Mini
@@ -154,7 +146,7 @@ function accountMenuHtml() {
   const avatarUrl = accountMenuAvatarUrl();
   const avatarInner = avatarUrl
     ? `<img class="account-menu-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('has-avatar');this.remove();" />`
-    : accountMenuPersonIconSvg();
+    : UyDosh.iconChrome('person');
   return `
     <div class="account-menu" role="group">
       <button
@@ -168,8 +160,8 @@ function accountMenuHtml() {
         <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
       </button>
       <div class="account-menu-list" role="menu" hidden>
-        <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${accountMenuPersonIconSvg()}<span data-i18n="account.menuAccount"></span></a>
-        <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${accountMenuPlusIconSvg()}<span data-i18n="create.postListing"></span></a>
+        <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('person')}<span data-i18n="account.menuAccount"></span></a>
+        <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
       </div>
     </div>`;
 }
