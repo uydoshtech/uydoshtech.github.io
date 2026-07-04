@@ -42,6 +42,12 @@ const state = {
   validationError: '',
   validationAnchor: '',
   lastGeneratedTitle: '',
+  /// Every station object seen across every line the author has browsed,
+  /// keyed by id. Lets multi-station selections survive switching lines
+  /// (mirrors the mobile app's `_stationCache` in MultiStationPicker) and
+  /// lets the review step resolve names for stations picked on a line
+  /// that isn't currently displayed.
+  stationCache: {},
   form: {
     listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
     locationMode: LOCATION_MODE_METRO,
@@ -80,6 +86,20 @@ function isRoomNeeded() {
   return state.form.listingTypeId === LISTING_TYPE_ROOM_NEEDED;
 }
 
+/// Both listing types offered by this wizard can be tagged with several
+/// metro stations (mirrors mobile's `_supportsMultiStation`, which also
+/// includes roommate-needed listings — only group-forming, not offered
+/// here, is excluded).
+function supportsMultiStation() {
+  return (
+    state.form.listingTypeId === LISTING_TYPE_ROOM_NEEDED ||
+    state.form.listingTypeId === LISTING_TYPE_ROOMMATE_NEEDED
+  );
+}
+
+/// Only demand-side (room-needed) listings can span several districts;
+/// roommate-needed listings describe one apartment (mirrors mobile's
+/// `_supportsMultiLocation`).
 function supportsMultiLocation() {
   return isRoomNeeded();
 }
@@ -170,8 +190,12 @@ function genderReviewBadgeHtml(lang) {
 
 function selectedLocationSummary(lang) {
   if (state.form.locationMode === LOCATION_MODE_METRO) {
-    const names = state.stations
-      .filter((s) => state.form.selectedStationIds.includes(Number(s.id)))
+    // Use the cross-line cache, not `state.stations` (only the currently
+    // displayed line), so stations picked on a different line still show
+    // up here.
+    const names = state.form.selectedStationIds
+      .map((id) => state.stationCache[id])
+      .filter(Boolean)
       .map((s) => UyDosh.localized(s, lang));
     return names.join(', ');
   }
@@ -285,7 +309,21 @@ function stationListHtml(lang) {
         <span class="station-list-spinner" aria-hidden="true"></span>
       </div>`;
   }
-  const multi = supportsMultiLocation();
+  const multi = supportsMultiStation();
+  const lineStationIds = state.stations.map((st) => Number(st.id));
+  const allOnLineSelected =
+    multi &&
+    lineStationIds.length > 0 &&
+    lineStationIds.every((id) => state.form.selectedStationIds.includes(id));
+  const selectAllRow =
+    multi && lineStationIds.length > 0
+      ? `
+      <button type="button" class="station-item station-item-select-all" data-select-all-stations aria-pressed="${allOnLineSelected ? 'true' : 'false'}">
+        ${UyDosh.iconCheckboxPair()}
+        ${UyDosh.iconMetro(state.form.subwayLineId)}
+        <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllStations', lang).replace('{count}', String(state.stations.length)))}</span>
+      </button>`
+      : '';
   const stationItems = state.stations.map((st) => {
     const id = Number(st.id);
     const pressed = state.form.selectedStationIds.includes(id);
@@ -297,7 +335,7 @@ function stationListHtml(lang) {
         <span>${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span>
       </button>`;
   }).join('');
-  return stationItems || `<div class="status">…</div>`;
+  return (selectAllRow + stationItems) || `<div class="status">…</div>`;
 }
 
 function renderStep0(lang) {
@@ -340,7 +378,7 @@ function renderStep0(lang) {
 
   let locationBody = '';
   if (state.form.locationMode === LOCATION_MODE_METRO) {
-    const stationLabel = supportsMultiLocation()
+    const stationLabel = supportsMultiStation()
       ? UyDosh.t('create.metroStations', lang)
       : UyDosh.t('create.metroStation', lang);
     const stationField = fieldErrorAttrs('location');
@@ -355,16 +393,31 @@ function renderStep0(lang) {
         <div class="station-list">${stationListHtml(lang)}</div>
       </div>`;
   } else {
-    const districtLabel = supportsMultiLocation()
+    const multiLocation = supportsMultiLocation();
+    const districtLabel = multiLocation
       ? UyDosh.t('create.districts', lang)
       : UyDosh.t('create.district', lang);
     const districtField = fieldErrorAttrs('location');
+    const allLocationIds = state.locations.map((loc) => Number(loc.id));
+    const allLocationsSelected =
+      multiLocation &&
+      allLocationIds.length > 0 &&
+      allLocationIds.every((id) => state.form.selectedLocationIds.includes(id));
+    const selectAllLocationsRow =
+      multiLocation && allLocationIds.length > 0
+        ? `
+        <button type="button" class="station-item station-item-select-all" data-select-all-locations aria-pressed="${allLocationsSelected ? 'true' : 'false'}">
+          ${UyDosh.iconCheckboxPair()}
+          ${UyDosh.iconPin()}
+          <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllDistricts', lang).replace('{count}', String(state.locations.length)))}</span>
+        </button>`
+        : '';
     const districtItems = state.locations.map((loc) => {
       const id = Number(loc.id);
       const pressed = state.form.selectedLocationIds.includes(id);
       return `
         <button type="button" class="station-item" data-location-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
-          ${supportsMultiLocation() ? UyDosh.iconCheckboxPair() : ''}
+          ${multiLocation ? UyDosh.iconCheckboxPair() : ''}
           ${UyDosh.iconPin()}
           <span>${UyDosh.escapeHtml(UyDosh.localizedShort(loc, lang))}</span>
         </button>`;
@@ -373,7 +426,7 @@ function renderStep0(lang) {
       <div class="field${districtField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(districtLabel)}</div>
         ${districtField.inline}
-        <div class="station-list">${districtItems || `<div class="status">…</div>`}</div>
+        <div class="station-list">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
       </div>`;
   }
 
@@ -618,9 +671,12 @@ async function loadStationsForLine(lineId) {
   const data = await UyDosh.fetchSubwayStationsByLine(lineId, lang);
   if (lineId !== state.form.subwayLineId) return;
   state.stations = Array.isArray(data) ? data : (Array.isArray(data?.stations) ? data.stations : []);
-  state.form.selectedStationIds = state.form.selectedStationIds.filter((id) =>
-    state.stations.some((s) => Number(s.id) === id),
-  );
+  // Cache every station seen so far (across every line browsed) so a
+  // multi-select made on one line survives switching to another line, and
+  // so the review step can resolve names for off-line selections.
+  for (const st of state.stations) {
+    state.stationCache[Number(st.id)] = st;
+  }
 }
 
 async function loadLocations() {
@@ -647,18 +703,28 @@ function toggleSelection(list, id, multi) {
 /** Toggle pressed state without re-rendering scrollable station/location lists. */
 function updateStationSelectionUi() {
   const selected = new Set(state.form.selectedStationIds.map(Number));
+  let allOnLineSelected = state.stations.length > 0;
   stepPanelsEl.querySelectorAll('[data-station-id]').forEach((btn) => {
     const id = Number(btn.getAttribute('data-station-id'));
-    btn.setAttribute('aria-pressed', selected.has(id) ? 'true' : 'false');
+    const pressed = selected.has(id);
+    btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    if (!pressed) allOnLineSelected = false;
   });
+  const selectAllBtn = stepPanelsEl.querySelector('[data-select-all-stations]');
+  selectAllBtn?.setAttribute('aria-pressed', allOnLineSelected ? 'true' : 'false');
 }
 
 function updateLocationSelectionUi() {
   const selected = new Set(state.form.selectedLocationIds.map(Number));
+  let allSelected = state.locations.length > 0;
   stepPanelsEl.querySelectorAll('[data-location-id]').forEach((btn) => {
     const id = Number(btn.getAttribute('data-location-id'));
-    btn.setAttribute('aria-pressed', selected.has(id) ? 'true' : 'false');
+    const pressed = selected.has(id);
+    btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    if (!pressed) allSelected = false;
   });
+  const selectAllBtn = stepPanelsEl.querySelector('[data-select-all-locations]');
+  selectAllBtn?.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
 }
 
 function bindStepEvents() {
@@ -666,8 +732,10 @@ function bindStepEvents() {
     btn.addEventListener('click', () => {
       haptic();
       state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
-      if (!supportsMultiLocation()) {
+      if (!supportsMultiStation()) {
         state.form.selectedStationIds = state.form.selectedStationIds.slice(0, 1);
+      }
+      if (!supportsMultiLocation()) {
         state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
       }
       updateDefaultTitle();
@@ -689,7 +757,9 @@ function bindStepEvents() {
       if (nextLineId === state.form.subwayLineId && !state.stationsLoading) return;
       haptic();
       state.form.subwayLineId = nextLineId;
-      state.form.selectedStationIds = [];
+      // Selections are preserved across line switches (see loadStationsForLine /
+      // state.stationCache) so multi-select can span several lines, matching
+      // the mobile app's MultiStationPicker.
       state.stationsLoading = true;
       renderStep();
       try {
@@ -713,7 +783,7 @@ function bindStepEvents() {
       state.form.selectedStationIds = toggleSelection(
         state.form.selectedStationIds,
         id,
-        supportsMultiLocation(),
+        supportsMultiStation(),
       );
       if (state.form.selectedStationIds.length > 0 && state.validationError) {
         showFormError('');
@@ -722,6 +792,31 @@ function bindStepEvents() {
       }
       updateStationSelectionUi();
     });
+  });
+
+  stepPanelsEl.querySelector('[data-select-all-stations]')?.addEventListener('click', () => {
+    haptic();
+    const lineIds = state.stations.map((s) => Number(s.id));
+    const allSelected =
+      lineIds.length > 0 && lineIds.every((id) => state.form.selectedStationIds.includes(id));
+    const otherLineIds = state.form.selectedStationIds.filter((id) => !lineIds.includes(id));
+    state.form.selectedStationIds = allSelected ? otherLineIds : [...otherLineIds, ...lineIds];
+    if (state.form.selectedStationIds.length > 0 && state.validationError) {
+      showFormError('');
+    }
+    renderStep();
+  });
+
+  stepPanelsEl.querySelector('[data-select-all-locations]')?.addEventListener('click', () => {
+    haptic();
+    const allIds = state.locations.map((l) => Number(l.id));
+    const allSelected =
+      allIds.length > 0 && allIds.every((id) => state.form.selectedLocationIds.includes(id));
+    state.form.selectedLocationIds = allSelected ? [] : [...allIds];
+    if (state.form.selectedLocationIds.length > 0 && state.validationError) {
+      showFormError('');
+    }
+    renderStep();
   });
 
   stepPanelsEl.querySelectorAll('[data-location-id]').forEach((btn) => {
@@ -986,10 +1081,17 @@ async function submitListing() {
     };
 
     if (state.form.locationMode === LOCATION_MODE_METRO) {
-      body.subwayLineId = state.form.subwayLineId;
-      if (supportsMultiLocation()) {
+      if (supportsMultiStation() && state.form.selectedStationIds.length > 0) {
+        // The first pick is persisted as the primary station; its own line
+        // (not necessarily the line currently shown in the UI) travels with
+        // it, matching the mobile app's `effectiveSubwayLineId`.
+        const primaryStation = state.stationCache[state.form.selectedStationIds[0]];
+        body.subwayLineId = primaryStation
+          ? Number(primaryStation.line)
+          : state.form.subwayLineId;
         body.subwayStationIds = state.form.selectedStationIds;
       } else {
+        body.subwayLineId = state.form.subwayLineId;
         body.subwayStationId = state.form.selectedStationIds[0];
       }
     } else if (supportsMultiLocation()) {
