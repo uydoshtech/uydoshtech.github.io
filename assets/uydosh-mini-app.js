@@ -159,6 +159,7 @@ function accountMenuHtml() {
       >
         <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
       </button>
+      <span class="account-menu-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
       <div class="account-menu-list" role="menu" hidden>
         <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('person')}<span data-i18n="account.menuAccount"></span></a>
         <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
@@ -166,13 +167,21 @@ function accountMenuHtml() {
     </div>`;
 }
 
+/** Mirrors the .account-menu-list transition duration below (used for the close fallback timer). */
+const ACCOUNT_MENU_TRANSITION_MS = 180;
+
 function closeAccountMenu(menu) {
   const list = menu.querySelector('.account-menu-list');
   const trigger = menu.querySelector('.account-menu-trigger');
-  if (!list || !trigger) return;
-  list.hidden = true;
+  if (!list || !trigger || list.hidden) return;
   trigger.setAttribute('aria-expanded', 'false');
   menu.classList.remove('account-menu-open');
+  // Keep the list rendered (but not interactive) until the closing transition
+  // finishes, then hide it — animating `display` directly isn't possible.
+  const hideWhenClosed = () => {
+    if (!menu.classList.contains('account-menu-open')) list.hidden = true;
+  };
+  window.setTimeout(hideWhenClosed, ACCOUNT_MENU_TRANSITION_MS);
 }
 
 function bindAccountMenu(menu) {
@@ -188,6 +197,9 @@ function bindAccountMenu(menu) {
     }
     if (!open) {
       list.hidden = false;
+      // Force layout before adding the open class so the browser registers the
+      // collapsed starting state and animates towards it instead of snapping.
+      list.getBoundingClientRect();
       trigger.setAttribute('aria-expanded', 'true');
       menu.classList.add('account-menu-open');
     }
@@ -424,6 +436,31 @@ function ensureMiniAppSafeAreaStyles() {
       object-fit: cover;
       display: block;
     }
+    html.mini-app .account-menu-chevron {
+      position: absolute;
+      right: -2px;
+      bottom: -2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg, #0f0f10);
+      border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      pointer-events: none;
+      transition: transform 0.18s ease;
+    }
+    html.mini-app .account-menu-chevron svg {
+      width: 9px;
+      height: 9px;
+      display: block;
+      stroke-width: 3;
+    }
+    html.mini-app .account-menu.account-menu-open .account-menu-chevron {
+      transform: rotate(180deg);
+    }
     html.mini-app .account-menu-list {
       position: absolute;
       top: calc(100% + 8px);
@@ -439,9 +476,19 @@ function ensureMiniAppSafeAreaStyles() {
       display: flex;
       flex-direction: column;
       gap: 2px;
+      transform-origin: top right;
+      opacity: 0;
+      transform: translateY(-6px) scale(0.96);
+      pointer-events: none;
+      transition: opacity 0.16s ease, transform 0.16s ease;
     }
     html.mini-app .account-menu-list[hidden] {
       display: none;
+    }
+    html.mini-app .account-menu.account-menu-open .account-menu-list {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
     }
     html.mini-app .account-menu-list a {
       display: flex;
