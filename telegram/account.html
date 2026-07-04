@@ -29,7 +29,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260703-67" />
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260704-68" />
     <style>
       header {
         margin-top: var(
@@ -42,10 +42,8 @@
           12px
           max(0px, var(--uydosh-tg-inset-left, 0px));
       }
-      .account-page-title {
-        margin: 4px 0 14px;
-        font-size: 18px;
-        font-weight: 700;
+      .view-tabs {
+        margin-top: 14px;
       }
       .status {
         text-align: center;
@@ -107,6 +105,16 @@
         border: 1px solid var(--stroke);
         background: var(--card);
         border-radius: 16px;
+      }
+      /* Favorites rows: thumb + body are a link to the listing; the row itself
+         stays a plain container so the unfavorite button isn't nested inside
+         an <a> (invalid — interactive content can't nest interactive content). */
+      .account-row-link {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
       .account-thumb {
         flex: 0 0 64px;
@@ -195,6 +203,23 @@
         text-decoration: none;
       }
       .account-edit-btn:active { opacity: 0.88; }
+      .account-favorite-btn {
+        flex: 0 0 auto;
+        appearance: none;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .account-favorite-btn:active { opacity: 0.88; }
+      .account-favorite-btn:disabled { opacity: 0.6; cursor: default; }
+      .account-favorite-btn .icon svg { width: 18px; height: 18px; display: block; }
       #account-list[hidden], #account-empty[hidden], #loading[hidden] { display: none !important; }
     </style>
   </head>
@@ -205,26 +230,29 @@
         data-uydosh-header-subtitle="account.subtitle"
       ></header>
 
-      <h1 class="account-page-title" data-i18n="account.title"></h1>
+      <div class="view-tabs" role="tablist" aria-label="Account">
+        <button type="button" class="view-tab" role="tab" data-account-tab="mine" aria-selected="true" data-i18n="account.tabs.mine"></button>
+        <button type="button" class="view-tab" role="tab" data-account-tab="favorites" aria-selected="false" data-i18n="account.tabs.favorites"></button>
+      </div>
 
       <div id="loading" class="status" aria-busy="true" aria-live="polite">
         <span class="loading-spinner" aria-hidden="true"></span>
       </div>
 
       <div id="account-empty" class="account-empty" hidden>
-        <p data-i18n="account.empty"></p>
-        <a class="btn-link" href="/telegram/create.html" data-i18n="create.postListing"></a>
+        <p id="account-empty-text"></p>
+        <a id="account-empty-cta" class="btn-link" href="/telegram/create.html" data-i18n="create.postListing" hidden></a>
       </div>
 
       <div id="account-list" class="account-list" hidden></div>
     </div>
 
     <script src="../assets/uydosh-core.js?v=20260704-68"></script>
-    <script src="../assets/uydosh-api.js?v=20260704-80"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260704-9"></script>
+    <script src="../assets/uydosh-api.js?v=20260704-81"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260704-10"></script>
     <script src="../assets/uydosh-icons.js?v=20260704-77"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260704-78"></script>
-    <script src="../assets/telegram-account.js?v=20260704-77"></script>
+    <script src="../assets/telegram-account.js?v=20260704-78"></script>
   </body>
 </html>

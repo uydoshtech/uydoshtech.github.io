@@ -204,6 +204,11 @@ function toggleListingFavorite(listingId) {
   return fetchJsonAuth(`/favorites/toggle/${encodeURIComponent(listingId)}`, { method: 'PUT' });
 }
 
+/** List the current Mini App user's favorited listings (reuses the shared favorites API). */
+function fetchFavoriteListings({ page = 1, limit = 100 } = {}) {
+  return fetchJsonAuth('/favorites', { params: { page, limit } });
+}
+
 /**
  * Records the Mini App user's device location, verified server-side via initData (no
  * session required). Fire-and-forget: swallows failures since it's called from a
@@ -567,6 +572,7 @@ Object.assign(window.UyDosh, {
   ensureTelegramMiniAppSession,
   checkListingFavorited,
   toggleListingFavorite,
+  fetchFavoriteListings,
   reportTelegramMiniAppLocation,
   requestTelegramContactShare,
   phoneNumberFromContactShareResponse,
