@@ -262,6 +262,24 @@ function formatPrice(listing, lang) {
   return `$${nf.format(n)}`;
 }
 
+/**
+ * "N view(s)" label for the owner-only view count toolbar, matching the mobile
+ * app's `listing_views_count` plural strings (RU needs proper one/few/many forms;
+ * `account.renewInDays`-style single templates would read wrong for 2–4 views).
+ */
+function listingViewsCountText(count, lang = getLang()) {
+  const n = Math.max(0, Math.trunc(Number(count) || 0));
+  if (lang === 'ru') {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return `${n} просмотр`;
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return `${n} просмотра`;
+    return `${n} просмотров`;
+  }
+  if (lang === 'uz') return `${n} ko'rilgan`;
+  return n === 1 ? `${n} view` : `${n} views`;
+}
+
 function listingTypeUsesPriceRange(listingTypeCode) {
   const code = String(listingTypeCode ?? '').trim().toLowerCase();
   return code === 'room_needed' || code === 'group_forming';
@@ -511,6 +529,7 @@ Object.assign(window.UyDosh, {
   noPhotoPlaceholderImageUrl,
   cardPhotoDotsHtml,
   formatPrice,
+  listingViewsCountText,
   formatMapPinPrice,
   formatPublicationDate,
   formatListingCardPublicationDate,

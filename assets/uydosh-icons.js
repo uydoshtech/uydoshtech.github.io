@@ -276,6 +276,14 @@ function iconPhone() {
   `);
 }
 
+/** Match mobile app owner-toolbar view count icon (CupertinoIcons.eye). */
+function iconEye() {
+  return iconSvg(null, `
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+  `);
+}
+
 function iconCalendar() {
   return iconSvg(null, `
     <rect x="4" y="5" width="16" height="16" rx="2" stroke-width="2" stroke-linejoin="round"></rect>
@@ -394,6 +402,7 @@ Object.assign(window.UyDosh, {
   iconMetro,
   iconClock,
   iconPhone,
+  iconEye,
   iconCalendar,
   iconLock,
   iconCamera,

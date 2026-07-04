@@ -328,12 +328,12 @@
         flex-shrink: 0;
         display: inline-flex;
       }
-      /* Station name grows to fill the row and truncates first so a
-         transfer-station's "<-> icon Name" suffix (see
-         metroTransferSuffixHtml) always stays fully visible at the right
-         edge, matching the mobile app's interchange station rows. */
+      /* Station name doesn't grow to fill the row, so a transfer-station's
+         "<-> icon Name" suffix (see metroTransferSuffixHtml) sits right next
+         to it instead of flush at the far right edge. It still shrinks (and
+         ellipsizes) first if the combined content overflows the row. */
       .station-item .station-item-label {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -348,22 +348,14 @@
         stroke: currentColor;
         fill: none;
       }
+      /* Same text/icon styling as the primary station name (font size,
+         weight, color) so both sides of a transfer row read as equals. */
       .station-item-transfer {
         flex-shrink: 0;
         display: inline-flex;
         align-items: center;
         gap: 3px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--muted);
         white-space: nowrap;
-      }
-      .station-item[aria-pressed="true"] .station-item-transfer {
-        color: var(--fg);
-      }
-      .station-item-transfer .icon svg {
-        width: 16px;
-        height: 16px;
       }
       /* Multi-select checkbox: both states render up front and CSS swaps
          which one shows based on the row's `aria-pressed` attribute, so
@@ -399,6 +391,18 @@
         padding-bottom: 9px;
         border-bottom: 1px solid var(--stroke);
         border-radius: 10px 10px 0 0;
+      }
+      /* District list: two columns instead of one long scrolling column
+         (see districtItems in telegram-create.js). The "select all" row
+         still spans the full width above the grid. */
+      .station-list-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px 8px;
+        align-content: start;
+      }
+      .station-list-grid .station-item-select-all {
+        grid-column: 1 / -1;
       }
       .amenity-grid {
         display: flex;
@@ -899,13 +903,13 @@
 
     <input type="file" id="photo-input" accept="image/*" multiple hidden />
 
-    <script src="../assets/uydosh-core.js?v=20260705-69"></script>
-    <script src="../assets/uydosh-api.js?v=20260705-83"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-13"></script>
-    <script src="../assets/uydosh-icons.js?v=20260705-88"></script>
-    <script src="../assets/uydosh-map-pins.js?v=20260704-76"></script>
+    <script src="../assets/uydosh-core.js?v=20260705-93"></script>
+    <script src="../assets/uydosh-api.js?v=20260705-93"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-14"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-93"></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260705-77"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-83"></script>
-    <script src="../assets/telegram-create.js?v=20260705-91"></script>
+    <script src="../assets/telegram-create.js?v=20260705-92"></script>
   </body>
 </html>

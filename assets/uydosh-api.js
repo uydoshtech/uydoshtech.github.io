@@ -108,6 +108,29 @@ function setSessionToken(token) {
   } catch { /* ignore */ }
 }
 
+const SESSION_USER_ID_KEY = 'uydosh_session_user_id';
+
+/** The app-side numeric user id behind the current session token (see `setSessionUserId`), used to detect e.g. listing ownership without a dedicated "whoami" round trip. */
+function getSessionUserId() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_USER_ID_KEY);
+    const id = raw ? Number(raw) : NaN;
+    return Number.isFinite(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function setSessionUserId(id) {
+  try {
+    if (id != null && Number.isFinite(Number(id))) {
+      sessionStorage.setItem(SESSION_USER_ID_KEY, String(Number(id)));
+    } else {
+      sessionStorage.removeItem(SESSION_USER_ID_KEY);
+    }
+  } catch { /* ignore */ }
+}
+
 async function fetchJsonAuth(path, { method = 'GET', body, params } = {}) {
   const token = getSessionToken();
   if (!token) {
@@ -173,6 +196,7 @@ async function authenticateTelegramMiniApp() {
     throw err;
   }
   if (payload?.sessionToken) setSessionToken(payload.sessionToken);
+  if (payload?.user?.id != null) setSessionUserId(payload.user.id);
   return payload;
 }
 
@@ -274,6 +298,19 @@ function phoneNumberFromContactShareResponse(contactRaw) {
   } catch {
     return '';
   }
+}
+
+/** Complaint reasons for reporting a listing (public, shared with mobile app). */
+function fetchComplaintCategories() {
+  return fetchJson('/complaint-categories');
+}
+
+/** Submit a complaint about a listing (reuses the shared complaints API, same as mobile app). */
+function createComplaint({ listingId, categoryId, text }) {
+  const body = { listing_id: Number(listingId), category_id: Number(categoryId) };
+  const trimmedText = String(text ?? '').trim();
+  if (trimmedText) body.text = trimmedText;
+  return fetchJsonAuth('/complaints', { method: 'POST', body });
 }
 
 function fetchSubwayStationsByLine(lineId, lang = getLang()) {
@@ -569,8 +606,30 @@ function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto,
   return fetchJson('/listings', params);
 }
 
-function fetchListing(id) {
-  return fetchJson(`/listings/${encodeURIComponent(id)}`);
+/**
+ * Fetches listing detail, attaching the Mini App session's Bearer token when one is
+ * already available (harmless for the public site — the endpoint's
+ * `optionalAuthenticateToken` middleware just resolves the viewer's identity when
+ * present). This lets an owner view their own not-yet-approved listing from "My
+ * Listings" and lets the page detect ownership (see `getSessionUserId`) without a
+ * separate request.
+ */
+async function fetchListing(id) {
+  const token = getSessionToken();
+  const headers = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}/listings/${encodeURIComponent(id)}`, { headers });
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+/** View count for a listing — only the listing's own owner may read this (reuses the shared, Bearer-authenticated endpoint the mobile app uses). */
+function fetchListingViewCount(listingId) {
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/view-count`);
 }
 
 function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, subwayLineId, createdWithinDays } = {}) {
@@ -655,6 +714,7 @@ function loadYandexMapModule() {
 Object.assign(window.UyDosh, {
   fetchListings,
   fetchListing,
+  fetchListingViewCount,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
   fetchSubwayStations,
@@ -677,6 +737,8 @@ Object.assign(window.UyDosh, {
   checkListingFavorited,
   toggleListingFavorite,
   fetchFavoriteListings,
+  fetchComplaintCategories,
+  createComplaint,
   reportTelegramMiniAppLocation,
   requestTelegramContactShare,
   phoneNumberFromContactShareResponse,
@@ -685,6 +747,7 @@ Object.assign(window.UyDosh, {
   isTelegramInitDataUsable,
   getSessionToken,
   setSessionToken,
+  getSessionUserId,
   loadYandexMapModule,
   resetYandexMaps,
   reflowActiveMaps,

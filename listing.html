@@ -128,6 +128,41 @@
       }
       */
 
+      /* Owner-only "views" panel — sits above the gallery, matching the mobile
+         app's ListingDetailOwnerToolbar position at the top of an owner's own
+         listing detail screen. */
+      .owner-toolbar {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 16px;
+        padding: 9px 16px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+      }
+      .owner-toolbar .icon { width: 18px; height: 18px; display: inline-flex; color: var(--muted); }
+      .owner-toolbar .icon svg { width: 18px; height: 18px; display: block; }
+      .owner-toolbar .icon svg * { stroke: currentColor; fill: none; }
+      .owner-toolbar-text {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+      }
+      .owner-toolbar-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid color-mix(in srgb, var(--fg) 16%, transparent);
+        border-top-color: var(--brand2);
+        border-radius: 50%;
+        animation: owner-toolbar-spin 0.75s linear infinite;
+      }
+      @keyframes owner-toolbar-spin {
+        to { transform: rotate(360deg); }
+      }
+
       .layout {
         display: grid;
         grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
@@ -215,6 +250,99 @@
       .gallery-favorite-btn:hover { background: #f3f4f6; }
       .gallery-favorite-btn:active { opacity: 0.85; transform: scale(0.92); }
       .gallery-favorite-btn .icon svg { width: 18px; height: 18px; display: block; }
+      .gallery-report-btn {
+        position: absolute; top: 102px; right: 14px; z-index: 2;
+        appearance: none; border: 0; padding: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fff; color: #0f172a; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      }
+      .gallery-report-btn[hidden] { display: none !important; }
+      .gallery-report-btn:hover { background: #f3f4f6; }
+      .gallery-report-btn:active { opacity: 0.85; }
+      .gallery-report-btn .icon svg { width: 18px; height: 18px; display: block; }
+
+      /* Complaint bottom sheet — reason selection + optional details, mirrors
+         the mobile app's CreateComplaintScreen flow in a compact Mini App form. */
+      .complaint-backdrop {
+        position: fixed; inset: 0; z-index: 200;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex; align-items: flex-end; justify-content: center;
+        padding: 0;
+        opacity: 0;
+        transition: opacity 0.18s ease;
+      }
+      .complaint-backdrop[hidden] { display: none !important; }
+      .complaint-backdrop.is-open { opacity: 1; }
+      .complaint-sheet {
+        width: 100%; max-width: 520px;
+        max-height: min(86vh, 640px);
+        display: flex; flex-direction: column;
+        background: var(--bg); color: var(--fg);
+        border: 1px solid var(--stroke);
+        border-bottom: 0;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.45);
+        padding: 16px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+        transform: translateY(24px);
+        transition: transform 0.2s ease;
+      }
+      .complaint-backdrop.is-open .complaint-sheet { transform: translateY(0); }
+      .complaint-sheet-header {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; margin-bottom: 14px; flex: 0 0 auto;
+      }
+      .complaint-sheet-header h2 { margin: 0; font-size: 17px; font-weight: 700; }
+      .complaint-close-btn {
+        appearance: none; border: 0; background: rgba(127, 127, 127, 0.12);
+        color: var(--fg); width: 30px; height: 30px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;
+      }
+      .complaint-close-btn:active { opacity: 0.8; }
+      .complaint-body { overflow-y: auto; flex: 1 1 auto; }
+      .complaint-reason-list {
+        display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
+      }
+      .complaint-reason-item {
+        display: flex; align-items: center; gap: 10px;
+        border: 1px solid var(--stroke); border-radius: 12px;
+        padding: 11px 13px; cursor: pointer;
+        background: rgba(127, 127, 127, 0.05);
+      }
+      .complaint-reason-item.selected {
+        border-color: var(--brand2);
+        background: color-mix(in srgb, var(--brand2) 12%, transparent);
+      }
+      .complaint-reason-item input[type="radio"] {
+        accent-color: var(--brand2); width: 18px; height: 18px; flex-shrink: 0;
+      }
+      .complaint-reason-item span { font-size: 14px; line-height: 1.35; }
+      .complaint-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+      .complaint-field label { font-size: 13px; font-weight: 700; color: var(--muted); }
+      .complaint-field textarea {
+        width: 100%; min-height: 90px; resize: vertical;
+        border: 1px solid var(--stroke); background: rgba(127, 127, 127, 0.08);
+        color: var(--fg); border-radius: 12px; padding: 11px 12px;
+        font: inherit; font-size: 15px;
+      }
+      .complaint-field textarea:focus {
+        outline: 2px solid color-mix(in srgb, var(--brand2) 45%, transparent);
+        outline-offset: 1px;
+      }
+      .complaint-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
+      .complaint-error-text {
+        color: var(--brand); font-size: 13px; font-weight: 600; margin: 0 0 12px;
+      }
+      .complaint-actions { flex: 0 0 auto; padding-top: 4px; }
+      .complaint-submit-btn {
+        width: 100%; border: 0; border-radius: 14px; padding: 13px 16px;
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+      }
+      .complaint-submit-btn:disabled { opacity: 0.55; cursor: default; }
+      .complaint-submit-btn:active:not(:disabled) { opacity: 0.88; }
       .gallery-dots {
         display: flex;
         justify-content: center;
@@ -637,12 +765,14 @@
 
     <div id="detail-contact-bar" class="detail-contact-bar" hidden aria-hidden="true"></div>
 
+    <div id="complaint-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="assets/uydosh-core.js?v=20260704-68"></script>
-    <script src="assets/uydosh-api.js?v=20260705-83"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-13"></script>
-    <script src="assets/uydosh-icons.js?v=20260705-88"></script>
-    <script src="assets/uydosh-map-pins.js?v=20260704-76"></script>
+    <script src="assets/uydosh-core.js?v=20260705-93"></script>
+    <script src="assets/uydosh-api.js?v=20260705-93"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-14"></script>
+    <script src="assets/uydosh-icons.js?v=20260705-93"></script>
+    <script src="assets/uydosh-map-pins.js?v=20260705-77"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-mini-app.js?v=20260705-83"></script>
     <script>
@@ -663,6 +793,15 @@
           webApp?.HapticFeedback?.impactOccurred('light');
           location.href = UyDosh.MINI_APP_FEED_PATH;
         });
+      }
+
+      // Owner-only "views" toolbar (see `ownerToolbarHtml`/`loadOwnerViewCount`) needs
+      // the viewer's own app user id up front — resolved as a side effect of
+      // establishing the Mini App session, which also lets the fetch below carry a
+      // Bearer token so an owner can open their own not-yet-approved listing.
+      async function ensureViewerIdentity() {
+        if (!UyDosh.isMiniApp()) return;
+        await UyDosh.ensureTelegramMiniAppSession();
       }
 
       const detailContactBarEl = document.getElementById('detail-contact-bar');
@@ -885,6 +1024,39 @@
         document.getElementById('retry')?.addEventListener('click', retry);
       }
 
+      /**
+       * Owner-only "views" panel shown above the gallery — matches the mobile app's
+       * `ListingDetailOwnerToolbar`, which sits at the very top of a listing's own
+       * detail screen. Only rendered inside the Mini App (the regular website has no
+       * concept of a logged-in viewer) once ownership is confirmed via the resolved
+       * session user id (see `ensureViewerIdentity`).
+       */
+      function ownerToolbarHtml(isOwner) {
+        if (!isOwner) return '';
+        return `
+          <div class="owner-toolbar" data-owner-toolbar>
+            ${UyDosh.iconEye()}
+            <span class="owner-toolbar-text" data-owner-toolbar-text>
+              <span class="owner-toolbar-spinner" aria-hidden="true"></span>
+            </span>
+          </div>
+        `;
+      }
+
+      async function loadOwnerViewCount(listingId) {
+        const textEl = rootEl.querySelector('[data-owner-toolbar-text]');
+        if (!textEl) return;
+        try {
+          const data = await UyDosh.fetchListingViewCount(listingId);
+          const count = Number(data?.viewCount) || 0;
+          textEl.textContent = UyDosh.listingViewsCountText(count, UyDosh.getLang());
+        } catch (err) {
+          console.error('Failed to load listing view count', err);
+          const toolbarEl = rootEl.querySelector('[data-owner-toolbar]');
+          if (toolbarEl) toolbarEl.hidden = true;
+        }
+      }
+
       function shareButtonHtml() {
         return `
           <button type="button" class="gallery-share-btn" data-share-listing aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.share'))}">
@@ -962,6 +1134,250 @@
         });
       }
 
+      // Reporting reuses the shared `/complaints` API (same one the mobile app
+      // uses) — it needs a real logged-in identity, which on this static site
+      // only Telegram provides, so the button only ever renders in the Mini App.
+      function reportButtonHtml() {
+        if (!UyDosh.isMiniApp()) return '';
+        return `
+          <button type="button" class="gallery-report-btn" data-report-listing aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.report'))}">
+            ${UyDosh.iconFlag('#0f172a')}
+          </button>
+        `;
+      }
+
+      // --- Complaint (report) bottom sheet ---------------------------------
+
+      const complaintBackdropEl = document.getElementById('complaint-backdrop');
+      complaintBackdropEl?.addEventListener('click', (e) => {
+        if (e.target === complaintBackdropEl) closeComplaintSheet();
+      });
+      const complaintState = {
+        categories: null,
+        categoriesPromise: null,
+        listing: null,
+        selectedCategoryId: null,
+        detailsText: '',
+        submitting: false,
+      };
+
+      function complaintCategoryName(category, lang) {
+        if (lang === 'ru') return category.name_ru || category.nameRu || category.name_en || '';
+        if (lang === 'uz') return category.name_uz || category.nameUz || category.name_en || '';
+        return category.name_en || category.nameEn || category.name_uz || category.nameUz || '';
+      }
+
+      function extractComplaintCategories(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.data)) return payload.data;
+        if (Array.isArray(payload?.content)) return payload.content;
+        return [];
+      }
+
+      function loadComplaintCategories() {
+        if (complaintState.categories) return Promise.resolve(complaintState.categories);
+        if (!complaintState.categoriesPromise) {
+          complaintState.categoriesPromise = UyDosh.fetchComplaintCategories()
+            .then((payload) => {
+              complaintState.categories = extractComplaintCategories(payload);
+              return complaintState.categories;
+            })
+            .catch((err) => {
+              complaintState.categoriesPromise = null;
+              throw err;
+            });
+        }
+        return complaintState.categoriesPromise;
+      }
+
+      function closeComplaintSheet() {
+        complaintBackdropEl.classList.remove('is-open');
+        window.setTimeout(() => {
+          complaintBackdropEl.hidden = true;
+          complaintBackdropEl.setAttribute('aria-hidden', 'true');
+          complaintBackdropEl.innerHTML = '';
+        }, 180);
+      }
+
+      function complaintSheetShellHtml(bodyHtml) {
+        const lang = UyDosh.getLang();
+        return `
+          <div class="complaint-sheet" role="dialog" aria-modal="true" aria-label="${UyDosh.escapeHtml(UyDosh.t('complaint.title', lang))}">
+            <div class="complaint-sheet-header">
+              <h2>${UyDosh.escapeHtml(UyDosh.t('complaint.title', lang))}</h2>
+              <button type="button" class="complaint-close-btn" data-complaint-close aria-label="${UyDosh.escapeHtml(UyDosh.t('complaint.cancel', lang))}">✕</button>
+            </div>
+            ${bodyHtml}
+          </div>
+        `;
+      }
+
+      function renderComplaintLoading() {
+        const lang = UyDosh.getLang();
+        complaintBackdropEl.innerHTML = complaintSheetShellHtml(`
+          <div class="complaint-status">${UyDosh.escapeHtml(UyDosh.t('complaint.loadingReasons', lang))}</div>
+        `);
+        bindComplaintCloseHandlers();
+      }
+
+      function renderComplaintError() {
+        const lang = UyDosh.getLang();
+        complaintBackdropEl.innerHTML = complaintSheetShellHtml(`
+          <div class="complaint-status">${UyDosh.escapeHtml(UyDosh.t('complaint.loadError', lang))}</div>
+          <div class="complaint-actions">
+            <button type="button" class="complaint-submit-btn" data-complaint-retry>${UyDosh.escapeHtml(UyDosh.t('feed.retry', lang))}</button>
+          </div>
+        `);
+        bindComplaintCloseHandlers();
+        complaintBackdropEl.querySelector('[data-complaint-retry]')?.addEventListener('click', () => {
+          openComplaintSheet(complaintState.listing);
+        });
+      }
+
+      function renderComplaintForm(categories, errorMessage = '') {
+        const lang = UyDosh.getLang();
+        const reasonsHtml = categories.map((category, index) => {
+          const id = category.id ?? index;
+          const selected = complaintState.selectedCategoryId === id;
+          return `
+            <label class="complaint-reason-item${selected ? ' selected' : ''}" data-complaint-reason-item>
+              <input type="radio" name="complaint-reason" value="${UyDosh.escapeHtml(String(id))}" ${selected ? 'checked' : ''} />
+              <span>${UyDosh.escapeHtml(complaintCategoryName(category, lang))}</span>
+            </label>
+          `;
+        }).join('');
+
+        complaintBackdropEl.innerHTML = complaintSheetShellHtml(`
+          <div class="complaint-body">
+            ${errorMessage ? `<p class="complaint-error-text">${UyDosh.escapeHtml(errorMessage)}</p>` : ''}
+            <div class="complaint-reason-list">${reasonsHtml}</div>
+            <div class="complaint-field">
+              <label for="complaint-details">${UyDosh.escapeHtml(UyDosh.t('complaint.detailsLabel', lang))}</label>
+              <textarea id="complaint-details" data-complaint-details placeholder="${UyDosh.escapeHtml(UyDosh.t('complaint.detailsPlaceholder', lang))}" maxlength="1000">${UyDosh.escapeHtml(complaintState.detailsText)}</textarea>
+            </div>
+          </div>
+          <div class="complaint-actions">
+            <button type="button" class="complaint-submit-btn" data-complaint-submit ${complaintState.selectedCategoryId == null ? 'disabled' : ''}>
+              ${UyDosh.escapeHtml(UyDosh.t(complaintState.submitting ? 'complaint.submitting' : 'complaint.submit', lang))}
+            </button>
+          </div>
+        `);
+
+        bindComplaintCloseHandlers();
+
+        for (const item of complaintBackdropEl.querySelectorAll('[data-complaint-reason-item]')) {
+          item.addEventListener('click', () => {
+            const input = item.querySelector('input[type="radio"]');
+            const value = input?.value;
+            const numeric = Number(value);
+            complaintState.selectedCategoryId = Number.isFinite(numeric) ? numeric : value;
+            window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+            for (const other of complaintBackdropEl.querySelectorAll('[data-complaint-reason-item]')) {
+              other.classList.toggle('selected', other === item);
+            }
+            const submitBtn = complaintBackdropEl.querySelector('[data-complaint-submit]');
+            if (submitBtn) submitBtn.disabled = false;
+          });
+        }
+
+        complaintBackdropEl.querySelector('[data-complaint-submit]')?.addEventListener('click', () => {
+          submitComplaint(categories);
+        });
+      }
+
+      function bindComplaintCloseHandlers() {
+        complaintBackdropEl.querySelector('[data-complaint-close]')?.addEventListener('click', () => {
+          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+          closeComplaintSheet();
+        });
+      }
+
+      async function submitComplaint(categories) {
+        if (complaintState.submitting || complaintState.selectedCategoryId == null) return;
+        const lang = UyDosh.getLang();
+        complaintState.submitting = true;
+        const submitBtn = complaintBackdropEl.querySelector('[data-complaint-submit]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = UyDosh.t('complaint.submitting', lang);
+        }
+        const detailsEl = complaintBackdropEl.querySelector('[data-complaint-details]');
+        complaintState.detailsText = detailsEl?.value ?? '';
+        try {
+          await UyDosh.createComplaint({
+            listingId: complaintState.listing.id,
+            categoryId: complaintState.selectedCategoryId,
+            text: complaintState.detailsText,
+          });
+          window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+          closeComplaintSheet();
+          showTelegramAlert(UyDosh.t('complaint.success', lang));
+          UyDosh.logMiniAppEvent('listing_complaint_submitted', {
+            listing_id: Number(complaintState.listing.id),
+            category_id: Number(complaintState.selectedCategoryId),
+            source: 'telegram_mini_app',
+          });
+        } catch (err) {
+          console.error('Failed to submit complaint', err);
+          window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('error');
+          complaintState.submitting = false;
+          const message = err?.status === 409
+            ? UyDosh.t('complaint.errorDuplicate', lang)
+            : UyDosh.t('complaint.errorGeneric', lang);
+          renderComplaintForm(categories, message);
+          return;
+        }
+        complaintState.submitting = false;
+      }
+
+      /** Telegram-native alert when available (Telegram.WebApp.showAlert), else a plain browser alert(). */
+      function showTelegramAlert(message) {
+        const tg = window.Telegram?.WebApp;
+        if (typeof tg?.showAlert === 'function') {
+          tg.showAlert(message);
+        } else {
+          window.alert(message);
+        }
+      }
+
+      async function openComplaintSheet(listing) {
+        if (!listing) return;
+        complaintState.listing = listing;
+        complaintState.selectedCategoryId = null;
+        complaintState.detailsText = '';
+        complaintState.submitting = false;
+
+        complaintBackdropEl.hidden = false;
+        complaintBackdropEl.setAttribute('aria-hidden', 'false');
+        renderComplaintLoading();
+        requestAnimationFrame(() => complaintBackdropEl.classList.add('is-open'));
+
+        const lang = UyDosh.getLang();
+        const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+        if (!sessionReady) {
+          closeComplaintSheet();
+          showTelegramAlert(UyDosh.t('complaint.errorAuth', lang));
+          return;
+        }
+
+        try {
+          const categories = await loadComplaintCategories();
+          renderComplaintForm(categories);
+        } catch (err) {
+          console.error('Failed to load complaint categories', err);
+          renderComplaintError();
+        }
+      }
+
+      function bindReportButton(l) {
+        const btn = rootEl.querySelector('[data-report-listing]');
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+          openComplaintSheet(l);
+        });
+      }
+
       function buildGalleryHtml() {
         if (state.photos.length === 0) {
           const placeholderSrc = UyDosh.noPhotoPlaceholderImageUrl(state.listing);
@@ -975,6 +1391,7 @@
               </div>
               ${shareButtonHtml()}
               ${favoriteButtonHtml()}
+              ${reportButtonHtml()}
             </div>
           `;
         }
@@ -1015,6 +1432,7 @@
             </div>
             ${shareButtonHtml()}
             ${favoriteButtonHtml()}
+            ${reportButtonHtml()}
             ${dots}
           </div>
         `;
@@ -1348,7 +1766,15 @@
         state.mapLoaded = false;
         state.mapLoading = false;
 
+        // Owner-only "views" toolbar (see `ownerToolbarHtml`) — the viewer's own
+        // user id is only resolvable inside the Mini App (see `ensureViewerIdentity`,
+        // called from `load()` before the listing itself is fetched).
+        const viewerId = isMiniApp ? UyDosh.getSessionUserId() : null;
+        const ownerId = Number(l.user_id ?? l.user?.id);
+        const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+
         rootEl.innerHTML = `
+          ${ownerToolbarHtml(isOwner)}
           <div class="layout">
             <div class="gallery-col">
               ${buildGalleryHtml()}
@@ -1379,13 +1805,16 @@
         bindMapSection();
         bindShareButton(l);
         bindFavoriteButton(l);
+        bindReportButton(l);
         updateDetailContactBar(l);
+        if (isOwner) loadOwnerViewCount(l.id);
       }
 
       async function load() {
         if (!listingId) { renderNotFound(); return; }
         hideDetailContactBar();
         try {
+          await ensureViewerIdentity();
           const data = await UyDosh.fetchListing(listingId);
           state.listing = data;
           state.photos = sortedPhotos(data);

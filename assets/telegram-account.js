@@ -32,6 +32,12 @@ function statusBadgeHtml(listing, lang) {
   return '';
 }
 
+/** Amenity icons row shown under the title/status block, matching the mobile ListingTile footer. */
+function amenitiesRowHtml(listing, lang) {
+  const icons = UyDosh.amenityIconsRowHtml(listing.amenities, lang);
+  return icons ? `<div class="account-row-amenities">${icons}</div>` : '';
+}
+
 function accountThumbHtml(listing) {
   const photo = UyDosh.primaryPhoto(listing);
   const photoSrc = photo ? UyDosh.photoUrl(photo) : '';
@@ -64,18 +70,22 @@ function listingRowHtml(listing) {
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
   const editHref = `/telegram/create.html?id=${encodeURIComponent(listing.id)}`;
+  const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id));
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
   return `
     <div class="account-row" data-listing-row="${listing.id}">
-      ${accountThumbHtml(listing)}
-      <div class="account-row-body">
-        <div class="account-row-title">${title}</div>
-        <div class="account-row-meta">
-          ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
-          ${statusBadgeHtml(listing, lang)}
+      <a class="account-row-link" href="${detailHref}">
+        ${accountThumbHtml(listing)}
+        <div class="account-row-body">
+          <div class="account-row-title">${title}</div>
+          <div class="account-row-meta">
+            ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
+            ${statusBadgeHtml(listing, lang)}
+          </div>
+          ${amenitiesRowHtml(listing, lang)}
         </div>
-      </div>
+      </a>
       <div class="account-row-actions">
         <a class="account-edit-btn" href="${editHref}" data-i18n="account.edit"></a>
         <button
@@ -119,6 +129,7 @@ function favoriteRowHtml(favorite) {
             ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
             ${statusBadgeHtml(listing, lang)}
           </div>
+          ${amenitiesRowHtml(listing, lang)}
         </div>
       </a>
       <button type="button" class="account-favorite-btn" data-unfavorite-listing="${listing.id}" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.favorite.remove'))}">

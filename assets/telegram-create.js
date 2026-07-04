@@ -493,21 +493,26 @@ function renderStep0(lang) {
           <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllDistricts', lang).replace('{count}', String(state.locations.length)))}</span>
         </button>`
         : '';
-    const districtItems = state.locations.map((loc) => {
+    // Sorted A→Z (by the currently displayed name) and laid out in two
+    // columns (see `.station-list-grid` in create.html) so the full district
+    // list fits on screen without excessive scrolling.
+    const sortedLocations = [...state.locations].sort((a, b) =>
+      UyDosh.localizedShort(a, lang).localeCompare(UyDosh.localizedShort(b, lang), lang));
+    const districtItems = sortedLocations.map((loc) => {
       const id = Number(loc.id);
       const pressed = state.form.selectedLocationIds.includes(id);
       return `
         <button type="button" class="station-item" data-location-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
           ${multiLocation ? UyDosh.iconCheckboxPair() : ''}
           ${UyDosh.iconPin()}
-          <span>${UyDosh.escapeHtml(UyDosh.localizedShort(loc, lang))}</span>
+          <span class="station-item-label">${UyDosh.escapeHtml(UyDosh.localizedShort(loc, lang))}</span>
         </button>`;
     }).join('');
     locationBody = `
       <div class="field${districtField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(districtLabel)}</div>
         ${districtField.inline}
-        <div class="station-list">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
+        <div class="station-list station-list-grid">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
       </div>`;
   }
 
@@ -882,55 +887,33 @@ function updateLocationSelectionUi() {
   selectAllBtn?.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
 }
 
-function bindStepEvents() {
-  stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      haptic();
-      state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
-      if (!supportsMultiStation()) {
-        state.form.selectedStationIds = state.form.selectedStationIds.slice(0, 1);
-      }
-      if (!supportsMultiLocation()) {
-        state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
-      }
-      updateDefaultTitle();
-      renderStep();
-    });
-  });
-
-  stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      haptic();
-      state.form.locationMode = btn.getAttribute('data-location-mode');
-      renderStep();
-    });
-  });
-
+/** Updates aria-pressed on the already-rendered metro line chips without
+ * touching the rest of the DOM, so the `[aria-pressed]`-driven CSS
+ * transition (name reveal, border/badge pop) animates instead of snapping —
+ * mirrors `syncMetroLineChipPressedState` in telegram-feed.js. A full
+ * `renderStep()` would recreate the chip buttons from scratch already in
+ * their final state, so the transition would never get a chance to play. */
+function syncSubwayLineChipPressedState() {
+  const selected = state.form.subwayLineId;
   stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const nextLineId = Number(btn.getAttribute('data-subway-line'));
-      if (nextLineId === state.form.subwayLineId && !state.stationsLoading) return;
-      haptic();
-      state.form.subwayLineId = nextLineId;
-      // Selections are preserved across line switches (see loadStationsForLine /
-      // state.stationCache) so multi-select can span several lines, matching
-      // the mobile app's MultiStationPicker.
-      state.stationsLoading = true;
-      renderStep();
-      try {
-        await loadStationsForLine(nextLineId);
-      } catch (err) {
-        console.error(err);
-        if (nextLineId === state.form.subwayLineId) state.stations = [];
-      } finally {
-        if (nextLineId === state.form.subwayLineId) {
-          state.stationsLoading = false;
-          renderStep();
-        }
-      }
-    });
+    const lineId = Number(btn.getAttribute('data-subway-line'));
+    btn.setAttribute('aria-pressed', lineId === selected ? 'true' : 'false');
   });
+}
 
+/** Re-renders only the station list (loading spinner / station items) for
+ * a metro line switch, leaving the line chips and the rest of step 0 intact
+ * so `syncSubwayLineChipPressedState` above keeps working. */
+function renderStationList() {
+  const lang = UyDosh.getLang();
+  const listEl = stepPanelsEl.querySelector('.station-list');
+  if (!listEl) return;
+  listEl.innerHTML = stationListHtml(lang);
+  bindStationListEvents();
+  sizeLocationList();
+}
+
+function bindStationListEvents() {
   stepPanelsEl.querySelectorAll('[data-station-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
       haptic();
@@ -961,6 +944,63 @@ function bindStepEvents() {
     }
     renderStep();
   });
+}
+
+function bindStepEvents() {
+  stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      haptic();
+      state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
+      if (!supportsMultiStation()) {
+        state.form.selectedStationIds = state.form.selectedStationIds.slice(0, 1);
+      }
+      if (!supportsMultiLocation()) {
+        state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
+      }
+      updateDefaultTitle();
+      renderStep();
+    });
+  });
+
+  stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      haptic();
+      state.form.locationMode = btn.getAttribute('data-location-mode');
+      renderStep();
+    });
+  });
+
+  stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const nextLineId = Number(btn.getAttribute('data-subway-line'));
+      if (nextLineId === state.form.subwayLineId && !state.stationsLoading) return;
+      haptic();
+      state.form.subwayLineId = nextLineId;
+      // Flip aria-pressed on the existing chip buttons (instead of letting a
+      // full renderStep() replace them) so the CSS transition that expands
+      // the tapped chip into its name actually gets to play, matching the
+      // feed filter ribbon (see syncMetroLineChipPressedState there).
+      syncSubwayLineChipPressedState();
+      // Selections are preserved across line switches (see loadStationsForLine /
+      // state.stationCache) so multi-select can span several lines, matching
+      // the mobile app's MultiStationPicker.
+      state.stationsLoading = true;
+      renderStationList();
+      try {
+        await loadStationsForLine(nextLineId);
+      } catch (err) {
+        console.error(err);
+        if (nextLineId === state.form.subwayLineId) state.stations = [];
+      } finally {
+        if (nextLineId === state.form.subwayLineId) {
+          state.stationsLoading = false;
+          renderStationList();
+        }
+      }
+    });
+  });
+
+  bindStationListEvents();
 
   stepPanelsEl.querySelector('[data-select-all-locations]')?.addEventListener('click', () => {
     haptic();

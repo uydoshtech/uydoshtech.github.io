@@ -778,6 +778,14 @@ function iconHeart(filled = false) {
   return iconSvg(color, path);
 }
 
+/** Report/complain flag icon (listing detail gallery action). */
+function iconFlag(color = '#0f172a') {
+  return iconSvg(color, `
+    <path d="M6 21V4" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M6 4.5c2.1-1.3 4.1-1.3 6 0s3.9 1.3 6 0v9c-2.1 1.3-4.1 1.3-6 0s-3.9-1.3-6 0V4.5Z" stroke-width="2" stroke-linejoin="round"></path>
+  `);
+}
+
 /**
  * Open Telegram's native share/forward dialog for a URL + caption. Falls
  * back to the OS share sheet (regular browser visits to this page outside
@@ -918,6 +926,7 @@ Object.assign(window.UyDosh, {
   iconPhone,
   iconShare,
   iconHeart,
+  iconFlag,
   shareListingLink,
   detailContactBarHtml,
   bindDetailContactBar,
