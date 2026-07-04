@@ -929,6 +929,31 @@
     container.classList.toggle(MAP_TILES_DARK_CLASS, !!isDark);
   }
 
+  /**
+   * Placemark icons (`iconLayout: 'default#image'`) render as a plain, sharp-cornered
+   * `<img>`/`<div>` sized to `iconImageSize` — the mobile WebView's default tap-highlight
+   * (and any focus outline) is drawn against that rectangular box, not the rounded shape
+   * painted inside it. On the small square single-listing pins the box roughly matches the
+   * circle, so it's barely visible; on the wide pill-shaped composite/group pins (see
+   * `createMapGroupPinIcon` in uydosh-map-pins.js) the box's square corners clearly stick out
+   * past the pill's rounded ends, showing up as a gray "artifact rectangle" on tap. Neutralize
+   * both — pin taps already get their own feedback via haptics + the custom tooltip/balloon.
+   */
+  const MAP_INTERACTION_STYLE_ID = 'uydosh-map-interaction-styles';
+
+  function ensureMapInteractionStyles() {
+    if (document.getElementById(MAP_INTERACTION_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = MAP_INTERACTION_STYLE_ID;
+    style.textContent = `
+      .map-container, .map-container * {
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   // The light/dark toggle lives in the app header (see initThemeToggle() in uydosh-i18n.js)
   // and only affects the app's own UI colors — prefersDarkMapPins() always returns false, so
   // this listener is a deliberate no-op for the map tiles/pins, kept only in case that ever
@@ -1459,6 +1484,7 @@
     if (mapPin.latitude == null) mapPin.latitude = latitude;
     if (mapPin.longitude == null) mapPin.longitude = longitude;
     map.geoObjects.add(createPlacemark(ymaps, mapPin, { selected }));
+    ensureMapInteractionStyles();
     applyMapTileTheme(container, window.UyDosh?.prefersDarkMapPins?.() ?? false);
     const instance = { map };
     attachUserLocationControl(ymaps, map, instance);
@@ -1534,6 +1560,7 @@
       visitedListingIds,
       darkMap,
     });
+    ensureMapInteractionStyles();
     applyMapTileTheme(container, pinVisualDefaults.darkMap);
     window.UyDosh?.warmMapPinIconCache?.({ darkMap: pinVisualDefaults.darkMap });
 

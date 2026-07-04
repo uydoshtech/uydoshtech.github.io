@@ -693,7 +693,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260704-75`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260705-95`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
