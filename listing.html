@@ -252,6 +252,7 @@
         color: var(--price-green);
       }
       .price small { font-weight: 500; font-size: 11px; line-height: 1; color: var(--price-green); opacity: 0.85; margin-left: 1px; }
+      .badges-group { display: flex; flex-direction: column; gap: 8px; }
       .badges { display: flex; gap: 8px; flex-wrap: wrap; }
       .badge {
         display: inline-flex; align-items: center; gap: 5px;
@@ -636,7 +637,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260704-68"></script>
     <script src="assets/uydosh-api.js?v=20260705-82"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-11"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-12"></script>
     <script src="assets/uydosh-icons.js?v=20260705-82"></script>
     <script src="assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
@@ -1257,22 +1258,31 @@
         const metro = UyDosh.localized(l.subway_station, lang);
         const rooms = Number(l.rooms_number);
 
-        const badges = [];
+        // Row 1: type / gender / price — the headline facts about the
+        // listing. Row 2: private room / room count — secondary details
+        // that used to just wrap onto their own line by accident; now
+        // they're deliberately grouped together below row 1.
+        const primaryBadges = [];
         if (UyDosh.isFeatured(l)) {
-          badges.push(`<span class="badge featured">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</span>`);
+          primaryBadges.push(`<span class="badge featured">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</span>`);
         }
         if (typeName) {
           const typeStyle = typeColor ? ` style="--badge-type-color:${typeColor}"` : '';
           const typeIcon = UyDosh.listingTypeBadgeIcon(l, { pressed: false });
-          badges.push(`<span class="badge badge-type"${typeStyle}>${typeIcon}${UyDosh.escapeHtml(typeName)}</span>`);
+          primaryBadges.push(`<span class="badge badge-type"${typeStyle}>${typeIcon}${UyDosh.escapeHtml(typeName)}</span>`);
         }
         const genderBadge = UyDosh.genderBadgeHtml(l, lang);
-        if (genderBadge) badges.push(genderBadge);
+        if (genderBadge) primaryBadges.push(genderBadge);
+        if (price) {
+          primaryBadges.push(`<span class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></span>`);
+        }
+
+        const secondaryBadges = [];
         if (l.private_room) {
-          badges.push(`<span class="badge">${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
+          secondaryBadges.push(`<span class="badge">${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
         }
         if (Number.isFinite(rooms) && rooms > 0) {
-          badges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
+          secondaryBadges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
 
         const amenities = Array.isArray(l.amenities) ? l.amenities : [];
@@ -1308,11 +1318,18 @@
           </div>
         ` : '';
 
-        const postedExtraHtml = (isMiniApp && l.created_at) ? `
+        const authorHandle = isMiniApp ? UyDosh.listingContactTelegram(l) : '';
+        const postedExtraHtml = (isMiniApp && (authorHandle || l.created_at)) ? `
           <div class="map-section-extra map-section-posted">
             <dl class="meta-grid">
-              <dt>${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
-              <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.created_at, lang))}</dd>
+              ${authorHandle ? `
+                <dt>${UyDosh.escapeHtml(UyDosh.t('detail.author'))}</dt>
+                <dd>@${UyDosh.escapeHtml(authorHandle)}</dd>
+              ` : ''}
+              ${l.created_at ? `
+                <dt>${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
+                <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.created_at, lang))}</dd>
+              ` : ''}
             </dl>
           </div>
         ` : '';
@@ -1334,10 +1351,14 @@
               ${buildGalleryHtml()}
             </div>
             <div class="details">
-              ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+              ${(primaryBadges.length || secondaryBadges.length) ? `
+                <div class="badges-group">
+                  ${primaryBadges.length ? `<div class="badges">${primaryBadges.join('')}</div>` : ''}
+                  ${secondaryBadges.length ? `<div class="badges">${secondaryBadges.join('')}</div>` : ''}
+                </div>
+              ` : ''}
               <div class="title-row">
                 <h1>${title}</h1>
-                ${price ? `<h2 class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></h2>` : ''}
               </div>
               ${mapHtml}
               ${amenitiesHtml}

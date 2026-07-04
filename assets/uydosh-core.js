@@ -195,7 +195,7 @@ function noPhotoPlaceholderImageUrl(listingOrPin) {
   return NO_PHOTO_PLACEHOLDER_IMAGES[typeCode]?.[gender] ?? '';
 }
 
-/** Card/detail badge label; roommate_needed is gendered (ru: «Нужен сосед» / «Нужна соседка»). */
+/** Card/detail badge label; roommate_needed is gendered (ru: «Ищем соседа» / «Ищем соседку»). */
 function listingTypeBadgeLabel(listing, lang = getLang()) {
   if (!listing) return '';
   if (isRoommateNeededListing(listing)) {

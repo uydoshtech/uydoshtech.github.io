@@ -440,13 +440,14 @@ function renderStep0(lang) {
   }).join('');
 
   const modeChips = [
-    { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang) },
-    { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang) },
+    { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang), icon: UyDosh.iconMetro() },
+    { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: UyDosh.iconPin() },
   ].map((opt) => {
     const pressed = state.form.locationMode === opt.mode;
     return `
       <button type="button" class="chip" data-location-mode="${opt.mode}" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.escapeHtml(opt.label)}
+        ${opt.icon}
+        <span>${UyDosh.escapeHtml(opt.label)}</span>
       </button>`;
   }).join('');
 
@@ -774,6 +775,37 @@ function renderStep3(lang) {
     </section>`;
 }
 
+/**
+ * The metro-station / district list's CSS height is a fixed guess (see
+ * `.station-list` in create.html), which leaves a large empty gap above the
+ * fixed wizard footer on tall screens. Measure the real remaining space and
+ * stretch the list to fill it down to the footer, leaving a fixed 20px gap
+ * (mirrors syncFeedMapPanelHeight in telegram-feed-map.js).
+ */
+function sizeLocationList() {
+  const list = stepPanelsEl.querySelector('.station-list');
+  if (!list) return;
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
+  const top = list.getBoundingClientRect().top;
+  if (!Number.isFinite(top)) return;
+  const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
+  const available = viewportHeight - top - footerHeight - 20;
+  list.style.height = `${Math.max(160, Math.round(available))}px`;
+}
+
+let sizeLocationListRaf = 0;
+function scheduleSizeLocationList() {
+  if (sizeLocationListRaf) cancelAnimationFrame(sizeLocationListRaf);
+  sizeLocationListRaf = requestAnimationFrame(() => {
+    sizeLocationListRaf = 0;
+    sizeLocationList();
+  });
+}
+
+window.addEventListener('resize', scheduleSizeLocationList, { passive: true });
+window.visualViewport?.addEventListener('resize', scheduleSizeLocationList, { passive: true });
+
 function renderStep() {
   const lang = UyDosh.getLang();
   const titles = stepTitles(lang);
@@ -793,6 +825,7 @@ function renderStep() {
   stepPanelsEl.innerHTML = html;
   bindStepEvents();
   updateWizardFooter();
+  sizeLocationList();
 }
 
 async function loadStationsForLine(lineId) {

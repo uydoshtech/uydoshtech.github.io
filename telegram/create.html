@@ -345,7 +345,10 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
-        max-height: 220px;
+        /* Fallback before JS measures the real remaining space (see
+           sizeLocationList in telegram-create.js), which then stretches the
+           list down to the wizard footer instead of leaving it capped here. */
+        height: 220px;
         overflow: auto;
         border: 1px solid var(--stroke);
         border-radius: 14px;
@@ -945,13 +948,13 @@
 
     <input type="file" id="photo-input" accept="image/*" multiple hidden />
 
-    <script src="../assets/uydosh-core.js?v=20260704-68"></script>
+    <script src="../assets/uydosh-core.js?v=20260705-69"></script>
     <script src="../assets/uydosh-api.js?v=20260705-82"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-11"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-12"></script>
     <script src="../assets/uydosh-icons.js?v=20260705-82"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-83"></script>
-    <script src="../assets/telegram-create.js?v=20260704-79"></script>
+    <script src="../assets/telegram-create.js?v=20260705-85"></script>
   </body>
 </html>

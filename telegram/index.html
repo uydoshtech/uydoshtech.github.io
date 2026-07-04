@@ -89,14 +89,9 @@
         box-sizing: border-box;
         transition: border-color 220ms ease, background-color 220ms ease, padding 220ms ease;
       }
-      /* Collapsed state drops the enclosing card so the compact chips + the
-         toggle button float directly on the page — each chip already has its
-         own pill border, so the extra box just doubled up the outline. */
-      .filters.filters--collapsed {
-        padding: 0;
-        border-color: transparent;
-        background: transparent;
-      }
+      /* Collapsed state keeps the same rounded-corner card border as the
+         expanded state, so the compact chip row still reads as one filters
+         panel instead of floating loose on the page. */
       .filters-main {
         flex: 1;
         min-width: 0;
@@ -177,9 +172,8 @@
         appearance: none;
         border: 1px solid var(--stroke);
         /* Same fill weight as chips/theme-toggle (not the near-invisible 0.04
-           this used before) — this button now floats without the `.filters`
-           card behind it in the collapsed state, so it needs its own
-           visible surface. */
+           this used before) so the toggle reads clearly against the
+           `.filters` card background in both expanded and collapsed states. */
         background: rgba(127, 127, 127, 0.08);
         border-radius: 999px;
         width: 32px;
@@ -225,6 +219,22 @@
         -webkit-overflow-scrolling: touch;
         padding-bottom: 2px;
         scrollbar-width: none;
+        /* Fade the scroll edges instead of hard-clipping chips mid-shape when
+           the row is scrolled. */
+        -webkit-mask-image: linear-gradient(
+          to right,
+          transparent 0,
+          black 16px,
+          black calc(100% - 16px),
+          transparent 100%
+        );
+        mask-image: linear-gradient(
+          to right,
+          transparent 0,
+          black 16px,
+          black calc(100% - 16px),
+          transparent 100%
+        );
       }
       .chips-compact::-webkit-scrollbar { display: none; }
       /* DEBUG: outline every chip container in the collapsed filter ribbon
@@ -1214,9 +1224,9 @@
       data-icon="chevronUp"
     ></button>
 
-    <script src="../assets/uydosh-core.js?v=20260704-68"></script>
+    <script src="../assets/uydosh-core.js?v=20260705-69"></script>
     <script src="../assets/uydosh-api.js?v=20260705-82"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-11"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-12"></script>
     <script src="../assets/uydosh-icons.js?v=20260705-82"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
