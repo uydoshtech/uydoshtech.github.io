@@ -778,11 +778,14 @@ function iconHeart(filled = false) {
   return iconSvg(color, path);
 }
 
-/** Report/complain flag icon (listing detail gallery action). */
-function iconFlag(color = '#0f172a') {
-  return iconSvg(color, `
-    <path d="M6 21V4" stroke-width="2" stroke-linecap="round"></path>
-    <path d="M6 4.5c2.1-1.3 4.1-1.3 6 0s3.9 1.3 6 0v9c-2.1 1.3-4.1 1.3-6 0s-3.9-1.3-6 0V4.5Z" stroke-width="2" stroke-linejoin="round"></path>
+/** Report/complain icon (listing detail gallery action) — matches the mobile app's red "Complain" exclamation-circle icon. */
+const REPORT_ICON_COLOR = '#F44336';
+
+function iconFlag() {
+  return iconSvg(REPORT_ICON_COLOR, `
+    <circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"></circle>
+    <rect x="10.85" y="5.5" width="2.3" height="8.5" rx="1.15" fill="#fff"></rect>
+    <rect x="10.85" y="16" width="2.3" height="2.3" rx="1.15" fill="#fff"></rect>
   `);
 }
 
