@@ -40,6 +40,12 @@
 
     let mapLoadGeneration = 0;
     let panelHeightRaf = 0;
+    // Signature (filters + lang) captured after the last successful `loadFeedMap()`
+    // render. Lets `onEnterMapView()` tell whether anything actually changed since
+    // the map was last shown, so switching List -> Map -> List -> Map without
+    // touching filters reuses the existing map instance (preserving pan/zoom)
+    // instead of tearing it down and re-fetching + rebuilding every time.
+    let lastLoadedMapSignature = null;
     // Offered at most once per page session — see showLocateBanner() for why.
     let locateBannerOffered = false;
     // Most recent resolved device position, used if the user later taps the
@@ -352,6 +358,10 @@
       enrichMapPinTooltipListings(pins, requestId);
     }
 
+    function currentMapSignature(filterParams) {
+      return JSON.stringify({ filters: filterParams, lang: UyDosh.getLang() });
+    }
+
     async function loadFeedMap() {
       const generation = ++mapLoadGeneration;
       state.mapLoading = true;
@@ -359,6 +369,7 @@
       hideLocateBanner();
       setFeedMapStatus(UyDosh.t('map.loading'), true);
       const filterParams = getFilterParams();
+      const signature = currentMapSignature(filterParams);
       try {
         await UyDosh.waitForElementLayout(feedMapEl);
         if (generation !== mapLoadGeneration) return;
@@ -422,6 +433,7 @@
         }
 
         state.mapLoaded = true;
+        lastLoadedMapSignature = signature;
         UyDosh.reflowActiveMaps();
         UyDosh.logMiniAppEvent('map_view_opened', {
           pin_count: pins.length,
@@ -443,6 +455,22 @@
     }
 
     function onEnterMapView() {
+      // Filters and language are unchanged since the last successful render —
+      // reuse the still-live map instance instead of destroying and rebuilding
+      // it (and re-fetching pins) on every List <-> Map tab switch. A real
+      // filter change still forces a reload via the filter click handlers,
+      // which call `loadFeedMap()` directly; a language change forces one via
+      // `onLangChange()`. This only short-circuits the redundant "nothing
+      // changed, user just tapped back to the tab" case.
+      if (state.mapLoaded && lastLoadedMapSignature === currentMapSignature(getFilterParams())) {
+        // Cheaply re-apply "visited" pin styling in case a listing was opened
+        // (e.g. from the list view or a previous map tooltip) since this map
+        // instance was last shown — a full reload would've picked this up via
+        // a fresh loadVisitedListingIds() call, so this keeps that behavior.
+        refreshFeedMapPinIcons();
+        UyDosh.reflowActiveMaps();
+        return;
+      }
       loadFeedMap();
     }
 
