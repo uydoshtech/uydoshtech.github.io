@@ -94,6 +94,28 @@ const METRO_LINE_NAMES = {
 
 const METRO_LINE_IDS = [1, 2, 3, 4];
 
+/**
+ * Transfer (interchange) station pairs, matching mobile MetroCache.
+ * Maps a station id to its transfer partner's id + line, so a transfer
+ * station can render a second colored train icon for the connecting line.
+ */
+const METRO_TRANSFER_PAIRS = {
+  12: { partnerId: 22, partnerLine: 2 }, // Paxtakor <-> Alisher Navoiy
+  22: { partnerId: 12, partnerLine: 1 }, // Alisher Navoiy <-> Paxtakor
+  14: { partnerId: 30, partnerLine: 3 }, // A. Temur Xiyoboni <-> Yunus Rajabiy
+  30: { partnerId: 14, partnerLine: 1 }, // Yunus Rajabiy <-> A. Temur Xiyoboni
+  25: { partnerId: 29, partnerLine: 3 }, // Oybek <-> Mingurik
+  29: { partnerId: 25, partnerLine: 2 }, // Mingurik <-> Oybek
+  1: { partnerId: 50, partnerLine: 4 }, // Chinor <-> Qipchoq
+  50: { partnerId: 1, partnerLine: 1 }, // Qipchoq <-> Chinor
+  28: { partnerId: 37, partnerLine: 4 }, // Do'stlik <-> Texnopark
+  37: { partnerId: 28, partnerLine: 2 }, // Texnopark <-> Do'stlik
+};
+
+function metroTransferPartner(stationId) {
+  return METRO_TRANSFER_PAIRS[Number(stationId)] || null;
+}
+
 /** Listing type ids shared by the Telegram feed and create-listing wizard. */
 const LISTING_TYPE_ALL = 0;
 const LISTING_TYPE_ROOM_NEEDED = 1;
@@ -152,6 +174,17 @@ function iconMetro(line) {
     <path d="M7 21l-2 2M17 21l2 2" stroke-width="2" stroke-linecap="round"></path>
     <path d="M7 8h10" stroke-width="2" stroke-linecap="round"></path>
   `);
+}
+
+/**
+ * Trailing colored train icon for a station's transfer partner line, shown
+ * after the station name for interchange stations (matches mobile
+ * listing_form_metro_section.dart, which flanks the name with both lines'
+ * icons). Empty string when the station isn't a transfer station.
+ */
+function metroTransferIconHtml(stationId) {
+  const partner = metroTransferPartner(stationId);
+  return partner ? iconMetro(partner.partnerLine) : '';
 }
 
 function iconClock() {
@@ -276,6 +309,8 @@ Object.assign(window.UyDosh, {
   GENDER_MALE,
   GENDER_FEMALE,
   resolveMetroLine,
+  metroTransferPartner,
+  metroTransferIconHtml,
   iconPin,
   iconMetro,
   iconClock,

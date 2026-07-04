@@ -421,7 +421,8 @@ function stationListHtml(lang) {
       <button type="button" class="station-item" data-station-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
         ${multi ? UyDosh.iconCheckboxPair() : ''}
         ${UyDosh.iconMetro(lineId)}
-        <span>${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span>
+        <span class="station-item-label">${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span>
+        ${UyDosh.metroTransferIconHtml(id)}
       </button>`;
   }).join('');
   return (selectAllRow + stationItems) || `<div class="status">…</div>`;

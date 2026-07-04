@@ -177,6 +177,34 @@ async function authenticateTelegramMiniApp() {
 }
 
 /**
+ * Ensures a session token is available for endpoints that only accept the generic
+ * Bearer-token auth (e.g. `/favorites/*`, shared with the mobile app) rather than a
+ * dedicated `init_data`-verifying endpoint. Authenticates via Telegram initData on
+ * first use and caches the resulting session token for the rest of the tab's session.
+ * Returns false when there's no usable Telegram identity to authenticate with.
+ */
+async function ensureTelegramMiniAppSession() {
+  if (getSessionToken()) return true;
+  if (!getTelegramInitData()) return false;
+  try {
+    await authenticateTelegramMiniApp();
+    return Boolean(getSessionToken());
+  } catch {
+    return false;
+  }
+}
+
+/** Whether the current Mini App user has favorited a listing (reuses the shared favorites API). */
+function checkListingFavorited(listingId) {
+  return fetchJsonAuth(`/favorites/check/${encodeURIComponent(listingId)}`);
+}
+
+/** Toggle favorite status for a listing (reuses the shared favorites API). */
+function toggleListingFavorite(listingId) {
+  return fetchJsonAuth(`/favorites/toggle/${encodeURIComponent(listingId)}`, { method: 'PUT' });
+}
+
+/**
  * Records the Mini App user's device location, verified server-side via initData (no
  * session required). Fire-and-forget: swallows failures since it's called from a
  * best-effort background flow (see autoRequestUserLocation in yandex-map.js) and must
@@ -536,6 +564,9 @@ Object.assign(window.UyDosh, {
   readFileAsDataUrl,
   resizeImageFileForUpload,
   authenticateTelegramMiniApp,
+  ensureTelegramMiniAppSession,
+  checkListingFavorited,
+  toggleListingFavorite,
   reportTelegramMiniAppLocation,
   requestTelegramContactShare,
   phoneNumberFromContactShareResponse,
