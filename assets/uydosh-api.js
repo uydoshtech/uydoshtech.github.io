@@ -286,18 +286,29 @@ function requestTelegramContactShare() {
 }
 
 /**
- * Best-effort client-side read of the phone number out of a raw contact-share `response`
- * string (see `requestTelegramContactShare`), for display purposes only — the backend
- * independently re-verifies the same raw string's signature before trusting it.
+ * Reads the phone number out of a raw contact-share `response` string (see
+ * `requestTelegramContactShare`). The string is a query string (structurally identical
+ * to initData) with a JSON-encoded `contact` field, e.g. `contact=<json>&auth_date=...
+ * &hash=...` — NOT bare JSON, so it must be parsed as a query string first.
  */
 function phoneNumberFromContactShareResponse(contactRaw) {
   if (!contactRaw) return '';
   try {
-    const parsed = JSON.parse(contactRaw);
+    const contactJson = new URLSearchParams(contactRaw).get('contact');
+    if (!contactJson) return '';
+    const parsed = JSON.parse(contactJson);
     return typeof parsed?.phone_number === 'string' ? parsed.phone_number.trim() : '';
   } catch {
     return '';
   }
+}
+
+/** Persists the account's phone number (e.g. shared via `requestTelegramContactShare`). */
+function updateMyPhoneNumber(phoneNumber) {
+  return fetchJsonAuth('/users/me/phone-number', {
+    method: 'PATCH',
+    body: { phone_number: phoneNumber },
+  });
 }
 
 /** Complaint reasons for reporting a listing (public, shared with mobile app). */
@@ -742,6 +753,7 @@ Object.assign(window.UyDosh, {
   reportTelegramMiniAppLocation,
   requestTelegramContactShare,
   phoneNumberFromContactShareResponse,
+  updateMyPhoneNumber,
   getTelegramInitData,
   clearTelegramInitData,
   isTelegramInitDataUsable,

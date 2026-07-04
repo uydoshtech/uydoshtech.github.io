@@ -1205,6 +1205,14 @@ function bindStepEvents() {
     if (!phoneNumber) return;
     state.form.phone = phoneNumber;
     renderStep();
+    // Best-effort: persist to the account so it's remembered for next time. Never
+    // blocks the review UI, which already reflects the shared number either way.
+    try {
+      await UyDosh.updateMyPhoneNumber(phoneNumber);
+      UyDosh.logMiniAppEvent('create_share_phone_saved');
+    } catch (err) {
+      UyDosh.logMiniAppEvent('create_share_phone_save_failed', { status: err?.status });
+    }
   });
 }
 
@@ -1296,7 +1304,6 @@ async function submitListing() {
       amenityIds: [...state.form.amenityIds],
       moveInDate: state.form.moveInDate || undefined,
       privateRoom: !isRoomNeeded() ? state.form.privateRoom : undefined,
-      contactPhone: state.form.phone.trim() || undefined,
     };
 
     if (state.form.locationMode === LOCATION_MODE_METRO) {
@@ -1504,7 +1511,11 @@ async function boot() {
   if (Number.isFinite(editId) && editId > 0) state.editingListingId = editId;
 
   try {
-    await UyDosh.authenticateTelegramMiniApp();
+    state.auth = await UyDosh.authenticateTelegramMiniApp();
+    const accountPhone = state.auth?.user?.phone_number;
+    if (typeof accountPhone === 'string' && accountPhone.trim()) {
+      state.form.phone = accountPhone.trim();
+    }
     await loadReferenceData();
     if (state.editingListingId) {
       await loadListingForEdit(state.editingListingId);
