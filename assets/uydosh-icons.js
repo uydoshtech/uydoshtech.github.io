@@ -298,6 +298,39 @@ function iconLock() {
   `);
 }
 
+/** "My Listings" row action icons (edit / show / hide / boost-renew / delete). */
+function iconPencil() {
+  return iconSvg(null, `
+    <path d="M12 20h9" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+function iconEyeOff() {
+  return iconSvg(null, `
+    <path d="M10.6 5.1A11 11 0 0 1 12 5c7 0 11 7 11 7a13.4 13.4 0 0 1-3.1 3.9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M6.5 6.6C3.7 8.3 1 12 1 12s4 7 11 7a10.6 10.6 0 0 0 4.2-.9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M3 3l18 18" stroke-width="2" stroke-linecap="round"></path>
+  `);
+}
+
+function iconArrowUp() {
+  return iconSvg(null, `
+    <path d="M12 19V5" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M5 12l7-7 7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+function iconTrash() {
+  return iconSvg(null, `
+    <path d="M3 6h18" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M10 11v6M14 11v6" stroke-width="2" stroke-linecap="round"></path>
+  `);
+}
+
 function iconCamera(color) {
   return chipIconFilled(
     color,
@@ -403,8 +436,12 @@ Object.assign(window.UyDosh, {
   iconClock,
   iconPhone,
   iconEye,
+  iconEyeOff,
   iconCalendar,
   iconLock,
+  iconPencil,
+  iconArrowUp,
+  iconTrash,
   iconCamera,
   filterPhotoIcon,
   iconCheckboxPair,

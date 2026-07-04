@@ -116,6 +116,14 @@
         align-items: center;
         gap: 12px;
       }
+      .account-thumb-col {
+        flex: 0 0 64px;
+        width: 64px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
       .account-thumb {
         flex: 0 0 64px;
         width: 64px;
@@ -174,8 +182,10 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        gap: 6px;
         color: var(--muted);
+        width: 64px;
       }
       .account-row-amenities .amenity-inline {
         display: inline-flex;
@@ -187,6 +197,17 @@
         font-weight: 700;
         color: var(--muted);
       }
+      .account-row-views {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+      .account-row-views .icon { width: 14px; height: 14px; display: inline-flex; }
+      .account-row-views .icon svg { width: 14px; height: 14px; display: block; }
+      .account-row-views .icon svg * { stroke: currentColor; fill: none; }
       .account-status {
         display: inline-flex;
         align-items: center;
@@ -217,6 +238,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         padding: 6px 10px;
         border-radius: 10px;
         border: 1px solid color-mix(in srgb, #eab308 55%, var(--stroke));
@@ -233,6 +255,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         padding: 6px 10px;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.85);
@@ -257,6 +280,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         padding: 6px 10px;
         border-radius: 10px;
         border: 1px solid color-mix(in srgb, #22c55e 55%, var(--stroke));
@@ -281,6 +305,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         padding: 6px 10px;
         border-radius: 10px;
         border: 1px solid color-mix(in srgb, var(--error, #f87171) 70%, transparent);
@@ -293,6 +318,21 @@
       }
       .account-delete-btn:active { opacity: 0.88; }
       .account-delete-btn:disabled { opacity: 0.6; cursor: default; }
+      .account-edit-btn .icon svg,
+      .account-visibility-btn .icon svg,
+      .account-renew-btn .icon svg,
+      .account-delete-btn .icon svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      .account-edit-btn .icon svg *,
+      .account-visibility-btn .icon svg *,
+      .account-renew-btn .icon svg *,
+      .account-delete-btn .icon svg * {
+        stroke: currentColor;
+        fill: none;
+      }
       .account-favorite-btn {
         flex: 0 0 auto;
         appearance: none;
@@ -350,6 +390,6 @@
     <script src="../assets/uydosh-map-pins.js?v=20260705-77"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-83"></script>
-    <script src="../assets/telegram-account.js?v=20260705-92"></script>
+    <script src="../assets/telegram-account.js?v=20260705-94"></script>
   </body>
 </html>

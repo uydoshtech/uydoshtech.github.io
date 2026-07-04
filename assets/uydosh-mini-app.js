@@ -298,6 +298,11 @@ function ensureMiniAppSafeAreaStyles() {
       --fg: var(--tg-fg, rgba(255, 255, 255, 0.92));
       --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
       --card: var(--tg-card, rgba(255, 255, 255, 0.06));
+      /* Re-derive against the real runtime wrap gutter (set below on `.wrap`)
+         instead of the stale 14px fallback baked into telegram-shared.css's
+         `:root`, so list/grid content (and `.view-tabs`) lines up with the
+         header + filters boxes instead of sitting closer to the edge. */
+      --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
     }
     html.mini-app .wrap {
       max-width: none;
@@ -354,8 +359,12 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app-mobile .feed-sticky {
       top: var(--uydosh-tg-filters-sticky-top, var(--uydosh-tg-sticky-top, ${TELEGRAM_MOBILE_HEADER_MIN_TOP}px));
-      padding-left: calc(var(--feed-content-gutter, 25px) + var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
-      padding-right: calc(var(--feed-content-gutter, 25px) + max(5px, env(safe-area-inset-right, 0px)));
+      /* Same as the desktop rule below: `.feed-sticky` already breaks out to
+         the raw screen edge (margin cancels `.wrap`'s padding above), so this
+         padding IS the full inset — it must not also add the wrap gutter on
+         top, or the filters box ends up further in than the header/feed tiles. */
+      padding-left: var(--feed-content-gutter, 25px);
+      padding-right: var(--feed-content-gutter, 25px);
     }
     html.mini-app header nav {
       display: flex;

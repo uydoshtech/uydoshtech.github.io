@@ -774,11 +774,16 @@ function renderStep3(lang) {
 }
 
 /**
- * The metro-station / district list's CSS height is a fixed guess (see
- * `.station-list` in create.html), which leaves a large empty gap above the
- * fixed wizard footer on tall screens. Measure the real remaining space and
- * stretch the list to fill it down to the footer, leaving a fixed 10px gap
- * (mirrors syncFeedMapPanelHeight in telegram-feed-map.js).
+ * The metro-station list's CSS height is a fixed guess (see `.station-list`
+ * in create.html), which leaves a large empty gap above the fixed wizard
+ * footer on tall screens. Measure the real remaining space and stretch the
+ * list to fill it down to the footer, leaving a fixed 10px gap (mirrors
+ * syncFeedMapPanelHeight in telegram-feed-map.js).
+ *
+ * The district grid (`.station-list-grid`) is short (two columns of ~12
+ * items), so stretching it the same way just leaves empty space below the
+ * last row. Size it to its content instead, capping at the same available
+ * space so it still scrolls rather than overlapping the footer.
  */
 function sizeLocationList() {
   const list = stepPanelsEl.querySelector('.station-list');
@@ -788,8 +793,14 @@ function sizeLocationList() {
   const top = list.getBoundingClientRect().top;
   if (!Number.isFinite(top)) return;
   const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
-  const available = viewportHeight - top - footerHeight - 10;
-  list.style.height = `${Math.max(160, Math.round(available))}px`;
+  const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - 10));
+  if (list.classList.contains('station-list-grid')) {
+    list.style.height = 'auto';
+    list.style.maxHeight = `${available}px`;
+  } else {
+    list.style.height = `${available}px`;
+    list.style.maxHeight = '';
+  }
 }
 
 let sizeLocationListRaf = 0;

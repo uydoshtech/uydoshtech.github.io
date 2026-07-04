@@ -20,6 +20,9 @@ const state = {
   // No usable session for the Bearer-token-based favorites API (distinct from
   // `authError`, which means there's no Telegram identity at all).
   favoritesUnavailable: false,
+  // Cache of listingId -> view count, so re-rendering "My Listings" after a
+  // renew/toggle/delete doesn't re-request every row's owner-only view count.
+  viewCounts: {},
 };
 
 function statusBadgeHtml(listing, lang) {
@@ -32,10 +35,24 @@ function statusBadgeHtml(listing, lang) {
   return '';
 }
 
-/** Amenity icons row shown under the title/status block, matching the mobile ListingTile footer. */
+/** Amenity icons row shown under the listing thumbnail photo. */
 function amenitiesRowHtml(listing, lang) {
   const icons = UyDosh.amenityIconsRowHtml(listing.amenities, lang);
   return icons ? `<div class="account-row-amenities">${icons}</div>` : '';
+}
+
+/**
+ * Eye icon + view count placeholder, matching the mobile ListingTile's owner-only
+ * footer status. Starts hidden — filled in and revealed by `bindViewCounts` once the
+ * owner-only `/listings/:id/view-count` request resolves (see also the listing detail
+ * page's owner toolbar, which reuses the same endpoint/helpers).
+ */
+function viewCountHtml(listing) {
+  return `
+    <span class="account-row-views" data-view-count="${listing.id}" hidden>
+      ${UyDosh.iconEye()}<span data-view-count-text></span>
+    </span>
+  `;
 }
 
 function accountThumbHtml(listing) {
@@ -72,41 +89,43 @@ function listingRowHtml(listing) {
   const editHref = `/telegram/create.html?id=${encodeURIComponent(listing.id)}`;
   const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id));
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
+  const visibilityIcon = listing.is_active ? UyDosh.iconEye() : UyDosh.iconEyeOff();
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
   return `
     <div class="account-row" data-listing-row="${listing.id}">
       <a class="account-row-link" href="${detailHref}">
-        ${accountThumbHtml(listing)}
+        <div class="account-thumb-col">
+          ${accountThumbHtml(listing)}
+          ${amenitiesRowHtml(listing, lang)}
+        </div>
         <div class="account-row-body">
           <div class="account-row-title">${title}</div>
           <div class="account-row-meta">
             ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
+            ${viewCountHtml(listing)}
             ${statusBadgeHtml(listing, lang)}
           </div>
-          ${amenitiesRowHtml(listing, lang)}
         </div>
       </a>
       <div class="account-row-actions">
-        <a class="account-edit-btn" href="${editHref}" data-i18n="account.edit"></a>
+        <a class="account-edit-btn" href="${editHref}">${UyDosh.iconPencil()}<span data-i18n="account.edit"></span></a>
         <button
           type="button"
           class="account-visibility-btn"
           data-toggle-visibility="${listing.id}"
           aria-pressed="${listing.is_active ? 'true' : 'false'}"
-          data-i18n="${visibilityLabelKey}"
-        ></button>
+        >${visibilityIcon}<span data-i18n="${visibilityLabelKey}"></span></button>
         <button
           type="button"
           class="account-renew-btn"
           data-renew-listing="${listing.id}"
           ${canRenew ? '' : 'disabled'}
-        >${renewLabelHtml(listing, lang)}</button>
+        >${UyDosh.iconArrowUp()}<span>${renewLabelHtml(listing, lang)}</span></button>
         <button
           type="button"
           class="account-delete-btn"
           data-delete-listing="${listing.id}"
-          data-i18n="account.delete"
-        ></button>
+        >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
       </div>
     </div>`;
 }
@@ -229,6 +248,42 @@ function bindRenewButtons() {
   }
 }
 
+function applyViewCountToRow(id, count) {
+  const el = listEl.querySelector(`[data-view-count="${id}"]`);
+  if (!el) return;
+  const textEl = el.querySelector('[data-view-count-text]');
+  if (textEl) textEl.textContent = UyDosh.listingViewsCountText(count, UyDosh.getLang());
+  el.hidden = false;
+}
+
+/**
+ * Reveals each listing's view count next to its price/status (mirrors the mobile
+ * ListingTile's owner-only footer status and the listing detail page's owner
+ * toolbar) — reuses the same owner-only `/listings/:id/view-count` endpoint, caching
+ * results so re-renders after a renew/toggle/delete don't re-request every row.
+ */
+async function bindViewCounts() {
+  const ids = state.myListings.map((l) => l?.id).filter((id) => Number.isFinite(id));
+  if (!ids.length) return;
+  for (const id of ids) {
+    if (state.viewCounts[id] != null) applyViewCountToRow(id, state.viewCounts[id]);
+  }
+  const pending = ids.filter((id) => state.viewCounts[id] == null);
+  if (!pending.length) return;
+  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+  if (!sessionReady) return;
+  await Promise.all(pending.map(async (id) => {
+    try {
+      const data = await UyDosh.fetchListingViewCount(id);
+      const count = Number(data?.viewCount) || 0;
+      state.viewCounts[id] = count;
+      applyViewCountToRow(id, count);
+    } catch (err) {
+      console.error('Failed to load listing view count', id, err);
+    }
+  }));
+}
+
 function bindDeleteButtons() {
   for (const btn of listEl.querySelectorAll('[data-delete-listing]')) {
     btn.addEventListener('click', async () => {
@@ -288,6 +343,7 @@ function renderMine() {
   showList(state.myListings.map(listingRowHtml).join(''));
   bindVisibilityToggleButtons();
   bindRenewButtons();
+  bindViewCounts();
   bindDeleteButtons();
 }
 

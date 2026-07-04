@@ -279,8 +279,9 @@
         flex-direction: column;
         gap: 2px;
         /* Fallback before JS measures the real remaining space (see
-           sizeLocationList in telegram-create.js), which then stretches the
-           list down to the wizard footer instead of leaving it capped here. */
+           sizeLocationList in telegram-create.js), which then either
+           stretches the list down to the wizard footer (metro list) or
+           sizes it to its content with a max-height cap (district grid). */
         height: 220px;
         overflow: auto;
         border: 1px solid var(--stroke);
