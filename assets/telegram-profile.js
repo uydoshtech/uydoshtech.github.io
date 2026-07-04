@@ -101,6 +101,11 @@ function renderUniversityList() {
   }).join('');
 }
 
+function closeUniversitySuggestions() {
+  universityListEl.hidden = true;
+  universityListEl.innerHTML = '';
+}
+
 function render() {
   const lang = UyDosh.getLang();
 
@@ -118,13 +123,14 @@ function render() {
     } else {
       universityPickedEl.hidden = true;
     }
-    if (state.universities.length === 0 && !state.universitiesError) {
-      universityListEl.innerHTML = `
-        <div class="station-list-loading" aria-busy="true" aria-live="polite">
-          <span class="station-list-spinner" aria-hidden="true"></span>
-        </div>`;
-    } else {
+    // Autosuggest: the match list only appears once the user types something
+    // (see `universitySearchEl` input handler) — it never shows as a
+    // permanently-visible full list.
+    if (state.searchQuery.trim()) {
+      universityListEl.hidden = false;
       renderUniversityList();
+    } else {
+      closeUniversitySuggestions();
     }
   }
 
@@ -145,19 +151,31 @@ function bindEvents() {
     if (state.isStudent === false) return;
     state.isStudent = false;
     state.selectedUniversityId = null;
+    state.searchQuery = '';
+    universitySearchEl.value = '';
     showFormError('');
     render();
   });
 
   universitySearchEl.addEventListener('input', () => {
     state.searchQuery = universitySearchEl.value || '';
-    renderUniversityList();
+    if (state.searchQuery.trim()) {
+      universityListEl.hidden = false;
+      renderUniversityList();
+    } else {
+      closeUniversitySuggestions();
+    }
   });
 
   universityListEl.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-university-id]');
     if (!btn) return;
     state.selectedUniversityId = Number(btn.getAttribute('data-university-id'));
+    // Selecting a suggestion closes the dropdown and clears the search box,
+    // matching a typical autosuggest field — the picked banner above shows
+    // the final choice instead.
+    state.searchQuery = '';
+    universitySearchEl.value = '';
     showFormError('');
     render();
   });
