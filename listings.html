@@ -123,12 +123,14 @@
       .type-badge {
         position: absolute; top: 10px; left: 10px;
         display: inline-flex; align-items: center;
-        padding: 4px 9px; border-radius: 999px;
-        font-size: 11px; font-weight: 600; line-height: 1.15;
-        border: 1px solid var(--badge-type-color, var(--stroke));
-        color: var(--badge-type-color, var(--muted));
-        /* Photo overlays need a darker scrim than detail-page chips (14% tint). */
-        background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 32%, rgba(8, 10, 14, 0.88));
+        padding: 5px 10px; border-radius: 999px;
+        font-size: 11px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
+        border: 1.5px solid var(--badge-type-color, var(--stroke));
+        color: #fff;
+        /* Photo overlays need a darker, more saturated scrim than detail-page
+           chips (14% tint) so the badge reads clearly over any photo. */
+        background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 68%, rgba(8, 10, 14, 0.92));
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
       }
@@ -251,9 +253,9 @@
     </div>
 
     <script src="assets/uydosh-core.js?v=20260704-68"></script>
-    <script src="assets/uydosh-api.js?v=20260705-82"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-12"></script>
-    <script src="assets/uydosh-icons.js?v=20260705-82"></script>
+    <script src="assets/uydosh-api.js?v=20260705-83"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-13"></script>
+    <script src="assets/uydosh-icons.js?v=20260705-88"></script>
     <script src="assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-mini-app.js?v=20260705-83"></script>

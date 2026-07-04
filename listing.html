@@ -254,6 +254,9 @@
       .price small { font-weight: 500; font-size: 11px; line-height: 1; color: var(--price-green); opacity: 0.85; margin-left: 1px; }
       .badges-group { display: flex; flex-direction: column; gap: 8px; }
       .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+      /* Price reads as the headline number for the listing, so it's pinned
+         to the far end of row 1 instead of trailing right after gender. */
+      .badges .price { margin-left: auto; margin-right: 4px; }
       .badge {
         display: inline-flex; align-items: center; gap: 5px;
         padding: 6px 11px; border-radius: 999px;
@@ -636,9 +639,9 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260704-68"></script>
-    <script src="assets/uydosh-api.js?v=20260705-82"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-12"></script>
-    <script src="assets/uydosh-icons.js?v=20260705-82"></script>
+    <script src="assets/uydosh-api.js?v=20260705-83"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-13"></script>
+    <script src="assets/uydosh-icons.js?v=20260705-88"></script>
     <script src="assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-mini-app.js?v=20260705-83"></script>

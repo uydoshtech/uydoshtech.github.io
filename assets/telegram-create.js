@@ -419,7 +419,7 @@ function stationListHtml(lang) {
         ${multi ? UyDosh.iconCheckboxPair() : ''}
         ${UyDosh.iconMetro(lineId)}
         <span class="station-item-label">${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span>
-        ${UyDosh.metroTransferIconHtml(id)}
+        ${UyDosh.metroTransferSuffixHtml(id, lang)}
       </button>`;
   }).join('');
   return (selectAllRow + stationItems) || `<div class="status">…</div>`;
@@ -451,18 +451,11 @@ function renderStep0(lang) {
       </button>`;
   }).join('');
 
-  // Icon-only until selected, matching the feed filter ribbon: only the
-  // currently selected line reveals its name (see `.chip-label-collapse` in
-  // telegram/create.html for the reveal animation).
-  const lineChips = UyDosh.METRO_LINE_IDS.map((lineId) => {
-    const pressed = state.form.subwayLineId === lineId;
-    const color = UyDosh.metroLineColor(lineId) || 'currentColor';
-    const label = UyDosh.metroLineLabel(lineId, lang);
-    return `
-      <button type="button" class="chip chip-line" data-subway-line="${lineId}" style="--line-color:${color}" aria-pressed="${pressed ? 'true' : 'false'}" aria-label="${UyDosh.escapeHtml(label)}">
-        ${UyDosh.metroLineBadgeHtml(lineId)}<span class="chip-label-collapse"><span class="chip-label">${UyDosh.escapeHtml(label)}</span></span>
-      </button>`;
-  }).join('');
+  // Shared metro ribbon (see `metroLineChipsHtml` in uydosh-icons.js):
+  // icon-only until selected, matching the feed filter ribbon — only the
+  // currently selected line reveals its name (slide + fade, see
+  // `.chip-label-collapse` in telegram-shared.css).
+  const lineChips = UyDosh.metroLineChipsHtml(state.form.subwayLineId, lang);
 
   let locationBody = '';
   if (state.form.locationMode === LOCATION_MODE_METRO) {
@@ -779,7 +772,7 @@ function renderStep3(lang) {
  * The metro-station / district list's CSS height is a fixed guess (see
  * `.station-list` in create.html), which leaves a large empty gap above the
  * fixed wizard footer on tall screens. Measure the real remaining space and
- * stretch the list to fill it down to the footer, leaving a fixed 20px gap
+ * stretch the list to fill it down to the footer, leaving a fixed 10px gap
  * (mirrors syncFeedMapPanelHeight in telegram-feed-map.js).
  */
 function sizeLocationList() {
@@ -790,7 +783,7 @@ function sizeLocationList() {
   const top = list.getBoundingClientRect().top;
   if (!Number.isFinite(top)) return;
   const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
-  const available = viewportHeight - top - footerHeight - 20;
+  const available = viewportHeight - top - footerHeight - 10;
   list.style.height = `${Math.max(160, Math.round(available))}px`;
 }
 

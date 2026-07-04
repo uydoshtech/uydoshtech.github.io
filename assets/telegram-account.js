@@ -45,12 +45,27 @@ function accountThumbHtml(listing) {
   return `<div class="account-thumb empty"></div>`;
 }
 
+/** Days remaining until `nextRenewalAtIso` (ISO string) is reached; 0 or less means renewal is available now. */
+function daysUntil(nextRenewalAtIso) {
+  if (!nextRenewalAtIso) return 0;
+  const diffMs = new Date(nextRenewalAtIso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+}
+
+function renewLabelHtml(listing, lang) {
+  const days = daysUntil(listing.next_renewal_at);
+  if (days <= 0) return UyDosh.escapeHtml(UyDosh.t('account.renew', lang));
+  const key = days === 1 ? 'account.renewInOneDay' : 'account.renewInDays';
+  return UyDosh.escapeHtml(UyDosh.t(key, lang).replace('{days}', String(days)));
+}
+
 function listingRowHtml(listing) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
   const editHref = `/telegram/create.html?id=${encodeURIComponent(listing.id)}`;
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
+  const canRenew = daysUntil(listing.next_renewal_at) <= 0;
   return `
     <div class="account-row" data-listing-row="${listing.id}">
       ${accountThumbHtml(listing)}
@@ -69,6 +84,18 @@ function listingRowHtml(listing) {
           data-toggle-visibility="${listing.id}"
           aria-pressed="${listing.is_active ? 'true' : 'false'}"
           data-i18n="${visibilityLabelKey}"
+        ></button>
+        <button
+          type="button"
+          class="account-renew-btn"
+          data-renew-listing="${listing.id}"
+          ${canRenew ? '' : 'disabled'}
+        >${renewLabelHtml(listing, lang)}</button>
+        <button
+          type="button"
+          class="account-delete-btn"
+          data-delete-listing="${listing.id}"
+          data-i18n="account.delete"
         ></button>
       </div>
     </div>`;
@@ -138,6 +165,82 @@ function bindVisibilityToggleButtons() {
   }
 }
 
+/** Telegram-native confirm dialog when available (Telegram.WebApp.showConfirm), else a plain browser confirm(). */
+function confirmDestructiveAction(message) {
+  return new Promise((resolve) => {
+    const tg = window.Telegram?.WebApp;
+    if (typeof tg?.showConfirm === 'function') {
+      tg.showConfirm(message, (confirmed) => resolve(!!confirmed));
+    } else {
+      resolve(window.confirm(message));
+    }
+  });
+}
+
+/** Telegram-native alert when available (Telegram.WebApp.showAlert), else a plain browser alert(). */
+function showTelegramAlert(message) {
+  const tg = window.Telegram?.WebApp;
+  if (typeof tg?.showAlert === 'function') {
+    tg.showAlert(message);
+  } else {
+    window.alert(message);
+  }
+}
+
+function bindRenewButtons() {
+  for (const btn of listEl.querySelectorAll('[data-renew-listing]')) {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.getAttribute('data-renew-listing'));
+      if (!Number.isFinite(id) || btn.disabled) return;
+      const listing = state.myListings.find((l) => l?.id === id);
+      if (!listing) return;
+      const lang = UyDosh.getLang();
+      btn.disabled = true;
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+      try {
+        const data = await UyDosh.renewListingFromTelegramMiniApp(id);
+        if (data?.listing) Object.assign(listing, data.listing);
+        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
+        renderMine();
+      } catch (err) {
+        console.error('Failed to renew listing', err);
+        const nextRenewalAt = err?.payload?.nextRenewalAt;
+        if (nextRenewalAt) {
+          // Cooldown still active (e.g. stale client state) — sync from the server's answer.
+          listing.next_renewal_at = nextRenewalAt;
+          renderMine();
+        } else {
+          btn.disabled = false;
+        }
+        showTelegramAlert(UyDosh.t('account.renewError', lang));
+      }
+    });
+  }
+}
+
+function bindDeleteButtons() {
+  for (const btn of listEl.querySelectorAll('[data-delete-listing]')) {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.getAttribute('data-delete-listing'));
+      if (!Number.isFinite(id) || btn.disabled) return;
+      const lang = UyDosh.getLang();
+      const confirmed = await confirmDestructiveAction(UyDosh.t('account.deleteConfirm', lang));
+      if (!confirmed) return;
+      btn.disabled = true;
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
+      try {
+        await UyDosh.deleteListingFromTelegramMiniApp(id);
+        state.myListings = state.myListings.filter((l) => l?.id !== id);
+        renderMine();
+      } catch (err) {
+        console.error('Failed to delete listing', err);
+        btn.disabled = false;
+        showTelegramAlert(UyDosh.t('account.deleteError', lang));
+      }
+    });
+  }
+}
+
 function bindFavoriteRemoveButtons() {
   for (const btn of listEl.querySelectorAll('[data-unfavorite-listing]')) {
     btn.addEventListener('click', async () => {
@@ -173,6 +276,8 @@ function renderMine() {
   }
   showList(state.myListings.map(listingRowHtml).join(''));
   bindVisibilityToggleButtons();
+  bindRenewButtons();
+  bindDeleteButtons();
 }
 
 function renderFavorites() {

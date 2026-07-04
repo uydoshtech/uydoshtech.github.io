@@ -405,6 +405,74 @@ async function toggleListingActiveFromTelegramMiniApp(listingId) {
   return payload;
 }
 
+/**
+ * Free weekly "renew publication" bump from the Telegram Mini App (verify
+ * initData on submit). Only the listing's own owner may renew it. On a 429
+ * cooldown response, `err.payload.nextRenewalAt` (ISO string) tells the
+ * caller when renewal becomes available again.
+ */
+async function renewListingFromTelegramMiniApp(listingId) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/renew`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ init_data: initData }),
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    if (res.status === 401) clearTelegramInitData();
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/**
+ * Delete a listing from the Telegram Mini App (verify initData on submit).
+ * Only the listing's own owner may delete it.
+ */
+async function deleteListingFromTelegramMiniApp(listingId) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ init_data: initData }),
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    if (res.status === 401) clearTelegramInitData();
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
 function createProfile(body) {
   return fetchJsonAuth('/profiles', { method: 'POST', body });
 }
@@ -597,6 +665,8 @@ Object.assign(window.UyDosh, {
   updateListingFromTelegramMiniApp,
   fetchMyTelegramMiniAppListings,
   toggleListingActiveFromTelegramMiniApp,
+  renewListingFromTelegramMiniApp,
+  deleteListingFromTelegramMiniApp,
   createProfile,
   uploadListingPhoto,
   deleteListingPhoto,

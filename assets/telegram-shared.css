@@ -53,10 +53,97 @@ a { color: inherit; text-decoration: none; }
   height: 14px;
   display: block;
 }
+
+/*
+ * Metro-line selector ribbon — shared by the feed filter bar (expanded +
+ * compact rows) and the create-listing wizard's metro-line picker (markup
+ * built by `metroLineChipsHtml` in uydosh-icons.js). Every chip starts as a
+ * bare "M" badge and only reveals its line name, with a slide + fade
+ * animation, once selected.
+ */
+.chip-line {
+  --line-color: var(--stroke);
+  border-color: color-mix(in srgb, var(--line-color) 55%, var(--stroke));
+  color: var(--fg);
+  gap: 0;
+  padding: 6px 10px;
+  transition: border-color 220ms ease, border-width 220ms ease,
+    background 220ms ease, padding 220ms ease;
+}
 .chip-line[aria-pressed="true"] {
+  padding: 5px 9px;
   border-color: var(--line-color);
   border-width: 2px;
   background: color-mix(in srgb, var(--line-color) 12%, rgba(127, 127, 127, 0.08));
+}
+/* Denser variant for the feed's collapsed/compact filter row. */
+.chip-line-compact {
+  padding: 7px 9px;
+}
+.chip-line-compact[aria-pressed="true"] {
+  padding: 6px 8px;
+}
+.metro-m-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line-color);
+  background: #fff;
+  color: var(--line-color);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: Arial, ui-sans-serif, system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chip-line[aria-pressed="true"] .metro-m-badge {
+  transform: scale(1.08);
+}
+@media (prefers-color-scheme: dark) {
+  .metro-m-badge {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+/* Ribbon container grows to fit the revealed label; the label itself slides
+   in from the left while fading (with a slight overshoot) so the text feels
+   like it "pops" into place rather than just fading. Collapsing back to the
+   icon-only state reverses this quickly, with no delay. */
+.chip-line .chip-label-collapse {
+  display: grid;
+  grid-template-columns: 0fr;
+  min-width: 0;
+  margin-left: 0;
+  overflow: hidden;
+  transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chip-line .chip-label-collapse > .chip-label {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 160ms ease, transform 180ms ease;
+}
+.chip-line[aria-pressed="true"] .chip-label-collapse {
+  grid-template-columns: 1fr;
+  margin-left: 6px;
+}
+.chip-line[aria-pressed="true"] .chip-label-collapse > .chip-label {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 260ms ease 100ms, transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip-line,
+  .chip-line .metro-m-badge,
+  .chip-line .chip-label-collapse,
+  .chip-line .chip-label-collapse > .chip-label {
+    transition: none;
+  }
 }
 
 /*

@@ -433,43 +433,17 @@ function renderFilters() {
     ><span class="chip-label">${UyDosh.escapeHtml(currentPeriod.label)}</span></button>
   `;
 
-  // Same icon-only-until-selected treatment as the compact row below: the
-  // expanded metro row also stays as bare "M" badges and reveals the line
-  // name (animated) only for the currently selected line.
-  const lineChips = UyDosh.METRO_LINE_IDS.map((lineId) => {
-    const pressed = state.filters.subwayLineId === lineId;
-    const color = UyDosh.metroLineColor(lineId) || 'currentColor';
-    const label = UyDosh.metroLineLabel(lineId, lang);
-    return `
-    <button
-      type="button"
-      class="chip chip-line"
-      data-subway-line="${lineId}"
-      style="--line-color:${color}"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-      aria-label="${UyDosh.escapeHtml(label)}"
-    >${UyDosh.metroLineBadgeHtml(lineId)}<span class="chip-label-collapse"><span class="chip-label">${UyDosh.escapeHtml(label)}</span></span></button>
-  `;
-  }).join('');
+  // Icon-only-until-selected metro ribbon shared with the compact row below
+  // and the create-listing wizard (see `metroLineChipsHtml` in
+  // uydosh-icons.js): bare "M" badges that reveal the selected line's name
+  // via a slide + fade animation (`.chip-label-collapse` in
+  // telegram-shared.css).
+  const lineChips = UyDosh.metroLineChipsHtml(state.filters.subwayLineId, lang);
 
   // Collapsed metro chips stay icon-only until tapped: selecting a line
-  // reveals its name inline (see `.chip-line-compact` in telegram/index.html)
+  // reveals its name inline (see `.chip-line-compact` in telegram-shared.css)
   // instead of a plain always-on label, so the compact row can stay dense.
-  const lineChipsCompact = UyDosh.METRO_LINE_IDS.map((lineId) => {
-    const pressed = state.filters.subwayLineId === lineId;
-    const color = UyDosh.metroLineColor(lineId) || 'currentColor';
-    const label = UyDosh.metroLineLabel(lineId, lang);
-    return `
-    <button
-      type="button"
-      class="chip chip-line chip-line-compact"
-      data-subway-line="${lineId}"
-      style="--line-color:${color}"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-      aria-label="${UyDosh.escapeHtml(label)}"
-    >${UyDosh.metroLineBadgeHtml(lineId)}<span class="chip-label-collapse"><span class="chip-label">${UyDosh.escapeHtml(label)}</span></span></button>
-  `;
-  }).join('');
+  const lineChipsCompact = UyDosh.metroLineChipsHtml(state.filters.subwayLineId, lang, { compact: true });
 
   filtersEl.classList.toggle('filters--collapsed', collapsed);
   const filtersToggleHtml = `

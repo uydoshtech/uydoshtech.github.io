@@ -133,20 +133,26 @@ const METRO_LINE_IDS = [1, 2, 3, 4];
 
 /**
  * Transfer (interchange) station pairs, matching mobile MetroCache.
- * Maps a station id to its transfer partner's id + line, so a transfer
- * station can render a second colored train icon for the connecting line.
+ * Maps a station id to its transfer partner's id + line + name (per
+ * language, matching mobile metro_cache.dart), so a transfer station can
+ * render the connecting station's icon + name alongside its own.
  */
 const METRO_TRANSFER_PAIRS = {
-  12: { partnerId: 22, partnerLine: 2 }, // Paxtakor <-> Alisher Navoiy
-  22: { partnerId: 12, partnerLine: 1 }, // Alisher Navoiy <-> Paxtakor
-  14: { partnerId: 30, partnerLine: 3 }, // A. Temur Xiyoboni <-> Yunus Rajabiy
-  30: { partnerId: 14, partnerLine: 1 }, // Yunus Rajabiy <-> A. Temur Xiyoboni
-  25: { partnerId: 29, partnerLine: 3 }, // Oybek <-> Mingurik
-  29: { partnerId: 25, partnerLine: 2 }, // Mingurik <-> Oybek
-  1: { partnerId: 50, partnerLine: 4 }, // Chinor <-> Qipchoq
-  50: { partnerId: 1, partnerLine: 1 }, // Qipchoq <-> Chinor
-  28: { partnerId: 37, partnerLine: 4 }, // Do'stlik <-> Texnopark
-  37: { partnerId: 28, partnerLine: 2 }, // Texnopark <-> Do'stlik
+  // Paxtakor <-> Alisher Navoiy
+  12: { partnerId: 22, partnerLine: 2, partnerName: { uz: 'Alisher Navoiy', ru: 'Алишер Навои', en: 'Alisher Navoi' } },
+  22: { partnerId: 12, partnerLine: 1, partnerName: { uz: 'Paxtakor', ru: 'Пахтакор', en: 'Pakhtakor' } },
+  // A. Temur Xiyoboni <-> Yunus Rajabiy
+  14: { partnerId: 30, partnerLine: 3, partnerName: { uz: 'Yunus Rajabiy', ru: 'Юнус Раджаби', en: 'Yunus Rajabiy' } },
+  30: { partnerId: 14, partnerLine: 1, partnerName: { uz: 'A. Temur Xiyoboni', ru: 'Сквер Амира Темура', en: 'A. Temur Square' } },
+  // Oybek <-> Mingurik
+  25: { partnerId: 29, partnerLine: 3, partnerName: { uz: 'Mingurik', ru: 'Мингурик', en: 'Mingurik' } },
+  29: { partnerId: 25, partnerLine: 2, partnerName: { uz: 'Oybek', ru: 'Ойбек', en: 'Oybek' } },
+  // Chinor <-> Qipchoq
+  1: { partnerId: 50, partnerLine: 4, partnerName: { uz: 'Qipchoq', ru: 'Кипчок', en: 'Qipchoq' } },
+  50: { partnerId: 1, partnerLine: 1, partnerName: { uz: 'Chinor', ru: 'Чинор', en: 'Chinor' } },
+  // Do'stlik <-> Texnopark
+  28: { partnerId: 37, partnerLine: 4, partnerName: { uz: 'Texnopark', ru: 'Технопарк', en: 'Technopark' } },
+  37: { partnerId: 28, partnerLine: 2, partnerName: { uz: 'Doʻstlik', ru: 'Дустлик', en: 'Dustlik' } },
 };
 
 function metroTransferPartner(stationId) {
@@ -179,6 +185,37 @@ function metroLineLabel(line, lang = getLang()) {
 function metroLineBadgeHtml(line) {
   const color = metroLineColor(line) || 'currentColor';
   return `<span class="metro-m-badge" style="--line-color:${color}" aria-hidden="true">M</span>`;
+}
+
+/**
+ * Metro-line selector ribbon: one `.chip-line` button per line, each an
+ * icon-only "M" badge that reveals its line name (slide + fade, via the
+ * shared `.chip-line` / `.chip-label-collapse` CSS in telegram-shared.css)
+ * once selected. Shared by the feed filter bar (expanded + compact rows,
+ * `compact: true`) and the create-listing wizard's metro-line picker so all
+ * three stay byte-identical instead of drifting via copy-paste.
+ *
+ * Callers are expected to wire up `[data-subway-line]` click handlers
+ * themselves (see `syncMetroLineChipPressedState` in telegram-feed.js for
+ * the aria-pressed-only update used to let the reveal animation play).
+ */
+function metroLineChipsHtml(selectedId, lang = getLang(), { compact = false } = {}) {
+  const selected = Number(selectedId);
+  return METRO_LINE_IDS.map((lineId) => {
+    const pressed = selected === lineId;
+    const color = metroLineColor(lineId) || 'currentColor';
+    const label = metroLineLabel(lineId, lang);
+    return `
+    <button
+      type="button"
+      class="chip chip-line${compact ? ' chip-line-compact' : ''}"
+      data-subway-line="${lineId}"
+      style="--line-color:${color}"
+      aria-pressed="${pressed ? 'true' : 'false'}"
+      aria-label="${escapeHtml(label)}"
+    >${metroLineBadgeHtml(lineId)}<span class="chip-label-collapse"><span class="chip-label">${escapeHtml(label)}</span></span></button>
+  `;
+  }).join('');
 }
 
 function resolveMetroLine(listing) {
@@ -214,14 +251,16 @@ function iconMetro(line) {
 }
 
 /**
- * Trailing colored train icon for a station's transfer partner line, shown
- * after the station name for interchange stations (matches mobile
- * listing_form_metro_section.dart, which flanks the name with both lines'
- * icons). Empty string when the station isn't a transfer station.
+ * Trailing "<-> icon Name" suffix for a station's transfer partner, shown
+ * after the station name for interchange stations, e.g.
+ * "icon Do'stlik <-> icon Texnopark". Empty string when the station isn't a
+ * transfer station.
  */
-function metroTransferIconHtml(stationId) {
+function metroTransferSuffixHtml(stationId, lang = getLang()) {
   const partner = metroTransferPartner(stationId);
-  return partner ? iconMetro(partner.partnerLine) : '';
+  if (!partner) return '';
+  const name = partner.partnerName?.[lang] || partner.partnerName?.en || '';
+  return `<span class="station-item-transfer">↔ ${iconMetro(partner.partnerLine)}<span class="station-item-transfer-name">${escapeHtml(name)}</span></span>`;
 }
 
 function iconClock() {
@@ -338,6 +377,7 @@ Object.assign(window.UyDosh, {
   metroLineColor,
   metroLineLabel,
   metroLineBadgeHtml,
+  metroLineChipsHtml,
   METRO_LINE_IDS,
   METRO_LINE_ANY,
   LISTING_TYPE_ALL,
@@ -349,7 +389,7 @@ Object.assign(window.UyDosh, {
   GENDER_FEMALE,
   resolveMetroLine,
   metroTransferPartner,
-  metroTransferIconHtml,
+  metroTransferSuffixHtml,
   iconPin,
   iconMetro,
   iconClock,
