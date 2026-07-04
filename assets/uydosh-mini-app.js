@@ -158,8 +158,8 @@ function accountMenuHtml() {
         data-i18n-attr="aria-label"
       >
         <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
+        <span class="account-menu-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
       </button>
-      <span class="account-menu-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
       <div class="account-menu-list" role="menu" hidden>
         <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('person')}<span data-i18n="account.menuAccount"></span></a>
         <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
@@ -405,29 +405,30 @@ function ensureMiniAppSafeAreaStyles() {
       border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
       background: rgba(127, 127, 127, 0.08);
       color: var(--muted, rgba(255, 255, 255, 0.7));
-      width: 34px;
       height: 34px;
-      padding: 0;
-      border-radius: 50%;
+      padding: 3px 9px 3px 3px;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      gap: 5px;
       cursor: pointer;
     }
     html.mini-app .account-menu-trigger:active {
       opacity: 0.88;
     }
     html.mini-app .account-menu-avatar {
-      width: 100%;
-      height: 100%;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
     html.mini-app .account-menu-avatar svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       display: block;
     }
     html.mini-app .account-menu-avatar.has-avatar .account-menu-avatar-img {
@@ -437,26 +438,17 @@ function ensureMiniAppSafeAreaStyles() {
       display: block;
     }
     html.mini-app .account-menu-chevron {
-      position: absolute;
-      right: -2px;
-      bottom: -2px;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: var(--bg, #0f0f10);
-      border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
-      color: var(--muted, rgba(255, 255, 255, 0.7));
-      pointer-events: none;
+      flex-shrink: 0;
       transition: transform 0.18s ease;
     }
     html.mini-app .account-menu-chevron svg {
-      width: 9px;
-      height: 9px;
+      width: 18px;
+      height: 18px;
       display: block;
-      stroke-width: 3;
+      stroke-width: 2.5;
     }
     html.mini-app .account-menu.account-menu-open .account-menu-chevron {
       transform: rotate(180deg);
