@@ -425,8 +425,6 @@ async function resizeImageFileForUpload(file, {
   return dataUrl;
 }
 
-const MINI_APP_CREATE_PATH = '/telegram/create.html';
-
 function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, subwayLineId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -551,5 +549,4 @@ Object.assign(window.UyDosh, {
   reflowActiveMaps,
   withTimeout,
   waitForElementLayout,
-  MINI_APP_CREATE_PATH,
 });

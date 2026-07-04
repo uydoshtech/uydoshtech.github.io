@@ -80,6 +80,8 @@ function isMiniAppPage() {
     if (/\/telegram\/index\.html$/i.test(path)) return true;
     if (/\/telegram\/create\.html$/i.test(path)) return true;
     if (/\/telegram\/create\/?$/i.test(path)) return true;
+    if (/\/telegram\/account\.html$/i.test(path)) return true;
+    if (/\/telegram\/account\/?$/i.test(path)) return true;
   } catch { /* ignore */ }
   return false;
 }
