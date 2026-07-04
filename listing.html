@@ -844,7 +844,8 @@
         detailContactBarEl.hidden = false;
         detailContactBarEl.setAttribute('aria-hidden', 'false');
         document.documentElement.classList.add('has-detail-contact');
-        UyDosh.bindDetailContactBar(detailContactBarEl, { listingId: listing?.id });
+        const prefillText = handle ? buildListingContactMessage(listing, UyDosh.getLang()) : '';
+        UyDosh.bindDetailContactBar(detailContactBarEl, { listingId: listing?.id, prefillText });
         UyDosh.applyI18n(detailContactBarEl);
       }
 
@@ -874,6 +875,24 @@
         const price = UyDosh.formatPrice(l, lang);
         const priceLine = price ? `\n💰 ${price}${UyDosh.t('card.perMonth')}` : '';
         return `${title}${priceLine}`;
+      }
+
+      // Prefills the Telegram compose box (via `?text=`) when a guest taps
+      // "Contact on Telegram" on the detail screen, so the host immediately
+      // knows which listing the message refers to instead of a blank chat.
+      function buildListingContactMessage(l, lang) {
+        const title = l.title || `#${l.id}`;
+        const price = UyDosh.formatPrice(l, lang);
+        const district = UyDosh.localized(l.location, lang);
+        const details = [
+          title,
+          price ? `${price}${UyDosh.t('card.perMonth', lang)}` : '',
+          district,
+        ].filter(Boolean).join(', ');
+        const link = buildListingShareUrl(l.id);
+        return UyDosh.t('detail.contactMessage', lang)
+          .replace('{details}', details)
+          .replace('{link}', link);
       }
 
       function bindShareButton(l) {
