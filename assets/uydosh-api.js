@@ -525,6 +525,25 @@ function createProfile(body) {
   return fetchJsonAuth('/profiles', { method: 'POST', body });
 }
 
+/** Current (or any) user's profile — public endpoint, no session required. */
+function fetchProfile(userId) {
+  return fetchJson(`/profiles/${encodeURIComponent(userId)}`);
+}
+
+/**
+ * Partial profile update (only the fields set are changed). Note: per the
+ * backend's update handler, `university_id: 0` clears the university —
+ * `null`/`undefined` are both treated as "leave unchanged", not "clear".
+ */
+function updateProfile(userId, body) {
+  return fetchJsonAuth(`/profiles/${encodeURIComponent(userId)}`, { method: 'PUT', body });
+}
+
+/** Full university list (for pickers) — public, localized by `lang`. */
+function fetchUniversitiesAll(lang = getLang()) {
+  return fetchJson('/universities/all', { language: lang });
+}
+
 function uploadListingPhoto(listingId, imageData, { isPrimary = false } = {}) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/photos`, {
     method: 'POST',
@@ -739,6 +758,9 @@ Object.assign(window.UyDosh, {
   renewListingFromTelegramMiniApp,
   deleteListingFromTelegramMiniApp,
   createProfile,
+  fetchProfile,
+  updateProfile,
+  fetchUniversitiesAll,
   uploadListingPhoto,
   deleteListingPhoto,
   readFileAsDataUrl,

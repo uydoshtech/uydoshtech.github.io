@@ -82,6 +82,8 @@ function isMiniAppPage() {
     if (/\/telegram\/create\/?$/i.test(path)) return true;
     if (/\/telegram\/account\.html$/i.test(path)) return true;
     if (/\/telegram\/account\/?$/i.test(path)) return true;
+    if (/\/telegram\/profile\.html$/i.test(path)) return true;
+    if (/\/telegram\/profile\/?$/i.test(path)) return true;
   } catch { /* ignore */ }
   return false;
 }

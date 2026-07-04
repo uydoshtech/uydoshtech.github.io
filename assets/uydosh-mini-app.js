@@ -44,6 +44,130 @@ function applyTelegramTheme(tg) {
   if (p.secondary_bg_color) root.style.setProperty('--tg-card', p.secondary_bg_color);
 }
 
+/**
+ * "Add your university" nudge banner (feed page only — see `maybeShowProfileNudge`).
+ * Dismissed permanently on this device either via its own close button or by
+ * completing a save on the profile page itself (see telegram-profile.js),
+ * since `user_profiles.university_id` alone can't distinguish "never asked"
+ * from "answered — not a student" (both are `null`).
+ */
+const PROFILE_NUDGE_DISMISSED_KEY = 'uydosh_profile_nudge_dismissed';
+const PROFILE_NUDGE_STYLE_ID = 'uydosh-profile-nudge-styles';
+
+function isProfileNudgeDismissed() {
+  try {
+    return localStorage.getItem(PROFILE_NUDGE_DISMISSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function dismissProfileNudge() {
+  try {
+    localStorage.setItem(PROFILE_NUDGE_DISMISSED_KEY, '1');
+  } catch { /* ignore */ }
+  document.querySelector('.profile-nudge')?.remove();
+}
+
+function ensureProfileNudgeStyles() {
+  if (document.getElementById(PROFILE_NUDGE_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = PROFILE_NUDGE_STYLE_ID;
+  style.textContent = `
+    .profile-nudge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 4px;
+      padding: 11px 12px;
+      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--brand2, #e11d2e) 10%, transparent);
+    }
+    .profile-nudge-icon {
+      flex-shrink: 0;
+      display: inline-flex;
+      color: var(--brand2, #e11d2e);
+    }
+    .profile-nudge-icon svg { width: 22px; height: 22px; display: block; }
+    .profile-nudge-text {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--fg);
+    }
+    .profile-nudge-cta {
+      flex-shrink: 0;
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: var(--brand2, #e11d2e);
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .profile-nudge-close {
+      flex-shrink: 0;
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function profileNudgeHtml() {
+  return `
+    <div class="profile-nudge content-gutter" data-profile-nudge>
+      <span class="profile-nudge-icon" aria-hidden="true">${UyDosh.iconChrome('graduationCap')}</span>
+      <span class="profile-nudge-text" data-i18n="profile.nudgeText"></span>
+      <a class="profile-nudge-cta" href="${MINI_APP_PROFILE_PATH}" data-i18n="profile.nudgeCta"></a>
+      <button type="button" class="profile-nudge-close" data-profile-nudge-close aria-label="${escapeHtml(t('profile.nudgeDismiss', getLang()))}">×</button>
+    </div>`;
+}
+
+/**
+ * Best-effort, non-blocking "add your university" nudge shown once per page
+ * load on the feed when the signed-in user's profile is missing a
+ * university (see `PROFILE_NUDGE_DISMISSED_KEY` for the suppression rule).
+ * Silently no-ops on any auth/network failure — this must never block or
+ * break the page it's called from.
+ */
+async function maybeShowProfileNudge(anchorEl) {
+  if (!isMiniApp() || isProfileNudgeDismissed()) return;
+  const anchor = anchorEl || document.querySelector('header.uydosh-mini-app-header');
+  if (!anchor || anchor.parentElement?.querySelector('.profile-nudge')) return;
+  try {
+    const sessionReady = await ensureTelegramMiniAppSession();
+    if (!sessionReady) return;
+    const userId = getSessionUserId();
+    if (!userId) return;
+    const profile = await fetchProfile(userId);
+    if (profile?.university_id != null) return;
+    if (isProfileNudgeDismissed()) return; // re-check: user may have dismissed while this was in flight
+    ensureProfileNudgeStyles();
+    anchor.insertAdjacentHTML('afterend', profileNudgeHtml());
+    const banner = anchor.parentElement?.querySelector('.profile-nudge');
+    if (!banner) return;
+    applyI18n(banner);
+    banner.querySelector('[data-profile-nudge-close]')?.addEventListener('click', dismissProfileNudge);
+  } catch (err) {
+    console.warn('[UyDosh] profile nudge skipped', err);
+  }
+}
+
 const MINI_APP_SAFE_AREA_STYLE_ID = 'uydosh-mini-app-safe-area-v2';
 const TELEGRAM_MOBILE_PLATFORMS = new Set(['ios', 'android', 'android_x']);
 const TELEGRAM_DESKTOP_PLATFORMS = new Set(['tdesktop', 'macos', 'unigram', 'weba', 'webk']);
@@ -126,6 +250,7 @@ function parseMiniAppHeaderOptions(el) {
 }
 
 const MINI_APP_ACCOUNT_PATH = '/telegram/account.html';
+const MINI_APP_PROFILE_PATH = '/telegram/profile.html';
 
 /** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
 function accountMenuAvatarUrl() {
@@ -161,6 +286,7 @@ function accountMenuHtml() {
         <span class="account-menu-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
       </button>
       <div class="account-menu-list" role="menu" hidden>
+        <a role="menuitem" href="${MINI_APP_PROFILE_PATH}">${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span></a>
         <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('person')}<span data-i18n="account.menuAccount"></span></a>
         <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
       </div>
@@ -873,6 +999,9 @@ Object.assign(window.UyDosh, {
   initMiniAppAccountMenus,
   MINI_APP_ACCOUNT_PATH,
   MINI_APP_CREATE_PATH,
+  MINI_APP_PROFILE_PATH,
+  maybeShowProfileNudge,
+  dismissProfileNudge,
   initMiniAppAnalytics,
   logMiniAppEvent,
   logMiniAppScreen,

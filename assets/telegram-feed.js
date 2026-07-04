@@ -884,3 +884,5 @@ window.addEventListener('pageshow', () => {
 requestAnimationFrame(() => resetFiltersScrollAnchor());
 updateScrollTopButton();
 loadMore();
+// Best-effort "add your university" nudge — never blocks the feed itself.
+UyDosh.maybeShowProfileNudge?.();
