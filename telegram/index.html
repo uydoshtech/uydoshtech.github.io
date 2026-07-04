@@ -890,7 +890,7 @@
       .type-badge {
         position: absolute;
         top: 8px;
-        right: 8px;
+        left: 8px;
         display: inline-flex;
         align-items: center;
         padding: 4px 9px;
@@ -903,6 +903,12 @@
         background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 32%, rgba(8, 10, 14, 0.88));
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
+      }
+      /* When a listing is also featured, that ribbon already claims the
+         top-left corner — stack the type badge underneath it instead of
+         overlapping. */
+      .featured-badge + .type-badge {
+        top: 36px;
       }
       .card .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
       .card .title-row {
