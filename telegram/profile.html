@@ -299,7 +299,18 @@
         animation: profile-spin 0.75s linear infinite;
         flex-shrink: 0;
       }
-      #loading[hidden], #form-root[hidden], #profile-footer[hidden] { display: none !important; }
+      /*
+       * `.field`/`.university-picked` set their own `display` (flex), which —
+       * being an author rule — otherwise wins over the browser's default
+       * `[hidden] { display: none }` (a user-agent rule) regardless of
+       * selector specificity. Without this, toggling `.hidden` via JS on
+       * these elements had no visual effect at all.
+       */
+      #loading[hidden],
+      #form-root[hidden],
+      #profile-footer[hidden],
+      #university-field[hidden],
+      #university-picked[hidden] { display: none !important; }
     </style>
   </head>
   <body>
@@ -360,7 +371,7 @@
       </div>
     </footer>
 
-    <script src="../assets/uydosh-core.js?v=20260705-94"></script>
+    <script src="../assets/uydosh-core.js?v=20260705-95"></script>
     <script src="../assets/uydosh-api.js?v=20260705-95"></script>
     <script src="../assets/uydosh-i18n.js?v=20260705-15"></script>
     <script src="../assets/uydosh-icons.js?v=20260705-94"></script>

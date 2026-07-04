@@ -231,6 +231,15 @@ function photoUrl(photo) {
   return `${API_BASE}${u.startsWith('/') ? '' : '/'}${u}`;
 }
 
+// Backend resolves the actual Telegram profile photo on demand (server-side
+// cached, see `GET /telegram/avatar/:username`). Returns '' for an empty/invalid
+// handle so callers can skip rendering an <img> entirely.
+function telegramAvatarUrl(username) {
+  const handle = typeof username === 'string' ? username.trim().replace(/^@+/, '') : '';
+  if (!handle) return '';
+  return `${API_BASE}/telegram/avatar/${encodeURIComponent(handle)}`;
+}
+
 function listingPhotos(listing) {
   return Array.isArray(listing?.photos) ? listing.photos : [];
 }
@@ -527,6 +536,7 @@ Object.assign(window.UyDosh, {
   localizedShort,
   localizedDescription,
   photoUrl,
+  telegramAvatarUrl,
   primaryPhoto,
   noPhotoPlaceholderImageUrl,
   cardPhotoDotsHtml,

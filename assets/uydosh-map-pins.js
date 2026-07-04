@@ -704,9 +704,12 @@ function listingContactPhone(listing) {
   return normalizePhoneNumber(listing?.contact_phone);
 }
 
-function telegramUserUrl(username) {
+/** `text` prefills the chat's compose box (documented Telegram deep-link param). */
+function telegramUserUrl(username, text) {
   const clean = normalizeTelegramUsername(username);
-  return clean ? `https://t.me/${encodeURIComponent(clean)}` : '';
+  if (!clean) return '';
+  const base = `https://t.me/${encodeURIComponent(clean)}`;
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base;
 }
 
 function telPhoneUrl(phone) {
@@ -714,9 +717,13 @@ function telPhoneUrl(phone) {
   return clean ? `tel:${clean}` : '';
 }
 
-/** Open a Telegram user chat (Mini App uses openTelegramLink). */
-function openTelegramContact(handle) {
-  const url = telegramUserUrl(handle);
+/**
+ * Open a Telegram user chat (Mini App uses openTelegramLink). `prefillText`,
+ * when given, pre-populates the message box with listing context so the
+ * host immediately knows which listing the guest means.
+ */
+function openTelegramContact(handle, prefillText) {
+  const url = telegramUserUrl(handle, prefillText);
   if (!url) return false;
   const tg = window.Telegram?.WebApp;
   if (isMiniApp() && typeof tg?.openTelegramLink === 'function') {
@@ -846,12 +853,12 @@ function detailContactBarHtml(username, phone) {
   `;
 }
 
-function bindDetailContactBar(container, { listingId, onOpen, onCall } = {}) {
+function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCall } = {}) {
   const telegramBtn = container?.querySelector('[data-detail-contact-telegram]');
   telegramBtn?.addEventListener('click', () => {
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     const handle = telegramBtn.getAttribute('data-telegram-username');
-    if (!openTelegramContact(handle)) return;
+    if (!openTelegramContact(handle, prefillText)) return;
     if (typeof onOpen === 'function') onOpen(handle);
     else if (listingId != null) {
       logMiniAppEvent('telegram_contact_tapped', {
