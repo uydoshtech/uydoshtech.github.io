@@ -413,6 +413,29 @@
         stroke: currentColor;
         fill: none;
       }
+      /* Multi-select checkbox: both states render up front and CSS swaps
+         which one shows based on the row's `aria-pressed` attribute, so
+         toggling selection doesn't require re-rendering the row (see
+         updateStationSelectionUi / updateLocationSelectionUi in
+         telegram-create.js). */
+      .station-item .checkbox-icon {
+        flex-shrink: 0;
+        display: inline-flex;
+      }
+      .station-item .checkbox-icon .chip-icon svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+      }
+      .station-item .checkbox-icon-checked {
+        display: none;
+      }
+      .station-item[aria-pressed="true"] .checkbox-icon-checked {
+        display: inline-flex;
+      }
+      .station-item[aria-pressed="true"] .checkbox-icon-unchecked {
+        display: none;
+      }
       .station-item[aria-pressed="true"] {
         border-color: var(--brand);
         background: rgba(127, 127, 127, 0.1);
@@ -636,6 +659,25 @@
         font-size: 14px;
       }
       .status.error { color: var(--error); }
+      /* #loading starts as a centered spinner; on error the JS swaps its
+         content for plain text via textContent, which naturally drops out
+         of this flex layout back to the padded/centered `.status` block
+         above (see the `.error` class toggle in telegram-create.js). */
+      #loading:not(.error) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100dvh - var(--uydosh-tg-inset-top, 0px) - 160px);
+        padding: 0;
+      }
+      .loading-spinner {
+        width: 32px;
+        height: 32px;
+        border: 2.5px solid color-mix(in srgb, var(--fg) 16%, transparent);
+        border-top-color: var(--brand2);
+        border-radius: 50%;
+        animation: station-list-spin 0.75s linear infinite;
+      }
       .success-panel {
         display: none;
         text-align: center;
@@ -803,7 +845,9 @@
         data-uydosh-header-brand-link="false"
       ></header>
 
-      <div id="loading" class="status">…</div>
+      <div id="loading" class="status" aria-busy="true" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+      </div>
 
       <div id="form-root" hidden>
         <div class="wizard-header">
@@ -851,10 +895,10 @@
     <script src="../assets/uydosh-core.js?v=20260703-67"></script>
     <script src="../assets/uydosh-api.js?v=20260704-73"></script>
     <script src="../assets/uydosh-i18n.js?v=20260704-4"></script>
-    <script src="../assets/uydosh-icons.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-map-pins.js?v=20260703-72"></script>
+    <script src="../assets/uydosh-icons.js?v=20260704-74"></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260704-75"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260703-70"></script>
-    <script src="../assets/telegram-create.js?v=20260703-69"></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260704-71"></script>
+    <script src="../assets/telegram-create.js?v=20260704-74"></script>
   </body>
 </html>

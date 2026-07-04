@@ -572,7 +572,11 @@ function initTelegramMiniApp() {
     try { tg.ready(); } catch { /* ignore */ }
     try { tg.expand(); } catch { /* ignore */ }
     if (redirectFromMiniAppStartParam()) return true;
-    initTelegramLocationManager();
+    // Fire-and-forget: inits the LocationManager and, if the user already granted location
+    // access (e.g. from a previous visit to the map view), silently reports their current
+    // location — so location history isn't limited to map-view visits. Never prompts for
+    // permission itself; see `reportUserLocationIfGranted`.
+    reportUserLocationIfGranted();
     applyTelegramTheme(tg);
     applyStoredManualTheme();
     applyTelegramSafeAreaInsets(tg);

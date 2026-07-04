@@ -285,12 +285,14 @@ function stationListHtml(lang) {
         <span class="station-list-spinner" aria-hidden="true"></span>
       </div>`;
   }
+  const multi = supportsMultiLocation();
   const stationItems = state.stations.map((st) => {
     const id = Number(st.id);
     const pressed = state.form.selectedStationIds.includes(id);
     const lineId = Number(st.line) || state.form.subwayLineId;
     return `
       <button type="button" class="station-item" data-station-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
+        ${multi ? UyDosh.iconCheckboxPair() : ''}
         ${UyDosh.iconMetro(lineId)}
         <span>${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span>
       </button>`;
@@ -362,6 +364,7 @@ function renderStep0(lang) {
       const pressed = state.form.selectedLocationIds.includes(id);
       return `
         <button type="button" class="station-item" data-location-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
+          ${supportsMultiLocation() ? UyDosh.iconCheckboxPair() : ''}
           ${UyDosh.iconPin()}
           <span>${UyDosh.escapeHtml(UyDosh.localizedShort(loc, lang))}</span>
         </button>`;

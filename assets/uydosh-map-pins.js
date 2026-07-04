@@ -620,26 +620,50 @@ function requestUserLocationFromBrowser() {
   });
 }
 
+/** Wraps `LocationManager.getLocation` in a promise resolving to `{ latitude, longitude }`. */
+function getTelegramLocationData(loc) {
+  return new Promise((resolve, reject) => {
+    loc.getLocation((data) => {
+      const latitude = Number(data?.latitude);
+      const longitude = Number(data?.longitude);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        resolve({ latitude, longitude });
+        return;
+      }
+      reject(new Error('telegram_location_denied'));
+    });
+  });
+}
+
 /** Telegram LocationManager first (Mini App), then browser Geolocation API. */
 async function requestUserLocation() {
   if (isMiniApp()) {
     const loc = await initTelegramLocationManager();
     if (loc?.isLocationAvailable) {
-      const telegramLocation = await new Promise((resolve, reject) => {
-        loc.getLocation((data) => {
-          const latitude = Number(data?.latitude);
-          const longitude = Number(data?.longitude);
-          if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-            resolve({ latitude, longitude });
-            return;
-          }
-          reject(new Error('telegram_location_denied'));
-        });
-      });
-      return telegramLocation;
+      return getTelegramLocationData(loc);
     }
   }
   return requestUserLocationFromBrowser();
+}
+
+/**
+ * Best-effort background location report, safe to call on every Mini App screen (not just
+ * the map view): it only proceeds if the user already granted Telegram location access
+ * (`isAccessGranted`), so — unlike `requestUserLocation` — it never triggers a permission
+ * prompt on a screen the user didn't take a location-related action on. Reuses the same
+ * `/app/telegram-mini-app-location` endpoint (and its per-IP rate limit) as the map view,
+ * so no extra client-side throttling is needed here.
+ */
+async function reportUserLocationIfGranted() {
+  if (!isMiniApp()) return;
+  try {
+    const loc = await initTelegramLocationManager();
+    if (!loc?.isLocationAvailable || !loc?.isAccessGranted) return;
+    const position = await getTelegramLocationData(loc);
+    await window.UyDosh.reportTelegramMiniAppLocation(position.latitude, position.longitude);
+  } catch (err) {
+    console.warn('[UyDoshMap] Background location report failed', err);
+  }
 }
 
 function openTelegramLocationSettings() {
@@ -866,6 +890,7 @@ Object.assign(window.UyDosh, {
   createMetroStationPinIcon,
   createUserLocationPinIcon,
   requestUserLocation,
+  reportUserLocationIfGranted,
   openTelegramLocationSettings,
   normalizeTelegramUsername,
   listingContactTelegram,

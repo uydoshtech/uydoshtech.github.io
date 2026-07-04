@@ -222,6 +222,39 @@ function filterPhotoIcon({ pressed = false } = {}) {
   return iconCamera(color);
 }
 
+/** Checked/unchecked checkbox glyphs, matching mobile's
+ * Icons.check_box / Icons.check_box_outline_blank used by
+ * MultiStationPicker / MultiLocationPicker. */
+function iconCheckboxChecked(color) {
+  return chipIconFilled(
+    color,
+    'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+  );
+}
+
+function iconCheckboxUnchecked(color) {
+  return chipIconFilled(
+    color,
+    'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z',
+  );
+}
+
+/**
+ * Checked + unchecked checkbox markup for a multi-select list row. Both
+ * states are rendered and toggled purely via CSS keyed off the row's
+ * `aria-pressed` attribute (see `.checkbox-icon-checked` /
+ * `.checkbox-icon-unchecked` rules in telegram/create.html), so callers that
+ * patch `aria-pressed` in place — see `updateStationSelectionUi` /
+ * `updateLocationSelectionUi` in telegram-create.js — don't need to
+ * re-render the row to reflect a new selection state.
+ */
+function iconCheckboxPair() {
+  return `<span class="checkbox-icon" aria-hidden="true">` +
+    `<span class="checkbox-icon-unchecked">${iconCheckboxUnchecked('var(--muted)')}</span>` +
+    `<span class="checkbox-icon-checked">${iconCheckboxChecked('var(--brand)')}</span>` +
+    `</span>`;
+}
+
 Object.assign(window.UyDosh, {
   feedEmptyStateHtml,
   metroLineColor,
@@ -244,6 +277,7 @@ Object.assign(window.UyDosh, {
   iconLock,
   iconCamera,
   filterPhotoIcon,
+  iconCheckboxPair,
   iconArticle,
   descriptionTemplateText,
   presetListingTitleText,
