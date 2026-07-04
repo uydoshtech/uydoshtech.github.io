@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ru" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UyDosh — Account</title>
+    <meta name="description" content="Your own listings on UyDosh — Telegram Mini App." />
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script>
+      // Apply a saved manual UI theme (mini app header sun/moon toggle) before first paint to
+      // avoid a flash. This only affects the app's own interface colors — the map's light/dark
+      // rendering is independent and is never controlled by this toggle.
+      (function () {
+        try {
+          var uiTheme = localStorage.getItem('uydosh_manual_theme');
+          var vars = uiTheme === 'dark'
+            ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
+            : uiTheme === 'light'
+              ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
+              : null;
+          if (vars) {
+            var root = document.documentElement;
+            for (var prop in vars) root.style.setProperty(prop, vars[prop]);
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260703-67" />
+    <style>
+      header {
+        margin-top: var(
+          --uydosh-tg-inset-top,
+          var(--tg-content-safe-area-inset-top, 0px)
+        );
+        padding:
+          4px
+          max(0px, var(--uydosh-tg-inset-right, 0px))
+          12px
+          max(0px, var(--uydosh-tg-inset-left, 0px));
+      }
+      .account-page-title {
+        margin: 4px 0 14px;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .status {
+        text-align: center;
+        color: var(--muted);
+        padding: 40px 16px;
+        font-size: 14px;
+      }
+      .status.error { color: var(--error, #f87171); }
+      #loading:not(.error) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100dvh - var(--uydosh-tg-inset-top, 0px) - 160px);
+        padding: 0;
+      }
+      .loading-spinner {
+        width: 32px;
+        height: 32px;
+        border: 2.5px solid color-mix(in srgb, var(--fg) 16%, transparent);
+        border-top-color: var(--brand2);
+        border-radius: 50%;
+        animation: account-spin 0.75s linear infinite;
+      }
+      @keyframes account-spin {
+        to { transform: rotate(360deg); }
+      }
+      .account-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        text-align: center;
+        padding: 48px 16px;
+        color: var(--muted);
+      }
+      .btn-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 20px;
+        border-radius: 12px;
+        border: 0;
+        background: var(--brand2);
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .btn-link:active { opacity: 0.9; }
+      .account-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .account-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 16px;
+      }
+      .account-thumb {
+        flex: 0 0 64px;
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(225, 29, 46, 0.08));
+      }
+      .account-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .account-thumb.empty::after {
+        content: 'UyDosh';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+      }
+      .account-row-body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .account-row-title {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .account-row-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .account-row-price {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--price-green);
+        white-space: nowrap;
+      }
+      .account-row-price small {
+        font-weight: 500;
+        font-size: 11px;
+        opacity: 0.85;
+        margin-left: 2px;
+      }
+      .account-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .account-status-pending {
+        color: #f59e0b;
+        border: 1px solid color-mix(in srgb, #f59e0b 55%, transparent);
+        background: color-mix(in srgb, #f59e0b 14%, transparent);
+      }
+      .account-status-inactive {
+        color: var(--muted);
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.1);
+      }
+      .account-edit-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.1);
+        color: var(--fg);
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .account-edit-btn:active { opacity: 0.88; }
+      #account-list[hidden], #account-empty[hidden], #loading[hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header
+        data-uydosh-mini-app-header
+        data-uydosh-header-subtitle="account.subtitle"
+      ></header>
+
+      <h1 class="account-page-title" data-i18n="account.title"></h1>
+
+      <div id="loading" class="status" aria-busy="true" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+      </div>
+
+      <div id="account-empty" class="account-empty" hidden>
+        <p data-i18n="account.empty"></p>
+        <a class="btn-link" href="/telegram/create.html" data-i18n="create.postListing"></a>
+      </div>
+
+      <div id="account-list" class="account-list" hidden></div>
+    </div>
+
+    <script src="../assets/uydosh-core.js?v=20260703-67"></script>
+    <script src="../assets/uydosh-api.js?v=20260704-78"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260704-8"></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260704-78"></script>
+    <script src="../assets/telegram-account.js?v=20260704-77"></script>
+  </body>
+</html>

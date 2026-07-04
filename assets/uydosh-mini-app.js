@@ -3,6 +3,7 @@
 // Depends on all other uydosh-*.js modules. Load last.
 
 const MINI_APP_FEED_PATH = '/telegram/';
+const MINI_APP_CREATE_PATH = '/telegram/create.html';
 
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
@@ -124,7 +125,104 @@ function parseMiniAppHeaderOptions(el) {
   return options;
 }
 
-/** Shared Telegram mini-app header markup (brand + lang slot). */
+const MINI_APP_ACCOUNT_PATH = '/telegram/account.html';
+
+/** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
+function accountMenuAvatarUrl() {
+  try {
+    return window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '';
+  } catch {
+    return '';
+  }
+}
+
+function accountMenuPersonIconSvg() {
+  return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"></circle><path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>';
+}
+
+function accountMenuPlusIconSvg() {
+  return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path></svg>';
+}
+
+/**
+ * Avatar-triggered account menu shown in the Mini App header — replaces the
+ * public site's language switcher here since the bot already sets the Mini
+ * App's language via `?lang=` (see initTelegramMiniApp). Links to the user's
+ * own listings ("Account") and the create-listing flow.
+ */
+function accountMenuHtml() {
+  const avatarUrl = accountMenuAvatarUrl();
+  const avatarInner = avatarUrl
+    ? `<img class="account-menu-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('has-avatar');this.remove();" />`
+    : accountMenuPersonIconSvg();
+  return `
+    <div class="account-menu" role="group">
+      <button
+        type="button"
+        class="account-menu-trigger"
+        aria-haspopup="true"
+        aria-expanded="false"
+        data-i18n="account.menuLabel"
+        data-i18n-attr="aria-label"
+      >
+        <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
+      </button>
+      <div class="account-menu-list" role="menu" hidden>
+        <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${accountMenuPersonIconSvg()}<span data-i18n="account.menuAccount"></span></a>
+        <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${accountMenuPlusIconSvg()}<span data-i18n="create.postListing"></span></a>
+      </div>
+    </div>`;
+}
+
+function closeAccountMenu(menu) {
+  const list = menu.querySelector('.account-menu-list');
+  const trigger = menu.querySelector('.account-menu-trigger');
+  if (!list || !trigger) return;
+  list.hidden = true;
+  trigger.setAttribute('aria-expanded', 'false');
+  menu.classList.remove('account-menu-open');
+}
+
+function bindAccountMenu(menu) {
+  const trigger = menu.querySelector('.account-menu-trigger');
+  const list = menu.querySelector('.account-menu-list');
+  if (!trigger || !list || trigger.dataset.bound) return;
+  trigger.dataset.bound = '1';
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.classList.contains('account-menu-open');
+    for (const other of document.querySelectorAll('.account-menu.account-menu-open')) {
+      closeAccountMenu(other);
+    }
+    if (!open) {
+      list.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      menu.classList.add('account-menu-open');
+    }
+  });
+}
+
+/** Wire up open/close + outside-click/Escape handling for every account menu on the page. */
+function initMiniAppAccountMenus() {
+  for (const menu of document.querySelectorAll('.account-menu')) {
+    bindAccountMenu(menu);
+  }
+  if (document.documentElement.dataset.uydoshAccountMenuBound) return;
+  document.documentElement.dataset.uydoshAccountMenuBound = '1';
+  document.addEventListener('click', (e) => {
+    for (const menu of document.querySelectorAll('.account-menu.account-menu-open')) {
+      if (!menu.contains(e.target)) closeAccountMenu(menu);
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    for (const menu of document.querySelectorAll('.account-menu.account-menu-open')) {
+      closeAccountMenu(menu);
+    }
+  });
+}
+
+/** Shared Telegram mini-app header markup (brand + account menu slot). */
 function miniAppHeaderHtml(options = {}) {
   const {
     subtitleKey = 'brand.tagline',
@@ -138,7 +236,7 @@ function miniAppHeaderHtml(options = {}) {
     ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
     : `<div class="brand">${brandContent}</div>`;
   const themeToggle = `<button type="button" class="theme-toggle-btn" data-uydosh-theme-toggle></button>`;
-  return `${brand}<div class="header-actions">${themeToggle}<div class="lang" role="group" aria-label="Language"></div></div>`;
+  return `${brand}<div class="header-actions">${themeToggle}${accountMenuHtml()}</div>`;
 }
 
 /** Inject the shared mini-app header into a <header> or mount element. */
@@ -150,6 +248,7 @@ function mountMiniAppHeader(target, options = {}) {
   header.dataset.uydoshHeaderMounted = '1';
   applyI18n(header);
   initThemeToggle();
+  initMiniAppAccountMenus();
   syncMobileHeaderLayout();
   return header;
 }
@@ -161,24 +260,24 @@ function mountAllMiniAppHeaders() {
   }
 }
 
-/** Keep brand + lang in one header row on phone (undo legacy relocation). */
+/** Keep brand + account menu in one header row on phone (undo legacy relocation). */
 function syncMobileHeaderLayout() {
   if (!isTelegramMobile()) return;
   const header = document.querySelector('header');
   if (!header) return;
   header.removeAttribute('hidden');
   for (const row of document.querySelectorAll('.mobile-lang-row')) {
-    const lang = row.querySelector('.lang');
-    if (lang && !header.querySelector('.lang')) {
+    const menu = row.querySelector('.account-menu');
+    if (menu && !header.querySelector('.account-menu')) {
       const nav = header.querySelector('nav');
-      (nav || header).appendChild(lang);
+      (nav || header).appendChild(menu);
     }
     row.remove();
   }
-  const orphanLang = document.querySelector('.feed-sticky > .lang, .wrap > .lang');
-  if (orphanLang && !header.contains(orphanLang)) {
+  const orphanMenu = document.querySelector('.feed-sticky > .account-menu, .wrap > .account-menu');
+  if (orphanMenu && !header.contains(orphanMenu)) {
     const nav = header.querySelector('nav');
-    (nav || header).appendChild(orphanLang);
+    (nav || header).appendChild(orphanMenu);
   }
 }
 
@@ -293,9 +392,86 @@ function ensureMiniAppSafeAreaStyles() {
       margin-left: auto;
       flex-shrink: 0;
     }
-    html.mini-app .lang.lang-dropdown > .lang-trigger {
-      font-size: 11px;
-      letter-spacing: 0.06em;
+    html.mini-app .account-menu {
+      position: relative;
+      flex-shrink: 0;
+    }
+    html.mini-app .account-menu-trigger {
+      appearance: none;
+      border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    html.mini-app .account-menu-trigger:active {
+      opacity: 0.88;
+    }
+    html.mini-app .account-menu-avatar {
+      width: 100%;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    html.mini-app .account-menu-avatar svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    html.mini-app .account-menu-avatar.has-avatar .account-menu-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    html.mini-app .account-menu-list {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 190px;
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      /* Solid, never see-through — this floats over feed content below it. */
+      background: color-mix(in srgb, var(--bg), black 6%);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    html.mini-app .account-menu-list[hidden] {
+      display: none;
+    }
+    html.mini-app .account-menu-list a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    html.mini-app .account-menu-list a:active {
+      background: rgba(127, 127, 127, 0.16);
+    }
+    html.mini-app .account-menu-list a svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: block;
+      stroke: currentColor;
+      fill: none;
     }
     html.mini-app .theme-toggle-btn {
       appearance: none;
@@ -654,6 +830,9 @@ Object.assign(window.UyDosh, {
   mountMiniAppHeader,
   mountAllMiniAppHeaders,
   miniAppHeaderHtml,
+  initMiniAppAccountMenus,
+  MINI_APP_ACCOUNT_PATH,
+  MINI_APP_CREATE_PATH,
   initMiniAppAnalytics,
   logMiniAppEvent,
   logMiniAppScreen,

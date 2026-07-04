@@ -70,7 +70,6 @@
       }
       .brand strong { font-size: 15px; }
       .brand span { color: var(--muted); font-size: 13px; display: block; }
-      .lang.lang-dropdown { flex-shrink: 0; }
       .progress {
         display: flex;
         gap: 6px;
@@ -539,6 +538,55 @@
         height: 22px;
         display: block;
       }
+      input[readonly] {
+        opacity: 0.85;
+        cursor: default;
+      }
+      .phone-share-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .phone-share-row input {
+        flex: 1;
+        min-width: 0;
+      }
+      .phone-share-btn {
+        appearance: none;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.08);
+        border-radius: 999px;
+        color: var(--fg);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .phone-share-btn:active {
+        opacity: 0.85;
+      }
+      .phone-share-btn .icon {
+        width: 15px;
+        height: 15px;
+        color: var(--brand);
+      }
+      .phone-share-btn .icon svg {
+        width: 15px;
+        height: 15px;
+        display: block;
+      }
+      .phone-share-btn .icon svg * {
+        stroke: currentColor;
+        fill: none;
+      }
+      .phone-share-btn[hidden] {
+        display: none !important;
+      }
       .review-card {
         border: 1px solid var(--stroke);
         border-radius: 16px;
@@ -798,6 +846,9 @@
         padding: 14px 18px;
         transition: opacity 0.15s ease, transform 0.15s ease;
       }
+      .wizard-btn[hidden] {
+        display: none;
+      }
       .wizard-btn:active:not(:disabled) {
         opacity: 0.9;
         transform: scale(0.98);
@@ -826,6 +877,9 @@
         width: 18px;
         height: 18px;
         flex-shrink: 0;
+      }
+      .wizard-btn-icon[hidden] {
+        display: none;
       }
       .wizard-btn-icon svg {
         display: block;
@@ -870,11 +924,12 @@
       <div id="form-error" class="form-error-banner" role="alert" hidden></div>
 
       <div id="success-root" class="success-panel" hidden>
-        <h2 data-i18n="create.success">Объявление отправлено!</h2>
-        <p data-i18n="create.successHint">После модерации оно появится в ленте.</p>
+        <h2 id="success-title" data-i18n="create.success">Объявление отправлено!</h2>
+        <p id="success-hint" data-i18n="create.successHint">После модерации оно появится в ленте.</p>
         <p id="success-photo-warning" class="success-photo-warning" hidden></p>
         <div class="success-actions">
           <a class="btn-link primary" id="success-feed" href="/telegram/" data-i18n="create.backToFeed">К объявлениям</a>
+          <a class="btn-link" id="success-view" href="/telegram/account.html" data-i18n="create.backToAccount">К моим объявлениям</a>
         </div>
       </div>
     </div>
@@ -900,12 +955,12 @@
     <input type="file" id="photo-input" accept="image/*" multiple hidden />
 
     <script src="../assets/uydosh-core.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-api.js?v=20260704-73"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260704-5"></script>
-    <script src="../assets/uydosh-icons.js?v=20260704-75"></script>
+    <script src="../assets/uydosh-api.js?v=20260704-78"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260704-8"></script>
+    <script src="../assets/uydosh-icons.js?v=20260704-76"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260704-75"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260704-71"></script>
-    <script src="../assets/telegram-create.js?v=20260704-75"></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260704-78"></script>
+    <script src="../assets/telegram-create.js?v=20260704-78"></script>
   </body>
 </html>

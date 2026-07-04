@@ -207,27 +207,6 @@ async function reportTelegramMiniAppLocation(latitude, longitude, contactRaw) {
   }
 }
 
-const TG_CONTACT_SHARE_OFFERED_KEY = 'uydosh_tg_contact_share_offered';
-
-/**
- * Whether we've already shown the "share phone number" prompt at least once on this
- * device — persisted (unlike the one-per-page-session locate banner) so returning users
- * aren't asked again on every app open regardless of whether they shared or declined.
- */
-function hasOfferedTelegramContactShare() {
-  try {
-    return localStorage.getItem(TG_CONTACT_SHARE_OFFERED_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function markTelegramContactShareOffered() {
-  try {
-    localStorage.setItem(TG_CONTACT_SHARE_OFFERED_KEY, '1');
-  } catch { /* ignore */ }
-}
-
 /**
  * Wraps `Telegram.WebApp.requestContact()` (native "share phone number" consent popup)
  * in a Promise. Resolves with the raw, signable `response` string (never `responseUnsafe`
@@ -247,6 +226,21 @@ function requestTelegramContactShare() {
       resolve(null);
     }
   });
+}
+
+/**
+ * Best-effort client-side read of the phone number out of a raw contact-share `response`
+ * string (see `requestTelegramContactShare`), for display purposes only — the backend
+ * independently re-verifies the same raw string's signature before trusting it.
+ */
+function phoneNumberFromContactShareResponse(contactRaw) {
+  if (!contactRaw) return '';
+  try {
+    const parsed = JSON.parse(contactRaw);
+    return typeof parsed?.phone_number === 'string' ? parsed.phone_number.trim() : '';
+  } catch {
+    return '';
+  }
 }
 
 function fetchSubwayStationsByLine(lineId, lang = getLang()) {
@@ -301,6 +295,50 @@ async function createListingFromTelegramMiniApp(listing) {
   return payload;
 }
 
+/**
+ * Update a listing from the Telegram Mini App (verify initData on submit).
+ * Only the listing's own owner (resolved from initData) may edit it.
+ */
+async function updateListingFromTelegramMiniApp(listingId, listing) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ init_data: initData, listing }),
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    if (res.status === 401) clearTelegramInitData();
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/** List the current Telegram Mini App user's own listings (verified initData). */
+async function fetchMyTelegramMiniAppListings() {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  return fetchJson('/listings/telegram-miniapp/mine', { init_data: initData });
+}
+
 function createProfile(body) {
   return fetchJsonAuth('/profiles', { method: 'POST', body });
 }
@@ -309,6 +347,13 @@ function uploadListingPhoto(listingId, imageData, { isPrimary = false } = {}) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/photos`, {
     method: 'POST',
     body: { imageData, isPrimary },
+  });
+}
+
+/** Delete a listing photo (used when editing an existing listing). */
+function deleteListingPhoto(listingId, photoId) {
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/photos/${encodeURIComponent(photoId)}`, {
+    method: 'DELETE',
   });
 }
 
@@ -485,15 +530,17 @@ Object.assign(window.UyDosh, {
   fetchAmenitiesOrdered,
   createListing,
   createListingFromTelegramMiniApp,
+  updateListingFromTelegramMiniApp,
+  fetchMyTelegramMiniAppListings,
   createProfile,
   uploadListingPhoto,
+  deleteListingPhoto,
   readFileAsDataUrl,
   resizeImageFileForUpload,
   authenticateTelegramMiniApp,
   reportTelegramMiniAppLocation,
-  hasOfferedTelegramContactShare,
-  markTelegramContactShareOffered,
   requestTelegramContactShare,
+  phoneNumberFromContactShareResponse,
   getTelegramInitData,
   clearTelegramInitData,
   isTelegramInitDataUsable,

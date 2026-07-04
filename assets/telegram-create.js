@@ -17,6 +17,10 @@ const MAX_PHOTOS = 5;
 const loadingEl = document.getElementById('loading');
 const formRoot = document.getElementById('form-root');
 const successRoot = document.getElementById('success-root');
+const successTitleEl = document.getElementById('success-title');
+const successHintEl = document.getElementById('success-hint');
+const successViewBtn = document.getElementById('success-view');
+const successFeedBtn = document.getElementById('success-feed');
 const successPhotoWarningEl = document.getElementById('success-photo-warning');
 const stepPanelsEl = document.getElementById('step-panels');
 const stepTitleEl = document.getElementById('step-title');
@@ -42,6 +46,13 @@ const state = {
   validationError: '',
   validationAnchor: '',
   lastGeneratedTitle: '',
+  /// Set when editing an existing listing (from `?id=` on the URL). Only the
+  /// listing's own owner can load/save it — enforced server-side via initData.
+  editingListingId: null,
+  /// Photos already saved on the server for the listing being edited. Shown
+  /// read-only alongside newly picked `form.photos`, removable via the
+  /// dedicated delete-photo endpoint (see removeExistingPhoto).
+  existingPhotos: [],
   /// Every station object seen across every line the author has browsed,
   /// keyed by id. Lets multi-station selections survive switching lines
   /// (mirrors the mobile app's `_stationCache` in MultiStationPicker) and
@@ -64,6 +75,7 @@ const state = {
     title: '',
     description: '',
     photos: [],
+    phone: '',
   },
 };
 
@@ -153,6 +165,85 @@ function updateDefaultTitle(lang = UyDosh.getLang()) {
     state.form.title = generated;
   }
   state.lastGeneratedTitle = generated;
+}
+
+/** Populate `state.form` from an existing listing (edit mode). */
+function hydrateFormFromListing(listing) {
+  const typeId = Number(listing.listing_type_id);
+  state.form.listingTypeId =
+    typeId === LISTING_TYPE_ROOM_NEEDED ? LISTING_TYPE_ROOM_NEEDED : LISTING_TYPE_ROOMMATE_NEEDED;
+
+  const searchStations = Array.isArray(listing.search_subway_stations)
+    ? listing.search_subway_stations
+    : [];
+  const searchLocations = Array.isArray(listing.search_locations)
+    ? listing.search_locations
+    : [];
+
+  if (searchLocations.length > 0 || (listing.location_id != null && searchStations.length === 0)) {
+    state.form.locationMode = LOCATION_MODE_DISTRICT;
+    state.form.selectedLocationIds = searchLocations.length > 0
+      ? searchLocations.map((l) => Number(l.id))
+      : [Number(listing.location_id)];
+  } else if (searchStations.length > 0 || listing.subway_station_id != null) {
+    state.form.locationMode = LOCATION_MODE_METRO;
+    const stations = searchStations.length > 0
+      ? searchStations
+      : (listing.subway_station ? [listing.subway_station] : []);
+    for (const st of stations) state.stationCache[Number(st.id)] = st;
+    state.form.selectedStationIds = stations.length > 0
+      ? stations.map((s) => Number(s.id))
+      : (listing.subway_station_id != null ? [Number(listing.subway_station_id)] : []);
+    const primaryLine = stations[0]?.line ?? listing.subway_station?.line ?? listing.subway_line_id;
+    state.form.subwayLineId = Number(primaryLine) || 1;
+  }
+
+  const minP = Number(listing.min_price);
+  const maxP = Number(listing.max_price);
+  if (Number.isFinite(minP) && Number.isFinite(maxP) && minP > 0 && maxP > 0) {
+    state.form.priceMin = minP;
+    state.form.priceMax = maxP;
+  }
+  const p = Number(listing.price);
+  if (Number.isFinite(p) && p > 0) state.form.price = p;
+
+  state.form.gender = Number(listing.gender) || 1;
+  state.form.amenityIds = new Set(
+    (Array.isArray(listing.amenities) ? listing.amenities : []).map((a) => Number(a.id)),
+  );
+  state.form.moveInDate = listing.move_in_date ? String(listing.move_in_date).slice(0, 10) : '';
+  state.form.privateRoom = Boolean(listing.private_room);
+  // Deliberately leave `state.lastGeneratedTitle` at its initial '' value (not
+  // synced to the loaded title) — updateDefaultTitle() only overwrites the
+  // title when it's empty or matches the last auto-generated text, so this
+  // keeps the listing's real (possibly hand-edited) title from ever being
+  // silently replaced by the auto-generated preset as the user tweaks other
+  // fields or switches language while editing.
+  state.form.title = listing.title || '';
+  state.form.description = listing.description || '';
+  state.existingPhotos = Array.isArray(listing.photos) ? listing.photos.slice() : [];
+}
+
+/** Fetch the caller's own listings and find the one being edited (ownership is enforced this way — no separate authenticated single-listing fetch needed). */
+async function loadListingForEdit(id) {
+  const data = await UyDosh.fetchMyTelegramMiniAppListings();
+  const listings = Array.isArray(data?.listings) ? data.listings : [];
+  const listing = listings.find((l) => Number(l.id) === Number(id));
+  if (!listing) {
+    const err = new Error('Listing not found or not yours');
+    err.status = 404;
+    throw err;
+  }
+  hydrateFormFromListing(listing);
+}
+
+/** Swap header/tab chrome to edit-mode wording; kept in sync across lang changes via data-i18n. */
+function applyEditModeChrome() {
+  if (!state.editingListingId) return;
+  const subtitleEl = document.querySelector('header [data-i18n="create.title"]');
+  subtitleEl?.setAttribute('data-i18n', 'create.editTitle');
+  UyDosh.applyI18n();
+  document.title = `UyDosh — ${UyDosh.t('create.editTitle', UyDosh.getLang())}`;
 }
 
 function reviewListingForBadges() {
@@ -278,10 +369,11 @@ function updateWizardFooter() {
   wizardBackBtn.hidden = isFirst;
   wizardNextBtn.classList.toggle('full', isFirst);
 
+  const isEdit = Boolean(state.editingListingId);
   const nextKey = state.submitting
-    ? 'create.publishing'
+    ? (isEdit ? 'create.saving' : 'create.publishing')
     : isLast
-      ? 'create.publish'
+      ? (isEdit ? 'create.save' : 'create.publish')
       : 'create.next';
   wizardNextLabelEl.textContent = UyDosh.t(nextKey, lang);
   wizardNextLabelEl.removeAttribute('data-i18n');
@@ -525,12 +617,19 @@ function renderStep1(lang) {
 function renderStep2(lang) {
   const titleField = fieldErrorAttrs('title');
   const descriptionField = fieldErrorAttrs('description');
+  const existingPhotoSlots = state.existingPhotos.map((photo) => `
+    <div class="photo-slot">
+      <img src="${UyDosh.escapeHtml(UyDosh.photoUrl(photo))}" alt="" />
+      <button type="button" data-remove-existing-photo="${photo.id}" aria-label="Remove">×</button>
+    </div>
+  `).join('');
   const photoSlots = state.form.photos.map((photo, index) => `
     <div class="photo-slot">
       <img src="${UyDosh.escapeHtml(photo.previewUrl)}" alt="" />
       <button type="button" data-remove-photo="${index}" aria-label="Remove">×</button>
     </div>
   `).join('');
+  const totalPhotoCount = state.existingPhotos.length + state.form.photos.length;
 
   return `
     <section class="panel active" data-step="2">
@@ -559,13 +658,14 @@ function renderStep2(lang) {
       </div>
       <div class="field">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.photos', lang))}</div>
-        <div class="photo-grid">${photoSlots}</div>
+        <div class="photo-grid">${existingPhotoSlots}${photoSlots}</div>
+        ${totalPhotoCount < MAX_PHOTOS ? `
         <button
           type="button"
           class="photo-add"
           data-add-photo
           aria-label="${UyDosh.escapeHtml(UyDosh.t('create.addPhoto', lang))}"
-        >${UyDosh.iconCamera(null)}</button>
+        >${UyDosh.iconCamera(null)}</button>` : ''}
       </div>
     </section>`;
 }
@@ -636,9 +736,43 @@ function renderStep3(lang) {
     </div>`;
   }).join('');
 
+  const phoneShareBtn = `
+    <button type="button" class="phone-share-btn" data-share-phone${state.form.phone ? ' hidden' : ''}>
+      ${UyDosh.iconPhone()}
+      <span>${UyDosh.escapeHtml(UyDosh.t('create.sharePhoneCta', lang))}</span>
+    </button>`;
+
+  const reviewPhotoUrls = [
+    ...state.existingPhotos.map((photo) => UyDosh.photoUrl(photo)),
+    ...state.form.photos.map((photo) => photo.previewUrl),
+  ];
+  const reviewPhotosBlock = reviewPhotoUrls.length > 0 ? `
+      <div class="field">
+        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.photos', lang))}</div>
+        <div class="photo-grid">${reviewPhotoUrls.map((url) => `
+          <div class="photo-slot">
+            <img src="${UyDosh.escapeHtml(url)}" alt="" />
+          </div>
+        `).join('')}</div>
+      </div>` : '';
+
   return `
     <section class="panel active" data-step="3">
       <div class="review-card">${reviewRows}</div>
+      ${reviewPhotosBlock}
+      <div class="field">
+        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.reviewPhone', lang))}</div>
+        <div class="phone-share-row">
+          <input
+            id="listing-phone"
+            type="text"
+            readonly
+            placeholder="${UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang))}"
+            value="${UyDosh.escapeHtml(state.form.phone)}"
+          />
+          ${phoneShareBtn}
+        </div>
+      </div>
     </section>`;
 }
 
@@ -986,6 +1120,17 @@ function bindStepEvents() {
       renderStep();
     });
   });
+
+  stepPanelsEl.querySelector('[data-share-phone]')?.addEventListener('click', async () => {
+    haptic();
+    UyDosh.logMiniAppEvent('create_share_phone_tap');
+    const contactRaw = await UyDosh.requestTelegramContactShare();
+    const phoneNumber = UyDosh.phoneNumberFromContactShareResponse(contactRaw);
+    UyDosh.logMiniAppEvent(phoneNumber ? 'create_share_phone_sent' : 'create_share_phone_cancelled');
+    if (!phoneNumber) return;
+    state.form.phone = phoneNumber;
+    renderStep();
+  });
 }
 
 function validateStep(step) {
@@ -1052,7 +1197,8 @@ function validateStep(step) {
 
 async function submitListing() {
   if (state.submitting) return;
-  UyDosh.logMiniAppEvent('listing_publish_tapped', {
+  const isEdit = Boolean(state.editingListingId);
+  UyDosh.logMiniAppEvent(isEdit ? 'listing_edit_save_tapped' : 'listing_publish_tapped', {
     flow: 'telegram_create',
     listing_type_id: state.form.listingTypeId,
     photo_count: state.form.photos.length,
@@ -1075,6 +1221,7 @@ async function submitListing() {
       amenityIds: [...state.form.amenityIds],
       moveInDate: state.form.moveInDate || undefined,
       privateRoom: !isRoomNeeded() ? state.form.privateRoom : undefined,
+      contactPhone: state.form.phone.trim() || undefined,
     };
 
     if (state.form.locationMode === LOCATION_MODE_METRO) {
@@ -1097,26 +1244,37 @@ async function submitListing() {
       body.locationId = state.form.selectedLocationIds[0];
     }
 
-    const result = await UyDosh.createListingFromTelegramMiniApp(body);
-    const listingId = result?.listing?.id;
-    UyDosh.logMiniAppEvent('listing_created', {
-      listing_type_id: state.form.listingTypeId,
-      photo_count: state.form.photos.length,
-    });
-    if (listingId) {
-      UyDosh.logMiniAppEvent('listing_published', {
+    let listingId;
+    if (isEdit) {
+      listingId = state.editingListingId;
+      await UyDosh.updateListingFromTelegramMiniApp(listingId, body);
+      UyDosh.logMiniAppEvent('listing_edit_saved', {
         listing_id: listingId,
-        source: 'telegram_create',
         listing_type_id: state.form.listingTypeId,
       });
+    } else {
+      const result = await UyDosh.createListingFromTelegramMiniApp(body);
+      listingId = result?.listing?.id;
+      UyDosh.logMiniAppEvent('listing_created', {
+        listing_type_id: state.form.listingTypeId,
+        photo_count: state.form.photos.length,
+      });
+      if (listingId) {
+        UyDosh.logMiniAppEvent('listing_published', {
+          listing_id: listingId,
+          source: 'telegram_create',
+          listing_type_id: state.form.listingTypeId,
+        });
+      }
     }
 
     let failedPhotoCount = 0;
     if (listingId && state.form.photos.length > 0) {
+      const isPrimaryStart = state.existingPhotos.length === 0;
       for (let i = 0; i < state.form.photos.length; i += 1) {
         const photo = state.form.photos[i];
         try {
-          await UyDosh.uploadListingPhoto(listingId, photo.dataUrl, { isPrimary: i === 0 });
+          await UyDosh.uploadListingPhoto(listingId, photo.dataUrl, { isPrimary: isPrimaryStart && i === 0 });
         } catch (photoErr) {
           console.error('Photo upload failed', photoErr);
           failedPhotoCount += 1;
@@ -1135,16 +1293,41 @@ async function submitListing() {
     } else if (successPhotoWarningEl) {
       successPhotoWarningEl.hidden = true;
     }
+    const lang = UyDosh.getLang();
+    if (isEdit) {
+      if (successTitleEl) {
+        successTitleEl.textContent = UyDosh.t('create.editSuccess', lang);
+        successTitleEl.removeAttribute('data-i18n');
+      }
+      if (successHintEl) {
+        successHintEl.textContent = UyDosh.t('create.editSuccessHint', lang);
+        successHintEl.removeAttribute('data-i18n');
+      }
+      // Edit mode: primary action returns to the "my listings" page the user
+      // came from (not the feed) — the secondary feed link stays available too.
+      if (successFeedBtn) {
+        successFeedBtn.href = UyDosh.MINI_APP_ACCOUNT_PATH;
+        successFeedBtn.textContent = UyDosh.t('create.backToAccount', lang);
+        successFeedBtn.removeAttribute('data-i18n');
+      }
+      if (successViewBtn) {
+        successViewBtn.href = UyDosh.MINI_APP_FEED_PATH;
+        successViewBtn.textContent = UyDosh.t('create.backToFeed', lang);
+        successViewBtn.removeAttribute('data-i18n');
+      }
+    }
     successRoot.hidden = false;
     successRoot.classList.add('active');
   } catch (err) {
-    console.error('Create listing failed', err, err.payload);
+    console.error(isEdit ? 'Update listing failed' : 'Create listing failed', err, err.payload);
     if (err.status === 401) UyDosh.clearTelegramInitData();
     haptic('heavy');
     showFormError(
       err.status === 401
         ? UyDosh.t('create.errorAuth', UyDosh.getLang())
-        : err.message || UyDosh.t('create.errorGeneric', UyDosh.getLang()),
+        : err.status === 403
+          ? UyDosh.t('create.errorNotOwner', UyDosh.getLang())
+          : err.message || UyDosh.t('create.errorGeneric', UyDosh.getLang()),
     );
   } finally {
     state.submitting = false;
@@ -1187,7 +1370,8 @@ function goBack() {
 photoInput.addEventListener('change', async () => {
   const files = [...(photoInput.files || [])];
   photoInput.value = '';
-  for (const file of files.slice(0, MAX_PHOTOS - state.form.photos.length)) {
+  const remainingSlots = MAX_PHOTOS - state.existingPhotos.length - state.form.photos.length;
+  for (const file of files.slice(0, Math.max(0, remainingSlots))) {
     try {
       const dataUrl = await UyDosh.resizeImageFileForUpload(file);
       state.form.photos.push({
@@ -1240,10 +1424,19 @@ async function boot() {
     return;
   }
 
+  const params = new URLSearchParams(location.search);
+  const editId = Number(params.get('id'));
+  if (Number.isFinite(editId) && editId > 0) state.editingListingId = editId;
+
   try {
     await UyDosh.authenticateTelegramMiniApp();
     await loadReferenceData();
-    updateDefaultTitle();
+    if (state.editingListingId) {
+      await loadListingForEdit(state.editingListingId);
+    } else {
+      updateDefaultTitle();
+    }
+    applyEditModeChrome();
     loadingEl.hidden = true;
     formRoot.hidden = false;
     renderStep();
@@ -1253,7 +1446,9 @@ async function boot() {
     loadingEl.classList.add('error');
     loadingEl.textContent = err.status === 401
       ? UyDosh.t('create.errorAuth', UyDosh.getLang())
-      : UyDosh.t('create.errorGeneric', UyDosh.getLang());
+      : err.status === 404
+        ? UyDosh.t('create.errorNotOwner', UyDosh.getLang())
+        : UyDosh.t('create.errorGeneric', UyDosh.getLang());
   }
 }
 

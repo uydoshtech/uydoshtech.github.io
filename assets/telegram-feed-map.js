@@ -14,7 +14,6 @@
    * @param {HTMLElement|null} [options.elements.feedMapTooltipEl]
    * @param {HTMLElement|null} [options.elements.feedMapStatusEl]
    * @param {HTMLElement|null} [options.elements.feedMapLocateBannerEl]
-   * @param {HTMLElement|null} [options.elements.feedMapContactBannerEl]
    * @param {HTMLElement|null} [options.elements.fabCreateEl]
    * @param {object} options.state Mutable feed state; map fields are owned by this controller.
    * @param {() => void} [options.onHaptic]
@@ -34,7 +33,6 @@
       feedMapTooltipEl = null,
       feedMapStatusEl = null,
       feedMapLocateBannerEl = null,
-      feedMapContactBannerEl = null,
       fabCreateEl = null,
     } = elements;
 
@@ -48,9 +46,6 @@
     let lastLoadedMapSignature = null;
     // Offered at most once per page session — see showLocateBanner() for why.
     let locateBannerOffered = false;
-    // Most recent resolved device position, used if the user later taps the
-    // "share phone number" banner (see maybeShowContactBanner()).
-    let lastKnownUserPosition = null;
 
     /**
      * The map panel's CSS `height` is a `calc(100dvh - ... - <fixed px>)` guess
@@ -177,44 +172,6 @@
       state.mapModule?.locateUserFromTap(feedMapEl).then((position) => {
         if (position) handleUserLocationResolved(position);
       });
-    });
-
-    /**
-     * Called whenever the map resolves a device position (silently on open, or via the
-     * locate banner tap fallback) so a later "share phone number" tap has coordinates to
-     * attach to. Also offers the contact-share banner, gated to at most once ever per
-     * device (see requestTelegramContactShare/hasOfferedTelegramContactShare) — unlike
-     * the locate banner, phone sharing requires an explicit native popup every time it's
-     * triggered, so nagging a user who already declined would be poor UX.
-     */
-    function handleUserLocationResolved(position) {
-      lastKnownUserPosition = position;
-      maybeShowContactBanner();
-    }
-
-    function maybeShowContactBanner() {
-      if (!feedMapContactBannerEl || UyDosh.hasOfferedTelegramContactShare()) return;
-      feedMapContactBannerEl.hidden = false;
-    }
-
-    function hideContactBanner() {
-      if (!feedMapContactBannerEl) return;
-      feedMapContactBannerEl.hidden = true;
-    }
-
-    feedMapContactBannerEl?.addEventListener('click', async () => {
-      onHaptic();
-      hideContactBanner();
-      UyDosh.markTelegramContactShareOffered();
-      UyDosh.logMiniAppEvent('map_share_phone_banner_tap');
-      const contactRaw = await UyDosh.requestTelegramContactShare();
-      UyDosh.logMiniAppEvent(contactRaw ? 'map_share_phone_sent' : 'map_share_phone_cancelled');
-      if (!contactRaw || !lastKnownUserPosition) return;
-      UyDosh.reportTelegramMiniAppLocation(
-        lastKnownUserPosition.latitude,
-        lastKnownUserPosition.longitude,
-        contactRaw,
-      );
     });
 
     function hideMapPinTooltip() {
@@ -422,7 +379,6 @@
               hideMapPinTooltip();
             },
             onLocationUnavailable: showLocateBanner,
-            onLocationResolved: handleUserLocationResolved,
           }),
           MAP_LOAD_TIMEOUT_MS,
           'Map render timed out',
@@ -478,7 +434,6 @@
       setFeedMapStatus('', false);
       hideMapPinTooltip();
       hideLocateBanner();
-      hideContactBanner();
     }
 
     function onLangChange() {

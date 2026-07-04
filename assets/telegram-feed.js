@@ -28,7 +28,6 @@ const feedMapEl = document.getElementById('feed-map');
 const feedMapTooltipEl = document.getElementById('feed-map-tooltip');
 const feedMapStatusEl = document.getElementById('feed-map-status');
 const feedMapLocateBannerEl = document.getElementById('feed-map-locate-banner');
-const feedMapContactBannerEl = document.getElementById('feed-map-contact-banner');
 const viewTabs = document.querySelectorAll('[data-view]');
 const fabCreateEl = document.getElementById('fab-create');
 const scrollTopBtnEl = document.getElementById('scroll-top-btn');
@@ -287,7 +286,6 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
     feedMapTooltipEl,
     feedMapStatusEl,
     feedMapLocateBannerEl,
-    feedMapContactBannerEl,
     fabCreateEl,
   },
   state,
