@@ -298,9 +298,9 @@ function ensureMiniAppSafeAreaStyles() {
       --fg: var(--tg-fg, rgba(255, 255, 255, 0.92));
       --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
       --card: var(--tg-card, rgba(255, 255, 255, 0.06));
-      /* Re-derive against the real runtime wrap gutter (set below on `.wrap`)
+      /* Re-derive against the real runtime wrap gutter (set below on '.wrap')
          instead of the stale 14px fallback baked into telegram-shared.css's
-         `:root`, so list/grid content (and `.view-tabs`) lines up with the
+         ':root', so list/grid content (and '.view-tabs') lines up with the
          header + filters boxes instead of sitting closer to the edge. */
       --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
     }
