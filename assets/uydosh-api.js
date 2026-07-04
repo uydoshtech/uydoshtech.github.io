@@ -372,6 +372,39 @@ async function fetchMyTelegramMiniAppListings() {
   return fetchJson('/listings/telegram-miniapp/mine', { init_data: initData });
 }
 
+/**
+ * Toggle a listing's active/inactive (visibility) status from the Telegram Mini App
+ * (verify initData on submit). Only the listing's own owner may toggle it.
+ */
+async function toggleListingActiveFromTelegramMiniApp(listingId) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/toggle-active`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ init_data: initData }),
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    if (res.status === 401) clearTelegramInitData();
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
 function createProfile(body) {
   return fetchJsonAuth('/profiles', { method: 'POST', body });
 }
@@ -563,6 +596,7 @@ Object.assign(window.UyDosh, {
   createListingFromTelegramMiniApp,
   updateListingFromTelegramMiniApp,
   fetchMyTelegramMiniAppListings,
+  toggleListingActiveFromTelegramMiniApp,
   createProfile,
   uploadListingPhoto,
   deleteListingPhoto,

@@ -237,12 +237,9 @@ async function loadListingForEdit(id) {
   hydrateFormFromListing(listing);
 }
 
-/** Swap header/tab chrome to edit-mode wording; kept in sync across lang changes via data-i18n. */
+/** Swap the browser/tab title to edit-mode wording (the wizard header carries no title text). */
 function applyEditModeChrome() {
   if (!state.editingListingId) return;
-  const subtitleEl = document.querySelector('header [data-i18n="create.title"]');
-  subtitleEl?.setAttribute('data-i18n', 'create.editTitle');
-  UyDosh.applyI18n();
   document.title = `UyDosh — ${UyDosh.t('create.editTitle', UyDosh.getLang())}`;
 }
 

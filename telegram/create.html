@@ -42,34 +42,23 @@
       .wrap {
         padding-bottom: 24px;
       }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-top: var(
-          --uydosh-tg-inset-top,
-          var(--tg-content-safe-area-inset-top, 0px)
-        );
-        padding:
-          4px
-          max(0px, var(--uydosh-tg-inset-right, 0px))
-          12px
-          max(0px, var(--uydosh-tg-inset-left, 0px));
+      /*
+       * The wizard's own progress bar + step title (below) already communicate
+       * "where am I", repeated on every one of the 4 steps — so unlike other
+       * mini-app pages, this page drops the logo/name/tagline brand row and
+       * keeps the header as an invisible safe-area spacer only, saving
+       * vertical space for the form fields.
+       */
+      html.mini-app header.uydosh-mini-app-header {
+        border: none;
+        background: none;
+        min-height: 0;
+        padding: 10px 0 0;
       }
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-width: 0;
+      html.mini-app header.uydosh-mini-app-header .brand,
+      html.mini-app header.uydosh-mini-app-header .header-actions {
+        display: none;
       }
-      .brand img {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-      }
-      .brand strong { font-size: 15px; }
-      .brand span { color: var(--muted); font-size: 13px; display: block; }
       .progress {
         display: flex;
         gap: 6px;
@@ -910,11 +899,7 @@
   </head>
   <body>
     <div class="wrap">
-      <header
-        data-uydosh-mini-app-header
-        data-uydosh-header-subtitle="create.title"
-        data-uydosh-header-brand-link="false"
-      ></header>
+      <header data-uydosh-mini-app-header></header>
 
       <div id="loading" class="status" aria-busy="true" aria-live="polite">
         <span class="loading-spinner" aria-hidden="true"></span>
@@ -961,8 +946,8 @@
     <input type="file" id="photo-input" accept="image/*" multiple hidden />
 
     <script src="../assets/uydosh-core.js?v=20260704-68"></script>
-    <script src="../assets/uydosh-api.js?v=20260704-81"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260704-10"></script>
+    <script src="../assets/uydosh-api.js?v=20260705-82"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-11"></script>
     <script src="../assets/uydosh-icons.js?v=20260705-82"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260704-76"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>

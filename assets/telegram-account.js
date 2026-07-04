@@ -50,8 +50,9 @@ function listingRowHtml(listing) {
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
   const editHref = `/telegram/create.html?id=${encodeURIComponent(listing.id)}`;
+  const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
   return `
-    <div class="account-row">
+    <div class="account-row" data-listing-row="${listing.id}">
       ${accountThumbHtml(listing)}
       <div class="account-row-body">
         <div class="account-row-title">${title}</div>
@@ -60,7 +61,16 @@ function listingRowHtml(listing) {
           ${statusBadgeHtml(listing, lang)}
         </div>
       </div>
-      <a class="account-edit-btn" href="${editHref}" data-i18n="account.edit"></a>
+      <div class="account-row-actions">
+        <a class="account-edit-btn" href="${editHref}" data-i18n="account.edit"></a>
+        <button
+          type="button"
+          class="account-visibility-btn"
+          data-toggle-visibility="${listing.id}"
+          aria-pressed="${listing.is_active ? 'true' : 'false'}"
+          data-i18n="${visibilityLabelKey}"
+        ></button>
+      </div>
     </div>`;
 }
 
@@ -106,6 +116,28 @@ function showList(html) {
   UyDosh.applyI18n(listEl);
 }
 
+function bindVisibilityToggleButtons() {
+  for (const btn of listEl.querySelectorAll('[data-toggle-visibility]')) {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.getAttribute('data-toggle-visibility'));
+      if (!Number.isFinite(id) || btn.disabled) return;
+      const listing = state.myListings.find((l) => l?.id === id);
+      if (!listing) return;
+      btn.disabled = true;
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+      try {
+        const data = await UyDosh.toggleListingActiveFromTelegramMiniApp(id);
+        const updated = data?.listing;
+        listing.is_active = updated ? !!updated.is_active : !listing.is_active;
+        renderMine();
+      } catch (err) {
+        console.error('Failed to toggle listing visibility', err);
+        btn.disabled = false;
+      }
+    });
+  }
+}
+
 function bindFavoriteRemoveButtons() {
   for (const btn of listEl.querySelectorAll('[data-unfavorite-listing]')) {
     btn.addEventListener('click', async () => {
@@ -140,6 +172,7 @@ function renderMine() {
     return;
   }
   showList(state.myListings.map(listingRowHtml).join(''));
+  bindVisibilityToggleButtons();
 }
 
 function renderFavorites() {

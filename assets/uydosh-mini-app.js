@@ -455,7 +455,7 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app .account-menu-list {
       position: absolute;
-      top: calc(100% + 8px);
+      top: calc(100% + 3px);
       right: 0;
       min-width: 190px;
       padding: 6px;
