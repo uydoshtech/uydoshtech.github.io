@@ -628,6 +628,86 @@ function isFeatured(listing) {
   return Boolean(listing?.featured_at);
 }
 
+/**
+ * Drops the trailing country segment from a reverse-geocoded address string
+ * (see backend's `reorderYandexAddressText`, which always emits exactly
+ * `street[+house], district, city, country` — narrow to broad — once it has
+ * successfully reordered an address). Only strips when there are at least 4
+ * segments, since anything shorter means the backend left the raw text
+ * unchanged (missing country/city/district) and we can't safely assume the
+ * last segment is a country name. Returns the address unchanged otherwise.
+ */
+function addressWithoutCountry(address) {
+  const text = typeof address === 'string' ? address.trim() : '';
+  if (!text) return text;
+  const segments = text.split(',').map((segment) => segment.trim()).filter(Boolean);
+  if (segments.length < 4) return text;
+  return segments.slice(0, -1).join(', ');
+}
+
+// Walk-time estimate constants + straight-line distance math shared by the
+// create-listing wizard's "find nearby metro stations" suggestions
+// (telegram-create.js) and the listing detail page's per-station walk info
+// (listing.html) — kept here (not in the lazily-loaded yandex-map.js) so
+// either page can use it without pulling in the full Maps module.
+const EARTH_RADIUS_METERS = 6371000;
+const WALK_METERS_PER_MINUTE = 80; // ~4.8 km/h
+const WALK_DETOUR_FACTOR = 1.3; // streets/blocks vs. straight-line distance
+
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, a)));
+}
+
+function estimatedWalkMinutes(meters) {
+  return (meters * WALK_DETOUR_FACTOR) / WALK_METERS_PER_MINUTE;
+}
+
+/**
+ * Best-known reference point for "where the listing actually is", used to
+ * measure walking distance to the metro stations it names: the exact
+ * address when the author gave one, else the primary subway station's own
+ * coordinates, else the district centroid. Mirrors the fallback order of
+ * `resolveListingMapCoordinates` in yandex-map.js (kept independent so this
+ * doesn't force-load the lazy Maps module just to compute a distance).
+ */
+function listingReferenceCoordinates(listing) {
+  if (!listing) return null;
+  const candidates = [
+    [listing.address_latitude, listing.address_longitude],
+    [listing.subway_station?.latitude, listing.subway_station?.longitude],
+    [listing.location?.latitude, listing.location?.longitude],
+  ];
+  for (const [lat, lon] of candidates) {
+    const latitude = Number(lat);
+    const longitude = Number(lon);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return { latitude, longitude };
+    }
+  }
+  return null;
+}
+
+/**
+ * Walking distance (km) + time (minutes) from `from` to `station`'s own
+ * coordinates, or null when either point is missing/invalid, or the two
+ * points are effectively the same spot (e.g. `from` fell back to this very
+ * station's coordinates — see `listingReferenceCoordinates` — showing
+ * "0 min" there isn't useful signal).
+ */
+function stationWalkInfo(from, station) {
+  const lat = Number(station?.latitude);
+  const lon = Number(station?.longitude);
+  if (!from || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const meters = haversineMeters(from.latitude, from.longitude, lat, lon);
+  if (meters < 50) return null;
+  return { km: meters / 1000, minutes: estimatedWalkMinutes(meters) };
+}
+
 window.UyDosh = window.UyDosh || {};
 Object.assign(window.UyDosh, {
   API_BASE,
@@ -656,4 +736,9 @@ Object.assign(window.UyDosh, {
   listingPinCoordinateKey,
   isFeatured,
   listingTypeBadgeLabel,
+  addressWithoutCountry,
+  haversineMeters,
+  estimatedWalkMinutes,
+  listingReferenceCoordinates,
+  stationWalkInfo,
 });

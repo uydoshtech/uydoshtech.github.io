@@ -518,7 +518,7 @@
       .roomscan-body[hidden] { display: none; }
       .roomscan-viewer-wrap {
         position: relative; height: 280px; border-radius: 12px; overflow: hidden;
-        border: 1px solid var(--stroke); background: rgba(127, 127, 127, 0.08);
+        border: 1px solid var(--stroke); background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
       }
       .roomscan-viewer-wrap model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
       .roomscan-fullscreen-btn {
@@ -536,7 +536,7 @@
       }
       .roomscan-status[hidden] { display: none; }
       .roomscan-backdrop {
-        position: fixed; inset: 0; z-index: 220; background: #000;
+        position: fixed; inset: 0; z-index: 220; background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
         opacity: 0; transition: opacity 0.18s ease;
       }
       .roomscan-backdrop[hidden] { display: none !important; }
@@ -860,6 +860,33 @@
         display: inline-flex;
         flex: 0 0 auto;
       }
+      /* One row per metro station the publisher tagged (see
+         buildMetroStationRowHtml) — name on the left, optional walking
+         distance/time pinned to the right. */
+      .map-section-row-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .map-section-walk {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+        padding-left: 8px;
+        flex: 0 0 auto;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .map-section-walk .icon {
+        width: 14px;
+        height: 14px;
+      }
+      .map-section-walk .icon svg { width: 14px; height: 14px; display: block; }
+      .map-section-walk .icon svg * { stroke: currentColor; fill: none; }
       /* Adds to (not replaces) `.map-section-summary`'s row gap, so the exact
          address row sits further from the district/metro rows above it.
          `:not(:first-child)` skips the extra gap on the rare listing that has
@@ -2101,19 +2128,46 @@
         `;
       }
 
+      /**
+       * One metro-station summary row: name + (when we can compute one) a
+       * clock icon with walking distance/time from the listing's location
+       * to that station — see `UyDosh.stationWalkInfo` in uydosh-core.js.
+       */
+      function buildMetroStationRowHtml(station, lang, fallbackLine, refCoords) {
+        const name = UyDosh.localized(station, lang);
+        if (!name) return '';
+        const line = Number(station.line) || fallbackLine;
+        const walk = UyDosh.stationWalkInfo(refCoords, station);
+        const walkHtml = walk ? `
+          <span class="map-section-walk">${UyDosh.iconClock()}<span>${UyDosh.escapeHtml(
+            UyDosh.t('detail.metroWalkInfo')
+              .replace('{km}', walk.km.toFixed(1))
+              .replace('{minutes}', String(Math.max(1, Math.round(walk.minutes)))),
+          )}</span></span>` : '';
+        return `<div class="map-section-row map-section-row-metro">${UyDosh.iconMetro(line)}<span class="map-section-row-label">${UyDosh.escapeHtml(name)}</span>${walkHtml}</div>`;
+      }
+
       function buildMapSectionHtml(l, lang, amenities = [], extraHtml = '') {
         const locName = UyDosh.localized(l.location, lang);
-        const metro = UyDosh.localized(l.subway_station, lang);
         const metroLine = UyDosh.resolveMetroLine(l);
         const address = typeof l.address_text === 'string' ? l.address_text.trim() : '';
+        // Several stations can be tagged on a listing (see multi-station
+        // selection in telegram-create.js) — `search_subway_stations` holds
+        // all of them, falling back to the single legacy `subway_station`.
+        const stations = Array.isArray(l.search_subway_stations) && l.search_subway_stations.length > 0
+          ? l.search_subway_stations
+          : (l.subway_station ? [l.subway_station] : []);
         const hasLocation = Boolean(locName);
-        const hasMetro = Boolean(metro);
+        const hasMetro = stations.length > 0;
         const hasAddress = Boolean(address);
         if (!hasLocation && !hasMetro && !hasAddress) return '';
 
         const rows = [];
         if (hasMetro) {
-          rows.push(`<div class="map-section-row">${UyDosh.iconMetro(metroLine)}<span>${UyDosh.escapeHtml(metro)}</span></div>`);
+          const refCoords = UyDosh.listingReferenceCoordinates(l);
+          rows.push(...stations
+            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords))
+            .filter(Boolean));
         }
         if (hasLocation) {
           rows.push(`<div class="map-section-row">${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(locName)}</span></div>`);
@@ -2122,7 +2176,13 @@
           // Extra top margin (on top of `.map-section-summary`'s row gap) so the
           // exact address stands apart from the district/metro rows above it —
           // those describe the general area, this is the precise address.
-          rows.push(`<div class="map-section-row map-section-row-address">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(address)}</span></div>`);
+          // The country segment is redundant inside the Mini App (Telegram
+          // users are already local), so it's dropped there; the standalone
+          // website keeps the full address.
+          const displayAddress = UyDosh.isMiniApp()
+            ? UyDosh.addressWithoutCountry(address)
+            : address;
+          rows.push(`<div class="map-section-row map-section-row-address">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(displayAddress)}</span></div>`);
         }
         if (l.move_in_date) {
           rows.push(
@@ -2345,6 +2405,7 @@
         }
         el.setAttribute('camera-controls', '');
         el.setAttribute('auto-rotate', '');
+        el.setAttribute('rotation-per-second', '60deg');
         el.setAttribute('shadow-intensity', '1');
         el.setAttribute('exposure', '1');
         el.setAttribute('environment-image', 'neutral');
