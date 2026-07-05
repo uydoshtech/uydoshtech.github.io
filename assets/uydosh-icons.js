@@ -186,6 +186,84 @@ function metroTransferPartner(stationId) {
   return METRO_TRANSFER_PAIRS[Number(stationId)] || null;
 }
 
+/**
+ * Tashkent district (rayon) short names for the feed's district filter button —
+ * must stay in sync with `STATIC_LOCATIONS` in telegram-create.js and mobile's
+ * LocationCache (same ids/short names, just trimmed to what the filter needs).
+ */
+const DISTRICT_ANY = 0;
+const DISTRICT_NAMES = {
+  1: { uz: 'Uchtepa', ru: 'Учтепа', en: 'Uchtepa' },
+  2: { uz: 'Bektemir', ru: 'Бектемир', en: 'Bektemir' },
+  3: { uz: 'Mirzo Ulugbek', ru: 'Мирзо-Улугбек', en: 'Mirzo Ulugbek' },
+  4: { uz: 'Mirobod', ru: 'Мирабад', en: 'Mirabad' },
+  5: { uz: 'Sergeli', ru: 'Сергели', en: 'Sergeli' },
+  6: { uz: 'Olmazor', ru: 'Алмазар', en: 'Almazar' },
+  7: { uz: 'Chilanzar', ru: 'Чиланзар', en: 'Chilanzar' },
+  8: { uz: 'Shayxontohur', ru: 'Шайхантаур', en: 'Shaykhantahur' },
+  9: { uz: 'Yunusobod', ru: 'Юнусабад', en: 'Yunusabad' },
+  10: { uz: 'Yakkasaroy', ru: 'Яккасарай', en: 'Yakkasaray' },
+  11: { uz: 'Yashnobod', ru: 'Яшнабад', en: 'Yashnabad' },
+  12: { uz: 'Yangi Hayot', ru: 'Янгихаёт', en: 'Yangihayot' },
+};
+const DISTRICT_IDS = Object.keys(DISTRICT_NAMES).map(Number);
+
+function districtLabel(id, lang = getLang()) {
+  const names = DISTRICT_NAMES[Number(id)];
+  return names?.[lang] || names?.en || '';
+}
+
+/** District ids ordered alphabetically by their current-language name — this is
+ * the tap order for the feed's single-button district cycle below. */
+function districtIdsAlphabetical(lang = getLang()) {
+  return [...DISTRICT_IDS].sort((a, b) => districtLabel(a, lang).localeCompare(districtLabel(b, lang), lang));
+}
+
+/** Next id in the tap cycle: off -> first district (A-Z) -> ... -> last -> off. */
+function nextDistrictId(currentId, lang = getLang()) {
+  const order = districtIdsAlphabetical(lang);
+  const current = Number(currentId) || 0;
+  if (!current) return order[0] ?? DISTRICT_ANY;
+  const index = order.indexOf(current);
+  if (index === -1 || index === order.length - 1) return DISTRICT_ANY;
+  return order[index + 1];
+}
+
+/** Location-pin badge sized/styled like `metroLineBadgeHtml`'s "M" circle, so
+ * the district chip below reads as part of the same family of controls. */
+function districtPinBadgeHtml() {
+  return `<span class="metro-m-badge district-pin-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.8 7-11a7 7 0 1 0-14 0c0 6.2 7 11 7 11Z"></path><circle cx="12" cy="10" r="2.25"></circle></svg></span>`;
+}
+
+/**
+ * Single cycling district-filter button — "just like" `metroLineChipsHtml`'s M
+ * ribbon, but one button instead of four: starts as a bare pin badge and each
+ * tap steps to the next district alphabetically, revealing its name with the
+ * same slide + fade animation (`.chip-line` / `.chip-label-collapse` in
+ * telegram-shared.css) until the cycle wraps back to the off state. Shared by
+ * the feed's expanded + compact filter rows (`compact: true`).
+ *
+ * Callers wire up the `[data-district-cycle]` click handler themselves and use
+ * `nextDistrictId` above to compute the next value — see
+ * `syncDistrictChipState` in telegram-feed.js for the in-place DOM update used
+ * to let the reveal animation play on every tap, not just the first.
+ */
+function districtChipHtml(selectedId, lang = getLang(), { compact = false } = {}) {
+  const selected = Number(selectedId) || 0;
+  const label = selected > 0 ? districtLabel(selected, lang) : '';
+  const ariaLabel = selected > 0 ? label : t('filter.district.aria', lang);
+  return `
+    <button
+      type="button"
+      class="chip chip-line chip-district${compact ? ' chip-line-compact' : ''}"
+      data-district-cycle
+      data-haptic="selection"
+      aria-pressed="${selected > 0 ? 'true' : 'false'}"
+      aria-label="${escapeHtml(ariaLabel)}"
+    >${districtPinBadgeHtml()}<span class="chip-label-collapse"><span class="chip-label">${escapeHtml(label)}</span></span></button>
+  `;
+}
+
 /** Listing type ids shared by the Telegram feed and create-listing wizard. */
 const LISTING_TYPE_ALL = 0;
 const LISTING_TYPE_ROOM_NEEDED = 1;
@@ -533,6 +611,13 @@ Object.assign(window.UyDosh, {
   chipButtonHtml,
   METRO_LINE_IDS,
   METRO_LINE_ANY,
+  DISTRICT_IDS,
+  DISTRICT_ANY,
+  districtLabel,
+  districtIdsAlphabetical,
+  nextDistrictId,
+  districtPinBadgeHtml,
+  districtChipHtml,
   LISTING_TYPE_ALL,
   LISTING_TYPE_ROOM_NEEDED,
   LISTING_TYPE_ROOMMATE_NEEDED,

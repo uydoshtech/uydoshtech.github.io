@@ -174,6 +174,7 @@ function readStoredFilters() {
           : DEFAULT_WITH_PHOTO,
       withPhotoExplicit: parsed.withPhotoExplicit === true,
       subwayLineId: Number(parsed.subwayLineId) || METRO_LINE_ANY,
+      locationId: Number(parsed.locationId) || DISTRICT_ANY,
       createdWithinDays: PERIOD_OPTION_VALUES.includes(Number(parsed.createdWithinDays))
         ? Number(parsed.createdWithinDays)
         : PERIOD_DEFAULT_DAYS,
@@ -193,6 +194,7 @@ function persistFilters() {
         withPhoto: state.filters.withPhoto,
         withPhotoExplicit: state.withPhotoExplicit,
         subwayLineId: state.filters.subwayLineId,
+        locationId: state.filters.locationId,
         createdWithinDays: state.filters.createdWithinDays,
       }),
     );
@@ -215,6 +217,7 @@ const state = {
     gender: storedFilters?.gender ?? GENDER_ANY,
     withPhoto: storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
     subwayLineId: storedFilters?.subwayLineId ?? METRO_LINE_ANY,
+    locationId: storedFilters?.locationId ?? DISTRICT_ANY,
     createdWithinDays: storedFilters?.createdWithinDays ?? PERIOD_DEFAULT_DAYS,
   },
   withPhotoExplicit: storedFilters?.withPhotoExplicit ?? false,
@@ -265,6 +268,11 @@ function subwayLineQueryParam() {
   return id > 0 ? id : undefined;
 }
 
+function locationQueryParam() {
+  const id = state.filters.locationId;
+  return id > 0 ? id : undefined;
+}
+
 function createdWithinDaysQueryParam() {
   const days = state.filters.createdWithinDays;
   return days > 0 ? days : undefined;
@@ -276,6 +284,7 @@ function logSearchEvent() {
     gender: state.filters.gender,
     with_photo: state.filters.withPhoto ? 'true' : 'false',
     subway_line_id: state.filters.subwayLineId,
+    location_id: state.filters.locationId,
     created_within_days: state.filters.createdWithinDays,
   });
 }
@@ -298,6 +307,7 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
     gender: genderQueryParam(),
     withPhoto: withPhotoQueryParam(),
     subwayLineId: subwayLineQueryParam(),
+    locationId: locationQueryParam(),
     createdWithinDays: createdWithinDaysQueryParam(),
   }),
 });
@@ -421,6 +431,13 @@ function renderFilters() {
   // instead of a plain always-on label, so the compact row can stay dense.
   const lineChipsCompact = UyDosh.metroLineChipsHtml(state.filters.subwayLineId, lang, { compact: true });
 
+  // District filter button: a single pin badge (sits right before the metro
+  // ribbon, mirroring its icon-reveals-name animation) that cycles through
+  // districts alphabetically on each tap instead of picking from a row of
+  // options — see `districtChipHtml`/`nextDistrictId` in uydosh-icons.js.
+  const districtChip = UyDosh.districtChipHtml(state.filters.locationId, lang);
+  const districtChipCompact = UyDosh.districtChipHtml(state.filters.locationId, lang, { compact: true });
+
   filtersEl.classList.toggle('filters--collapsed', collapsed);
   const filtersToggleHtml = `
       <button
@@ -452,6 +469,7 @@ function renderFilters() {
             </div>
             <div class="filter-row filter-row-metro">
               <div class="chips chips-metro" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.line.aria', lang))}">
+                ${districtChip}
                 ${lineChips}
               </div>
             </div>
@@ -466,6 +484,7 @@ function renderFilters() {
                 ${typeChipsCompact}
                 ${genderChipsCompact}
                 ${photoChip}
+                ${districtChipCompact}
                 ${lineChipsCompact}
               </div>
               ${filtersToggleHtml}
@@ -525,6 +544,19 @@ function renderFilters() {
     });
   });
 
+  filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.filters.locationId = UyDosh.nextDistrictId(state.filters.locationId, lang);
+      // Update the button(s) in place (instead of a full re-render) so the same
+      // icon-reveals-name transition metro line chips use gets to play here too.
+      syncDistrictChipState();
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad({ skipFiltersRender: true });
+      if (state.view === 'map') feedMap.loadFeedMap();
+    });
+  });
+
   filtersEl.querySelectorAll('[data-gender]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-gender'));
@@ -569,6 +601,24 @@ function syncMetroLineChipPressedState() {
   filtersEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
     const lineId = Number(btn.getAttribute('data-subway-line'));
     btn.setAttribute('aria-pressed', lineId === selected ? 'true' : 'false');
+  });
+}
+
+/** Updates the already-rendered district button(s) (expanded + compact rows)
+ * in place: unlike the fixed-label metro chips above, this single button's
+ * label changes on every tap (it cycles through district names), so this also
+ * rewrites `.chip-label` text — not just `aria-pressed` — while still avoiding
+ * a full re-render, so the reveal/collapse transition plays each time. */
+function syncDistrictChipState() {
+  const lang = UyDosh.getLang();
+  const selected = state.filters.locationId;
+  const label = selected > 0 ? UyDosh.districtLabel(selected, lang) : '';
+  const ariaLabel = selected > 0 ? label : UyDosh.t('filter.district.aria', lang);
+  filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
+    btn.setAttribute('aria-pressed', selected > 0 ? 'true' : 'false');
+    btn.setAttribute('aria-label', ariaLabel);
+    const labelEl = btn.querySelector('.chip-label');
+    if (labelEl) labelEl.textContent = label;
   });
 }
 
@@ -761,6 +811,7 @@ async function loadMore() {
       gender: genderQueryParam(),
       withPhoto: withPhotoQueryParam(),
       subwayLineId: subwayLineQueryParam(),
+      locationId: locationQueryParam(),
       createdWithinDays: createdWithinDaysQueryParam(),
     });
     // A newer filter/reset superseded this request while it was in flight —
