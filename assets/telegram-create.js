@@ -217,12 +217,13 @@ function isRoomNeeded() {
   return state.form.listingTypeId === LISTING_TYPE_ROOM_NEEDED;
 }
 
-/// Only demand-side (room-needed) listings can be tagged with several metro
-/// stations; roommate-needed listings describe one apartment near one
-/// station, so metro selection stays singular (mirrors `_supportsMultiLocation`
-/// below).
+/// Both listing types can be tagged with several metro stations: a
+/// roommate-needed apartment is one fixed place, but it can genuinely sit
+/// within walking distance of more than one station (this is exactly what
+/// the "find nearby metro stations" suggestions surface), and a room-needed
+/// search is inherently flexible about which stations are acceptable.
 function supportsMultiStation() {
-  return isRoomNeeded();
+  return true;
 }
 
 /// Only demand-side (room-needed) listings can span several districts;
@@ -1602,9 +1603,6 @@ function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
-      if (!supportsMultiStation()) {
-        state.form.selectedStationIds = state.form.selectedStationIds.slice(0, 1);
-      }
       if (!supportsMultiLocation()) {
         state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
       }
