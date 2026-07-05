@@ -42,7 +42,6 @@ const LIFESTYLE_FIELDS = [
     key: 'employed',
     labelKey: 'profile.lifestyle.employed',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: true, labelKey: 'profile.lifestyle.employedYes', icon: 'checkCircle' },
       { value: false, labelKey: 'profile.lifestyle.employedNo', icon: 'xCircle' },
     ],
@@ -52,7 +51,6 @@ const LIFESTYLE_FIELDS = [
     labelKey: 'profile.lifestyle.wakeupTime',
     icon: 'sun',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: 'morning', labelKey: 'profile.lifestyle.morning', icon: 'sun' },
       { value: 'evening', labelKey: 'profile.lifestyle.evening', icon: 'sunset' },
       { value: 'night', labelKey: 'profile.lifestyle.night', icon: 'moon' },
@@ -63,7 +61,6 @@ const LIFESTYLE_FIELDS = [
     labelKey: 'profile.lifestyle.sleepTime',
     icon: 'moon',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: 'morning', labelKey: 'profile.lifestyle.morning', icon: 'sun' },
       { value: 'evening', labelKey: 'profile.lifestyle.evening', icon: 'sunset' },
       { value: 'night', labelKey: 'profile.lifestyle.night', icon: 'moon' },
@@ -118,7 +115,6 @@ const LIFESTYLE_FIELDS = [
     key: 'guests_allowed',
     labelKey: 'profile.lifestyle.guestsAllowed',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: true, labelKey: 'profile.lifestyle.guestsYes', icon: 'users' },
       { value: false, labelKey: 'profile.lifestyle.guestsNo', icon: 'xCircle' },
     ],
@@ -127,7 +123,6 @@ const LIFESTYLE_FIELDS = [
     key: 'smoking_preference',
     labelKey: 'profile.lifestyle.smokingPreference',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: 'non-smoker', labelKey: 'profile.lifestyle.nonSmoker', icon: 'smokeFree' },
       { value: 'occasional', labelKey: 'profile.lifestyle.occasionalSmoker', icon: 'cigarette' },
       { value: 'regular', labelKey: 'profile.lifestyle.regularSmoker', icon: 'cigarette' },
@@ -137,7 +132,6 @@ const LIFESTYLE_FIELDS = [
     key: 'alcohol_preference',
     labelKey: 'profile.lifestyle.alcoholPreference',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: 'non-drinker', labelKey: 'profile.lifestyle.nonDrinker', icon: 'noDrink' },
       { value: 'occasional', labelKey: 'profile.lifestyle.occasionalDrinker', icon: 'wineGlass' },
       { value: 'regular', labelKey: 'profile.lifestyle.regularDrinker', icon: 'wineGlass' },
@@ -147,7 +141,6 @@ const LIFESTYLE_FIELDS = [
     key: 'cooking_habits',
     labelKey: 'profile.lifestyle.cookingHabits',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: true, labelKey: 'profile.lifestyle.cook', icon: 'cookingPot' },
       { value: false, labelKey: 'profile.lifestyle.dontCook', icon: 'takeout' },
     ],
@@ -156,7 +149,6 @@ const LIFESTYLE_FIELDS = [
     key: 'pets_preference',
     labelKey: 'profile.lifestyle.petsPreference',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
       { value: 'dont_like_pets', labelKey: 'profile.lifestyle.dontLikePets', icon: 'xCircle' },
       { value: 'like_pets', labelKey: 'profile.lifestyle.likePets', icon: 'heartOutline' },
       { value: 'have_cat', labelKey: 'profile.lifestyle.haveCat', icon: 'cat' },

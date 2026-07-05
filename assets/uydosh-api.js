@@ -719,6 +719,16 @@ function fetchListingViewCount(listingId) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/view-count`);
 }
 
+/**
+ * Record a view when a non-owner opens a listing (reuses the shared
+ * `/listings/:id/record-view` API — same one the mobile app uses, and
+ * a no-op server-side if the viewer turns out to be the owner). Best-effort:
+ * a failure here shouldn't block or error out the detail page.
+ */
+function recordListingView(listingId) {
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/record-view`, { method: 'POST' });
+}
+
 function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, subwayLineId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -802,6 +812,7 @@ Object.assign(window.UyDosh, {
   fetchListings,
   fetchListing,
   fetchListingViewCount,
+  recordListingView,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
   fetchSubwayStations,

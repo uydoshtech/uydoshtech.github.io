@@ -1072,6 +1072,9 @@
         mapExpanded: false,
         mapLoaded: false,
         mapLoading: false,
+        // `render()` re-runs on language change, so this guards against
+        // recording the same page visit as multiple views.
+        viewRecorded: false,
       };
 
       const GALLERY_AUTO_MS = 3000;
@@ -1231,6 +1234,24 @@
           console.error('Failed to load listing view count', err);
           const toolbarEl = rootEl.querySelector('[data-owner-toolbar]');
           if (toolbarEl) toolbarEl.hidden = true;
+        }
+      }
+
+      /**
+       * Records a view for a non-owner opening the listing — matches the
+       * mobile app's `_recordView` (see `ListingDetailScreen`). Needs a real
+       * signed-in identity (only available inside the Mini App), and is
+       * best-effort: a failure here should never surface to the viewer.
+       */
+      async function recordNonOwnerView(listingId) {
+        if (state.viewRecorded || !UyDosh.isMiniApp()) return;
+        state.viewRecorded = true;
+        try {
+          const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+          if (!sessionReady) return;
+          await UyDosh.recordListingView(listingId);
+        } catch (err) {
+          console.error('Failed to record listing view', err);
         }
       }
 
@@ -2682,7 +2703,10 @@
         bindReportButton(l);
         updateDetailContactBar(l);
         if (isOwner) loadOwnerViewCount(l.id);
-        else loadClaimBanner(l);
+        else {
+          loadClaimBanner(l);
+          recordNonOwnerView(l.id);
+        }
         if (isMiniApp) loadComplaintsWarning(l);
         if (isMiniApp && !isOwner) {
           bindCompatibilitySection();
