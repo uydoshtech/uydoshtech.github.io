@@ -1981,14 +1981,14 @@
         if (!hasLocation && !hasMetro && !hasAddress) return '';
 
         const rows = [];
-        if (hasAddress) {
-          rows.push(`<div class="map-section-row">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(address)}</span></div>`);
-        }
         if (hasMetro) {
           rows.push(`<div class="map-section-row">${UyDosh.iconMetro(metroLine)}<span>${UyDosh.escapeHtml(metro)}</span></div>`);
         }
         if (hasLocation) {
           rows.push(`<div class="map-section-row">${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(locName)}</span></div>`);
+        }
+        if (hasAddress) {
+          rows.push(`<div class="map-section-row">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(address)}</span></div>`);
         }
         if (l.move_in_date) {
           rows.push(
