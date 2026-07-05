@@ -295,9 +295,10 @@ input[type="range"] {
   flex-direction: column;
   gap: 2px;
   /* Fallback before JS measures the real row height (see sizeLocationList
-     in telegram-create.js), which then caps the metro list to ~5.5 rows
-     and the district grid to its content, both with a max-height cap. */
-  height: 220px;
+     in telegram-create.js), which then caps the metro list to exactly
+     STATION_LIST_VISIBLE_ROWS rows and the district grid to its content,
+     both with a max-height cap. */
+  height: 200px;
   overflow: auto;
   border: 1px solid var(--stroke);
   border-radius: 14px;
@@ -739,9 +740,13 @@ input[readonly] {
   stroke: currentColor;
   fill: none;
 }
+.use-location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .use-location-btn {
   appearance: none;
-  align-self: flex-start;
   border: 1px solid var(--stroke);
   background: rgba(127, 127, 127, 0.08);
   color: var(--fg);
@@ -749,7 +754,10 @@ input[readonly] {
   padding: 8px 14px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  flex: 1 1 auto;
+  white-space: nowrap;
   font: inherit;
   font-size: 13px;
   font-weight: 600;

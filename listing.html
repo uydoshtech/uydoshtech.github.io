@@ -2369,7 +2369,14 @@
           section.setAttribute('aria-expanded', next ? 'true' : 'false');
           toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
           body.hidden = !next;
-          if (next) mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl);
+          if (next) {
+            mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl);
+            // Bring the tile header as close to the top of the screen as the
+            // page can scroll, so the newly expanded viewer has room to show.
+            requestAnimationFrame(() => {
+              toggle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          }
         });
       }
 

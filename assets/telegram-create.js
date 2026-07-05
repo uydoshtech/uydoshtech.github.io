@@ -771,31 +771,33 @@ function renderStep0(lang) {
         maxlength="500"
         placeholder="${UyDosh.escapeHtml(UyDosh.t('create.addressPlaceholder', lang))}"
       >${UyDosh.escapeHtml(state.form.addressText)}</textarea>
-      <button
-        type="button"
-        class="use-location-btn"
-        data-use-current-location
-        ${state.locatingAddress ? 'disabled' : ''}
-        aria-label="${UyDosh.escapeHtml(UyDosh.t('create.useCurrentLocation', lang))}"
-      >
-        ${state.locatingAddress
-          ? '<span class="use-location-spinner" aria-hidden="true"></span>'
-          : UyDosh.iconLocateMe()}
-        <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
-      </button>
-      ${state.form.locationMode === LOCATION_MODE_METRO ? `
-      <button
-        type="button"
-        class="use-location-btn"
-        data-find-nearby-metro
-        ${state.findingNearbyStations ? 'disabled' : ''}
-        aria-label="${UyDosh.escapeHtml(UyDosh.t('create.findNearbyMetro', lang))}"
-      >
-        ${state.findingNearbyStations
-          ? '<span class="use-location-spinner" aria-hidden="true"></span>'
-          : UyDosh.iconMetro()}
-        <span>${UyDosh.escapeHtml(state.findingNearbyStations ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.findNearbyMetro', lang))}</span>
-      </button>` : ''}
+      <div class="use-location-actions">
+        <button
+          type="button"
+          class="use-location-btn"
+          data-use-current-location
+          ${state.locatingAddress ? 'disabled' : ''}
+          aria-label="${UyDosh.escapeHtml(UyDosh.t('create.useCurrentLocation', lang))}"
+        >
+          ${state.locatingAddress
+            ? '<span class="use-location-spinner" aria-hidden="true"></span>'
+            : UyDosh.iconLocateMe()}
+          <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
+        </button>
+        ${state.form.locationMode === LOCATION_MODE_METRO ? `
+        <button
+          type="button"
+          class="use-location-btn"
+          data-find-nearby-metro
+          ${state.findingNearbyStations ? 'disabled' : ''}
+          aria-label="${UyDosh.escapeHtml(UyDosh.t('create.findNearbyMetro', lang))}"
+        >
+          ${state.findingNearbyStations
+            ? '<span class="use-location-spinner" aria-hidden="true"></span>'
+            : UyDosh.iconMetro()}
+          <span>${UyDosh.escapeHtml(state.findingNearbyStations ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.findNearbyMetro', lang))}</span>
+        </button>` : ''}
+      </div>
       ${nearbyStationsHtml(lang)}
     </div>` : '';
 
@@ -1086,6 +1088,9 @@ function renderStep3(lang) {
 /** Mirrors `.panel { gap: … }` in create.html — see the trailing-siblings loop below. */
 const STEP_PANEL_GAP_PX = 14;
 
+/** How many metro station rows are visible at once before the list scrolls (see `sizeLocationList`). */
+const STATION_LIST_VISIBLE_ROWS = 5;
+
 /**
  * The district grid (`.station-list-grid`) is short (two columns of ~12
  * items). Size it to its content, capped by the real remaining space down
@@ -1101,10 +1106,11 @@ const STEP_PANEL_GAP_PX = 14;
  *
  * The metro station list is a single scrolling column that can hold 50+
  * stations, so instead of stretching to fill the viewport (which used to
- * leave a large empty box for short lines) it's capped to ~5.5 rows: five
- * full rows plus a deliberately clipped half row that hints the list keeps
- * going. If a station on the current line is already selected, the list
- * scrolls so that row lands in the middle of the (now compact) viewport.
+ * leave a large empty box for short lines) it's capped to exactly
+ * `STATION_LIST_VISIBLE_ROWS` full rows — the rest only appear once the user
+ * scrolls the list itself. If a station on the current line is already
+ * selected, the list scrolls so that row lands in the middle of the (now
+ * compact) viewport.
  */
 function sizeLocationList() {
   const list = stepPanelsEl.querySelector('.station-list');
@@ -1132,7 +1138,8 @@ function sizeLocationList() {
     const styles = getComputedStyle(list);
     const gap = parseFloat(styles.rowGap || styles.gap) || 0;
     const paddingY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
-    const maxHeight = paddingY + rowHeight * 5.5 + gap * 5;
+    const maxHeight =
+      paddingY + rowHeight * STATION_LIST_VISIBLE_ROWS + gap * (STATION_LIST_VISIBLE_ROWS - 1);
     list.style.height = 'auto';
     list.style.maxHeight = `${Math.round(maxHeight)}px`;
   } else {
@@ -1144,7 +1151,7 @@ function sizeLocationList() {
 
 /** Centers an already-selected station row in the metro list's visible
  * viewport — e.g. when editing a listing, or switching back to a line with
- * a prior selection — so the compact 5.5-row list doesn't hide it off-screen. */
+ * a prior selection — so the compact 5-row list doesn't hide it off-screen. */
 function scrollSelectedStationIntoView(list) {
   const selectedBtn = list.querySelector('[data-station-id][aria-pressed="true"]');
   if (!selectedBtn) return;
