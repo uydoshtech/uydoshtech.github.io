@@ -745,6 +745,14 @@ input[readonly] {
   flex-wrap: wrap;
   gap: 8px;
 }
+/* "Find nearby metro" button + its suggestions panel (see
+   nearbyMetroFinderHtml in telegram-create.js) — lives inside the metro
+   station-list field, for both listing types. */
+.nearby-metro-finder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .use-location-btn {
   appearance: none;
   border: 1px solid var(--stroke);

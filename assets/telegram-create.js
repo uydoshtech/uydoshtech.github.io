@@ -670,6 +670,35 @@ function nearbyStationsHtml(lang) {
     </div>`;
 }
 
+/**
+ * "Find nearby metro stations" button + the `nearbyStationsHtml` suggestions
+ * panel it reveals — extracted so it can live directly in the metro
+ * station-list field (both listing types, now that `supportsMultiStation`
+ * always allows several) instead of only inside the roommate-needed address
+ * block. Geolocating for this doesn't require an address: the click handler
+ * (see `data-find-nearby-metro` in bindStepEvents) reuses/sets
+ * `state.form.addressLatitude/Longitude` purely as a location cache, which
+ * is simply never sent for room-needed listings (see the submit payload).
+ */
+function nearbyMetroFinderHtml(lang) {
+  return `
+    <div class="nearby-metro-finder">
+      <button
+        type="button"
+        class="use-location-btn"
+        data-find-nearby-metro
+        ${state.findingNearbyStations ? 'disabled' : ''}
+        aria-label="${UyDosh.escapeHtml(UyDosh.t('create.findNearbyMetro', lang))}"
+      >
+        ${state.findingNearbyStations
+          ? '<span class="use-location-spinner" aria-hidden="true"></span>'
+          : UyDosh.iconMetro()}
+        <span>${UyDosh.escapeHtml(state.findingNearbyStations ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.findNearbyMetro', lang))}</span>
+      </button>
+      ${nearbyStationsHtml(lang)}
+    </div>`;
+}
+
 function renderStep0(lang) {
   const typeOptions = [
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
@@ -715,6 +744,7 @@ function renderStep0(lang) {
         <div class="field-label">${UyDosh.escapeHtml(stationLabel)}</div>
         ${stationField.inline}
         <div class="station-list">${stationListHtml(lang)}</div>
+        ${nearbyMetroFinderHtml(lang)}
       </div>`;
   } else {
     const multiLocation = supportsMultiLocation();
@@ -785,21 +815,7 @@ function renderStep0(lang) {
             : UyDosh.iconLocateMe()}
           <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
         </button>
-        ${state.form.locationMode === LOCATION_MODE_METRO ? `
-        <button
-          type="button"
-          class="use-location-btn"
-          data-find-nearby-metro
-          ${state.findingNearbyStations ? 'disabled' : ''}
-          aria-label="${UyDosh.escapeHtml(UyDosh.t('create.findNearbyMetro', lang))}"
-        >
-          ${state.findingNearbyStations
-            ? '<span class="use-location-spinner" aria-hidden="true"></span>'
-            : UyDosh.iconMetro()}
-          <span>${UyDosh.escapeHtml(state.findingNearbyStations ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.findNearbyMetro', lang))}</span>
-        </button>` : ''}
       </div>
-      ${nearbyStationsHtml(lang)}
     </div>` : '';
 
   return `
