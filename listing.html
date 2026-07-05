@@ -767,6 +767,13 @@
         display: inline-flex;
         flex: 0 0 auto;
       }
+      /* Adds to (not replaces) `.map-section-summary`'s row gap, so the exact
+         address row sits further from the district/metro rows above it.
+         `:not(:first-child)` skips the extra gap on the rare listing that has
+         an address but no district/metro row above it. */
+      .map-section-row-address:not(:first-child) {
+        margin-top: 8px;
+      }
       .map-section-row .icon svg { width: 18px; height: 18px; display: block; }
       .map-section-row .icon svg * { stroke: currentColor; fill: none; }
       .map-section-chevron {
@@ -2009,7 +2016,10 @@
           rows.push(`<div class="map-section-row">${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(locName)}</span></div>`);
         }
         if (hasAddress) {
-          rows.push(`<div class="map-section-row">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(address)}</span></div>`);
+          // Extra top margin (on top of `.map-section-summary`'s row gap) so the
+          // exact address stands apart from the district/metro rows above it —
+          // those describe the general area, this is the precise address.
+          rows.push(`<div class="map-section-row map-section-row-address">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(address)}</span></div>`);
         }
         if (l.move_in_date) {
           rows.push(
@@ -2632,10 +2642,10 @@
                 <dt>${UyDosh.escapeHtml(UyDosh.t('detail.author'))}</dt>
                 <dd>
                   <span class="author-row">
+                    <span>@${UyDosh.escapeHtml(authorHandle)}</span>
                     <span class="author-avatar" aria-hidden="true">
                       ${authorAvatarUrl ? `<img src="${UyDosh.escapeHtml(authorAvatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />` : UyDosh.iconChrome('person')}
                     </span>
-                    <span>@${UyDosh.escapeHtml(authorHandle)}</span>
                   </span>
                 </dd>
               ` : ''}
