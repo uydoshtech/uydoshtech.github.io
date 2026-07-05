@@ -841,7 +841,7 @@
     <script src="assets/uydosh-icons.js?v=20260705-96"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-80"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="assets/uydosh-mini-app.js?v=20260705-98"></script>
+    <script src="assets/uydosh-mini-app.js?v=20260705-99"></script>
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
       UyDosh.initTelegramMiniApp();
@@ -1155,8 +1155,9 @@
       // Favoriting reuses the shared `/favorites` API (same one the mobile app
       // uses) — it needs a real logged-in identity, which on this static site
       // only Telegram provides, so the button only ever renders in the Mini App.
+      /** Owners can't favorite their own listing (matches the mobile app, which hides this action for owners too). */
       function favoriteButtonHtml() {
-        if (!UyDosh.isMiniApp()) return '';
+        if (!UyDosh.isMiniApp() || isViewingOwnListing()) return '';
         return `
           <button type="button" class="gallery-favorite-btn" data-favorite-listing aria-pressed="false" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.favorite.add'))}">
             ${UyDosh.iconHeart(false)}

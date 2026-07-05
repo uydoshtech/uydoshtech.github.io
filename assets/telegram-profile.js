@@ -281,18 +281,22 @@ function renderLifestyleFields() {
       // "not specified" is only true until the user actually drags it, at
       // which point it becomes a real answer (matches the Flutter slider).
       const sliderValue = current ?? min;
+      const ticks = scaleOptions.map(() => '<span class="lifestyle-slider-tick"></span>').join('');
       return `
         <div class="field">
           <div class="field-label">${fieldLabelHtml(field)}</div>
-          <input
-            type="range"
-            class="lifestyle-slider"
-            min="${min}"
-            max="${max}"
-            step="1"
-            value="${sliderValue}"
-            data-lifestyle-slider="${field.key}"
-          />
+          <div class="lifestyle-slider-wrap">
+            <input
+              type="range"
+              class="lifestyle-slider"
+              min="${min}"
+              max="${max}"
+              step="1"
+              value="${sliderValue}"
+              data-lifestyle-slider="${field.key}"
+            />
+            <div class="lifestyle-slider-ticks" aria-hidden="true">${ticks}</div>
+          </div>
           <div class="lifestyle-slider-value" data-lifestyle-value-for="${field.key}">
             ${UyDosh.escapeHtml(scaleValueLabel(field, current))}
           </div>
@@ -469,8 +473,10 @@ async function onSave() {
   try {
     await UyDosh.updateProfile(state.userId, body);
     // Either answer ("student" + university, or "not a student") counts as
-    // having engaged with the prompt — don't keep nudging on the feed.
+    // having engaged with the prompt — don't keep nudging on the feed, and
+    // the account menu's "profile not populated" dot no longer applies.
     UyDosh.dismissProfileNudge?.();
+    UyDosh.hideProfileMenuBadge?.();
     showFormSuccess(UyDosh.t('profile.saved'));
   } catch (err) {
     console.error('Failed to save profile', err);

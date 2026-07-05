@@ -85,10 +85,11 @@
         padding-right: max(16px, env(safe-area-inset-right, 0px));
       }
       .profile-intro {
-        margin: 4px 0 18px;
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.4;
+        margin: 6px 0 18px;
+        color: var(--fg);
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.3;
       }
       .field {
         display: flex;
@@ -222,11 +223,39 @@
         border-color: var(--brand);
         background: rgba(127, 127, 127, 0.1);
       }
+      .lifestyle-slider-wrap {
+        position: relative;
+      }
       .lifestyle-slider {
         width: 100%;
         accent-color: var(--brand2);
         display: block;
         margin: 2px 0 6px;
+        position: relative;
+        z-index: 0;
+      }
+      /* Small dots overlaid on top of the track marking each of the 1-5
+         stops the slider can land on — purely decorative, so they ignore
+         pointer events (to not block dragging) and sit above the input via
+         z-index (the thumb itself still renders on top, being a child of
+         the browser's own track rendering, not affected by our z-index). */
+      .lifestyle-slider-ticks {
+        position: absolute;
+        left: 3px;
+        right: 3px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        justify-content: space-between;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .lifestyle-slider-tick {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--bg);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 30%, transparent);
       }
       .lifestyle-slider-value {
         font-size: 13px;
@@ -416,7 +445,7 @@
     <script src="../assets/uydosh-icons.js?v=20260705-96"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260705-80"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260705-98"></script>
-    <script src="../assets/telegram-profile.js?v=20260705-6"></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260705-99"></script>
+    <script src="../assets/telegram-profile.js?v=20260705-8"></script>
   </body>
 </html>

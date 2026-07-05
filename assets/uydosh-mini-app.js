@@ -168,6 +168,56 @@ async function maybeShowProfileNudge(anchorEl) {
   }
 }
 
+/**
+ * `user_profiles` columns the Telegram profile page (telegram-profile.js)
+ * can fill in today — used only to decide whether the account-menu "Profile"
+ * green dot (below) should show, not tied to that page's own field list.
+ */
+const PROFILE_COMPLETENESS_FIELDS = [
+  'university_id', 'employed', 'wakeup_time', 'sleep_time', 'cleanliness',
+  'noise_level', 'sociability', 'guests_allowed', 'smoking_preference',
+  'alcohol_preference', 'cooking_habits', 'pets_preference',
+];
+
+/** True when every field the profile page can edit is still unset. */
+function isProfileEmpty(profile) {
+  if (!profile) return true;
+  return PROFILE_COMPLETENESS_FIELDS.every((key) => profile[key] == null);
+}
+
+/** Hides the green "profile not populated" dot on every account menu on the page. */
+function hideProfileMenuBadge() {
+  document.querySelectorAll('[data-profile-menu-badge]').forEach((el) => { el.hidden = true; });
+}
+
+/**
+ * Best-effort, non-blocking green dot on the header account menu's "Profile"
+ * item, shown whenever the signed-in user hasn't filled in anything on their
+ * profile yet. Runs on every mini-app page (see initTelegramMiniApp) since
+ * the account menu itself appears in every page header. Silently no-ops on
+ * any auth/network failure — this must never block or break the page it's
+ * called from.
+ */
+async function maybeShowProfileMenuBadge() {
+  if (!isMiniApp()) return;
+  try {
+    const sessionReady = await ensureTelegramMiniAppSession();
+    if (!sessionReady) return;
+    const userId = getSessionUserId();
+    if (!userId) return;
+    let profile = null;
+    try {
+      profile = await fetchProfile(userId);
+    } catch (err) {
+      if (err?.status !== 404) throw err; // 404 = no profile row yet, i.e. definitely empty
+    }
+    if (!isProfileEmpty(profile)) return;
+    document.querySelectorAll('[data-profile-menu-badge]').forEach((el) => { el.hidden = false; });
+  } catch (err) {
+    console.warn('[UyDosh] profile menu badge skipped', err);
+  }
+}
+
 const MINI_APP_SAFE_AREA_STYLE_ID = 'uydosh-mini-app-safe-area-v2';
 const TELEGRAM_MOBILE_PLATFORMS = new Set(['ios', 'android', 'android_x']);
 const TELEGRAM_DESKTOP_PLATFORMS = new Set(['tdesktop', 'macos', 'unigram', 'weba', 'webk']);
@@ -286,7 +336,10 @@ function accountMenuHtml() {
         <span class="account-menu-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
       </button>
       <div class="account-menu-list" role="menu" hidden>
-        <a role="menuitem" href="${MINI_APP_PROFILE_PATH}">${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span></a>
+        <a role="menuitem" href="${MINI_APP_PROFILE_PATH}" data-profile-menu-item>
+          ${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span>
+          <span class="account-menu-badge" data-profile-menu-badge hidden aria-hidden="true"></span>
+        </a>
         <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('person')}<span data-i18n="account.menuAccount"></span></a>
         <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
       </div>
@@ -639,6 +692,19 @@ function ensureMiniAppSafeAreaStyles() {
       stroke: currentColor;
       fill: none;
     }
+    html.mini-app .account-menu-badge {
+      display: inline-block;
+      flex-shrink: 0;
+      margin-left: auto;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), black 6%);
+    }
+    html.mini-app .account-menu-badge[hidden] {
+      display: none;
+    }
     html.mini-app .theme-toggle-btn {
       appearance: none;
       border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
@@ -962,6 +1028,9 @@ function initTelegramMiniApp() {
   applyTelegramSafeAreaInsets(tg);
   mountAllMiniAppHeaders();
   syncMobileHeaderLayout();
+  // Fire-and-forget: reveals a green dot on the account menu's "Profile" item
+  // once the profile fetch resolves, if the user hasn't filled anything in yet.
+  maybeShowProfileMenuBadge();
   for (const el of document.querySelectorAll('[data-hide-in-mini-app]')) {
     el.setAttribute('hidden', '');
   }
@@ -1002,6 +1071,8 @@ Object.assign(window.UyDosh, {
   MINI_APP_PROFILE_PATH,
   maybeShowProfileNudge,
   dismissProfileNudge,
+  maybeShowProfileMenuBadge,
+  hideProfileMenuBadge,
   initMiniAppAnalytics,
   logMiniAppEvent,
   logMiniAppScreen,
