@@ -160,6 +160,10 @@ const state = {
   /// suggest metro stations within `nearbyStationsRadiusMinutes` of the
   /// author's location.
   nearbyStations: [],
+  /// True when `nearbyStations` holds a single entry that's actually outside
+  /// `nearbyStationsRadiusMinutes` — the closest station overall, shown as a
+  /// fallback so the panel isn't just empty (see `findNearbyStations`).
+  nearbyStationsIsFallback: false,
   /// True once "Find nearby metro stations" has actually searched, so the
   /// metro panel can tell "never asked" apart from "asked, found nothing
   /// within range" (see renderStep0).
@@ -594,10 +598,16 @@ function nearbyStationsHtml(lang) {
         <span class="nearby-station-time">${UyDosh.iconClock()}${UyDosh.escapeHtml(minutesLabel)}</span>
       </button>`;
   }).join('');
+  // Fallback ("closest station overall" — see `findNearbyStations`) gets its
+  // own label instead of "Stations near you", since it's explicitly outside
+  // the radius the author picked.
+  const labelKey = state.nearbyStationsIsFallback
+    ? 'create.nearbyStationsFallback'
+    : 'create.nearbyStations';
   return `
     <div class="nearby-stations">
       ${radiusChips}
-      <div class="nearby-stations-label">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStations', lang))}</div>
+      <div class="nearby-stations-label">${UyDosh.escapeHtml(UyDosh.t(labelKey, lang))}</div>
       <div class="nearby-stations-list">${chips}</div>
     </div>`;
 }
@@ -1205,6 +1215,34 @@ function findLocationIdByDistrictName(districtName, locations, lang) {
 }
 
 /**
+ * Geographic fallback for "Use current location" district auto-select: some
+ * coordinates — e.g. inside the Tashkent City redevelopment zone around the
+ * old Ukchi street — geocode to a `text`/Components hierarchy with *no*
+ * `kind: "district"` entry at all (Yandex simply has no tuman boundary data
+ * for that point), so `extractDistrictNameFromGeocode` returns null and
+ * `findLocationIdByDistrictName` never gets a name to match against. Rather
+ * than leave the district unset in that case, fall back to whichever of our
+ * 12 districts' centroid (`STATIC_LOCATIONS[].latitude/longitude`) is
+ * closest to the author's actual position — always available since we
+ * already have their coordinates, unlike the name-based match above.
+ */
+function findNearestLocationId(latitude, longitude, locations) {
+  let bestId = null;
+  let bestDistance = Infinity;
+  for (const loc of locations) {
+    const locLat = Number(loc.latitude);
+    const locLon = Number(loc.longitude);
+    if (!Number.isFinite(locLat) || !Number.isFinite(locLon)) continue;
+    const distance = haversineMeters(latitude, longitude, locLat, locLon);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestId = Number(loc.id);
+    }
+  }
+  return bestId;
+}
+
+/**
  * Metro station suggestions for "Use current location" (see the
  * `data-use-current-location` handler in bindStepEvents): straight-line
  * distance is a poor stand-in for actual walking distance, so this pads it
@@ -1221,6 +1259,15 @@ const WALK_DETOUR_FACTOR = 1.3; // streets/blocks vs. straight-line distance
 const NEARBY_STATION_RADIUS_OPTIONS = [10, 20, 30];
 const DEFAULT_NEARBY_STATION_RADIUS_MINUTES = NEARBY_STATION_RADIUS_OPTIONS[0];
 const MAX_SUGGESTED_STATIONS = 12;
+// When nothing falls within the selected radius, we still surface the single
+// closest station as a fallback rather than leaving the panel empty — but
+// only up to this cutoff. Beyond it the "closest" station is far enough
+// (author is on the edge of the city or outside it entirely) that showing it
+// stops being useful signal, so we fall back to the plain empty state
+// instead. Twice the largest selectable radius (30 min) is a reasonable
+// proxy for "still plausibly metro-adjacent, just not within the chosen
+// walk time".
+const NEARBY_STATION_FALLBACK_MAX_MINUTES = 60;
 
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -1241,9 +1288,14 @@ function estimatedWalkMinutes(meters) {
  * `state.stationCache` so the review step and cross-line multi-select keep
  * working if the author picks a suggestion whose line they haven't opened
  * yet.
+ *
+ * If nothing falls within `maxMinutes`, falls back to the single closest
+ * station overall (as long as it's within `NEARBY_STATION_FALLBACK_MAX_MINUTES`)
+ * instead of returning nothing — see the caller in `bindStepEvents` for how
+ * `isFallback` drives the "outside your selected radius" messaging.
  */
 function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STATION_RADIUS_MINUTES) {
-  const nearby = STATIC_METRO_STATIONS
+  const ranked = STATIC_METRO_STATIONS
     .filter((st) => st.latitude != null && st.longitude != null)
     .map((st) => ({
       station: st,
@@ -1251,13 +1303,29 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
         haversineMeters(latitude, longitude, Number(st.latitude), Number(st.longitude)),
       ),
     }))
-    .filter((entry) => entry.minutes <= maxMinutes)
-    .sort((a, b) => a.minutes - b.minutes)
-    .slice(0, MAX_SUGGESTED_STATIONS);
+    .sort((a, b) => a.minutes - b.minutes);
+
+  let nearby = ranked.filter((entry) => entry.minutes <= maxMinutes).slice(0, MAX_SUGGESTED_STATIONS);
+  let isFallback = false;
+  if (nearby.length === 0 && ranked.length > 0 && ranked[0].minutes <= NEARBY_STATION_FALLBACK_MAX_MINUTES) {
+    nearby = [ranked[0]];
+    isFallback = true;
+  }
+
   for (const { station } of nearby) {
     state.stationCache[Number(station.id)] = station;
   }
-  return nearby;
+  return { stations: nearby, isFallback };
+}
+
+/** Runs `findNearbyStations` and spreads its result across the three
+ * `state.nearbyStations*` fields the panel reads from (see call sites in
+ * `bindStepEvents`). */
+function applyNearbyStations(latitude, longitude, maxMinutes) {
+  const { stations, isFallback } = findNearbyStations(latitude, longitude, maxMinutes);
+  state.nearbyStations = stations;
+  state.nearbyStationsIsFallback = isFallback;
+  state.nearbyStationsChecked = true;
 }
 
 function toggleSelection(list, id, multi) {
@@ -1412,13 +1480,17 @@ function bindStepEvents() {
         const matchedId = districtName
           ? findLocationIdByDistrictName(districtName, state.locations, UyDosh.getLang())
           : null;
+        // Yandex's Components hierarchy sometimes has no `district` entry at
+        // all for a given point (see `findNearestLocationId`), so fall back
+        // to the geographically nearest district rather than leaving the
+        // field unset.
+        const resolvedId = matchedId ?? findNearestLocationId(latitude, longitude, state.locations);
         // "Use current location" only ever shows for roommate-needed listings
         // (see `addressBody` above), which only ever allow a single district —
         // safe to just replace the selection outright.
-        if (matchedId != null) state.form.selectedLocationIds = [matchedId];
+        if (resolvedId != null) state.form.selectedLocationIds = [resolvedId];
       }
-      state.nearbyStations = findNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
-      state.nearbyStationsChecked = true;
+      applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
       showFormError('');
     } catch (err) {
       console.error('Use current location failed', err);
@@ -1449,8 +1521,7 @@ function bindStepEvents() {
         state.form.addressLatitude = latitude;
         state.form.addressLongitude = longitude;
       }
-      state.nearbyStations = findNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
-      state.nearbyStationsChecked = true;
+      applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
       showFormError('');
     } catch (err) {
       console.error('Find nearby metro stations failed', err);
@@ -1472,7 +1543,7 @@ function bindStepEvents() {
       state.nearbyStationsRadiusMinutes = minutes;
       const { addressLatitude: latitude, addressLongitude: longitude } = state.form;
       if (latitude != null && longitude != null) {
-        state.nearbyStations = findNearbyStations(latitude, longitude, minutes);
+        applyNearbyStations(latitude, longitude, minutes);
       }
       renderStep();
     });
