@@ -291,6 +291,17 @@ function listingViewsCountText(count, lang = getLang()) {
   return n === 1 ? `${n} view` : `${n} views`;
 }
 
+/**
+ * "N complaint(s)" label for the listing detail page's complaints warning button,
+ * matching the mobile app's `complaints_count_short` wording per language.
+ */
+function listingComplaintsCountText(count, lang = getLang()) {
+  const n = Math.max(0, Math.trunc(Number(count) || 0));
+  if (lang === 'ru') return `${n} жалоб`;
+  if (lang === 'uz') return `${n} ta shikoyat`;
+  return n === 1 ? `${n} complaint` : `${n} complaints`;
+}
+
 function listingTypeUsesPriceRange(listingTypeCode) {
   const code = String(listingTypeCode ?? '').trim().toLowerCase();
   return code === 'room_needed' || code === 'group_forming';
@@ -542,6 +553,7 @@ Object.assign(window.UyDosh, {
   cardPhotoDotsHtml,
   formatPrice,
   listingViewsCountText,
+  listingComplaintsCountText,
   formatMapPinPrice,
   formatPublicationDate,
   formatListingCardPublicationDate,

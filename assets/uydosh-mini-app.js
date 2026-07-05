@@ -914,11 +914,11 @@ function initTelegramMiniApp() {
     try { tg.ready(); } catch { /* ignore */ }
     try { tg.expand(); } catch { /* ignore */ }
     if (redirectFromMiniAppStartParam()) return true;
-    // Fire-and-forget: inits the LocationManager and, if the user already granted location
-    // access (e.g. from a previous visit to the map view), silently reports their current
-    // location — so location history isn't limited to map-view visits. Never prompts for
-    // permission itself; see `reportUserLocationIfGranted`.
-    reportUserLocationIfGranted();
+    // Fire-and-forget: inits the LocationManager and requests the user's location right away.
+    // On a user's very first Mini App visit ever, this is what triggers Telegram's native
+    // location permission prompt; on every visit after that (granted or denied), it silently
+    // resolves/no-ops with no repeat prompt. See `requestAndReportUserLocation`.
+    requestAndReportUserLocation();
     applyTelegramTheme(tg);
     applyStoredManualTheme();
     applyTelegramSafeAreaInsets(tg);

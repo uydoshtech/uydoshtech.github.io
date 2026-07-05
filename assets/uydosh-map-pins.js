@@ -647,18 +647,20 @@ async function requestUserLocation() {
 }
 
 /**
- * Best-effort background location report, safe to call on every Mini App screen (not just
- * the map view): it only proceeds if the user already granted Telegram location access
- * (`isAccessGranted`), so — unlike `requestUserLocation` — it never triggers a permission
- * prompt on a screen the user didn't take a location-related action on. Reuses the same
- * `/app/telegram-mini-app-location` endpoint (and its per-IP rate limit) as the map view,
- * so no extra client-side throttling is needed here.
+ * Fire-and-forget location request + report, meant to run once as soon as the Mini App
+ * opens. `LocationManager.getLocation` only surfaces Telegram's native permission prompt
+ * the first time it's ever called for this user (while `isAccessRequested` is still
+ * false); once the user has answered (granted or denied), later calls resolve/reject
+ * immediately with no repeat prompt. So in practice this asks once on a user's very first
+ * visit and is a silent no-op (or silent report) on every visit after that. Reuses the
+ * same `/app/telegram-mini-app-location` endpoint (and its per-IP rate limit) as the map
+ * view, so no extra client-side throttling is needed here.
  */
-async function reportUserLocationIfGranted() {
+async function requestAndReportUserLocation() {
   if (!isMiniApp()) return;
   try {
     const loc = await initTelegramLocationManager();
-    if (!loc?.isLocationAvailable || !loc?.isAccessGranted) return;
+    if (!loc?.isLocationAvailable) return;
     const position = await getTelegramLocationData(loc);
     await window.UyDosh.reportTelegramMiniAppLocation(position.latitude, position.longitude);
   } catch (err) {
@@ -922,7 +924,7 @@ Object.assign(window.UyDosh, {
   createMetroStationPinIcon,
   createUserLocationPinIcon,
   requestUserLocation,
-  reportUserLocationIfGranted,
+  requestAndReportUserLocation,
   openTelegramLocationSettings,
   normalizeTelegramUsername,
   listingContactTelegram,

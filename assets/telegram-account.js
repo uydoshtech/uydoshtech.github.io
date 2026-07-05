@@ -370,12 +370,22 @@ function renderActiveTab() {
   else renderMine();
 }
 
+/** Mirrors the active tab's label in the mini-app header (e.g. "My listings" vs "Favorites"). */
+function updateHeaderSubtitle(tab) {
+  const subtitleEl = document.querySelector('[data-uydosh-mini-app-header] .brand span[data-i18n]');
+  if (!subtitleEl) return;
+  const key = tab === TAB_FAVORITES ? 'account.tabs.favorites' : 'account.subtitle';
+  subtitleEl.setAttribute('data-i18n', key);
+  subtitleEl.textContent = UyDosh.t(key, UyDosh.getLang());
+}
+
 function setActiveTab(tab) {
   if (state.activeTab === tab) return;
   state.activeTab = tab;
   for (const btn of tabButtons) {
     btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === tab ? 'true' : 'false');
   }
+  updateHeaderSubtitle(tab);
   renderActiveTab();
 }
 

@@ -324,6 +324,20 @@ function createComplaint({ listingId, categoryId, text }) {
   return fetchJsonAuth('/complaints', { method: 'POST', body });
 }
 
+/** Complaint count for a listing (public, no auth) — drives the listing detail page's complaints warning button. */
+function fetchListingComplaintsCount(listingId) {
+  return fetchJson('/complaints/counts-by-listing', { listing_id: listingId });
+}
+
+/**
+ * Complaints for a listing, including each complainant's name/avatar (public, no
+ * auth — same `GET /complaints` endpoint the mobile app falls back to). Used to
+ * render the "grouped by user" complaints sheet.
+ */
+function fetchListingComplaints(listingId, { limit = 100 } = {}) {
+  return fetchJson('/complaints', { listing_id: listingId, limit });
+}
+
 function fetchSubwayStationsByLine(lineId, lang = getLang()) {
   return fetchJson(`/subway-stations/line/${encodeURIComponent(lineId)}`, { language: lang });
 }
@@ -343,6 +357,17 @@ function fetchAmenitiesOrdered() {
 
 function createListing(body) {
   return fetchJsonAuth('/listings', { method: 'POST', body });
+}
+
+/**
+ * Reverse-geocodes coordinates into a human-readable address via the backend's
+ * Yandex Geocoder proxy — used by the create-listing wizard's "Use current
+ * location" address button. Requires a session token (see
+ * `ensureTelegramMiniAppSession`/`authenticateTelegramMiniApp`). Resolves to
+ * `{ addressText }`.
+ */
+function fetchReverseGeocodeAddress(latitude, longitude, lang = getLang()) {
+  return fetchJsonAuth('/app/geosuggest/reverse', { params: { latitude, longitude, lang } });
 }
 
 /** Create a listing from the Telegram Mini App (verify initData on submit). */
@@ -751,6 +776,7 @@ Object.assign(window.UyDosh, {
   fetchLocations,
   fetchAmenitiesOrdered,
   createListing,
+  fetchReverseGeocodeAddress,
   createListingFromTelegramMiniApp,
   updateListingFromTelegramMiniApp,
   fetchMyTelegramMiniAppListings,
@@ -772,6 +798,8 @@ Object.assign(window.UyDosh, {
   fetchFavoriteListings,
   fetchComplaintCategories,
   createComplaint,
+  fetchListingComplaintsCount,
+  fetchListingComplaints,
   reportTelegramMiniAppLocation,
   requestTelegramContactShare,
   phoneNumberFromContactShareResponse,

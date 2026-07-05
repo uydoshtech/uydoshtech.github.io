@@ -242,6 +242,15 @@ function iconPin() {
   `);
 }
 
+/** "My location" crosshair — used by the create-listing address field's "Use current location" button. */
+function iconLocateMe(color = null) {
+  return iconSvg(color, `
+    <circle cx="12" cy="12" r="6.5" stroke-width="2"></circle>
+    <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"></circle>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-width="2" stroke-linecap="round"></path>
+  `);
+}
+
 function iconMetro(line) {
   const color = metroLineColor(line) || 'currentColor';
   return iconSvg(color, `
@@ -434,6 +443,7 @@ Object.assign(window.UyDosh, {
   metroTransferPartner,
   metroTransferSuffixHtml,
   iconPin,
+  iconLocateMe,
   iconMetro,
   iconClock,
   iconPhone,

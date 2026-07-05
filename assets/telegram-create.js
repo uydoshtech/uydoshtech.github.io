@@ -59,12 +59,22 @@ const state = {
   /// lets the review step resolve names for stations picked on a line
   /// that isn't currently displayed.
   stationCache: {},
+  /// True while `requestUserLocation()` + reverse-geocoding are in flight for
+  /// the "Use current location" address button (step 0), so the button can
+  /// show a spinner and ignore repeat taps.
+  locatingAddress: false,
   form: {
     listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
     locationMode: LOCATION_MODE_METRO,
     subwayLineId: 1,
     selectedStationIds: [],
     selectedLocationIds: [],
+    // Free-text street address — roommate-needed listings only (mirrors the
+    // backend's `shouldPersistAddress` gating in listingService). Lat/lon are
+    // only set when populated via "Use current location", not manual typing.
+    addressText: '',
+    addressLatitude: null,
+    addressLongitude: null,
     price: 100,
     priceMin: 50,
     priceMax: 150,
@@ -213,6 +223,11 @@ function hydrateFormFromListing(listing) {
   );
   state.form.moveInDate = listing.move_in_date ? String(listing.move_in_date).slice(0, 10) : '';
   state.form.privateRoom = Boolean(listing.private_room);
+  state.form.addressText = listing.address_text || '';
+  const addressLat = Number(listing.address_latitude);
+  const addressLon = Number(listing.address_longitude);
+  state.form.addressLatitude = Number.isFinite(addressLat) ? addressLat : null;
+  state.form.addressLongitude = Number.isFinite(addressLon) ? addressLon : null;
   // Deliberately leave `state.lastGeneratedTitle` at its initial '' value (not
   // synced to the loaded title) — updateDefaultTitle() only overwrites the
   // title when it's empty or matches the last auto-generated text, so this
@@ -516,6 +531,33 @@ function renderStep0(lang) {
       </div>`;
   }
 
+  // Address is only ever persisted for roommate-needed (apartment) listings —
+  // mirrors the backend's `shouldPersistAddress` gating — so it's hidden for
+  // room-needed (demand-side) listings, which have no specific address to give.
+  const addressBody = !isRoomNeeded() ? `
+    <div class="field">
+      <label for="listing-address">${UyDosh.escapeHtml(UyDosh.t('create.addressOptional', lang))}</label>
+      <input
+        id="listing-address"
+        type="text"
+        maxlength="500"
+        value="${UyDosh.escapeHtml(state.form.addressText)}"
+        placeholder="${UyDosh.escapeHtml(UyDosh.t('create.addressPlaceholder', lang))}"
+      />
+      <button
+        type="button"
+        class="use-location-btn"
+        data-use-current-location
+        ${state.locatingAddress ? 'disabled' : ''}
+        aria-label="${UyDosh.escapeHtml(UyDosh.t('create.useCurrentLocation', lang))}"
+      >
+        ${state.locatingAddress
+          ? '<span class="use-location-spinner" aria-hidden="true"></span>'
+          : UyDosh.iconLocateMe()}
+        <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
+      </button>
+    </div>` : '';
+
   return `
     <section class="panel active" data-step="0">
       <div class="field">
@@ -527,6 +569,7 @@ function renderStep0(lang) {
         <div class="chips">${modeChips}</div>
       </div>
       ${locationBody}
+      ${addressBody}
     </section>`;
 }
 
@@ -702,6 +745,9 @@ function renderStep3(lang) {
       valueHtml: formatPriceReviewHtml(lang),
       price: true,
     },
+    ...(!isRoomNeeded() && state.form.addressText.trim()
+      ? [{ label: UyDosh.t('create.address', lang), value: state.form.addressText.trim(), clip: true }]
+      : []),
     {
       label: UyDosh.t('create.reviewAmenities', lang),
       valueHtml: amenityValueHtml,
@@ -979,6 +1025,35 @@ function bindStepEvents() {
       state.form.locationMode = btn.getAttribute('data-location-mode');
       renderStep();
     });
+  });
+
+  stepPanelsEl.querySelector('#listing-address')?.addEventListener('input', (e) => {
+    state.form.addressText = e.target.value;
+  });
+
+  stepPanelsEl.querySelector('[data-use-current-location]')?.addEventListener('click', async () => {
+    if (state.locatingAddress) return;
+    haptic();
+    state.locatingAddress = true;
+    renderStep();
+    try {
+      const { latitude, longitude } = await UyDosh.requestUserLocation();
+      state.form.addressLatitude = latitude;
+      state.form.addressLongitude = longitude;
+      const result = await UyDosh.fetchReverseGeocodeAddress(latitude, longitude, UyDosh.getLang());
+      if (result?.addressText) {
+        state.form.addressText = result.addressText;
+      }
+      showFormError('');
+    } catch (err) {
+      console.error('Use current location failed', err);
+      haptic('heavy');
+      if (UyDosh.isMiniApp()) UyDosh.openTelegramLocationSettings();
+      showFormError(UyDosh.t('create.errorLocationFailed', UyDosh.getLang()));
+    } finally {
+      state.locatingAddress = false;
+      renderStep();
+    }
   });
 
   stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
@@ -1304,6 +1379,18 @@ async function submitListing() {
       amenityIds: [...state.form.amenityIds],
       moveInDate: state.form.moveInDate || undefined,
       privateRoom: !isRoomNeeded() ? state.form.privateRoom : undefined,
+      // Omitted entirely for room-needed listings (no address concept there).
+      // For roommate-needed listings, sent even when empty so clearing the
+      // field during an edit actually clears the saved address — the backend
+      // only ever persists it for roommate-needed listings anyway (see
+      // `shouldPersistAddress` in listingService).
+      addressText: !isRoomNeeded() ? state.form.addressText.trim() : undefined,
+      addressLatitude: !isRoomNeeded() && state.form.addressLatitude != null
+        ? state.form.addressLatitude
+        : undefined,
+      addressLongitude: !isRoomNeeded() && state.form.addressLongitude != null
+        ? state.form.addressLongitude
+        : undefined,
     };
 
     if (state.form.locationMode === LOCATION_MODE_METRO) {

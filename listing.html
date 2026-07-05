@@ -343,6 +343,55 @@
       }
       .complaint-submit-btn:disabled { opacity: 0.55; cursor: default; }
       .complaint-submit-btn:active:not(:disabled) { opacity: 0.88; }
+
+      /* Complaints warning button + grouped-by-user complaints sheet — mirrors
+         the mobile app's "N complaints" banner and ListingComplaintsScreen.
+         Shown whenever a listing has at least one complaint; the underlying
+         data is public, but the button only renders in the Mini App (see
+         `loadComplaintsWarning`) to match the reporting flow above. */
+      .complaints-warning { margin-top: 20px; }
+      .complaints-warning[hidden] { display: none !important; }
+      .complaints-warning-btn {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+        border: 0; border-radius: 14px; padding: 13px 16px;
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+        animation: complaints-warning-pulse 1.6s ease-in-out infinite;
+      }
+      .complaints-warning-btn:active { opacity: 0.88; }
+      .complaints-warning-btn .icon { width: 20px; height: 20px; display: inline-flex; flex-shrink: 0; }
+      .complaints-warning-btn .icon svg { width: 20px; height: 20px; display: block; }
+      @keyframes complaints-warning-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.72; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .complaints-warning-btn { animation: none; }
+      }
+      .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
+      .complaints-group + .complaints-group {
+        margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--stroke);
+      }
+      .complaints-group-header { display: flex; align-items: center; gap: 10px; }
+      .complaints-avatar {
+        position: relative;
+        width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+        background: rgba(127, 127, 127, 0.16);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 700; color: var(--muted);
+      }
+      .complaints-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+      .complaints-group-name { font-weight: 700; font-size: 15px; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .complaints-count-badge {
+        flex-shrink: 0; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px;
+        background: color-mix(in srgb, var(--brand2) 18%, transparent);
+        color: var(--brand2); font-size: 12px; font-weight: 800;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .complaints-entry { margin-top: 10px; padding-left: 46px; display: flex; flex-direction: column; gap: 4px; }
+      .complaints-entry-category { font-size: 13px; font-weight: 700; color: #f97316; }
+      .complaints-entry-text { font-size: 14px; line-height: 1.4; color: var(--fg); }
+      .complaints-entry-date { font-size: 12px; color: var(--muted); }
       .gallery-dots {
         display: flex;
         justify-content: center;
@@ -451,17 +500,19 @@
       .author-row { display: flex; align-items: center; gap: 8px; }
       .author-avatar {
         flex-shrink: 0;
-        width: 22px;
-        height: 22px;
+        box-sizing: border-box;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
+        border: 1px solid var(--stroke);
         overflow: hidden;
-        background: var(--stroke);
+        background: rgba(127, 127, 127, 0.08);
         display: flex;
         align-items: center;
         justify-content: center;
         color: var(--muted);
       }
-      .author-avatar svg { width: 13px; height: 13px; display: block; }
+      .author-avatar svg { width: 15px; height: 15px; display: block; }
       .author-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
       .section h2 {
@@ -781,15 +832,16 @@
     <div id="detail-contact-bar" class="detail-contact-bar" hidden aria-hidden="true"></div>
 
     <div id="complaint-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
+    <div id="listing-complaints-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="assets/uydosh-core.js?v=20260705-95"></script>
-    <script src="assets/uydosh-api.js?v=20260705-95"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-18"></script>
-    <script src="assets/uydosh-icons.js?v=20260705-95"></script>
-    <script src="assets/uydosh-map-pins.js?v=20260705-79"></script>
+    <script src="assets/uydosh-core.js?v=20260705-96"></script>
+    <script src="assets/uydosh-api.js?v=20260705-97"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-20"></script>
+    <script src="assets/uydosh-icons.js?v=20260705-96"></script>
+    <script src="assets/uydosh-map-pins.js?v=20260705-80"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="assets/uydosh-mini-app.js?v=20260705-97"></script>
+    <script src="assets/uydosh-mini-app.js?v=20260705-98"></script>
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
       UyDosh.initTelegramMiniApp();
@@ -1413,6 +1465,203 @@
         });
       }
 
+      // --- Complaints warning + grouped-by-user complaints list -----------
+      // Mirrors the mobile app's ListingDetailComplaintsCard: a warning button
+      // that only appears once a listing actually has complaints, opening a
+      // sheet listing them grouped by whoever reported them (with avatars).
+      // The underlying data is public (no auth), but — like the report button
+      // above — this only renders inside the Mini App.
+
+      function complaintsWarningIconHtml() {
+        return `
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"></circle>
+              <rect x="10.85" y="5.5" width="2.3" height="8.5" rx="1.15" fill="#fff"></rect>
+              <rect x="10.85" y="16" width="2.3" height="2.3" rx="1.15" fill="#fff"></rect>
+            </svg>
+          </span>
+        `;
+      }
+
+      function complaintsWarningHtml() {
+        if (!UyDosh.isMiniApp()) return '';
+        return `
+          <div class="complaints-warning" data-complaints-warning hidden>
+            <button type="button" class="complaints-warning-btn" data-view-complaints>
+              ${complaintsWarningIconHtml()}
+              <span data-complaints-warning-label></span>
+            </button>
+          </div>
+        `;
+      }
+
+      async function loadComplaintsWarning(listing) {
+        const wrapEl = rootEl.querySelector('[data-complaints-warning]');
+        if (!wrapEl) return;
+        try {
+          const res = await UyDosh.fetchListingComplaintsCount(listing.id);
+          const count = Number(res?.data?.count) || 0;
+          if (count <= 0) return;
+          const labelEl = wrapEl.querySelector('[data-complaints-warning-label]');
+          if (labelEl) labelEl.textContent = UyDosh.listingComplaintsCountText(count, UyDosh.getLang());
+          wrapEl.hidden = false;
+          wrapEl.querySelector('[data-view-complaints]')?.addEventListener('click', () => {
+            window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+            openComplaintsListSheet(listing.id);
+          });
+        } catch (err) {
+          console.error('Failed to load listing complaints count', err);
+        }
+      }
+
+      const listingComplaintsBackdropEl = document.getElementById('listing-complaints-backdrop');
+      listingComplaintsBackdropEl?.addEventListener('click', (e) => {
+        if (e.target === listingComplaintsBackdropEl) closeComplaintsListSheet();
+      });
+
+      function closeComplaintsListSheet() {
+        listingComplaintsBackdropEl.classList.remove('is-open');
+        window.setTimeout(() => {
+          listingComplaintsBackdropEl.hidden = true;
+          listingComplaintsBackdropEl.setAttribute('aria-hidden', 'true');
+          listingComplaintsBackdropEl.innerHTML = '';
+        }, 180);
+      }
+
+      function complaintsListSheetShellHtml(bodyHtml) {
+        const lang = UyDosh.getLang();
+        return `
+          <div class="complaint-sheet" role="dialog" aria-modal="true" aria-label="${UyDosh.escapeHtml(UyDosh.t('complaints.title', lang))}">
+            <div class="complaint-sheet-header">
+              <h2>${UyDosh.escapeHtml(UyDosh.t('complaints.title', lang))}</h2>
+              <button type="button" class="complaint-close-btn" data-complaints-close aria-label="${UyDosh.escapeHtml(UyDosh.t('complaint.cancel', lang))}">✕</button>
+            </div>
+            ${bodyHtml}
+          </div>
+        `;
+      }
+
+      function bindComplaintsListCloseHandlers() {
+        listingComplaintsBackdropEl.querySelector('[data-complaints-close]')?.addEventListener('click', () => {
+          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+          closeComplaintsListSheet();
+        });
+      }
+
+      function renderComplaintsListLoading() {
+        listingComplaintsBackdropEl.innerHTML = complaintsListSheetShellHtml(`
+          <div class="complaint-body">
+            <div class="complaints-list-status">${UyDosh.escapeHtml(UyDosh.t('complaints.loading'))}</div>
+          </div>
+        `);
+        bindComplaintsListCloseHandlers();
+      }
+
+      function renderComplaintsListError(listingId) {
+        listingComplaintsBackdropEl.innerHTML = complaintsListSheetShellHtml(`
+          <div class="complaint-body">
+            <div class="complaints-list-status">${UyDosh.escapeHtml(UyDosh.t('complaints.loadError'))}</div>
+          </div>
+          <div class="complaint-actions">
+            <button type="button" class="complaint-submit-btn" data-complaints-retry>${UyDosh.escapeHtml(UyDosh.t('feed.retry'))}</button>
+          </div>
+        `);
+        bindComplaintsListCloseHandlers();
+        listingComplaintsBackdropEl.querySelector('[data-complaints-retry]')?.addEventListener('click', () => {
+          openComplaintsListSheet(listingId);
+        });
+      }
+
+      /** Groups complaints by whoever filed them, most-recently-complaining user first. */
+      function groupComplaintsByComplainant(complaints) {
+        const groups = [];
+        const byKey = new Map();
+        for (const complaint of complaints) {
+          const complainant = complaint?.complainant || null;
+          const key = complainant?.id ?? `anon-${complaint.id}`;
+          let group = byKey.get(key);
+          if (!group) {
+            group = { complainant, items: [] };
+            byKey.set(key, group);
+            groups.push(group);
+          }
+          group.items.push(complaint);
+        }
+        for (const group of groups) {
+          group.items.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        }
+        groups.sort((a, b) => new Date(b.items[0]?.created_at || 0) - new Date(a.items[0]?.created_at || 0));
+        return groups;
+      }
+
+      function complaintsGroupHtml(group, lang) {
+        const name = String(group.complainant?.profile?.name || '').trim() || UyDosh.t('complaints.anonymous', lang);
+        const avatarUrl = group.complainant?.profile?.avatar_url ? UyDosh.photoUrl(group.complainant.profile.avatar_url) : '';
+        const initial = name.charAt(0).toUpperCase() || '?';
+        const avatarHtml = `
+          ${avatarUrl ? `<img src="${UyDosh.escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />` : ''}
+          <span>${UyDosh.escapeHtml(initial)}</span>
+        `;
+        const entriesHtml = group.items.map((complaint) => {
+          const categoryLabel = complaint.category ? complaintCategoryName(complaint.category, lang) : '';
+          const text = String(complaint.text || '').trim();
+          const date = complaint.created_at ? UyDosh.formatDate(complaint.created_at, lang) : '';
+          return `
+            <div class="complaints-entry">
+              ${categoryLabel ? `<div class="complaints-entry-category">${UyDosh.escapeHtml(categoryLabel)}</div>` : ''}
+              ${text ? `<div class="complaints-entry-text">${UyDosh.escapeHtml(text)}</div>` : ''}
+              ${date ? `<div class="complaints-entry-date">${UyDosh.escapeHtml(date)}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+        return `
+          <div class="complaints-group">
+            <div class="complaints-group-header">
+              <div class="complaints-avatar">${avatarHtml}</div>
+              <div class="complaints-group-name">${UyDosh.escapeHtml(name)}</div>
+              ${group.items.length > 1 ? `<span class="complaints-count-badge">${group.items.length}</span>` : ''}
+            </div>
+            ${entriesHtml}
+          </div>
+        `;
+      }
+
+      function renderComplaintsList(complaints) {
+        const lang = UyDosh.getLang();
+        if (!complaints.length) {
+          listingComplaintsBackdropEl.innerHTML = complaintsListSheetShellHtml(`
+            <div class="complaint-body">
+              <div class="complaints-list-status">${UyDosh.escapeHtml(UyDosh.t('complaints.empty', lang))}</div>
+            </div>
+          `);
+          bindComplaintsListCloseHandlers();
+          return;
+        }
+        const groups = groupComplaintsByComplainant(complaints);
+        const groupsHtml = groups.map((group) => complaintsGroupHtml(group, lang)).join('');
+        listingComplaintsBackdropEl.innerHTML = complaintsListSheetShellHtml(`
+          <div class="complaint-body">${groupsHtml}</div>
+        `);
+        bindComplaintsListCloseHandlers();
+      }
+
+      async function openComplaintsListSheet(listingId) {
+        listingComplaintsBackdropEl.hidden = false;
+        listingComplaintsBackdropEl.setAttribute('aria-hidden', 'false');
+        renderComplaintsListLoading();
+        requestAnimationFrame(() => listingComplaintsBackdropEl.classList.add('is-open'));
+
+        try {
+          const res = await UyDosh.fetchListingComplaints(listingId, { limit: 100 });
+          const complaints = Array.isArray(res?.data) ? res.data : [];
+          renderComplaintsList(complaints);
+        } catch (err) {
+          console.error('Failed to load listing complaints', err);
+          renderComplaintsListError(listingId);
+        }
+      }
+
       function buildGalleryHtml() {
         if (state.photos.length === 0) {
           const placeholderSrc = UyDosh.noPhotoPlaceholderImageUrl(state.listing);
@@ -1839,6 +2088,7 @@
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
                 <a class="btn" href="${APK_URL}" download="uydosh.apk" data-i18n="detail.downloadApk">${UyDosh.escapeHtml(UyDosh.t('detail.downloadApk'))}</a>
               </div>
+              ${complaintsWarningHtml()}
             </div>
           </div>
           ${descHtml}
@@ -1851,6 +2101,7 @@
         bindReportButton(l);
         updateDetailContactBar(l);
         if (isOwner) loadOwnerViewCount(l.id);
+        if (isMiniApp) loadComplaintsWarning(l);
       }
 
       async function load() {
