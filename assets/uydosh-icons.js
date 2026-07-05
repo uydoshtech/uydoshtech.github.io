@@ -240,6 +240,42 @@ function metroLineChipsHtml(selectedId, lang = getLang(), { compact = false } = 
   }).join('');
 }
 
+/**
+ * Generic `.chip`-style toggle button — shared by the feed filter ribbon
+ * (telegram-feed.js: listing type, gender, photo, period chips), the
+ * create-listing wizard (telegram-create.js: listing type, location mode,
+ * gender, amenity chips), and the profile page's lifestyle chips
+ * (telegram-profile.js), all of which rendered near-identical
+ * `<button class="chip" data-*="..." data-haptic="selection"
+ * aria-pressed="...">icon+label</button>` markup by hand before this existed.
+ * Bespoke shapes (the metro-line reveal ribbon, icon-only chips with just an
+ * `aria-label`) still just pass a different `className`/`labelWrap` — this
+ * only centralizes the common attribute/escaping plumbing, not every
+ * possible chip variant.
+ */
+function chipButtonHtml({
+  className = 'chip',
+  attrs = {},
+  pressed,
+  icon = '',
+  label = '',
+  labelWrap = true,
+  labelClassName = 'chip-label',
+  ariaLabel = '',
+  haptic = 'selection',
+} = {}) {
+  const attrHtml = Object.entries(attrs).map(([name, value]) => {
+    if (value === true) return ` ${name}`;
+    if (value == null || value === false) return '';
+    return ` ${name}="${escapeHtml(String(value))}"`;
+  }).join('');
+  const pressedHtml = pressed == null ? '' : ` aria-pressed="${pressed ? 'true' : 'false'}"`;
+  const ariaLabelHtml = ariaLabel ? ` aria-label="${escapeHtml(ariaLabel)}"` : '';
+  const labelText = label ? escapeHtml(label) : '';
+  const labelHtml = labelText ? (labelWrap ? `<span class="${labelClassName}">${labelText}</span>` : labelText) : '';
+  return `<button type="button" class="${className}"${attrHtml} data-haptic="${haptic}"${pressedHtml}${ariaLabelHtml}>${icon}${labelHtml}</button>`;
+}
+
 function resolveMetroLine(listing) {
   const st = listing?.subway_station;
   if (st?.line != null) return Number(st.line);
@@ -458,6 +494,7 @@ Object.assign(window.UyDosh, {
   metroLineLabel,
   metroLineBadgeHtml,
   metroLineChipsHtml,
+  chipButtonHtml,
   METRO_LINE_IDS,
   METRO_LINE_ANY,
   LISTING_TYPE_ALL,

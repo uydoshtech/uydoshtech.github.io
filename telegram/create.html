@@ -29,7 +29,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260705-89" />
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260705-101" />
     <style>
       :root {
         --error: #f87171;
@@ -123,37 +123,19 @@
         font-weight: 700;
         color: var(--muted);
       }
-      .chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
+      /* Base `.chips`/`.chip` and metro-line ribbon styles (`.chip-line`,
+         `.metro-m-badge`, `.chip-label-collapse` reveal animation) live in
+         telegram-shared.css — shared with the feed filter ribbon. This page
+         just sets its own chip density. */
       .chip {
-        appearance: none;
-        border: 1px solid var(--stroke);
-        background: rgba(127, 127, 127, 0.08);
-        border-radius: 999px;
-        color: var(--muted);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
         font-size: 12px;
         font-weight: 600;
         padding: 8px 12px;
       }
-      .chip[aria-pressed="true"] {
-        border-color: var(--brand);
-        color: var(--fg);
-      }
       .chip .chip-icon {
         width: 14px;
         height: 14px;
-        display: inline-flex;
       }
-      /* Metro-line ribbon base styles (`.chip-line`, `.metro-m-badge`,
-         `.chip-label-collapse` reveal animation) live in
-         telegram-shared.css — shared with the feed filter ribbon. */
       select, input[type="text"], input[type="number"], input[type="date"], textarea {
         width: 100%;
         border: 1px solid var(--stroke);
@@ -311,96 +293,13 @@
         border: 2.5px solid color-mix(in srgb, var(--fg) 16%, transparent);
         border-top-color: var(--brand2);
         border-radius: 50%;
-        animation: station-list-spin 0.75s linear infinite;
+        animation: uydosh-spin 0.75s linear infinite;
       }
-      @keyframes station-list-spin {
-        to { transform: rotate(360deg); }
-      }
+      /* Base `.station-item` (+ icon/checkbox/transfer/select-all) styles
+         live in telegram-shared.css, shared with the profile page's
+         university list; this page just sets its own row padding. */
       .station-item {
-        appearance: none;
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--fg);
-        border-radius: 10px;
         padding: 7px 12px;
-        text-align: left;
-        font: inherit;
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 1.35;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        width: 100%;
-      }
-      .station-item .icon {
-        flex-shrink: 0;
-        display: inline-flex;
-      }
-      /* Station name doesn't grow to fill the row, so a transfer-station's
-         "<-> icon Name" suffix (see metroTransferSuffixHtml) sits right next
-         to it instead of flush at the far right edge. It still shrinks (and
-         ellipsizes) first if the combined content overflows the row. */
-      .station-item .station-item-label {
-        flex: 0 1 auto;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .station-item .icon svg {
-        width: 20px;
-        height: 20px;
-        display: block;
-      }
-      .station-item .icon svg * {
-        stroke: currentColor;
-        fill: none;
-      }
-      /* Same text/icon styling as the primary station name (font size,
-         weight, color) so both sides of a transfer row read as equals. */
-      .station-item-transfer {
-        flex-shrink: 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        white-space: nowrap;
-      }
-      /* Multi-select checkbox: both states render up front and CSS swaps
-         which one shows based on the row's `aria-pressed` attribute, so
-         toggling selection doesn't require re-rendering the row (see
-         updateStationSelectionUi / updateLocationSelectionUi in
-         telegram-create.js). */
-      .station-item .checkbox-icon {
-        flex-shrink: 0;
-        display: inline-flex;
-      }
-      .station-item .checkbox-icon .chip-icon svg {
-        width: 20px;
-        height: 20px;
-        display: block;
-      }
-      .station-item .checkbox-icon-checked {
-        display: none;
-      }
-      .station-item[aria-pressed="true"] .checkbox-icon-checked {
-        display: inline-flex;
-      }
-      .station-item[aria-pressed="true"] .checkbox-icon-unchecked {
-        display: none;
-      }
-      .station-item[aria-pressed="true"] {
-        border-color: var(--brand);
-        background: rgba(127, 127, 127, 0.1);
-        color: var(--fg);
-      }
-      .station-item-select-all {
-        font-weight: 700;
-        margin-bottom: 6px;
-        padding-bottom: 9px;
-        border-bottom: 1px solid var(--stroke);
-        border-radius: 10px 10px 0 0;
       }
       /* District list: two columns instead of one long scrolling column
          (see districtItems in telegram-create.js). The "select all" row
@@ -718,7 +617,7 @@
         border: 2.5px solid color-mix(in srgb, var(--fg) 16%, transparent);
         border-top-color: var(--brand2);
         border-radius: 50%;
-        animation: station-list-spin 0.75s linear infinite;
+        animation: uydosh-spin 0.75s linear infinite;
       }
       .success-panel {
         display: none;
@@ -831,7 +730,7 @@
         border: 2px solid color-mix(in srgb, var(--fg) 16%, transparent);
         border-top-color: var(--brand2);
         border-radius: 50%;
-        animation: station-list-spin 0.75s linear infinite;
+        animation: uydosh-spin 0.75s linear infinite;
       }
       .wizard-footer {
         position: fixed;
@@ -851,73 +750,9 @@
         max-width: 720px;
         margin: 0 auto;
       }
-      .wizard-btn {
-        appearance: none;
-        border: 0;
-        border-radius: 20px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        flex: 1;
-        font: inherit;
-        font-size: 15px;
-        font-weight: 600;
-        line-height: 1;
-        min-height: 48px;
-        padding: 14px 18px;
-        transition: opacity 0.15s ease, transform 0.15s ease;
-      }
-      .wizard-btn[hidden] {
-        display: none;
-      }
-      .wizard-btn:active:not(:disabled) {
-        opacity: 0.9;
-        transform: scale(0.98);
-      }
-      .wizard-btn:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-      }
-      .wizard-btn-back {
-        background: transparent;
-        color: var(--fg);
-        border: 1px solid transparent;
-      }
-      .wizard-btn-next {
-        background: var(--brand2);
-        color: #fff;
-        border: 1px solid transparent;
-      }
-      .wizard-btn-next.full {
-        flex: 1;
-      }
-      .wizard-btn-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-      }
-      .wizard-btn-icon[hidden] {
-        display: none;
-      }
-      .wizard-btn-icon svg {
-        display: block;
-        width: 18px;
-        height: 18px;
-      }
-      .wizard-btn-spinner {
-        width: 18px;
-        height: 18px;
-        border: 2px solid rgba(255, 255, 255, 0.28);
-        border-top-color: #fff;
-        border-radius: 50%;
-        animation: station-list-spin 0.75s linear infinite;
-        flex-shrink: 0;
-      }
+      /* `.wizard-btn`/`.wizard-btn-back`/`.wizard-btn-next`/
+         `.wizard-btn-icon`/`.wizard-btn-spinner` styles live in
+         telegram-shared.css, shared with the profile page's Save button. */
       #loading[hidden], #form-root[hidden], #success-root[hidden], #wizard-footer[hidden] { display: none !important; }
     </style>
   </head>
@@ -972,10 +807,10 @@
     <script src="../assets/uydosh-core.js?v=20260705-98"></script>
     <script src="../assets/uydosh-api.js?v=20260705-98"></script>
     <script src="../assets/uydosh-i18n.js?v=20260705-22"></script>
-    <script src="../assets/uydosh-icons.js?v=20260705-97"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-101"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-100"></script>
-    <script src="../assets/telegram-create.js?v=20260705-95"></script>
+    <script src="../assets/telegram-create.js?v=20260705-101"></script>
   </body>
 </html>

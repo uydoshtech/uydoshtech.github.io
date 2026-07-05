@@ -1,7 +1,9 @@
 /*
- * Shared base styles for the Telegram Mini App pages (telegram/index.html, telegram/create.html).
+ * Shared base styles for the Telegram Mini App pages (telegram/index.html,
+ * telegram/create.html, telegram/profile.html, telegram/account.html).
  * Keep this file limited to declarations that are byte-identical across pages;
- * page-specific tokens/overrides belong in each page's own <style> block.
+ * page-specific tokens/overrides (e.g. `.chip`/`.station-item` sizing) belong
+ * in each page's own <style> block.
  */
 :root {
   color-scheme: light dark;
@@ -47,11 +49,209 @@ a { color: inherit; text-decoration: none; }
   padding: 12px 14px;
 }
 
-/* Byte-identical between telegram/index.html and telegram/create.html. */
+/*
+ * Chip / pill toggle button — shared by the feed filter ribbon
+ * (telegram/index.html), the create-listing wizard (telegram/create.html),
+ * and the profile form (telegram/profile.html). Sizing (font-size/padding)
+ * varies by page's information density, so that stays a small override in
+ * each page's own <style> block instead of living here.
+ */
+.chip {
+  appearance: none;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.08);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip .chip-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
 .chip .chip-icon svg {
   width: 14px;
   height: 14px;
   display: block;
+}
+.chip .chip-label {
+  line-height: 1;
+}
+.chip:active {
+  opacity: 0.88;
+}
+.chip[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand2) 12%, transparent);
+  color: var(--fg);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/*
+ * Selectable list row — the create-listing wizard's metro station/district
+ * pickers (telegram-create.js) and the profile page's university autosuggest
+ * list (telegram-profile.js). The icon/checkbox/transfer sub-elements are
+ * only present when a page's markup actually includes them — harmless no-ops
+ * on pages (like profile) that render plain text rows.
+ */
+.station-item {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  border-radius: 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.station-item .icon {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.station-item .station-item-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.station-item .icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.station-item .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+.station-item-transfer {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.station-item .checkbox-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.station-item .checkbox-icon .chip-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.station-item .checkbox-icon-checked {
+  display: none;
+}
+.station-item[aria-pressed="true"] .checkbox-icon-checked {
+  display: inline-flex;
+}
+.station-item[aria-pressed="true"] .checkbox-icon-unchecked {
+  display: none;
+}
+.station-item[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: rgba(127, 127, 127, 0.1);
+  color: var(--fg);
+}
+.station-item-select-all {
+  font-weight: 700;
+  margin-bottom: 6px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--stroke);
+  border-radius: 10px 10px 0 0;
+}
+
+/* Generic spinner rotation — used by every loading/busy spinner across the Mini App. */
+@keyframes uydosh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/*
+ * Primary/secondary footer action button — the create-listing wizard's
+ * Back/Next bar (telegram/create.html) and the profile page's Save button
+ * (telegram/profile.html). `.wizard-btn-back`/`.wizard-btn-next` pick the
+ * look; a lone button (like profile's Save) just uses `.wizard-btn-next`.
+ */
+.wizard-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  min-height: 48px;
+  padding: 14px 18px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.wizard-btn[hidden] {
+  display: none;
+}
+.wizard-btn:active:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+.wizard-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.wizard-btn-back {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid transparent;
+}
+.wizard-btn-next {
+  background: var(--brand2);
+  color: #fff;
+  border: 1px solid transparent;
+}
+.wizard-btn-next.full {
+  flex: 1;
+}
+.wizard-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.wizard-btn-icon[hidden] {
+  display: none;
+}
+.wizard-btn-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+.wizard-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: uydosh-spin 0.75s linear infinite;
+  flex-shrink: 0;
 }
 
 /*

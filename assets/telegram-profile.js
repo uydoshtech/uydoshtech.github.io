@@ -303,18 +303,13 @@ function renderLifestyleFields() {
         </div>`;
     }
 
-    const chips = field.options.map((opt, i) => {
-      const pressed = current === opt.value;
-      return `
-        <button
-          type="button"
-          class="chip"
-          data-lifestyle-key="${field.key}"
-          data-option-index="${i}"
-          data-haptic="selection"
-          aria-pressed="${pressed ? 'true' : 'false'}"
-        >${chipIconHtml(opt.icon)}${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`;
-    }).join('');
+    const chips = field.options.map((opt, i) => UyDosh.chipButtonHtml({
+      attrs: { 'data-lifestyle-key': field.key, 'data-option-index': i },
+      pressed: current === opt.value,
+      icon: chipIconHtml(opt.icon),
+      label: UyDosh.t(opt.labelKey),
+      labelWrap: false,
+    })).join('');
     return `
       <div class="field">
         <div class="field-label">${fieldLabelHtml(field)}</div>

@@ -446,25 +446,23 @@ function renderStep0(lang) {
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
   ];
-  const typeChips = typeOptions.map((opt) => {
-    const pressed = state.form.listingTypeId === opt.id;
-    return `
-      <button type="button" class="chip" data-listing-type="${opt.id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}
-        <span>${UyDosh.escapeHtml(opt.label)}</span>
-      </button>`;
-  }).join('');
+  const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
+    attrs: { 'data-listing-type': opt.id },
+    pressed: state.form.listingTypeId === opt.id,
+    icon: UyDosh.filterListingTypeIcon(opt.id, { pressed: false }),
+    label: opt.label,
+  })).join('');
 
   const modeChips = [
     { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang), icon: UyDosh.iconMetro() },
     { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: UyDosh.iconPin() },
   ].map((opt) => {
-    const pressed = state.form.locationMode === opt.mode;
-    return `
-      <button type="button" class="chip" data-location-mode="${opt.mode}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${opt.icon}
-        <span>${UyDosh.escapeHtml(opt.label)}</span>
-      </button>`;
+    return UyDosh.chipButtonHtml({
+      attrs: { 'data-location-mode': opt.mode },
+      pressed: state.form.locationMode === opt.mode,
+      icon: opt.icon,
+      label: opt.label,
+    });
   }).join('');
 
   // Shared metro ribbon (see `metroLineChipsHtml` in uydosh-icons.js):
@@ -603,23 +601,22 @@ function renderStep1(lang) {
       </div>`;
 
   const genderField = fieldErrorAttrs('gender');
-  const genderChips = [1, 2].map((g) => {
-    const pressed = state.form.gender === g;
-    return `
-      <button type="button" class="chip" data-gender="${g}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.filterGenderIcon(g, { pressed: false })}
-        <span>${UyDosh.escapeHtml(genderLabel(g, lang))}</span>
-      </button>`;
-  }).join('');
+  const genderChips = [1, 2].map((g) => UyDosh.chipButtonHtml({
+    attrs: { 'data-gender': g },
+    pressed: state.form.gender === g,
+    icon: UyDosh.filterGenderIcon(g, { pressed: false }),
+    label: genderLabel(g, lang),
+  })).join('');
 
   const amenityChips = state.amenities.map((a) => {
     const id = Number(a.id);
-    const pressed = state.form.amenityIds.has(id);
-    return `
-      <button type="button" class="amenity-chip" data-amenity-id="${id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.amenityIconHtml(UyDosh.getAmenityCode(a), { size: 16 })}
-        <span>${UyDosh.escapeHtml(UyDosh.localized(a, lang))}</span>
-      </button>`;
+    return UyDosh.chipButtonHtml({
+      className: 'amenity-chip',
+      attrs: { 'data-amenity-id': id },
+      pressed: state.form.amenityIds.has(id),
+      icon: UyDosh.amenityIconHtml(UyDosh.getAmenityCode(a), { size: 16 }),
+      label: UyDosh.localized(a, lang),
+    });
   }).join('');
 
   return `

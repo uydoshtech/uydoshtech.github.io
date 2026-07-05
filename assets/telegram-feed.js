@@ -343,50 +343,30 @@ function renderFilters() {
     ? UyDosh.t('filter.expand.aria', lang)
     : UyDosh.t('filter.collapse.aria', lang);
 
-  const typeChips = typeOptions.map((opt) => {
-    const pressed = state.filters.listingTypeId === opt.value;
-    const icon = UyDosh.filterListingTypeIcon(opt.value, { pressed: false });
-    return `
-    <button
-      type="button"
-      class="chip"
-      data-listing-type="${opt.value}"
-      data-haptic="selection"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-    >${icon}<span class="chip-label">${UyDosh.escapeHtml(opt.label)}</span></button>
-  `;
-  }).join('');
+  const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
+    attrs: { 'data-listing-type': opt.value },
+    pressed: state.filters.listingTypeId === opt.value,
+    icon: UyDosh.filterListingTypeIcon(opt.value, { pressed: false }),
+    label: opt.label,
+  })).join('');
 
-  const typeChipsCompact = typeOptions.map((opt) => {
-    const pressed = state.filters.listingTypeId === opt.value;
-    const icon = UyDosh.filterListingTypeIcon(opt.value, { pressed: false });
-    return `
-    <button
-      type="button"
-      class="chip chip-icon-only"
-      data-listing-type="${opt.value}"
-      data-haptic="selection"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-      aria-label="${UyDosh.escapeHtml(opt.label)}"
-    >${icon}</button>
-  `;
-  }).join('');
+  const typeChipsCompact = typeOptions.map((opt) => UyDosh.chipButtonHtml({
+    className: 'chip chip-icon-only',
+    attrs: { 'data-listing-type': opt.value },
+    pressed: state.filters.listingTypeId === opt.value,
+    icon: UyDosh.filterListingTypeIcon(opt.value, { pressed: false }),
+    ariaLabel: opt.label,
+  })).join('');
 
   const selectedGender = state.filters.gender;
-  const genderSegments = genderOptions.map((opt) => {
-    const pressed = selectedGender === opt.value;
-    const icon = UyDosh.filterGenderIcon(opt.value, { pressed: false });
-    return `
-    <button
-      type="button"
-      class="gender-switch-segment"
-      data-gender="${opt.value}"
-      data-haptic="selection"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-      aria-label="${UyDosh.escapeHtml(opt.label)}"
-    >${icon}<span class="chip-label">${UyDosh.escapeHtml(opt.label)}</span></button>
-  `;
-  }).join('');
+  const genderSegments = genderOptions.map((opt) => UyDosh.chipButtonHtml({
+    className: 'gender-switch-segment',
+    attrs: { 'data-gender': opt.value },
+    pressed: selectedGender === opt.value,
+    icon: UyDosh.filterGenderIcon(opt.value, { pressed: false }),
+    label: opt.label,
+    ariaLabel: opt.label,
+  })).join('');
   const genderSwitch = `
     <div
       class="gender-switch"
@@ -399,43 +379,31 @@ function renderFilters() {
     </div>
   `;
 
-  const genderChipsCompact = genderOptions.map((opt) => {
-    const pressed = selectedGender === opt.value;
-    const icon = UyDosh.filterGenderIcon(opt.value, { pressed: false });
-    return `
-    <button
-      type="button"
-      class="chip chip-icon-only chip-gender"
-      data-gender="${opt.value}"
-      data-haptic="selection"
-      aria-pressed="${pressed ? 'true' : 'false'}"
-      aria-label="${UyDosh.escapeHtml(opt.label)}"
-    >${icon}</button>
-  `;
-  }).join('');
+  const genderChipsCompact = genderOptions.map((opt) => UyDosh.chipButtonHtml({
+    className: 'chip chip-icon-only chip-gender',
+    attrs: { 'data-gender': opt.value },
+    pressed: selectedGender === opt.value,
+    icon: UyDosh.filterGenderIcon(opt.value, { pressed: false }),
+    ariaLabel: opt.label,
+  })).join('');
 
   const photoPressed = state.filters.withPhoto;
-  const photoChip = `
-    <button
-      type="button"
-      class="chip chip-photo"
-      data-with-photo
-      data-haptic="selection"
-      aria-pressed="${photoPressed ? 'true' : 'false'}"
-      aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.photo.aria', lang))}"
-    >${UyDosh.filterPhotoIcon({ pressed: false })}</button>
-  `;
+  const photoChip = UyDosh.chipButtonHtml({
+    className: 'chip chip-photo',
+    attrs: { 'data-with-photo': true },
+    pressed: photoPressed,
+    icon: UyDosh.filterPhotoIcon({ pressed: false }),
+    ariaLabel: UyDosh.t('filter.photo.aria', lang),
+  });
 
   const currentPeriod = periodOptions.find((opt) => opt.value === state.filters.createdWithinDays) ?? periodOptions[0];
-  const periodChip = `
-    <button
-      type="button"
-      class="chip chip-period"
-      data-period-cycle
-      data-haptic="selection"
-      aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.period.aria', lang))}: ${UyDosh.escapeHtml(currentPeriod.label)}"
-    ><span class="chip-label">${UyDosh.escapeHtml(currentPeriod.label)}</span></button>
-  `;
+  const periodChip = UyDosh.chipButtonHtml({
+    className: 'chip chip-period',
+    attrs: { 'data-period-cycle': true },
+    icon: '',
+    label: currentPeriod.label,
+    ariaLabel: `${UyDosh.t('filter.period.aria', lang)}: ${currentPeriod.label}`,
+  });
 
   // Icon-only-until-selected metro ribbon shared with the compact row below
   // and the create-listing wizard (see `metroLineChipsHtml` in
