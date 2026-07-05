@@ -300,6 +300,7 @@ function parseMiniAppHeaderOptions(el) {
 }
 
 const MINI_APP_ACCOUNT_PATH = '/telegram/account.html';
+const MINI_APP_FAVORITES_PATH = '/telegram/account.html?tab=favorites';
 const MINI_APP_PROFILE_PATH = '/telegram/profile.html';
 
 /** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
@@ -315,7 +316,7 @@ function accountMenuAvatarUrl() {
  * Avatar-triggered account menu shown in the Mini App header — replaces the
  * public site's language switcher here since the bot already sets the Mini
  * App's language via `?lang=` (see initTelegramMiniApp). Links to the user's
- * own listings ("Account") and the create-listing flow.
+ * own listings, favorites, and the create-listing flow.
  */
 function accountMenuHtml() {
   const avatarUrl = accountMenuAvatarUrl();
@@ -340,7 +341,8 @@ function accountMenuHtml() {
           ${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span>
           <span class="account-menu-badge" data-profile-menu-badge hidden aria-hidden="true"></span>
         </a>
-        <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('person')}<span data-i18n="account.menuAccount"></span></a>
+        <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
+        <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
         <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
       </div>
     </div>`;

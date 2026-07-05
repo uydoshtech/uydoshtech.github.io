@@ -1428,9 +1428,6 @@ function findNearestLocationId(latitude, longitude, locations) {
  * urban walking pace — good enough for a "stations near you" shortlist, not
  * meant to match a real routing engine.
  */
-const EARTH_RADIUS_METERS = 6371000;
-const WALK_METERS_PER_MINUTE = 80; // ~4.8 km/h
-const WALK_DETOUR_FACTOR = 1.3; // streets/blocks vs. straight-line distance
 // Selectable walk-time radii for the "Find nearby metro stations" button
 // (see `nearbyRadiusChipsHtml`) — the author picks how far they're willing
 // to walk instead of being stuck with one fixed cutoff.
@@ -1447,18 +1444,8 @@ const MAX_SUGGESTED_STATIONS = 12;
 // walk time".
 const NEARBY_STATION_FALLBACK_MAX_MINUTES = 60;
 
-function haversineMeters(lat1, lon1, lat2, lon2) {
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, a)));
-}
-
-function estimatedWalkMinutes(meters) {
-  return (meters * WALK_DETOUR_FACTOR) / WALK_METERS_PER_MINUTE;
-}
+// `haversineMeters`/`estimatedWalkMinutes` (+ their constants) live in
+// uydosh-core.js, shared with listing.html — see the comment there.
 
 /**
  * Stations within `maxMinutes` of `(latitude, longitude)`, nearest first,

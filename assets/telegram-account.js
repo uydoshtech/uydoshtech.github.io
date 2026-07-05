@@ -10,8 +10,19 @@ const tabButtons = Array.from(document.querySelectorAll('[data-account-tab]'));
 const TAB_MINE = 'mine';
 const TAB_FAVORITES = 'favorites';
 
+/** Deep-links from the header menu land here with `?tab=favorites` to open straight on that tab. */
+function initialTabFromUrl() {
+  try {
+    return new URLSearchParams(window.location.search).get('tab') === TAB_FAVORITES
+      ? TAB_FAVORITES
+      : TAB_MINE;
+  } catch {
+    return TAB_MINE;
+  }
+}
+
 const state = {
-  activeTab: TAB_MINE,
+  activeTab: initialTabFromUrl(),
   authError: false,
   myListings: [],
   myListingsError: false,
@@ -392,6 +403,16 @@ for (const btn of tabButtons) {
   btn.addEventListener('click', () => {
     setActiveTab(btn.getAttribute('data-account-tab'));
   });
+}
+
+// The markup hardcodes "My listings" as selected; sync tab buttons + header
+// subtitle when a deep link (e.g. the header menu's "Favorites" item) opens
+// straight into the favorites tab instead.
+if (state.activeTab === TAB_FAVORITES) {
+  for (const btn of tabButtons) {
+    btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === TAB_FAVORITES ? 'true' : 'false');
+  }
+  updateHeaderSubtitle(TAB_FAVORITES);
 }
 
 async function loadMyListings() {
