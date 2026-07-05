@@ -1224,8 +1224,17 @@
       // Reporting reuses the shared `/complaints` API (same one the mobile app
       // uses) — it needs a real logged-in identity, which on this static site
       // only Telegram provides, so the button only ever renders in the Mini App.
+      /** Owners can't report their own listing (matches the mobile app, which hides this action for owners too). */
+      function isViewingOwnListing() {
+        const l = state.listing;
+        if (!l) return false;
+        const viewerId = UyDosh.getSessionUserId();
+        const ownerId = Number(l.user_id ?? l.user?.id);
+        return viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+      }
+
       function reportButtonHtml() {
-        if (!UyDosh.isMiniApp()) return '';
+        if (!UyDosh.isMiniApp() || isViewingOwnListing()) return '';
         return `
           <button type="button" class="gallery-report-btn" data-report-listing aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.report'))}">
             ${UyDosh.iconFlag()}
