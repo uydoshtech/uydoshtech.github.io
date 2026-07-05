@@ -583,6 +583,24 @@ function fetchUniversitiesAll(lang = getLang()) {
   return fetchJson('/universities/all', { language: lang });
 }
 
+// Regions are static reference data (1h server cache) — memoize per id so the
+// 1-on-1 compatibility breakdown (see uydosh-profile-match.js) doesn't refetch
+// the same region twice when both profiles share it.
+const _regionCache = new Map();
+
+/** Single region by id (for the compatibility breakdown's "region" row) — public. */
+function fetchRegion(id) {
+  const key = Number(id);
+  if (!Number.isFinite(key)) return Promise.resolve(null);
+  if (_regionCache.has(key)) return _regionCache.get(key);
+  const promise = fetchJson(`/regions/${encodeURIComponent(key)}`).catch((err) => {
+    _regionCache.delete(key);
+    throw err;
+  });
+  _regionCache.set(key, promise);
+  return promise;
+}
+
 function uploadListingPhoto(listingId, imageData, { isPrimary = false } = {}) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/photos`, {
     method: 'POST',
@@ -801,6 +819,7 @@ Object.assign(window.UyDosh, {
   fetchProfile,
   updateProfile,
   fetchUniversitiesAll,
+  fetchRegion,
   uploadListingPhoto,
   deleteListingPhoto,
   readFileAsDataUrl,

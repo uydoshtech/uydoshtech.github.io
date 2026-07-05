@@ -122,6 +122,7 @@
         gap: 6px;
       }
       .account-thumb {
+        position: relative;
         flex: 0 0 64px;
         width: 64px;
         height: 64px;
@@ -194,16 +195,28 @@
         font-weight: 700;
         color: var(--muted);
       }
+      /* Overlaid on the thumbnail's top-left corner (see `accountThumbHtml`) —
+         a small pill with its own dark backdrop so the count stays legible
+         over any photo. */
       .account-row-views {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        z-index: 1;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--muted);
+        gap: 3px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(2px);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: #fff;
       }
-      .account-row-views .icon { width: 14px; height: 14px; display: inline-flex; }
-      .account-row-views .icon svg { width: 14px; height: 14px; display: block; }
+      .account-row-views .icon { width: 12px; height: 12px; display: inline-flex; }
+      .account-row-views .icon svg { width: 12px; height: 12px; display: block; }
       .account-row-views .icon svg * { stroke: currentColor; fill: none; }
       .account-status {
         display: inline-flex;
@@ -381,12 +394,12 @@
     </div>
 
     <script src="../assets/uydosh-core.js?v=20260705-98"></script>
-    <script src="../assets/uydosh-api.js?v=20260705-98"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-22"></script>
-    <script src="../assets/uydosh-icons.js?v=20260705-101"></script>
+    <script src="../assets/uydosh-api.js?v=20260705-99"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-23"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-102"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-100"></script>
-    <script src="../assets/telegram-account.js?v=20260705-96"></script>
+    <script src="../assets/telegram-account.js?v=20260705-97"></script>
   </body>
 </html>

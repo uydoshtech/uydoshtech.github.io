@@ -147,6 +147,16 @@
         font-size: 15px;
       }
       textarea { min-height: 120px; resize: vertical; }
+      /*
+       * iOS Safari (Telegram's in-app browser on iOS) renders `type="date"`'s
+       * formatted value flush against the control's own inner edge instead of
+       * respecting our padding the way typed text does — so the date looks
+       * like it has no right margin even though `padding: 11px 12px` is set.
+       * Extra right padding compensates so it lines up with every other field.
+       */
+      input[type="date"] {
+        padding-right: 24px;
+      }
       /* Address is a short, optional field — 2 rows is plenty, and letting the
          full text wrap is the whole point (see .address-textarea usage), so it
          doesn't need the description field's tall default or a resize handle. */
@@ -805,12 +815,12 @@
     <input type="file" id="photo-input" accept="image/*" multiple hidden />
 
     <script src="../assets/uydosh-core.js?v=20260705-98"></script>
-    <script src="../assets/uydosh-api.js?v=20260705-98"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-22"></script>
-    <script src="../assets/uydosh-icons.js?v=20260705-101"></script>
+    <script src="../assets/uydosh-api.js?v=20260705-99"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-23"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-102"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-100"></script>
-    <script src="../assets/telegram-create.js?v=20260705-101"></script>
+    <script src="../assets/telegram-create.js?v=20260705-102"></script>
   </body>
 </html>

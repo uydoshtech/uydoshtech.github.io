@@ -926,6 +926,85 @@ async function loadReferenceData() {
   await Promise.all([loadStationsForLine(state.form.subwayLineId), loadLocations()]);
 }
 
+/**
+ * Best-effort district auto-select for "Use current location" (see the
+ * `data-use-current-location` handler in bindStepEvents): reverse-geocoding
+ * only ever returns free-text, so this pulls the `kind: "district"` entry out
+ * of Yandex's own address hierarchy (https://yandex.com/dev/geocode/doc/en/response)
+ * and fuzzy-matches it against our `locations` list — Yandex's official
+ * district names ("Шайхантахурский район") don't always match our DB's
+ * spelling/short form ("Шайхантаур") character-for-character.
+ */
+function extractDistrictNameFromGeocode(upstream) {
+  try {
+    const members = upstream?.response?.GeoObjectCollection?.featureMember;
+    const geoObject = Array.isArray(members) ? members[0]?.GeoObject : null;
+    const components = geoObject?.metaDataProperty?.GeocoderMetaData?.Address?.Components;
+    if (!Array.isArray(components)) return null;
+    const district = components.find((c) => c?.kind === 'district');
+    return typeof district?.name === 'string' ? district.name : null;
+  } catch {
+    return null;
+  }
+}
+
+// `\bword\b`-style regexes don't work for stripping these — JS's `\b` is
+// based on the ASCII-only `\w`, which never matches Cyrillic letters, so it
+// can't find a boundary next to them. Split on non-letter runs and drop
+// stopword tokens by exact match instead.
+const DISTRICT_NAME_STOPWORDS = new Set(['район', 'тумани', 'туман', 'shahri', 'shahar', 'district']);
+function normalizeDistrictName(s) {
+  return String(s || '')
+    .toLowerCase()
+    .split(/[^a-zа-яёʻʼ']+/i)
+    .filter((word) => word && !DISTRICT_NAME_STOPWORDS.has(word))
+    .join('');
+}
+
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prevRow = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 0; i < a.length; i++) {
+    const currRow = [i + 1];
+    for (let j = 0; j < b.length; j++) {
+      currRow.push(a[i] === b[j]
+        ? prevRow[j]
+        : 1 + Math.min(prevRow[j], prevRow[j + 1], currRow[j]));
+    }
+    prevRow = currRow;
+  }
+  return prevRow[b.length];
+}
+
+/** 1 = identical, 0 = completely different (normalized by the longer string's length). */
+function nameSimilarity(a, b) {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 0;
+  return 1 - levenshteinDistance(a, b) / maxLen;
+}
+
+const DISTRICT_MATCH_THRESHOLD = 0.75;
+
+function findLocationIdByDistrictName(districtName, locations, lang) {
+  const target = normalizeDistrictName(districtName);
+  if (!target) return null;
+  let bestId = null;
+  let bestScore = 0;
+  for (const loc of locations) {
+    const candidates = [UyDosh.localized(loc, lang), UyDosh.localizedShort(loc, lang)];
+    for (const candidate of candidates) {
+      const score = nameSimilarity(target, normalizeDistrictName(candidate));
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = Number(loc.id);
+      }
+    }
+  }
+  return bestScore >= DISTRICT_MATCH_THRESHOLD ? bestId : null;
+}
+
 function toggleSelection(list, id, multi) {
   const n = Number(id);
   if (!multi) return [n];
@@ -1054,6 +1133,16 @@ function bindStepEvents() {
       const result = await UyDosh.fetchReverseGeocodeAddress(latitude, longitude, UyDosh.getLang());
       if (result?.addressText) {
         state.form.addressText = result.addressText;
+      }
+      if (state.form.locationMode === LOCATION_MODE_DISTRICT) {
+        const districtName = extractDistrictNameFromGeocode(result?.upstream);
+        const matchedId = districtName
+          ? findLocationIdByDistrictName(districtName, state.locations, UyDosh.getLang())
+          : null;
+        // "Use current location" only ever shows for roommate-needed listings
+        // (see `addressBody` above), which only ever allow a single district —
+        // safe to just replace the selection outright.
+        if (matchedId != null) state.form.selectedLocationIds = [matchedId];
       }
       showFormError('');
     } catch (err) {

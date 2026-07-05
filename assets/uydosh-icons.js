@@ -49,6 +49,12 @@ const CHROME_ICONS = {
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8" r="3"></circle><path d="M2.5 19c.8-3 3-4.8 6-4.8s5.2 1.8 6 4.8"></path><path d="M15 8.2a3 3 0 1 1 3.6 2.9"></path><path d="M15.5 14.5c2.3.4 3.9 1.9 4.5 4.4"></path></svg>',
   volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3.5L12 17.5v-11L7.5 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10"></path></svg>',
   chatBubble: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-4 3.5V16H4V5Z"></path></svg>',
+  // Compatibility breakdown row icons (listing.html + uydosh-profile-match.js)
+  // for the "language" / "age" / "budget" matching dimensions — no existing
+  // chrome icon fit these, so kept minimal and consistent with the set above.
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9Z"></path></svg>',
+  cake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6"></path><path d="M4 20h16"></path><path d="M8 12V9M12 12V9M16 12V9"></path><path d="M8 9c0-1 .7-1.5.7-2.5S8 4.5 8 4M12 9c0-1 .7-1.5.7-2.5S12 4.5 12 4M16 9c0-1 .7-1.5.7-2.5S16 4.5 16 4"></path><path d="M4 16.5c1 .7 2 .7 3 0s2-.7 3 0 2 .7 3 0 2-.7 3 0 2 .7 3 0"></path></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h13A1.5 1.5 0 0 1 19 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 16.5v-9Z"></path><path d="M3 10h16.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H17"></path><circle cx="16.25" cy="13" r="1"></circle></svg>',
 };
 
 function iconChrome(name) {
