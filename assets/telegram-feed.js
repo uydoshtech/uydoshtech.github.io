@@ -533,10 +533,14 @@ function renderFilters() {
       const next = Number(btn.getAttribute('data-subway-line'));
       const toggledOff = state.filters.subwayLineId === next;
       state.filters.subwayLineId = toggledOff ? METRO_LINE_ANY : next;
+      // Metro and district are mutually exclusive location filters: picking a
+      // line clears any district selection so the two never combine.
+      if (!toggledOff) state.filters.locationId = DISTRICT_ANY;
       // Flip aria-pressed on the existing buttons (instead of letting the
       // upcoming full re-render replace them) so the CSS transition that
       // expands the tapped chip into its name actually gets to play.
       syncMetroLineChipPressedState();
+      syncDistrictChipState();
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });
@@ -547,9 +551,13 @@ function renderFilters() {
   filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.filters.locationId = UyDosh.nextDistrictId(state.filters.locationId, lang);
+      // Metro and district are mutually exclusive location filters: picking a
+      // district clears any metro line selection so the two never combine.
+      if (state.filters.locationId !== DISTRICT_ANY) state.filters.subwayLineId = METRO_LINE_ANY;
       // Update the button(s) in place (instead of a full re-render) so the same
       // icon-reveals-name transition metro line chips use gets to play here too.
       syncDistrictChipState();
+      syncMetroLineChipPressedState();
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });

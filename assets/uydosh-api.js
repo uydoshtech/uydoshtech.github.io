@@ -384,6 +384,19 @@ function fetchReverseGeocodeAddress(latitude, longitude, lang = getLang()) {
   return fetchJsonAuth('/app/geosuggest/reverse', { params: { latitude, longitude, lang } });
 }
 
+/**
+ * Address autocomplete hints via the backend's Yandex Geosuggest proxy — used
+ * by the create-listing wizard's address field (see `bindAddressAutocomplete`
+ * in telegram-create.js). `sessionToken` should be one random id per typing
+ * session (Yandex billing groups a session's requests together). Resolves to
+ * the raw upstream `{ results: [...] }` body — see `parseGeosuggestResults`.
+ */
+function fetchGeosuggest({ text, sessionToken, lang = getLang(), results = 6 }) {
+  return fetchJsonAuth('/app/geosuggest/suggest', {
+    params: { text, sessiontoken: sessionToken, lang, results },
+  });
+}
+
 /** Create a listing from the Telegram Mini App (verify initData on submit). */
 async function createListingFromTelegramMiniApp(listing) {
   const initData = getTelegramInitData();
@@ -822,6 +835,7 @@ Object.assign(window.UyDosh, {
   fetchAmenitiesOrdered,
   createListing,
   fetchReverseGeocodeAddress,
+  fetchGeosuggest,
   createListingFromTelegramMiniApp,
   updateListingFromTelegramMiniApp,
   fetchMyTelegramMiniAppListings,

@@ -171,6 +171,16 @@ const state = {
   /// Selected walk-time radius (minutes) for "Find nearby metro stations" —
   /// one of `NEARBY_STATION_RADIUS_OPTIONS` (10 by default).
   nearbyStationsRadiusMinutes: 10,
+  /// Yandex Geosuggest session token for the address field's autocomplete
+  /// (see `addressSuggestSessionToken()`) — one random id per "typing
+  /// session", reset after a suggestion is picked or the field is cleared,
+  /// per Yandex's billing guidance (groups a session's requests into one
+  /// billed unit instead of charging per keystroke).
+  addressSuggestSessionToken: null,
+  /// `{ displayText, subtitle }[]` from the last successful address
+  /// autocomplete fetch — see `fetchAddressSuggestions` (step 0).
+  addressSuggestions: [],
+  addressSuggestLoading: false,
   form: {
     listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
     locationMode: LOCATION_MODE_METRO,
@@ -799,13 +809,17 @@ function renderStep0(lang) {
   const addressBody = !isRoomNeeded() ? `
     <div class="field">
       <label for="listing-address">${UyDosh.escapeHtml(UyDosh.t('create.addressOptional', lang))}</label>
-      <textarea
-        id="listing-address"
-        class="address-textarea"
-        rows="2"
-        maxlength="500"
-        placeholder="${UyDosh.escapeHtml(UyDosh.t('create.addressPlaceholder', lang))}"
-      >${UyDosh.escapeHtml(state.form.addressText)}</textarea>
+      <div class="address-input-wrap">
+        <textarea
+          id="listing-address"
+          class="address-textarea"
+          rows="2"
+          maxlength="500"
+          autocomplete="off"
+          placeholder="${UyDosh.escapeHtml(UyDosh.t('create.addressPlaceholder', lang))}"
+        >${UyDosh.escapeHtml(state.form.addressText)}</textarea>
+        <div class="address-suggestions" id="address-suggestions" hidden></div>
+      </div>
       <div class="use-location-actions">
         <button
           type="button"
@@ -835,6 +849,168 @@ function renderStep0(lang) {
       ${locationBody}
       ${addressBody}
     </section>`;
+}
+
+const ADDRESS_SUGGEST_MIN_LENGTH = 2;
+const ADDRESS_SUGGEST_DEBOUNCE_MS = 350;
+const ADDRESS_SUGGEST_BLUR_HIDE_DELAY_MS = 180;
+
+/// Debounce timer + monotonically increasing request id for the address
+/// autocomplete fetch — not part of `state` since they're plumbing for
+/// `fetchAddressSuggestions` below, not anything a re-render needs to read.
+let addressSuggestDebounceTimer = null;
+let addressSuggestRequestId = 0;
+
+/** Random per-session id for Yandex Geosuggest billing (groups one typing session's requests together instead of billing per keystroke). */
+function newGeosuggestSessionToken() {
+  const bytes = new Uint8Array(16);
+  (window.crypto || window.msCrypto).getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function addressSuggestSessionToken() {
+  if (!state.addressSuggestSessionToken) {
+    state.addressSuggestSessionToken = newGeosuggestSessionToken();
+  }
+  return state.addressSuggestSessionToken;
+}
+
+/** Mirrors the Flutter app's `YandexGeosuggestService._parseSuggestion` — same upstream Yandex Geosuggest response shape. */
+function parseGeosuggestResults(data) {
+  const rawResults = Array.isArray(data?.results) ? data.results : [];
+  const parsed = [];
+  for (const item of rawResults) {
+    const formatted = item?.address?.formatted_address;
+    const titleText = item?.title?.text;
+    const displayText =
+      (typeof formatted === 'string' && formatted.trim()) ||
+      (typeof titleText === 'string' && titleText.trim()) ||
+      '';
+    if (!displayText) continue;
+    const subtitleText = typeof item?.subtitle?.text === 'string' ? item.subtitle.text.trim() : '';
+    parsed.push({ displayText, subtitle: subtitleText || null });
+  }
+  return parsed;
+}
+
+/**
+ * Repaints only the `#address-suggestions` dropdown — deliberately not a
+ * full `renderStep()` (which recreates the whole panel's DOM, including the
+ * `<textarea>` itself, dropping focus and any in-progress IME composition on
+ * every keystroke).
+ */
+function renderAddressSuggestionsPanel() {
+  const panel = stepPanelsEl.querySelector('#address-suggestions');
+  const input = stepPanelsEl.querySelector('#listing-address');
+  if (!panel || !input) return;
+
+  const hasFocus = document.activeElement === input;
+  const suggestions = state.addressSuggestions;
+  const loading = state.addressSuggestLoading;
+  const shouldShow = hasFocus && (loading || suggestions.length > 0);
+
+  if (!shouldShow) {
+    panel.hidden = true;
+    panel.innerHTML = '';
+    return;
+  }
+
+  panel.hidden = false;
+  if (loading && suggestions.length === 0) {
+    panel.innerHTML = '<div class="address-suggestions-loading"><span class="use-location-spinner" aria-hidden="true"></span></div>';
+    return;
+  }
+  panel.innerHTML = suggestions.map((suggestion, index) => `
+    <button type="button" class="address-suggestion-item" data-suggestion-index="${index}">
+      ${UyDosh.iconPin()}
+      <span class="address-suggestion-text">
+        <span class="address-suggestion-title">${UyDosh.escapeHtml(suggestion.displayText)}</span>
+        ${suggestion.subtitle ? `<span class="address-suggestion-subtitle">${UyDosh.escapeHtml(suggestion.subtitle)}</span>` : ''}
+      </span>
+    </button>`).join('');
+}
+
+async function fetchAddressSuggestions(query) {
+  const requestId = ++addressSuggestRequestId;
+  try {
+    const data = await UyDosh.fetchGeosuggest({
+      text: query,
+      sessionToken: addressSuggestSessionToken(),
+      lang: UyDosh.getLang(),
+    });
+    if (requestId !== addressSuggestRequestId) return;
+    state.addressSuggestions = parseGeosuggestResults(data);
+  } catch (err) {
+    if (requestId !== addressSuggestRequestId) return;
+    console.error('Address suggest failed', err);
+    state.addressSuggestions = [];
+  } finally {
+    if (requestId === addressSuggestRequestId) {
+      state.addressSuggestLoading = false;
+      renderAddressSuggestionsPanel();
+    }
+  }
+}
+
+function handleAddressInputChange(value) {
+  state.form.addressText = value;
+  clearTimeout(addressSuggestDebounceTimer);
+
+  const query = value.trim();
+  if (query.length < ADDRESS_SUGGEST_MIN_LENGTH) {
+    addressSuggestRequestId++;
+    state.addressSuggestions = [];
+    state.addressSuggestLoading = false;
+    renderAddressSuggestionsPanel();
+    return;
+  }
+
+  state.addressSuggestLoading = true;
+  renderAddressSuggestionsPanel();
+  addressSuggestDebounceTimer = setTimeout(
+    () => fetchAddressSuggestions(query),
+    ADDRESS_SUGGEST_DEBOUNCE_MS,
+  );
+}
+
+function selectAddressSuggestion(index) {
+  const suggestion = state.addressSuggestions[index];
+  if (!suggestion) return;
+  state.form.addressText = suggestion.displayText;
+  const input = stepPanelsEl.querySelector('#listing-address');
+  if (input) input.value = suggestion.displayText;
+  state.addressSuggestions = [];
+  state.addressSuggestLoading = false;
+  // A pick ends this Geosuggest "session" — the next keystroke starts a new
+  // billed session, per Yandex's guidance.
+  state.addressSuggestSessionToken = null;
+  renderAddressSuggestionsPanel();
+  haptic('selection');
+}
+
+/** Wires the address textarea + its suggestions dropdown; no-op when the field isn't in the DOM (room-needed listings hide it). */
+function bindAddressAutocomplete() {
+  const input = stepPanelsEl.querySelector('#listing-address');
+  const panel = stepPanelsEl.querySelector('#address-suggestions');
+  if (!input || !panel) return;
+
+  input.addEventListener('input', (e) => handleAddressInputChange(e.target.value));
+  input.addEventListener('focus', () => renderAddressSuggestionsPanel());
+  input.addEventListener('blur', () => {
+    // Delayed so a tap on a suggestion button — which blurs the textarea
+    // first — still lands on that button before the dropdown disappears.
+    setTimeout(() => {
+      state.addressSuggestions = [];
+      state.addressSuggestLoading = false;
+      renderAddressSuggestionsPanel();
+    }, ADDRESS_SUGGEST_BLUR_HIDE_DELAY_MS);
+  });
+
+  panel.addEventListener('click', (e) => {
+    const button = e.target.closest('[data-suggestion-index]');
+    if (!button) return;
+    selectAddressSuggestion(Number(button.getAttribute('data-suggestion-index')));
+  });
 }
 
 function renderStep1(lang) {
@@ -1520,6 +1696,8 @@ function clearCurrentLocationAddress() {
   state.form.addressText = '';
   state.form.addressLatitude = null;
   state.form.addressLongitude = null;
+  state.addressSuggestions = [];
+  state.addressSuggestLoading = false;
 }
 
 /** Toggle pressed state without re-rendering scrollable station/location lists. */
@@ -1630,9 +1808,7 @@ function bindStepEvents() {
     });
   });
 
-  stepPanelsEl.querySelector('#listing-address')?.addEventListener('input', (e) => {
-    state.form.addressText = e.target.value;
-  });
+  bindAddressAutocomplete();
 
   stepPanelsEl.querySelector('[data-use-current-location]')?.addEventListener('click', async () => {
     if (state.locatingAddress) return;
@@ -1645,6 +1821,12 @@ function bindStepEvents() {
       const result = await UyDosh.fetchReverseGeocodeAddress(latitude, longitude, UyDosh.getLang());
       if (result?.addressText) {
         state.form.addressText = result.addressText;
+        // Drop any stale autocomplete dropdown from typing before this
+        // overwrote the field — the next full renderStep() below rebuilds
+        // #address-suggestions hidden, but the in-memory list would
+        // otherwise still show once the field regains focus.
+        state.addressSuggestions = [];
+        state.addressSuggestLoading = false;
       }
       if (state.form.locationMode === LOCATION_MODE_DISTRICT) {
         const districtName = extractDistrictNameFromGeocode(result?.upstream);
