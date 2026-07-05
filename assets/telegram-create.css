@@ -145,6 +145,33 @@ input[type="date"] {
   appearance: none;
   -webkit-appearance: none;
 }
+/*
+ * The native date control can only show a raw date or a locale placeholder
+ * like "dd.mm.yyyy" — not the "Заселение: Любая дата" text product wants
+ * while empty. So the input's own text is made transparent and a styled
+ * span (`.date-field-display`, kept in sync in bindStepEvents) is overlaid
+ * on top instead; `pointer-events: none` lets taps fall through to the real
+ * input underneath so it still opens the native picker.
+ */
+.date-field-wrap {
+  position: relative;
+}
+.date-field-wrap input[type="date"] {
+  color: transparent;
+}
+.date-field-wrap .date-field-display {
+  position: absolute;
+  left: 12px;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg);
+  font-size: 15px;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* Address is a short, optional field — 2 rows is plenty, and letting the
    full text wrap is the whole point (see .address-textarea usage), so it
    doesn't need the description field's tall default or a resize handle. */
@@ -407,12 +434,12 @@ input[readonly] {
 }
 .phone-share-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
 }
 .phone-input-wrap {
   position: relative;
-  flex: 1;
   min-width: 0;
 }
 .phone-input-wrap input {
@@ -461,12 +488,13 @@ input[readonly] {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  width: 100%;
   padding: 12px 14px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 .phone-share-btn:active {
   opacity: 0.85;

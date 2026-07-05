@@ -2311,17 +2311,20 @@
       function createModelViewerEl(glbUrl, usdzUrl) {
         const el = document.createElement('model-viewer');
         el.setAttribute('src', glbUrl);
-        if (usdzUrl) {
-          el.setAttribute('ios-src', usdzUrl);
-          el.setAttribute('ar', '');
-          el.setAttribute('ar-modes', 'quick-look webxr scene-viewer');
-        }
+        if (usdzUrl) el.setAttribute('ios-src', usdzUrl);
+        el.setAttribute('ar', '');
+        el.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
         el.setAttribute('camera-controls', '');
         el.setAttribute('auto-rotate', '');
         el.setAttribute('shadow-intensity', '1');
         el.setAttribute('exposure', '1');
         el.setAttribute('environment-image', 'neutral');
         return el;
+      }
+
+      function showRoomScanLoadError(container) {
+        container.dataset.roomscanMounted = '';
+        container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
       }
 
       async function mountRoomScanViewer(container, glbUrl, usdzUrl) {
@@ -2331,6 +2334,9 @@
         try {
           await loadModelViewerScript();
           const viewer = createModelViewerEl(glbUrl, usdzUrl);
+          // `<model-viewer>` swallows bad/empty GLB responses internally instead
+          // of rejecting a promise — only its `error` event tells us it failed.
+          viewer.addEventListener('error', () => showRoomScanLoadError(container), { once: true });
           container.innerHTML = '';
           container.appendChild(viewer);
           const fullscreenBtn = document.createElement('button');
@@ -2342,8 +2348,7 @@
           container.appendChild(fullscreenBtn);
         } catch (err) {
           console.error('Failed to load 3D room scan viewer', err);
-          container.dataset.roomscanMounted = '';
-          container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
+          showRoomScanLoadError(container);
         }
       }
 
@@ -2382,25 +2387,39 @@
       async function openRoomScanFullscreen(glbUrl, usdzUrl) {
         if (!roomScanBackdropEl) return;
         UyDosh.haptic?.light?.();
-        roomScanBackdropEl.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</div>`;
+        roomScanBackdropEl.innerHTML = '';
         roomScanBackdropEl.hidden = false;
         roomScanBackdropEl.setAttribute('aria-hidden', 'false');
         requestAnimationFrame(() => roomScanBackdropEl.classList.add('is-open'));
+
+        // Close button is created up front and stays put regardless of
+        // load outcome, so a failed/slow model never traps the viewer open.
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'roomscan-backdrop-close';
+        closeBtn.setAttribute('aria-label', UyDosh.t('complaint.cancel'));
+        closeBtn.textContent = '✕';
+        closeBtn.addEventListener('click', closeRoomScanFullscreen);
+        roomScanBackdropEl.appendChild(closeBtn);
+
+        const statusEl = document.createElement('div');
+        statusEl.className = 'roomscan-status';
+        statusEl.textContent = UyDosh.t('detail.loading');
+        roomScanBackdropEl.appendChild(statusEl);
+
         try {
           await loadModelViewerScript();
           const viewer = createModelViewerEl(glbUrl, usdzUrl);
-          const closeBtn = document.createElement('button');
-          closeBtn.type = 'button';
-          closeBtn.className = 'roomscan-backdrop-close';
-          closeBtn.setAttribute('aria-label', UyDosh.t('complaint.cancel'));
-          closeBtn.textContent = '✕';
-          closeBtn.addEventListener('click', closeRoomScanFullscreen);
-          roomScanBackdropEl.innerHTML = '';
+          viewer.addEventListener('error', () => {
+            statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
+            statusEl.hidden = false;
+            viewer.remove();
+          }, { once: true });
+          statusEl.hidden = true;
           roomScanBackdropEl.appendChild(viewer);
-          roomScanBackdropEl.appendChild(closeBtn);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
-          roomScanBackdropEl.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
+          statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
         }
       }
 
@@ -2918,6 +2937,7 @@
         const cardExtraHtml = `${descriptionExtraHtml}${postedExtraHtml}`;
 
         const mapHtml = buildMapSectionHtml(l, lang, hasMapSection ? amenities : [], hasMapSection ? cardExtraHtml : '');
+        const roomScanHtml = buildRoomScanSectionHtml(l);
         // No location/metro to anchor a card around — fall back to a plain
         // (non-collapsible) card so description + posted date still share
         // one block.
@@ -2951,6 +2971,7 @@
               </div>
               ${isOwner ? '' : claimBannerHtml()}
               ${compatibilityTileHtml(isOwner)}
+              ${roomScanHtml}
               ${mapHtml}
               ${amenitiesHtml}
               ${metaHtml}
@@ -2966,6 +2987,7 @@
 
         bindGallery();
         bindMapSection();
+        bindRoomScanSection();
         bindShareButton(l);
         bindFavoriteButton(l);
         bindReportButton(l);

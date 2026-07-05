@@ -470,6 +470,18 @@ function formatNationalPhoneNumber(rawDigits) {
   return out;
 }
 
+/** "Any date" once formatted, or the localized move-in date otherwise — shared between the step-1 field's inline display and the step-3 review row. */
+function moveInValueText(lang) {
+  return state.form.moveInDate
+    ? UyDosh.formatDate(state.form.moveInDate, lang)
+    : UyDosh.t('create.moveInAny', lang);
+}
+
+/** "Заселение: Любая дата" / "Заселение: 5 июл." — the move-in field shows this as its own inline text (see renderStep1) instead of the native, unformattable date placeholder. */
+function moveInDisplayText(lang) {
+  return `${UyDosh.t('create.moveInDate', lang)}: ${moveInValueText(lang)}`;
+}
+
 function fieldInlineErrorHtml(message) {
   if (!message) return '';
   return `<div class="field-inline-error" role="alert">${UyDosh.escapeHtml(message)}</div>`;
@@ -862,8 +874,15 @@ function renderStep1(lang) {
         <div class="amenity-grid">${amenityChips}</div>
       </div>
       <div class="field">
-        <label for="move-in-date">${UyDosh.escapeHtml(UyDosh.t('create.moveInDate', lang))}</label>
-        <input id="move-in-date" type="date" value="${UyDosh.escapeHtml(state.form.moveInDate)}" />
+        <div class="date-field-wrap">
+          <input
+            id="move-in-date"
+            type="date"
+            aria-label="${UyDosh.escapeHtml(UyDosh.t('create.moveInDate', lang))}"
+            value="${UyDosh.escapeHtml(state.form.moveInDate)}"
+          />
+          <span class="date-field-display" aria-hidden="true">${UyDosh.escapeHtml(moveInDisplayText(lang))}</span>
+        </div>
       </div>
       ${!isRoomNeeded() ? `
       <div class="toggle-row">
@@ -1135,8 +1154,29 @@ function scrollSelectedStationIntoView(list) {
   list.scrollTop = Math.max(0, Math.round(list.scrollTop + delta));
 }
 
+/**
+ * True while a text field inside the wizard has focus — i.e. the on-screen
+ * keyboard is (most likely) open. See `scheduleSizeLocationList` below for
+ * why this matters.
+ */
+function isEditingTextField() {
+  const active = document.activeElement;
+  return !!active && /^(INPUT|TEXTAREA)$/.test(active.tagName) && stepPanelsEl.contains(active);
+}
+
 let sizeLocationListRaf = 0;
 function scheduleSizeLocationList() {
+  // Focusing a field opens the keyboard, which fires `resize`/visualViewport
+  // `resize` while the browser is still mid-animation scrolling that field
+  // into view. Recomputing the list's height at that exact moment reflows
+  // the content sitting above the field (metro chips / station list) and can
+  // strand that scroll-into-view partway, leaving the tapped field hidden
+  // behind the keyboard once it settles — with the metro/district picker
+  // visible instead (see the focusin/focusout handlers below). Nothing about
+  // the list itself needs to change just because the keyboard opened, so
+  // skip the recompute entirely while editing and catch up once the field
+  // blurs.
+  if (isEditingTextField()) return;
   if (sizeLocationListRaf) cancelAnimationFrame(sizeLocationListRaf);
   sizeLocationListRaf = requestAnimationFrame(() => {
     sizeLocationListRaf = 0;
@@ -1146,6 +1186,35 @@ function scheduleSizeLocationList() {
 
 window.addEventListener('resize', scheduleSizeLocationList, { passive: true });
 window.visualViewport?.addEventListener('resize', scheduleSizeLocationList, { passive: true });
+
+/**
+ * Belt-and-suspenders for the same keyboard-open race: even with the resize
+ * recompute above skipped, the keyboard animation itself (or a Telegram
+ * WebView `viewportChanged` side effect elsewhere) can still carry a
+ * just-focused field out of view before the visual viewport finishes
+ * resizing. Once it does, nudge the still-focused field back into view
+ * rather than leaving the user staring at the picker above it with no
+ * visible field to type into.
+ */
+stepPanelsEl.addEventListener('focusin', (e) => {
+  const target = e.target;
+  if (!(target instanceof HTMLElement) || !/^(INPUT|TEXTAREA)$/.test(target.tagName)) return;
+  const reveal = () => {
+    if (document.activeElement === target) {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  };
+  window.visualViewport?.addEventListener('resize', reveal, { once: true });
+  // Fallback for engines without visualViewport, or where it never fires.
+  setTimeout(reveal, 350);
+});
+stepPanelsEl.addEventListener('focusout', () => {
+  // The next focus target (if any) hasn't taken over `activeElement` yet
+  // during the same tick focusout fires in.
+  setTimeout(() => {
+    if (!isEditingTextField()) scheduleSizeLocationList();
+  }, 0);
+});
 
 function renderStep() {
   const lang = UyDosh.getLang();
@@ -1783,6 +1852,8 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelector('#move-in-date')?.addEventListener('change', (e) => {
     state.form.moveInDate = e.target.value || '';
+    const display = stepPanelsEl.querySelector('.date-field-display');
+    if (display) display.textContent = moveInDisplayText(UyDosh.getLang());
   });
 
   stepPanelsEl.querySelector('[data-private-room]')?.addEventListener('click', (e) => {
