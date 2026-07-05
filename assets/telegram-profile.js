@@ -70,6 +70,10 @@ const LIFESTYLE_FIELDS = [
   {
     key: 'cleanliness',
     labelKey: 'profile.lifestyle.cleanliness',
+    // 1-5 scales render as a slider (see renderLifestyleFields) instead of
+    // chips — the option list is still used to look up the current value's
+    // label text shown below the track.
+    type: 'scale',
     options: [
       { value: null, labelKey: 'profile.lifestyle.notSpecified' },
       { value: 1, labelKey: 'profile.lifestyle.veryMessy' },
@@ -82,6 +86,7 @@ const LIFESTYLE_FIELDS = [
   {
     key: 'noise_level',
     labelKey: 'profile.lifestyle.noiseLevel',
+    type: 'scale',
     options: [
       { value: null, labelKey: 'profile.lifestyle.notSpecified' },
       { value: 1, labelKey: 'profile.lifestyle.veryQuiet' },
@@ -94,6 +99,7 @@ const LIFESTYLE_FIELDS = [
   {
     key: 'sociability',
     labelKey: 'profile.lifestyle.sociability',
+    type: 'scale',
     options: [
       { value: null, labelKey: 'profile.lifestyle.notSpecified' },
       { value: 1, labelKey: 'profile.lifestyle.veryIntroverted' },
@@ -237,14 +243,48 @@ function closeUniversitySuggestions() {
   universityListEl.innerHTML = '';
 }
 
+function scaleValueLabel(field, value) {
+  const opt = field.options.find((o) => o.value === value);
+  return UyDosh.t(opt ? opt.labelKey : 'profile.lifestyle.notSpecified');
+}
+
 /**
- * Renders the lifestyle chip fields into `#lifestyle-fields` from scratch.
- * Called once on boot (the field/option set never changes) and again after
- * any lifestyle chip is clicked, so `aria-pressed` reflects the new value.
+ * Renders the lifestyle fields (chips or, for 1-5 scales, sliders) into
+ * `#lifestyle-fields` from scratch. Called once on boot (the field/option
+ * set never changes) and again after any chip is clicked, so `aria-pressed`
+ * reflects the new value. Slider drags update in place instead (see
+ * `bindEvents`) to avoid rebuilding the DOM node mid-drag.
  */
 function renderLifestyleFields() {
   lifestyleFieldsEl.innerHTML = LIFESTYLE_FIELDS.map((field) => {
     const current = state.lifestyle[field.key];
+
+    if (field.type === 'scale') {
+      const scaleOptions = field.options.filter((opt) => opt.value !== null);
+      const min = scaleOptions[0].value;
+      const max = scaleOptions[scaleOptions.length - 1].value;
+      // The track always shows a real position (defaults to the minimum) —
+      // "not specified" is only true until the user actually drags it, at
+      // which point it becomes a real answer (matches the Flutter slider).
+      const sliderValue = current ?? min;
+      return `
+        <div class="field">
+          <div class="field-label">${UyDosh.escapeHtml(UyDosh.t(field.labelKey))}</div>
+          <input
+            type="range"
+            class="lifestyle-slider"
+            min="${min}"
+            max="${max}"
+            step="1"
+            value="${sliderValue}"
+            data-lifestyle-slider="${field.key}"
+          />
+          <div class="lifestyle-slider-value" data-lifestyle-value-for="${field.key}">
+            ${UyDosh.escapeHtml(scaleValueLabel(field, current))}
+          </div>
+        </div>`;
+    }
+
     const chips = field.options.map((opt, i) => {
       const pressed = current === opt.value;
       return `
@@ -327,6 +367,22 @@ function bindEvents() {
     state.lifestyle[field.key] = option.value;
     showFormError('');
     render();
+  });
+
+  // Sliders update the value text in place instead of calling render() on
+  // every 'input' tick — replacing the <input type="range"> DOM node
+  // mid-drag would kill the browser's native pointer-capture, making the
+  // handle jump around while dragging (see the same pattern in create.html).
+  lifestyleFieldsEl.addEventListener('input', (e) => {
+    const slider = e.target.closest('[data-lifestyle-slider]');
+    if (!slider) return;
+    const field = LIFESTYLE_FIELDS.find((f) => f.key === slider.getAttribute('data-lifestyle-slider'));
+    if (!field) return;
+    const value = Number(slider.value);
+    state.lifestyle[field.key] = value;
+    const valueEl = lifestyleFieldsEl.querySelector(`[data-lifestyle-value-for="${field.key}"]`);
+    if (valueEl) valueEl.textContent = scaleValueLabel(field, value);
+    showFormError('');
   });
 
   studentYesBtn.addEventListener('click', () => {
