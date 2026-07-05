@@ -94,11 +94,21 @@ function setManualTheme(theme) {
   document.dispatchEvent(new CustomEvent('uydosh:themechange', { detail: { theme } }));
 }
 
-/** Currently active app UI theme: manual override if set, else system preference. */
+/**
+ * Currently active app UI theme, in priority order:
+ * 1. Manual override (header sun/moon toggle) — always wins once set.
+ * 2. Telegram's own theme (`Telegram.WebApp.colorScheme`) when running inside a Mini App —
+ *    this can differ from the OS setting (Telegram's theme is configured independently).
+ * 3. OS/browser `prefers-color-scheme` — fallback when opened outside Telegram.
+ */
 function currentUiTheme() {
   const manual = getManualTheme();
   if (manual) return manual;
   if (typeof window === 'undefined') return 'dark';
+  try {
+    const tgScheme = window.Telegram?.WebApp?.colorScheme;
+    if (tgScheme === 'light' || tgScheme === 'dark') return tgScheme;
+  } catch { /* ignore */ }
   try {
     return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
   } catch {

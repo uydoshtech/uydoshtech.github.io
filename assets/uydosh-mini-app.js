@@ -1087,6 +1087,10 @@ function initTelegramMiniApp() {
       tg.onEvent('themeChanged', () => {
         applyTelegramTheme(tg);
         applyStoredManualTheme();
+        // Keeps the header toggle's icon/label correct if Telegram's theme flips while a user
+        // has no manual override set — currentUiTheme() falls back to tg.colorScheme (see
+        // uydosh-map-pins.js), manual overrides still win regardless of this event firing.
+        document.dispatchEvent(new CustomEvent('uydosh:themechange'));
       });
       tg.onEvent('contentSafeAreaChanged', () => {
         applyTelegramSafeAreaInsets(tg);

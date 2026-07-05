@@ -1435,6 +1435,27 @@
     });
   }
 
+  /**
+   * Same blank-icon WebView issue as forceRefreshAllPinIcons above, but triggered by zoom
+   * changes: when ObjectManager dissolves/reforms a cluster on zoom, the newly (re)painted
+   * placemark icons for the pins that pop out of the cluster can come back blank in the
+   * Telegram iOS Mini App, making the pin appear to "disappear" even though it's still
+   * present and clickable. Debounced so a continuous pinch-zoom gesture only triggers one
+   * refresh once the zoom level settles, instead of piling up a refresh per intermediate frame.
+   */
+  function scheduleForceRefreshPinIconsOnZoom(container) {
+    const instance = activeMaps.get(container);
+    if (!instance) return;
+    if (instance.zoomPinIconRefreshTimer) {
+      clearTimeout(instance.zoomPinIconRefreshTimer);
+    }
+    instance.zoomPinIconRefreshTimer = setTimeout(() => {
+      const current = activeMaps.get(container);
+      if (current) current.zoomPinIconRefreshTimer = null;
+      forceRefreshAllPinIcons(container);
+    }, 300);
+  }
+
   function buildPinGroupMaps(pinGroups) {
     const groupsByFeatureId = new Map();
     for (const group of pinGroups) {
@@ -1606,6 +1627,7 @@
     map.events.add('boundschange', (event) => {
       if (event.get('newZoom') === event.get('oldZoom')) return;
       refreshDistrictLabelVisibility(mapInstance);
+      scheduleForceRefreshPinIconsOnZoom(container);
     });
 
     const pinVisualDefaults = pinVisualContext({
