@@ -150,14 +150,23 @@ const state = {
   /// the "Use current location" address button (step 0), so the button can
   /// show a spinner and ignore repeat taps.
   locatingAddress: false,
+  /// True while the dedicated "Find nearby metro stations" button (step 0,
+  /// below "Use current location") is fetching a location — separate from
+  /// `locatingAddress` since either button can trigger a geolocation lookup
+  /// independently of the other.
+  findingNearbyStations: false,
   /// `{ station, minutes }[]`, nearest-first, populated by `findNearbyStations`
-  /// after a successful "Use current location" — lets step 0 suggest metro
-  /// stations within `MAX_SUGGESTED_WALK_MINUTES` of the author's location.
+  /// after a successful "Find nearby metro stations" lookup — lets step 0
+  /// suggest metro stations within `nearbyStationsRadiusMinutes` of the
+  /// author's location.
   nearbyStations: [],
-  /// True once a "Use current location" lookup has actually searched for
-  /// nearby stations, so the metro panel can tell "never asked" apart from
-  /// "asked, found nothing within range" (see renderStep0).
+  /// True once "Find nearby metro stations" has actually searched, so the
+  /// metro panel can tell "never asked" apart from "asked, found nothing
+  /// within range" (see renderStep0).
   nearbyStationsChecked: false,
+  /// Selected walk-time radius (minutes) for "Find nearby metro stations" —
+  /// one of `NEARBY_STATION_RADIUS_OPTIONS` (10 by default).
+  nearbyStationsRadiusMinutes: 10,
   form: {
     listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
     locationMode: LOCATION_MODE_METRO,
@@ -537,17 +546,40 @@ function stationListHtml(lang) {
 }
 
 /**
- * "Stations near you" suggestion chips shown under the "Use current
- * location" button once `findNearbyStations` has run (see
- * `data-use-current-location` in bindStepEvents). Only relevant for metro
- * mode — district mode has its own auto-select (see
+ * Walk-time radius toggle (10 / 20 / 30 min) for "Find nearby metro
+ * stations" — reselecting a radius re-filters `state.nearbyStations` from
+ * the already-known location without another geolocation lookup (see the
+ * `data-nearby-radius` handler in bindStepEvents).
+ */
+function nearbyRadiusChipsHtml(lang) {
+  const chips = NEARBY_STATION_RADIUS_OPTIONS.map((minutes) => UyDosh.chipButtonHtml({
+    className: 'chip nearby-radius-chip',
+    attrs: { 'data-nearby-radius': minutes },
+    pressed: state.nearbyStationsRadiusMinutes === minutes,
+    label: UyDosh.t('create.walkRadiusOption', lang).replace('{count}', String(minutes)),
+  })).join('');
+  return `<div class="chips nearby-radius-chips">${chips}</div>`;
+}
+
+/**
+ * "Stations near you" panel shown under the "Find nearby metro stations"
+ * button once `findNearbyStations` has run (see `data-find-nearby-metro` in
+ * bindStepEvents): a radius toggle plus the matching station chips. Only
+ * relevant for metro mode — district mode has its own auto-select (see
  * `findLocationIdByDistrictName`).
  */
 function nearbyStationsHtml(lang) {
   if (state.form.locationMode !== LOCATION_MODE_METRO) return '';
   if (!state.nearbyStationsChecked) return '';
+  const radiusChips = nearbyRadiusChipsHtml(lang);
   if (state.nearbyStations.length === 0) {
-    return `<div class="nearby-stations-empty">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationsEmpty', lang))}</div>`;
+    const emptyText = UyDosh.t('create.nearbyStationsEmpty', lang)
+      .replace('{minutes}', String(state.nearbyStationsRadiusMinutes));
+    return `
+      <div class="nearby-stations">
+        ${radiusChips}
+        <div class="nearby-stations-empty">${UyDosh.escapeHtml(emptyText)}</div>
+      </div>`;
   }
   const chips = state.nearbyStations.map(({ station, minutes }) => {
     const id = Number(station.id);
@@ -564,6 +596,7 @@ function nearbyStationsHtml(lang) {
   }).join('');
   return `
     <div class="nearby-stations">
+      ${radiusChips}
       <div class="nearby-stations-label">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStations', lang))}</div>
       <div class="nearby-stations-list">${chips}</div>
     </div>`;
@@ -683,6 +716,19 @@ function renderStep0(lang) {
           : UyDosh.iconLocateMe()}
         <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
       </button>
+      ${state.form.locationMode === LOCATION_MODE_METRO ? `
+      <button
+        type="button"
+        class="use-location-btn"
+        data-find-nearby-metro
+        ${state.findingNearbyStations ? 'disabled' : ''}
+        aria-label="${UyDosh.escapeHtml(UyDosh.t('create.findNearbyMetro', lang))}"
+      >
+        ${state.findingNearbyStations
+          ? '<span class="use-location-spinner" aria-hidden="true"></span>'
+          : UyDosh.iconMetro()}
+        <span>${UyDosh.escapeHtml(state.findingNearbyStations ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.findNearbyMetro', lang))}</span>
+      </button>` : ''}
       ${nearbyStationsHtml(lang)}
     </div>` : '';
 
@@ -1169,8 +1215,12 @@ function findLocationIdByDistrictName(districtName, locations, lang) {
 const EARTH_RADIUS_METERS = 6371000;
 const WALK_METERS_PER_MINUTE = 80; // ~4.8 km/h
 const WALK_DETOUR_FACTOR = 1.3; // streets/blocks vs. straight-line distance
-const MAX_SUGGESTED_WALK_MINUTES = 15;
-const MAX_SUGGESTED_STATIONS = 6;
+// Selectable walk-time radii for the "Find nearby metro stations" button
+// (see `nearbyRadiusChipsHtml`) — the author picks how far they're willing
+// to walk instead of being stuck with one fixed cutoff.
+const NEARBY_STATION_RADIUS_OPTIONS = [10, 20, 30];
+const DEFAULT_NEARBY_STATION_RADIUS_MINUTES = NEARBY_STATION_RADIUS_OPTIONS[0];
+const MAX_SUGGESTED_STATIONS = 12;
 
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -1186,13 +1236,13 @@ function estimatedWalkMinutes(meters) {
 }
 
 /**
- * Stations within `MAX_SUGGESTED_WALK_MINUTES` of `(latitude, longitude)`,
- * nearest first, capped to `MAX_SUGGESTED_STATIONS`. Also merges every
- * candidate into `state.stationCache` so the review step and cross-line
- * multi-select keep working if the author picks a suggestion whose line
- * they haven't opened yet.
+ * Stations within `maxMinutes` of `(latitude, longitude)`, nearest first,
+ * capped to `MAX_SUGGESTED_STATIONS`. Also merges every candidate into
+ * `state.stationCache` so the review step and cross-line multi-select keep
+ * working if the author picks a suggestion whose line they haven't opened
+ * yet.
  */
-function findNearbyStations(latitude, longitude) {
+function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STATION_RADIUS_MINUTES) {
   const nearby = STATIC_METRO_STATIONS
     .filter((st) => st.latitude != null && st.longitude != null)
     .map((st) => ({
@@ -1201,7 +1251,7 @@ function findNearbyStations(latitude, longitude) {
         haversineMeters(latitude, longitude, Number(st.latitude), Number(st.longitude)),
       ),
     }))
-    .filter((entry) => entry.minutes <= MAX_SUGGESTED_WALK_MINUTES)
+    .filter((entry) => entry.minutes <= maxMinutes)
     .sort((a, b) => a.minutes - b.minutes)
     .slice(0, MAX_SUGGESTED_STATIONS);
   for (const { station } of nearby) {
@@ -1349,7 +1399,7 @@ function bindStepEvents() {
         // safe to just replace the selection outright.
         if (matchedId != null) state.form.selectedLocationIds = [matchedId];
       }
-      state.nearbyStations = findNearbyStations(latitude, longitude);
+      state.nearbyStations = findNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
       state.nearbyStationsChecked = true;
       showFormError('');
     } catch (err) {
@@ -1361,6 +1411,53 @@ function bindStepEvents() {
       state.locatingAddress = false;
       renderStep();
     }
+  });
+
+  // Dedicated "Find nearby metro stations" button (step 0, under "Use
+  // current location"): reuses the address location if already known
+  // (e.g. from "Use current location") instead of asking twice, otherwise
+  // requests it fresh — then lists stations within the selected walk-time
+  // radius (see nearbyRadiusChipsHtml).
+  stepPanelsEl.querySelector('[data-find-nearby-metro]')?.addEventListener('click', async () => {
+    if (state.findingNearbyStations) return;
+    state.findingNearbyStations = true;
+    renderStep();
+    try {
+      let { addressLatitude: latitude, addressLongitude: longitude } = state.form;
+      if (latitude == null || longitude == null) {
+        const position = await UyDosh.requestUserLocation();
+        latitude = position.latitude;
+        longitude = position.longitude;
+        state.form.addressLatitude = latitude;
+        state.form.addressLongitude = longitude;
+      }
+      state.nearbyStations = findNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
+      state.nearbyStationsChecked = true;
+      showFormError('');
+    } catch (err) {
+      console.error('Find nearby metro stations failed', err);
+      haptic('heavy');
+      if (UyDosh.isMiniApp()) UyDosh.openTelegramLocationSettings();
+      showFormError(UyDosh.t('create.errorLocationFailed', UyDosh.getLang()));
+    } finally {
+      state.findingNearbyStations = false;
+      renderStep();
+    }
+  });
+
+  // Walk-time radius toggle (10 / 20 / 30 min) — re-filters the already
+  // fetched location without another geolocation lookup.
+  stepPanelsEl.querySelectorAll('[data-nearby-radius]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const minutes = Number(btn.getAttribute('data-nearby-radius'));
+      if (!Number.isFinite(minutes) || minutes === state.nearbyStationsRadiusMinutes) return;
+      state.nearbyStationsRadiusMinutes = minutes;
+      const { addressLatitude: latitude, addressLongitude: longitude } = state.form;
+      if (latitude != null && longitude != null) {
+        state.nearbyStations = findNearbyStations(latitude, longitude, minutes);
+      }
+      renderStep();
+    });
   });
 
   stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {

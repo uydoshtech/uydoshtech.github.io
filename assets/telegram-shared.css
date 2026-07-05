@@ -76,6 +76,26 @@ a { color: inherit; text-decoration: none; }
   height: 14px;
   display: block;
 }
+/*
+ * Some chips (e.g. the create-listing "search area" Metro/District toggle)
+ * use the shared stroke-based `.icon` glyphs from uydosh-icons.js
+ * (iconPin/iconMetro) instead of the fill-based `.chip-icon` badges — those
+ * glyphs ship without a `stroke` color or explicit size, relying on the
+ * usage site to supply both, same as `.chip-icon` above.
+ */
+.chip .icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.chip .icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.chip .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
 .chip .chip-label {
   line-height: 1;
 }

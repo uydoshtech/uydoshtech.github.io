@@ -587,6 +587,11 @@ function mapPinTooltipHtml(pin, { listing = null, lang = getLang() } = {}) {
   `;
 }
 
+// Above this many cards, a full dot-per-card row would overflow/clutter the
+// tooltip (the carousel now spans every listing on the map, not just a small
+// composite-pin group), so a compact "3 / 128" counter is shown instead.
+const MAP_CAROUSEL_DOT_LIMIT = 8;
+
 function mapPinCarouselHtml(pins, { listingsById = null, lang = getLang(), activeIndex = 0 } = {}) {
   const items = Array.isArray(pins) ? pins.filter(Boolean) : [];
   if (items.length === 0) return '';
@@ -596,19 +601,24 @@ function mapPinCarouselHtml(pins, { listingsById = null, lang = getLang(), activ
       ${mapPinTooltipCardHtml(pin, { listing: listings[pin.id] ?? null, lang, showClose: true })}
     </div>
   `).join('');
-  const dots = items.length > 1
+  const showDots = items.length > 1 && items.length <= MAP_CAROUSEL_DOT_LIMIT;
+  const showCounter = items.length > 1 && !showDots;
+  const dots = showDots
     ? `<div class="map-pin-carousel-dots" role="tablist" aria-label="${escapeHtml(t('map.carousel.dots', lang))}">
         ${items.map((_, index) => `
           <span class="map-pin-carousel-dot" role="tab" aria-current="${index === activeIndex ? 'true' : 'false'}" data-carousel-dot="${index}"></span>
         `).join('')}
       </div>`
     : '';
+  const counter = showCounter
+    ? `<div class="map-pin-carousel-counter" data-map-carousel-counter aria-live="polite" aria-label="${escapeHtml(t('map.carousel.dots', lang))}">${activeIndex + 1} / ${items.length}</div>`
+    : '';
   return `
     <div class="map-pin-carousel${items.length > 1 ? '' : ' map-pin-carousel--single'}" role="dialog">
       <div class="map-pin-carousel-track" data-map-carousel-track tabindex="0">
         ${slides}
       </div>
-      ${dots}
+      ${dots}${counter}
     </div>
   `;
 }

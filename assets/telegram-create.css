@@ -714,13 +714,22 @@ input[readonly] {
   border-radius: 50%;
   animation: uydosh-spin 0.75s linear infinite;
 }
-/* "Stations near you" suggestions, shown under the "Use current location"
-   button once findNearbyStations resolves (see nearbyStationsHtml). */
+/* "Stations near you" suggestions, shown under the "Find nearby metro
+   stations" button once findNearbyStations resolves (see nearbyStationsHtml). */
 .nearby-stations {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-top: 4px;
+}
+/* Walk-time radius toggle (10 / 20 / 30 min) — smaller/denser than the main
+   type/location chips since it's a secondary control within this panel. */
+.nearby-radius-chips {
+  gap: 6px;
+}
+.nearby-radius-chip {
+  font-size: 11px;
+  padding: 5px 10px;
 }
 .nearby-stations-label {
   font-size: 12px;

@@ -773,6 +773,35 @@
     };
   }
 
+  function isCoordinateWithinBounds(latitude, longitude, bounds) {
+    if (!bounds) return false;
+    const [[lat1, lon1], [lat2, lon2]] = bounds;
+    const minLat = Math.min(lat1, lat2);
+    const maxLat = Math.max(lat1, lat2);
+    const minLon = Math.min(lon1, lon2);
+    const maxLon = Math.max(lon1, lon2);
+    return latitude >= minLat && latitude <= maxLat && longitude >= minLon && longitude <= maxLon;
+  }
+
+  /**
+   * Recenters the map on `pin` only when it has scrolled outside the current
+   * viewport — used while swiping through the "all listings" tooltip carousel
+   * so pins that are already on screen don't cause the map to jump around.
+   */
+  function panToPinIfNeeded(container, pin) {
+    const instance = activeMaps.get(container);
+    const map = instance?.map;
+    if (!map || !pin) return;
+    const latitude = Number(pin.latitude);
+    const longitude = Number(pin.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    try {
+      const bounds = map.getBounds();
+      if (isCoordinateWithinBounds(latitude, longitude, bounds)) return;
+      map.panTo([latitude, longitude], { duration: 280 });
+    } catch { /* ignore */ }
+  }
+
   async function destroyMap(container) {
     if (!container) return;
     const instance = activeMaps.get(container);
@@ -1714,6 +1743,7 @@
     renderPinsMap,
     locateUserFromTap,
     refreshMapPinStates,
+    panToPinIfNeeded,
     destroyMap,
     reflowMap,
     reflowAllMaps,

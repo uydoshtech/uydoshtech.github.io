@@ -134,10 +134,49 @@
       return pins;
     }
 
+    // Number of neighboring carousel cards (each side) to eagerly fetch full
+    // listing details for, so cards feel enriched a beat before the user
+    // swipes onto them without fetching all (up to 300) map listings at once.
+    const MAP_CAROUSEL_ENRICH_WINDOW = 2;
+
+    // Flat, ordered view of every listing currently on the map (coordinate
+    // groups kept adjacent) plus a reverse index of "which other listing ids
+    // share this listing's coordinates" — rebuilt whenever the map pins
+    // change. This is what lets the tooltip carousel page through the whole
+    // map instead of only the tapped pin's composite group.
+    let mapCarouselOrder = [];
+    let mapCarouselGroupIdsByListingId = new Map();
+
+    function rebuildMapCarouselIndex() {
+      const validPins = (state.mapPins || []).filter((pin) => {
+        const lat = Number(pin?.latitude);
+        const lon = Number(pin?.longitude);
+        return Number.isFinite(lat) && Number.isFinite(lon);
+      });
+      const order = [];
+      const groupIdsByListingId = new Map();
+      for (const group of UyDosh.groupPinsByCoordinate(validPins)) {
+        const ids = group.pins.map((pin) => Number(pin.id)).filter((id) => id > 0);
+        for (const pin of group.pins) {
+          order.push(pin);
+          groupIdsByListingId.set(Number(pin.id), ids);
+        }
+      }
+      mapCarouselOrder = order;
+      mapCarouselGroupIdsByListingId = groupIdsByListingId;
+    }
+
+    function pinsToEnrichAround(index) {
+      if (mapCarouselOrder.length === 0) return [];
+      const start = Math.max(0, index - MAP_CAROUSEL_ENRICH_WINDOW);
+      const end = Math.min(mapCarouselOrder.length, index + MAP_CAROUSEL_ENRICH_WINDOW + 1);
+      return mapCarouselOrder.slice(start, end);
+    }
+
     function selectedMapPinGroupIds() {
-      return state.selectedMapPins
-        .map((pin) => Number(pin?.id))
-        .filter((id) => id > 0);
+      const listingId = Number(currentSelectedMapPin()?.id);
+      if (listingId <= 0) return [];
+      return mapCarouselGroupIdsByListingId.get(listingId) || [listingId];
     }
 
     function currentSelectedMapPin() {
@@ -210,6 +249,8 @@
         const dotIndex = Number(dot.getAttribute('data-carousel-dot'));
         dot.setAttribute('aria-current', dotIndex === index ? 'true' : 'false');
       }
+      const counterEl = feedMapTooltipEl.querySelector('[data-map-carousel-counter]');
+      if (counterEl) counterEl.textContent = `${index + 1} / ${slides.length}`;
       for (const [slideIndex, slide] of slides.entries()) {
         slide.setAttribute('aria-hidden', slideIndex === index ? 'false' : 'true');
       }
@@ -224,7 +265,11 @@
         UyDosh.markListingVisited(pin.id);
       }
       refreshFeedMapPinIcons();
+      // Only recenters the map when the new card's pin has scrolled off the
+      // visible viewport, so swiping within on-screen pins never yanks the map.
+      state.mapModule?.panToPinIfNeeded?.(feedMapEl, pin);
       syncMapCarouselUi({ scrollToIndex: scroll ? nextIndex : null });
+      enrichMapPinTooltipListings(pinsToEnrichAround(nextIndex), state.mapTooltipRequestId);
     }
 
     function bindMapPinTooltipEvents() {
@@ -276,40 +321,58 @@
     }
 
     async function enrichMapPinTooltipListings(pins, requestId) {
-      const listingsById = { ...state.mapTooltipListings };
-      await Promise.all(pins.map(async (pin) => {
+      const pending = pins.filter((pin) => {
         const listingId = Number(pin?.id);
-        if (listingId <= 0 || listingsById[listingId]) return;
+        return listingId > 0 && !state.mapTooltipListings[listingId];
+      });
+      if (pending.length === 0) return;
+      const listingsById = { ...state.mapTooltipListings };
+      const currentId = Number(currentSelectedMapPin()?.id);
+      let currentEnriched = false;
+      await Promise.all(pending.map(async (pin) => {
+        const listingId = Number(pin.id);
         try {
           listingsById[listingId] = await UyDosh.fetchListing(listingId);
+          if (listingId === currentId) currentEnriched = true;
         } catch (err) {
           console.warn('Failed to enrich map pin tooltip', err);
         }
       }));
-      if (requestId !== state.mapTooltipRequestId) return;
-      if (state.selectedMapPins.length !== pins.length) return;
+      if (requestId !== state.mapTooltipRequestId || state.selectedMapPins.length === 0) return;
       state.mapTooltipListings = listingsById;
-      renderMapPinTooltip();
+      // Cards render fine from raw pin fields alone (title/price/photo), so
+      // only force a re-render when the *currently visible* card just got its
+      // enrichment data — re-rendering for off-screen prefetches would rebuild
+      // the whole carousel DOM and could interrupt an in-progress swipe.
+      if (currentEnriched) renderMapPinTooltip();
     }
 
     async function showMapPinTooltip(pinOrPins) {
-      const pins = normalizeMapPinSelection(pinOrPins);
-      if (pins.length === 0) return;
+      const tappedPins = normalizeMapPinSelection(pinOrPins);
+      if (tappedPins.length === 0) return;
       onHaptic();
-      const primaryPin = pins[0];
+      const primaryPin = tappedPins[0];
       UyDosh.logMiniAppEvent('map_pin_tap', {
         listing_id: primaryPin.id,
-        pin_count: pins.length,
+        pin_count: tappedPins.length,
       });
-      for (const pin of pins) {
+      for (const pin of tappedPins) {
         UyDosh.markListingVisited(pin.id);
       }
-      state.selectedMapPins = pins;
-      state.selectedMapPinIndex = 0;
+      // The carousel always sources from every listing on the map (falling
+      // back to just the tapped pin(s) if the index isn't ready yet), so
+      // swiping right from any pin keeps paging through the rest of the map
+      // instead of stopping at the tapped pin's own composite group.
+      const carouselPins = mapCarouselOrder.length > 0 ? mapCarouselOrder : tappedPins;
+      const startIndex = Math.max(0, carouselPins.findIndex(
+        (pin) => Number(pin.id) === Number(primaryPin.id),
+      ));
+      state.selectedMapPins = carouselPins;
+      state.selectedMapPinIndex = startIndex;
       refreshFeedMapPinIcons();
       const requestId = ++state.mapTooltipRequestId;
       renderMapPinTooltip();
-      enrichMapPinTooltipListings(pins, requestId);
+      enrichMapPinTooltipListings(pinsToEnrichAround(startIndex), requestId);
     }
 
     function currentMapSignature(filterParams) {
@@ -343,6 +406,7 @@
         const total = Number(data?.total);
         state.mapPins = pins;
         state.mapResultTotal = Number.isFinite(total) ? total : pins.length;
+        rebuildMapCarouselIndex();
         if (pins.length === 0) {
           await UyDosh.loadYandexMapModule().then((m) => m.destroyMap(feedMapEl)).catch(() => {});
           if (generation !== mapLoadGeneration) return;

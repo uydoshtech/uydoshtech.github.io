@@ -225,6 +225,10 @@ const state = {
   mapLoading: false,
   mapLoaded: false,
   mapModule: null,
+  // All listings currently on the map, ordered so coordinate-mates (composite
+  // pins) stay adjacent — lets the open tooltip swipe seamlessly from one
+  // pin/group straight into the next rather than being capped at the tapped
+  // pin's own group. See rebuildMapCarouselIndex() in telegram-feed-map.js.
   selectedMapPins: [],
   selectedMapPinIndex: 0,
   mapTooltipListings: {},

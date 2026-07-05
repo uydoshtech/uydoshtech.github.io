@@ -543,6 +543,16 @@ header {
 .map-pin-carousel-dot[aria-current="true"] {
   background: currentColor;
 }
+.map-pin-carousel-counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 12px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  opacity: 0.72;
+}
 .map-pin-tooltip-card {
   position: relative;
   border: 1px solid var(--stroke);
