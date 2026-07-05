@@ -626,12 +626,14 @@ function nearbyRadiusChipsHtml(lang) {
 /**
  * "Stations near you" panel shown under the "Find nearby metro stations"
  * button once `findNearbyStations` has run (see `data-find-nearby-metro` in
- * bindStepEvents): a radius toggle plus the matching station chips. Only
- * relevant for metro mode — district mode has its own auto-select (see
+ * bindStepEvents): a radius toggle plus the matching station chips. Shown
+ * for both location modes — metro mode uses picks here as the actual
+ * required station selection, while district mode surfaces it purely as
+ * informational context (district itself still comes from the district
+ * grid / "Use current location" auto-select, see
  * `findLocationIdByDistrictName`).
  */
 function nearbyStationsHtml(lang) {
-  if (state.form.locationMode !== LOCATION_MODE_METRO) return '';
   if (!state.nearbyStationsChecked) return '';
   const radiusChips = nearbyRadiusChipsHtml(lang);
   if (state.nearbyStations.length === 0) {
@@ -672,13 +674,14 @@ function nearbyStationsHtml(lang) {
 
 /**
  * "Find nearby metro stations" button + the `nearbyStationsHtml` suggestions
- * panel it reveals — extracted so it can live directly in the metro
- * station-list field (both listing types, now that `supportsMultiStation`
- * always allows several) instead of only inside the roommate-needed address
- * block. Geolocating for this doesn't require an address: the click handler
- * (see `data-find-nearby-metro` in bindStepEvents) reuses/sets
- * `state.form.addressLatitude/Longitude` purely as a location cache, which
- * is simply never sent for room-needed listings (see the submit payload).
+ * panel it reveals — extracted so the same control can be reused in both the
+ * metro station-list field and the district field (both listing types, now
+ * that `supportsMultiStation` always allows several) instead of only inside
+ * the roommate-needed address block. Geolocating for this doesn't require an
+ * address: the click handler (see `data-find-nearby-metro` in
+ * bindStepEvents) reuses/sets `state.form.addressLatitude/Longitude` purely
+ * as a location cache, which is simply never sent for room-needed listings
+ * (see the submit payload).
  */
 function nearbyMetroFinderHtml(lang) {
   return `
@@ -743,7 +746,7 @@ function renderStep0(lang) {
       <div class="field${stationField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(stationLabel)}</div>
         ${stationField.inline}
-        <div class="station-list">${stationListHtml(lang)}</div>
+        <div class="station-list station-list-metro">${stationListHtml(lang)}</div>
         ${nearbyMetroFinderHtml(lang)}
       </div>`;
   } else {
@@ -786,7 +789,8 @@ function renderStep0(lang) {
         <div class="field-label">${UyDosh.escapeHtml(districtLabel)}</div>
         ${districtField.inline}
         <div class="station-list station-list-grid">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
-      </div>`;
+      </div>
+      ${nearbyMetroFinderHtml(lang)}`;
   }
 
   // Address is only ever persisted for roommate-needed (apartment) listings —
@@ -1564,7 +1568,12 @@ function syncSubwayLineChipPressedState() {
  * so `syncSubwayLineChipPressedState` above keeps working. */
 function renderStationList() {
   const lang = UyDosh.getLang();
-  const listEl = stepPanelsEl.querySelector('.station-list');
+  // Scoped to `.station-list-metro` specifically (not the generic
+  // `.station-list` class shared with the district grid): the "nearby
+  // metro" control's station-chip picks (see `data-nearby-station-id` in
+  // bindStepEvents) call this even while district mode is active, and it
+  // must never overwrite the district grid with metro station markup.
+  const listEl = stepPanelsEl.querySelector('.station-list-metro');
   if (!listEl) return;
   listEl.innerHTML = stationListHtml(lang);
   bindStationListEvents();
