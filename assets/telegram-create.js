@@ -1267,6 +1267,24 @@ function toggleSelection(list, id, multi) {
   return [...list, n];
 }
 
+function sameIdSet(a, b) {
+  if (a.length !== b.length) return false;
+  const setA = new Set(a);
+  return b.every((id) => setA.has(id));
+}
+
+/** Clears the free-text address + coordinates captured via "Use current
+ * location" (see the `data-use-current-location` handler below). Those
+ * values describe a point inside whichever district was selected at the
+ * time, so once the user picks a different district by hand — overriding
+ * the auto-detected one, or just changing their mind — the old address no
+ * longer matches and must not be submitted alongside the new district. */
+function clearCurrentLocationAddress() {
+  state.form.addressText = '';
+  state.form.addressLatitude = null;
+  state.form.addressLongitude = null;
+}
+
 /** Toggle pressed state without re-rendering scrollable station/location lists. */
 function updateStationSelectionUi() {
   const selected = new Set(state.form.selectedStationIds.map(Number));
@@ -1508,13 +1526,24 @@ function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-location-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = Number(btn.getAttribute('data-location-id'));
+      const previousLocationIds = state.form.selectedLocationIds;
       state.form.selectedLocationIds = toggleSelection(
-        state.form.selectedLocationIds,
+        previousLocationIds,
         id,
         supportsMultiLocation(),
       );
+      const districtChanged = !sameIdSet(previousLocationIds, state.form.selectedLocationIds);
+      const hadCurrentLocationAddress =
+        state.form.addressText || state.form.addressLatitude != null;
+      if (districtChanged && hadCurrentLocationAddress) clearCurrentLocationAddress();
       if (state.form.selectedLocationIds.length > 0 && state.validationError) {
         showFormError('');
+        renderStep();
+        return;
+      }
+      // Re-render (instead of just updating pressed states) when the address
+      // was just cleared, so the textarea reflects the reset value.
+      if (districtChanged && hadCurrentLocationAddress) {
         renderStep();
         return;
       }
