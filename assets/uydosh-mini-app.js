@@ -964,6 +964,92 @@ function redirectFromMiniAppStartParam() {
   return true;
 }
 
+/**
+ * Telegram's Mini App WebView doesn't reliably follow a plain `<a href>` tap to a
+ * same-origin page on every client/platform — the tap can silently do nothing (see
+ * https://bugs.telegram.org/c/19188 and multiple developer reports of internal links
+ * "not working" inside Mini Apps). Explicitly driving navigation from the click handler
+ * via `location.href` — instead of leaving it to the WebView's native tap-to-navigate
+ * behavior — is the reliable way to move between this app's own pages. External links
+ * (different origin), `target="_blank"`/download links, and modified clicks (cmd/ctrl/
+ * middle-click) are left alone so they keep their normal/native handling.
+ */
+function bindMiniAppInternalNav() {
+  if (document.documentElement.dataset.uydoshInternalNavBound) return;
+  document.documentElement.dataset.uydoshInternalNavBound = '1';
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const link = e.target.closest('a[href]');
+    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+    let url;
+    try {
+      url = new URL(link.href, location.href);
+    } catch {
+      return;
+    }
+    if (url.origin !== location.origin) return;
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+    e.preventDefault();
+    location.href = url.href;
+  });
+}
+
+/**
+ * Elements that get automatic tap feedback from `bindMiniAppHapticFeedback`
+ * below — every real button, link, and ARIA button/tab/switch/menu item in
+ * the Mini App, so new UI gets feedback for free without wiring up a
+ * `HapticFeedback` call by hand on every tap.
+ */
+const MINI_APP_HAPTIC_TAP_SELECTOR = [
+  'button',
+  '.btn',
+  'input[type="submit"]',
+  'input[type="button"]',
+  'a[href]',
+  '[role="button"]',
+  '[role="tab"]',
+  '[role="switch"]',
+  '[role="menuitem"]',
+].join(', ');
+
+/**
+ * Resolves which `UyDosh.haptic` profile a tapped element should use.
+ * Defaults to `light` (a plain button/link tap); set `data-haptic="medium"`,
+ * `"heavy"`, `"selection"`, `"success"`, `"warning"`, or `"error"` on an
+ * element (or an ancestor) to use a different profile for it, or
+ * `data-haptic="none"` to opt out entirely — e.g. an element whose own click
+ * handler already fires more specific feedback itself.
+ */
+function miniAppHapticProfileFor(el) {
+  return el.closest('[data-haptic]')?.getAttribute('data-haptic') || 'light';
+}
+
+function fireMiniAppHapticProfile(profile) {
+  if (profile === 'none') return;
+  const haptic = window.UyDosh?.haptic;
+  const fn = haptic?.[profile];
+  (typeof fn === 'function' ? fn : haptic?.light)?.();
+}
+
+/**
+ * Best-effort tactile feedback on every button/link/tab press across the
+ * Mini App. A single delegated (capture-phase, so it still runs even if a
+ * handler later calls `stopPropagation`) listener replaces having to wire up
+ * a `HapticFeedback` call by hand in every click handler — see
+ * `MINI_APP_HAPTIC_TAP_SELECTOR`/`miniAppHapticProfileFor` above for the
+ * element matching + profile override rules.
+ */
+function bindMiniAppHapticFeedback() {
+  if (document.documentElement.dataset.uydoshHapticBound) return;
+  document.documentElement.dataset.uydoshHapticBound = '1';
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented) return;
+    const target = e.target.closest?.(MINI_APP_HAPTIC_TAP_SELECTOR);
+    if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true') return;
+    fireMiniAppHapticProfile(miniAppHapticProfileFor(target));
+  }, true);
+}
+
 /** Call on mini-app pages after telegram-web-app.js is loaded. */
 function initTelegramMiniApp() {
   // Persist the bot-selected `?lang=` for the rest of this session so
@@ -1026,6 +1112,8 @@ function initTelegramMiniApp() {
   applyStoredManualTheme();
   ensureMiniAppSafeAreaStyles();
   applyTelegramSafeAreaInsets(tg);
+  bindMiniAppInternalNav();
+  bindMiniAppHapticFeedback();
   mountAllMiniAppHeaders();
   syncMobileHeaderLayout();
   // Fire-and-forget: reveals a green dot on the account menu's "Profile" item
@@ -1060,7 +1148,9 @@ Object.assign(window.UyDosh, {
   listingPageUrl,
   feedPageUrl,
   createPageUrl,
+  bindMiniAppInternalNav,
   initTelegramMiniApp,
+  bindMiniAppHapticFeedback,
   redirectFromMiniAppStartParam,
   mountMiniAppHeader,
   mountAllMiniAppHeaders,

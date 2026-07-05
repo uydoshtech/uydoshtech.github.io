@@ -231,6 +231,7 @@ function metroLineChipsHtml(selectedId, lang = getLang(), { compact = false } = 
       type="button"
       class="chip chip-line${compact ? ' chip-line-compact' : ''}"
       data-subway-line="${lineId}"
+      data-haptic="selection"
       style="--line-color:${color}"
       aria-pressed="${pressed ? 'true' : 'false'}"
       aria-label="${escapeHtml(label)}"
@@ -258,6 +259,14 @@ function iconPin() {
   return iconSvg(LOCATION_PIN_COLOR, `
     <path d="M12 21s7-4.8 7-11a7 7 0 1 0-14 0c0 6.2 7 11 7 11Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
     <path d="M12 10.5a2.5 2.5 0 1 0 0.001-5.001A2.5 2.5 0 0 0 12 10.5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+/** Street address marker — used on the listing detail page when the host entered an exact address. */
+function iconHome() {
+  return iconSvg(LOCATION_PIN_COLOR, `
+    <path d="M4 10.5 12 4l8 6.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
   `);
 }
 
@@ -462,6 +471,7 @@ Object.assign(window.UyDosh, {
   metroTransferPartner,
   metroTransferSuffixHtml,
   iconPin,
+  iconHome,
   iconLocateMe,
   iconMetro,
   iconClock,

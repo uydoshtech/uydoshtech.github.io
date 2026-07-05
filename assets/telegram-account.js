@@ -125,6 +125,7 @@ function listingRowHtml(listing) {
           type="button"
           class="account-delete-btn"
           data-delete-listing="${listing.id}"
+          data-haptic="heavy"
         >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
       </div>
     </div>`;
@@ -181,7 +182,6 @@ function bindVisibilityToggleButtons() {
       const listing = state.myListings.find((l) => l?.id === id);
       if (!listing) return;
       btn.disabled = true;
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
       try {
         const data = await UyDosh.toggleListingActiveFromTelegramMiniApp(id);
         const updated = data?.listing;
@@ -226,11 +226,10 @@ function bindRenewButtons() {
       if (!listing) return;
       const lang = UyDosh.getLang();
       btn.disabled = true;
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
       try {
         const data = await UyDosh.renewListingFromTelegramMiniApp(id);
         if (data?.listing) Object.assign(listing, data.listing);
-        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
+        UyDosh.haptic.success();
         renderMine();
       } catch (err) {
         console.error('Failed to renew listing', err);
@@ -293,7 +292,6 @@ function bindDeleteButtons() {
       const confirmed = await confirmDestructiveAction(UyDosh.t('account.deleteConfirm', lang));
       if (!confirmed) return;
       btn.disabled = true;
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');
       try {
         await UyDosh.deleteListingFromTelegramMiniApp(id);
         state.myListings = state.myListings.filter((l) => l?.id !== id);
@@ -313,7 +311,6 @@ function bindFavoriteRemoveButtons() {
       const id = Number(btn.getAttribute('data-unfavorite-listing'));
       if (!Number.isFinite(id) || btn.disabled) return;
       btn.disabled = true;
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
       try {
         await UyDosh.toggleListingFavorite(id);
         state.favorites = state.favorites.filter((f) => f?.listing?.id !== id);
@@ -391,7 +388,6 @@ function setActiveTab(tab) {
 
 for (const btn of tabButtons) {
   btn.addEventListener('click', () => {
-    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     setActiveTab(btn.getAttribute('data-account-tab'));
   });
 }

@@ -938,6 +938,13 @@
    * `createMapGroupPinIcon` in uydosh-map-pins.js) the box's square corners clearly stick out
    * past the pill's rounded ends, showing up as a gray "artifact rectangle" on tap. Neutralize
    * both — pin taps already get their own feedback via haptics + the custom tooltip/balloon.
+   *
+   * The cluster bubble's listing-count label (`.uydosh-map-cluster-count`, see
+   * `ensureClusterListingCountLayout` below) is real DOM text overlaid on the icon, not part
+   * of the canvas bitmap — without `user-select`/`-webkit-touch-callout` disabled, a tap/hold on
+   * it can trigger the WebView's native text-selection highlight, drawn as a solid rectangle in
+   * the OS/app accent color (e.g. green) floating over the cluster. `user-select: none` (plus
+   * the callout reset, for iOS's copy/lookup menu) suppresses that too.
    */
   const MAP_INTERACTION_STYLE_ID = 'uydosh-map-interaction-styles';
 
@@ -949,6 +956,9 @@
       .map-container, .map-container * {
         -webkit-tap-highlight-color: transparent;
         outline: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
       }
     `;
     document.head.appendChild(style);
@@ -1145,8 +1155,10 @@
 
     const metroBtn = createLayerControlButton();
     metroBtn.innerHTML = METRO_LAYER_BUTTON_ICON_SVG;
+    metroBtn.setAttribute('data-haptic', 'selection');
     const districtBtn = createLayerControlButton();
     districtBtn.innerHTML = DISTRICTS_LAYER_BUTTON_ICON_SVG;
+    districtBtn.setAttribute('data-haptic', 'selection');
     wrap.append(metroBtn, districtBtn);
 
     function refreshMetroButton() {
@@ -1185,14 +1197,12 @@
     }
 
     metroBtn.addEventListener('click', () => {
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
       const nextMode = nextMetroLayerMode(instance.metroLayer.mode);
       setMetroLayerMode(container, nextMode).finally(refreshMetroButton);
       refreshMetroButton();
     });
 
     districtBtn.addEventListener('click', () => {
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
       const nextVisible = !instance.districtLayer.visible;
       setDistrictLayerVisible(container, nextVisible).finally(refreshDistrictButton);
       refreshDistrictButton();
@@ -1222,7 +1232,7 @@
   function ensureClusterListingCountLayout(ymaps) {
     if (clusterListingCountLayout) return clusterListingCountLayout;
     const Layout = ymaps.templateLayoutFactory.createClass(
-      '<div class="uydosh-map-cluster-count" style="color:#fff;font-weight:700;font-size:10px;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;width:100%;height:100%;"></div>',
+      '<div class="uydosh-map-cluster-count" style="color:#fff;font-weight:700;font-size:10px;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;width:100%;height:100%;pointer-events:none;user-select:none;-webkit-user-select:none;"></div>',
       {
         build: function () {
           Layout.superclass.build.call(this);

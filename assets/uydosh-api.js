@@ -234,6 +234,20 @@ function fetchFavoriteListings({ page = 1, limit = 100 } = {}) {
 }
 
 /**
+ * Whether the current Mini App user's linked Telegram identity matches the original
+ * poster of a scraped listing (still owned by the import service account) and can
+ * therefore claim it. Returns `{ eligible: boolean }`.
+ */
+function checkListingClaimEligibility(listingId) {
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/claim-eligibility`);
+}
+
+/** Claim a scraped listing that matches the current user's Telegram identity. */
+function claimListing(listingId) {
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/claim`, { method: 'POST' });
+}
+
+/**
  * Records the Mini App user's device location, verified server-side via initData (no
  * session required). Fire-and-forget: swallows failures since it's called from a
  * best-effort background flow (see autoRequestUserLocation in yandex-map.js) and must
@@ -748,7 +762,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260705-95`;
+    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260705-96`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -796,6 +810,8 @@ Object.assign(window.UyDosh, {
   checkListingFavorited,
   toggleListingFavorite,
   fetchFavoriteListings,
+  checkListingClaimEligibility,
+  claimListing,
   fetchComplaintCategories,
   createComplaint,
   fetchListingComplaintsCount,

@@ -344,6 +344,35 @@
       .complaint-submit-btn:disabled { opacity: 0.55; cursor: default; }
       .complaint-submit-btn:active:not(:disabled) { opacity: 0.88; }
 
+      /* "Is this your listing?" claim banner — offers to transfer a scraped
+         listing (still owned by the import service account) to the Mini App
+         viewer once their linked Telegram identity matches the original
+         poster (see `loadClaimBanner`). Uses the accent (green) color to read
+         as a positive action, unlike the warning-colored complaints banner. */
+      .claim-banner { margin: 16px 0; }
+      .claim-banner[hidden] { display: none !important; }
+      .claim-banner-card {
+        display: flex; align-items: center; gap: 12px;
+        border-radius: 14px; padding: 14px 16px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      }
+      .claim-banner-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
+      .claim-banner-icon svg { width: 22px; height: 22px; display: block; }
+      .claim-banner-text { flex: 1; min-width: 0; }
+      .claim-banner-title { font-weight: 700; font-size: 14px; margin: 0 0 2px; }
+      .claim-banner-subtitle { font-size: 12px; color: var(--muted); margin: 0; }
+      .claim-banner-btn {
+        flex: 0 0 auto; border: 0; border-radius: 10px; padding: 9px 14px;
+        background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
+      }
+      .claim-banner-btn:disabled { opacity: 0.6; cursor: default; }
+      .claim-banner-btn:active:not(:disabled) { opacity: 0.85; }
+      @media (max-width: 480px) {
+        .claim-banner-card { flex-wrap: wrap; }
+        .claim-banner-btn { width: 100%; }
+      }
+
       /* Complaints warning button + grouped-by-user complaints sheet — mirrors
          the mobile app's "N complaints" banner and ListingComplaintsScreen.
          Shown whenever a listing has at least one complaint; the underlying
@@ -835,13 +864,13 @@
     <div id="listing-complaints-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="assets/uydosh-core.js?v=20260705-97"></script>
-    <script src="assets/uydosh-api.js?v=20260705-97"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-20"></script>
-    <script src="assets/uydosh-icons.js?v=20260705-96"></script>
-    <script src="assets/uydosh-map-pins.js?v=20260705-80"></script>
+    <script src="assets/uydosh-core.js?v=20260705-98"></script>
+    <script src="assets/uydosh-api.js?v=20260705-98"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-22"></script>
+    <script src="assets/uydosh-icons.js?v=20260705-97"></script>
+    <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="assets/uydosh-mini-app.js?v=20260705-99"></script>
+    <script src="assets/uydosh-mini-app.js?v=20260705-100"></script>
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
       UyDosh.initTelegramMiniApp();
@@ -857,7 +886,7 @@
         webApp?.MainButton?.hide();
         webApp?.BackButton?.show();
         webApp?.BackButton?.onClick(() => {
-          webApp?.HapticFeedback?.impactOccurred('light');
+          UyDosh.haptic.light();
           location.href = UyDosh.MINI_APP_FEED_PATH;
         });
       }
@@ -952,7 +981,6 @@
         const btn = rootEl.querySelector('[data-share-listing]');
         if (!btn) return;
         btn.addEventListener('click', () => {
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
           const lang = UyDosh.getLang();
           const url = buildListingShareUrl(l.id);
           const text = buildListingShareText(l, lang);
@@ -1201,7 +1229,6 @@
         btn.addEventListener('click', async () => {
           if (pending) return;
           pending = true;
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
           const nextState = !isFavorited;
           setFavoriteButtonState(btn, nextState);
           try {
@@ -1368,7 +1395,7 @@
             const value = input?.value;
             const numeric = Number(value);
             complaintState.selectedCategoryId = Number.isFinite(numeric) ? numeric : value;
-            window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+            UyDosh.haptic.selection();
             for (const other of complaintBackdropEl.querySelectorAll('[data-complaint-reason-item]')) {
               other.classList.toggle('selected', other === item);
             }
@@ -1384,7 +1411,6 @@
 
       function bindComplaintCloseHandlers() {
         complaintBackdropEl.querySelector('[data-complaint-close]')?.addEventListener('click', () => {
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
           closeComplaintSheet();
         });
       }
@@ -1406,7 +1432,7 @@
             categoryId: complaintState.selectedCategoryId,
             text: complaintState.detailsText,
           });
-          window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+          UyDosh.haptic.success();
           closeComplaintSheet();
           showTelegramAlert(UyDosh.t('complaint.success', lang));
           UyDosh.logMiniAppEvent('listing_complaint_submitted', {
@@ -1416,7 +1442,7 @@
           });
         } catch (err) {
           console.error('Failed to submit complaint', err);
-          window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('error');
+          UyDosh.haptic.error();
           complaintState.submitting = false;
           const message = err?.status === 409
             ? UyDosh.t('complaint.errorDuplicate', lang)
@@ -1470,9 +1496,88 @@
         const btn = rootEl.querySelector('[data-report-listing]');
         if (!btn) return;
         btn.addEventListener('click', () => {
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
           openComplaintSheet(l);
         });
+      }
+
+      // --- Claim scraped listing --------------------------------------------
+      // Listings imported from Telegram channels are initially owned by a
+      // shared "import" service account. If the Mini App viewer's own linked
+      // Telegram identity matches the original poster (checked server-side —
+      // see GET /listings/:id/claim-eligibility), we offer to transfer
+      // ownership to them so they can manage it like any other listing.
+      // Like the report/favorite buttons, this only ever renders in the Mini
+      // App (claiming requires a verified Telegram session).
+
+      /** Telegram-native confirm dialog when available, else a plain browser confirm(). */
+      function confirmClaimAction(message) {
+        return new Promise((resolve) => {
+          const tg = window.Telegram?.WebApp;
+          if (typeof tg?.showConfirm === 'function') {
+            tg.showConfirm(message, (confirmed) => resolve(!!confirmed));
+          } else {
+            resolve(window.confirm(message));
+          }
+        });
+      }
+
+      function claimBannerHtml() {
+        if (!UyDosh.isMiniApp()) return '';
+        return `
+          <div class="claim-banner" data-claim-banner hidden>
+            <div class="claim-banner-card">
+              <span class="claim-banner-icon" aria-hidden="true">${UyDosh.iconChrome('checkCircle')}</span>
+              <div class="claim-banner-text">
+                <p class="claim-banner-title">${UyDosh.escapeHtml(UyDosh.t('detail.claim.title'))}</p>
+                <p class="claim-banner-subtitle">${UyDosh.escapeHtml(UyDosh.t('detail.claim.subtitle'))}</p>
+              </div>
+              <button type="button" class="claim-banner-btn" data-claim-listing>
+                <span data-claim-btn-label>${UyDosh.escapeHtml(UyDosh.t('detail.claim.button'))}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      async function loadClaimBanner(listing) {
+        const wrapEl = rootEl.querySelector('[data-claim-banner]');
+        if (!wrapEl) return;
+        try {
+          const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+          if (!sessionReady) return;
+          const status = await UyDosh.checkListingClaimEligibility(listing.id);
+          if (!status?.eligible) return;
+          wrapEl.hidden = false;
+
+          const btn = wrapEl.querySelector('[data-claim-listing]');
+          const labelEl = wrapEl.querySelector('[data-claim-btn-label]');
+          let pending = false;
+          btn?.addEventListener('click', async () => {
+            if (pending) return;
+            const confirmed = await confirmClaimAction(UyDosh.t('detail.claim.confirm'));
+            if (!confirmed) return;
+
+            pending = true;
+            btn.disabled = true;
+            if (labelEl) labelEl.textContent = UyDosh.t('detail.claim.pending');
+            try {
+              const result = await UyDosh.claimListing(listing.id);
+              UyDosh.haptic.success();
+              if (result?.listing) state.listing = result.listing;
+              showTelegramAlert(UyDosh.t('detail.claim.success'));
+              render();
+            } catch (err) {
+              console.error('Failed to claim listing', err);
+              UyDosh.haptic.error();
+              showTelegramAlert(err?.payload?.error || UyDosh.t('detail.claim.error'));
+              pending = false;
+              btn.disabled = false;
+              if (labelEl) labelEl.textContent = UyDosh.t('detail.claim.button');
+            }
+          });
+        } catch (err) {
+          console.error('Failed to check listing claim eligibility', err);
+        }
       }
 
       // --- Complaints warning + grouped-by-user complaints list -----------
@@ -1517,7 +1622,6 @@
           if (labelEl) labelEl.textContent = UyDosh.listingComplaintsCountText(count, UyDosh.getLang());
           wrapEl.hidden = false;
           wrapEl.querySelector('[data-view-complaints]')?.addEventListener('click', () => {
-            window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
             openComplaintsListSheet(listing.id);
           });
         } catch (err) {
@@ -1554,7 +1658,6 @@
 
       function bindComplaintsListCloseHandlers() {
         listingComplaintsBackdropEl.querySelector('[data-complaints-close]')?.addEventListener('click', () => {
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
           closeComplaintsListSheet();
         });
       }
@@ -1809,11 +1912,16 @@
         const locName = UyDosh.localized(l.location, lang);
         const metro = UyDosh.localized(l.subway_station, lang);
         const metroLine = UyDosh.resolveMetroLine(l);
+        const address = typeof l.address_text === 'string' ? l.address_text.trim() : '';
         const hasLocation = Boolean(locName);
         const hasMetro = Boolean(metro);
-        if (!hasLocation && !hasMetro) return '';
+        const hasAddress = Boolean(address);
+        if (!hasLocation && !hasMetro && !hasAddress) return '';
 
         const rows = [];
+        if (hasAddress) {
+          rows.push(`<div class="map-section-row">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(address)}</span></div>`);
+        }
         if (hasMetro) {
           rows.push(`<div class="map-section-row">${UyDosh.iconMetro(metroLine)}<span>${UyDosh.escapeHtml(metro)}</span></div>`);
         }
@@ -1857,7 +1965,6 @@
           </div>
         `;
         container.querySelector('[data-map-retry]')?.addEventListener('click', () => {
-          window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
           state.mapLoaded = false;
           state.mapLoading = false;
           UyDosh.resetYandexMaps({ hard: true });
@@ -1933,7 +2040,6 @@
           toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
           body.hidden = !next;
           if (next) {
-            window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
             setTimeout(() => {
               if (state.mapExpanded) mountListingMap();
             }, 350);
@@ -2001,11 +2107,13 @@
         }
 
         const amenities = Array.isArray(l.amenities) ? l.amenities : [];
-        const hasMapSection = Boolean(locName || metro);
+        const addressText = typeof l.address_text === 'string' ? l.address_text.trim() : '';
+        const hasMapSection = Boolean(locName || metro || addressText);
 
         const isMiniApp = UyDosh.isMiniApp();
 
         const metaRows = [];
+        if (!hasMapSection && addressText) metaRows.push([UyDosh.t('detail.address'), addressText]);
         if (!hasMapSection && locName) metaRows.push([UyDosh.t('detail.location'), locName]);
         if (!hasMapSection && metro) metaRows.push([UyDosh.t('detail.metro'), metro]);
         if (l.move_in_date && !hasMapSection) {
@@ -2091,6 +2199,7 @@
               <div class="title-row">
                 <h1>${title}</h1>
               </div>
+              ${isOwner ? '' : claimBannerHtml()}
               ${mapHtml}
               ${amenitiesHtml}
               ${metaHtml}
@@ -2111,6 +2220,7 @@
         bindReportButton(l);
         updateDetailContactBar(l);
         if (isOwner) loadOwnerViewCount(l.id);
+        else loadClaimBanner(l);
         if (isMiniApp) loadComplaintsWarning(l);
       }
 

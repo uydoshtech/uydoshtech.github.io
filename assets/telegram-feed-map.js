@@ -108,7 +108,6 @@
         </div>
       `;
       feedMapStatusEl.querySelector('[data-map-retry]')?.addEventListener('click', () => {
-        onHaptic();
         onRetry();
       });
     }
@@ -166,7 +165,6 @@
     }
 
     feedMapLocateBannerEl?.addEventListener('click', () => {
-      onHaptic();
       hideLocateBanner();
       UyDosh.logMiniAppEvent('map_locate_banner_tap');
       state.mapModule?.locateUserFromTap(feedMapEl).then((position) => {
@@ -234,7 +232,6 @@
         closeBtn.addEventListener('click', (event) => {
           event.preventDefault();
           event.stopPropagation();
-          onHaptic();
           hideMapPinTooltip();
         });
       }

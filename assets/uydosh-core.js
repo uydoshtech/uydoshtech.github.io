@@ -59,6 +59,73 @@ const API_BASE = (() => {
   return 'https://api.uydosh.com';
 })();
 
+/**
+ * Centralized Telegram Mini App haptic feedback helpers. Wraps every profile
+ * exposed by `Telegram.WebApp.HapticFeedback` — the five `impactOccurred`
+ * styles, the three `notificationOccurred` types, and `selectionChanged` —
+ * behind one small API so every page/module triggers feedback the same way
+ * instead of scattering raw `window.Telegram?.WebApp?.HapticFeedback?...`
+ * one-liners everywhere. No-ops outside Telegram (or on older clients that
+ * don't support a given style/type) since the underlying SDK calls are
+ * themselves best-effort/no-ops there — see
+ * https://core.telegram.org/bots/webapps#hapticfeedback.
+ */
+const HAPTIC_IMPACT_STYLES = ['light', 'medium', 'heavy', 'rigid', 'soft'];
+const HAPTIC_NOTIFICATION_TYPES = ['success', 'warning', 'error'];
+
+/** @param {'light'|'medium'|'heavy'|'rigid'|'soft'} [style] */
+function hapticImpact(style = 'light') {
+  try {
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(
+      HAPTIC_IMPACT_STYLES.includes(style) ? style : 'light',
+    );
+  } catch { /* ignore */ }
+}
+
+/** @param {'success'|'warning'|'error'} [type] */
+function hapticNotification(type = 'success') {
+  try {
+    window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(
+      HAPTIC_NOTIFICATION_TYPES.includes(type) ? type : 'success',
+    );
+  } catch { /* ignore */ }
+}
+
+function hapticSelection() {
+  try {
+    window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
+  } catch { /* ignore */ }
+}
+
+/**
+ * `UyDosh.haptic.<profile>()` for every Telegram haptic profile, plus the
+ * raw `impact`/`notification` escape hatches for dynamic style/type values.
+ * See `bindMiniAppHapticFeedback` (uydosh-mini-app.js) for the delegated
+ * click listener that fires `light` on every button/link tap automatically —
+ * these are for feedback tied to a specific outcome (success/error) or a
+ * non-default tap profile (medium/heavy/selection) instead.
+ *
+ * Named `hapticProfiles` (not `haptic`) at the top level and exposed as
+ * `UyDosh.haptic` only below — classic <script> top-level `const` bindings
+ * are shared across every script on the page, and `telegram-create.js`
+ * already declares its own top-level `function haptic(...)` compat shim, so
+ * a same-named `const` here would throw "Identifier 'haptic' has already
+ * been declared" and break that page's script entirely.
+ */
+const hapticProfiles = {
+  light: () => hapticImpact('light'),
+  medium: () => hapticImpact('medium'),
+  heavy: () => hapticImpact('heavy'),
+  rigid: () => hapticImpact('rigid'),
+  soft: () => hapticImpact('soft'),
+  success: () => hapticNotification('success'),
+  warning: () => hapticNotification('warning'),
+  error: () => hapticNotification('error'),
+  selection: hapticSelection,
+  impact: hapticImpact,
+  notification: hapticNotification,
+};
+
 const LANGS = ['uz', 'ru', 'en'];
 const MINI_APP_DEFAULT_LANG = 'ru';
 const LANG_META = {
@@ -554,6 +621,7 @@ function isFeatured(listing) {
 window.UyDosh = window.UyDosh || {};
 Object.assign(window.UyDosh, {
   API_BASE,
+  haptic: hapticProfiles,
   getLang,
   setLang,
   localized,

@@ -382,11 +382,11 @@
         <p class="profile-intro content-gutter" data-i18n="profile.subtitle"></p>
 
         <div class="view-tabs" role="tablist" aria-label="Profile">
-          <button type="button" class="view-tab" role="tab" data-profile-tab="basic" aria-selected="true">
+          <button type="button" class="view-tab" role="tab" data-profile-tab="basic" data-haptic="selection" aria-selected="true">
             <span class="view-tab-icon" aria-hidden="true" data-icon="person"></span>
             <span data-i18n="profile.tabs.basic"></span>
           </button>
-          <button type="button" class="view-tab" role="tab" data-profile-tab="lifestyle" aria-selected="false">
+          <button type="button" class="view-tab" role="tab" data-profile-tab="lifestyle" data-haptic="selection" aria-selected="false">
             <span class="view-tab-icon" aria-hidden="true" data-icon="sparkles"></span>
             <span data-i18n="profile.tabs.lifestyle"></span>
           </button>
@@ -396,8 +396,8 @@
           <div class="field">
             <div class="field-label" data-i18n="profile.studentQuestion"></div>
             <div class="chips">
-              <button type="button" class="chip" id="student-yes" aria-pressed="false" data-i18n="profile.studentYes"></button>
-              <button type="button" class="chip" id="student-no" aria-pressed="false" data-i18n="profile.studentNo"></button>
+              <button type="button" class="chip" id="student-yes" data-haptic="selection" aria-pressed="false" data-i18n="profile.studentYes"></button>
+              <button type="button" class="chip" id="student-no" data-haptic="selection" aria-pressed="false" data-i18n="profile.studentNo"></button>
             </div>
           </div>
 
@@ -432,20 +432,20 @@
 
     <footer id="profile-footer" class="profile-footer" hidden>
       <div class="profile-footer-inner">
-        <button type="button" class="wizard-btn" id="save-btn">
+        <button type="button" class="wizard-btn" id="save-btn" data-haptic="medium">
           <span id="save-btn-label" data-i18n="profile.save"></span>
           <span class="wizard-btn-spinner" id="save-btn-spinner" hidden></span>
         </button>
       </div>
     </footer>
 
-    <script src="../assets/uydosh-core.js?v=20260705-97"></script>
-    <script src="../assets/uydosh-api.js?v=20260705-97"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-20"></script>
-    <script src="../assets/uydosh-icons.js?v=20260705-96"></script>
-    <script src="../assets/uydosh-map-pins.js?v=20260705-80"></script>
+    <script src="../assets/uydosh-core.js?v=20260705-98"></script>
+    <script src="../assets/uydosh-api.js?v=20260705-98"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-22"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-97"></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260705-99"></script>
-    <script src="../assets/telegram-profile.js?v=20260705-8"></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260705-100"></script>
+    <script src="../assets/telegram-profile.js?v=20260705-9"></script>
   </body>
 </html>

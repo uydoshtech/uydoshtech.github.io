@@ -858,7 +858,6 @@ function detailContactBarHtml(username, phone) {
 function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCall } = {}) {
   const telegramBtn = container?.querySelector('[data-detail-contact-telegram]');
   telegramBtn?.addEventListener('click', () => {
-    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     const handle = telegramBtn.getAttribute('data-telegram-username');
     if (!openTelegramContact(handle, prefillText)) return;
     if (typeof onOpen === 'function') onOpen(handle);
@@ -872,7 +871,6 @@ function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCal
 
   const phoneBtn = container?.querySelector('[data-detail-contact-phone]');
   phoneBtn?.addEventListener('click', () => {
-    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
     const phone = phoneBtn.getAttribute('data-phone-number');
     if (!openPhoneContact(phone)) return;
     if (typeof onCall === 'function') onCall(phone);

@@ -39,6 +39,7 @@ const I18N = {
     'detail.moveIn': 'Ko‘chib o‘tish',
     'detail.type': 'Turi',
     'detail.location': 'Joylashuv',
+    'detail.address': 'Manzil',
     'detail.metro': 'Metro',
     'detail.map': 'Xarita',
     'detail.showMap': 'Xaritani ko‘rsatish',
@@ -55,6 +56,13 @@ const I18N = {
     'detail.favorite.add': 'Sevimlilarga qo‘shish',
     'detail.favorite.remove': 'Sevimlilardan olib tashlash',
     'detail.report': 'Shikoyat qilish',
+    'detail.claim.title': 'Bu sizning e’loningizmi?',
+    'detail.claim.subtitle': 'Telegram hisobingiz mos keldi — uni profilingizga bog‘lang.',
+    'detail.claim.button': 'Talab qilish',
+    'detail.claim.pending': 'Bajarilmoqda…',
+    'detail.claim.confirm': 'Bu e’lon hisobingizga o‘tkaziladi va uni tahrirlay olasiz. Davom etasizmi?',
+    'detail.claim.success': 'E’lon muvaffaqiyatli sizga o‘tkazildi',
+    'detail.claim.error': 'E’lonni talab qilib bo‘lmadi. Keyinroq urinib ko‘ring.',
     'complaint.title': 'Shikoyat qilish',
     'complaint.reasonLabel': 'Sabab',
     'complaint.loadingReasons': 'Sabablar yuklanmoqda…',
@@ -333,6 +341,7 @@ const I18N = {
     'detail.moveIn': 'Заселение',
     'detail.type': 'Тип',
     'detail.location': 'Район',
+    'detail.address': 'Адрес',
     'detail.metro': 'Метро',
     'detail.map': 'Карта',
     'detail.showMap': 'Показать карту',
@@ -349,6 +358,13 @@ const I18N = {
     'detail.favorite.add': 'Добавить в избранное',
     'detail.favorite.remove': 'Убрать из избранного',
     'detail.report': 'Пожаловаться',
+    'detail.claim.title': 'Это ваше объявление?',
+    'detail.claim.subtitle': 'Ваш Telegram-аккаунт совпадает — привяжите его к своему профилю.',
+    'detail.claim.button': 'Забрать себе',
+    'detail.claim.pending': 'Выполняется…',
+    'detail.claim.confirm': 'Объявление будет передано в ваш аккаунт, и вы сможете его редактировать. Продолжить?',
+    'detail.claim.success': 'Объявление успешно передано вам',
+    'detail.claim.error': 'Не удалось забрать объявление. Попробуйте позже.',
     'complaint.title': 'Пожаловаться',
     'complaint.reasonLabel': 'Причина',
     'complaint.loadingReasons': 'Загрузка причин…',
@@ -627,6 +643,7 @@ const I18N = {
     'detail.moveIn': 'Move-in',
     'detail.type': 'Type',
     'detail.location': 'Area',
+    'detail.address': 'Address',
     'detail.metro': 'Metro',
     'detail.map': 'Map',
     'detail.showMap': 'Show map',
@@ -643,6 +660,13 @@ const I18N = {
     'detail.favorite.add': 'Add to favorites',
     'detail.favorite.remove': 'Remove from favorites',
     'detail.report': 'Report',
+    'detail.claim.title': 'Is this your listing?',
+    'detail.claim.subtitle': 'Your Telegram account matches — link it to your profile.',
+    'detail.claim.button': 'Claim it',
+    'detail.claim.pending': 'Working…',
+    'detail.claim.confirm': 'This listing will be transferred to your account and you\u2019ll be able to edit it. Continue?',
+    'detail.claim.success': 'Listing successfully transferred to you',
+    'detail.claim.error': 'Could not claim this listing. Please try again later.',
     'complaint.title': 'Report listing',
     'complaint.reasonLabel': 'Reason',
     'complaint.loadingReasons': 'Loading reasons…',
@@ -1035,6 +1059,7 @@ function buildLangDropdown(group) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.setAttribute('data-lang', lang);
+    btn.setAttribute('data-haptic', 'selection');
     btn.setAttribute('role', 'option');
     btn.setAttribute('aria-label', meta.label);
     btn.innerHTML =
@@ -1191,7 +1216,6 @@ function initThemeToggle() {
     if (btn.dataset.bound) continue;
     btn.dataset.bound = '1';
     btn.addEventListener('click', () => {
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
       toggleManualTheme();
     });
   }

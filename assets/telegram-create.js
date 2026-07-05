@@ -91,8 +91,9 @@ const state = {
 
 function tg() { return window.Telegram?.WebApp; }
 
+/** Thin wrapper kept so every existing `haptic('heavy')`/`haptic()` call site below stays unchanged. */
 function haptic(type = 'light') {
-  tg()?.HapticFeedback?.impactOccurred(type);
+  UyDosh.haptic.impact(type);
 }
 
 function stepTitles(lang) {
@@ -419,7 +420,7 @@ function stationListHtml(lang) {
   const selectAllRow =
     multi && lineStationIds.length > 0
       ? `
-      <button type="button" class="station-item station-item-select-all" data-select-all-stations aria-pressed="${allOnLineSelected ? 'true' : 'false'}">
+      <button type="button" class="station-item station-item-select-all" data-select-all-stations data-haptic="selection" aria-pressed="${allOnLineSelected ? 'true' : 'false'}">
         ${UyDosh.iconCheckboxPair()}
         ${UyDosh.iconMetro(state.form.subwayLineId)}
         <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllStations', lang).replace('{count}', String(state.stations.length)))}</span>
@@ -430,7 +431,7 @@ function stationListHtml(lang) {
     const pressed = state.form.selectedStationIds.includes(id);
     const lineId = Number(st.line) || state.form.subwayLineId;
     return `
-      <button type="button" class="station-item" data-station-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
+      <button type="button" class="station-item" data-station-id="${id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
         ${multi ? UyDosh.iconCheckboxPair() : ''}
         ${UyDosh.iconMetro(lineId)}
         <span class="station-item-label">${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span>
@@ -448,7 +449,7 @@ function renderStep0(lang) {
   const typeChips = typeOptions.map((opt) => {
     const pressed = state.form.listingTypeId === opt.id;
     return `
-      <button type="button" class="chip" data-listing-type="${opt.id}" aria-pressed="${pressed ? 'true' : 'false'}">
+      <button type="button" class="chip" data-listing-type="${opt.id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
         ${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}
         <span>${UyDosh.escapeHtml(opt.label)}</span>
       </button>`;
@@ -460,7 +461,7 @@ function renderStep0(lang) {
   ].map((opt) => {
     const pressed = state.form.locationMode === opt.mode;
     return `
-      <button type="button" class="chip" data-location-mode="${opt.mode}" aria-pressed="${pressed ? 'true' : 'false'}">
+      <button type="button" class="chip" data-location-mode="${opt.mode}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
         ${opt.icon}
         <span>${UyDosh.escapeHtml(opt.label)}</span>
       </button>`;
@@ -502,7 +503,7 @@ function renderStep0(lang) {
     const selectAllLocationsRow =
       multiLocation && allLocationIds.length > 0
         ? `
-        <button type="button" class="station-item station-item-select-all" data-select-all-locations aria-pressed="${allLocationsSelected ? 'true' : 'false'}">
+        <button type="button" class="station-item station-item-select-all" data-select-all-locations data-haptic="selection" aria-pressed="${allLocationsSelected ? 'true' : 'false'}">
           ${UyDosh.iconCheckboxPair()}
           ${UyDosh.iconPin()}
           <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllDistricts', lang).replace('{count}', String(state.locations.length)))}</span>
@@ -517,7 +518,7 @@ function renderStep0(lang) {
       const id = Number(loc.id);
       const pressed = state.form.selectedLocationIds.includes(id);
       return `
-        <button type="button" class="station-item" data-location-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
+        <button type="button" class="station-item" data-location-id="${id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
           ${multiLocation ? UyDosh.iconCheckboxPair() : ''}
           ${UyDosh.iconPin()}
           <span class="station-item-label">${UyDosh.escapeHtml(UyDosh.localizedShort(loc, lang))}</span>
@@ -537,13 +538,13 @@ function renderStep0(lang) {
   const addressBody = !isRoomNeeded() ? `
     <div class="field">
       <label for="listing-address">${UyDosh.escapeHtml(UyDosh.t('create.addressOptional', lang))}</label>
-      <input
+      <textarea
         id="listing-address"
-        type="text"
+        class="address-textarea"
+        rows="2"
         maxlength="500"
-        value="${UyDosh.escapeHtml(state.form.addressText)}"
         placeholder="${UyDosh.escapeHtml(UyDosh.t('create.addressPlaceholder', lang))}"
-      />
+      >${UyDosh.escapeHtml(state.form.addressText)}</textarea>
       <button
         type="button"
         class="use-location-btn"
@@ -605,7 +606,7 @@ function renderStep1(lang) {
   const genderChips = [1, 2].map((g) => {
     const pressed = state.form.gender === g;
     return `
-      <button type="button" class="chip" data-gender="${g}" aria-pressed="${pressed ? 'true' : 'false'}">
+      <button type="button" class="chip" data-gender="${g}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
         ${UyDosh.filterGenderIcon(g, { pressed: false })}
         <span>${UyDosh.escapeHtml(genderLabel(g, lang))}</span>
       </button>`;
@@ -615,7 +616,7 @@ function renderStep1(lang) {
     const id = Number(a.id);
     const pressed = state.form.amenityIds.has(id);
     return `
-      <button type="button" class="amenity-chip" data-amenity-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
+      <button type="button" class="amenity-chip" data-amenity-id="${id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
         ${UyDosh.amenityIconHtml(UyDosh.getAmenityCode(a), { size: 16 })}
         <span>${UyDosh.escapeHtml(UyDosh.localized(a, lang))}</span>
       </button>`;
@@ -645,6 +646,7 @@ function renderStep1(lang) {
           class="switch"
           role="switch"
           data-private-room
+          data-haptic="selection"
           aria-checked="${state.form.privateRoom ? 'true' : 'false'}"
           aria-label="${UyDosh.escapeHtml(UyDosh.t('create.privateRoom', lang))}"
         >
@@ -806,18 +808,24 @@ function renderStep3(lang) {
       <div class="field">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.reviewPhone', lang))}</div>
         <div class="phone-share-row">
-          <input
-            id="listing-phone"
-            type="text"
-            readonly
-            placeholder="${UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang))}"
-            value="${UyDosh.escapeHtml(state.form.phone)}"
-          />
+          <div class="phone-input-wrap">
+            ${UyDosh.iconPhone()}
+            <input
+              id="listing-phone"
+              type="text"
+              readonly
+              placeholder="${UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang))}"
+              value="${UyDosh.escapeHtml(state.form.phone)}"
+            />
+          </div>
           ${phoneShareBtn}
         </div>
       </div>
     </section>`;
 }
+
+/** Mirrors `.panel { gap: … }` in create.html — see the trailing-siblings loop below. */
+const STEP_PANEL_GAP_PX = 14;
 
 /**
  * The metro-station list's CSS height is a fixed guess (see `.station-list`
@@ -830,6 +838,13 @@ function renderStep3(lang) {
  * items), so stretching it the same way just leaves empty space below the
  * last row. Size it to its content instead, capping at the same available
  * space so it still scrolls rather than overlapping the footer.
+ *
+ * Step 0 (roommate-needed listings) also renders an address field + "use my
+ * location" button *after* this list — without reserving room for those, the
+ * list would grow to fill all the way down to the footer and push that whole
+ * block underneath it, clipped and barely reachable by scrolling. Measure and
+ * reserve whatever height the list's trailing siblings (within the same
+ * step) actually need first.
  */
 function sizeLocationList() {
   const list = stepPanelsEl.querySelector('.station-list');
@@ -839,7 +854,11 @@ function sizeLocationList() {
   const top = list.getBoundingClientRect().top;
   if (!Number.isFinite(top)) return;
   const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
-  const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - 10));
+  let trailingHeight = 0;
+  for (let sib = list.closest('.field')?.nextElementSibling; sib; sib = sib.nextElementSibling) {
+    trailingHeight += sib.getBoundingClientRect().height + STEP_PANEL_GAP_PX;
+  }
+  const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - trailingHeight - 10));
   if (list.classList.contains('station-list-grid')) {
     list.style.height = 'auto';
     list.style.maxHeight = `${available}px`;
@@ -973,7 +992,6 @@ function renderStationList() {
 function bindStationListEvents() {
   stepPanelsEl.querySelectorAll('[data-station-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       const id = Number(btn.getAttribute('data-station-id'));
       state.form.selectedStationIds = toggleSelection(
         state.form.selectedStationIds,
@@ -990,7 +1008,6 @@ function bindStationListEvents() {
   });
 
   stepPanelsEl.querySelector('[data-select-all-stations]')?.addEventListener('click', () => {
-    haptic();
     const lineIds = state.stations.map((s) => Number(s.id));
     const allSelected =
       lineIds.length > 0 && lineIds.every((id) => state.form.selectedStationIds.includes(id));
@@ -1006,7 +1023,6 @@ function bindStationListEvents() {
 function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
       if (!supportsMultiStation()) {
         state.form.selectedStationIds = state.form.selectedStationIds.slice(0, 1);
@@ -1021,7 +1037,6 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       state.form.locationMode = btn.getAttribute('data-location-mode');
       renderStep();
     });
@@ -1033,7 +1048,6 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelector('[data-use-current-location]')?.addEventListener('click', async () => {
     if (state.locatingAddress) return;
-    haptic();
     state.locatingAddress = true;
     renderStep();
     try {
@@ -1060,7 +1074,6 @@ function bindStepEvents() {
     btn.addEventListener('click', async () => {
       const nextLineId = Number(btn.getAttribute('data-subway-line'));
       if (nextLineId === state.form.subwayLineId && !state.stationsLoading) return;
-      haptic();
       state.form.subwayLineId = nextLineId;
       // Flip aria-pressed on the existing chip buttons (instead of letting a
       // full renderStep() replace them) so the CSS transition that expands
@@ -1089,7 +1102,6 @@ function bindStepEvents() {
   bindStationListEvents();
 
   stepPanelsEl.querySelector('[data-select-all-locations]')?.addEventListener('click', () => {
-    haptic();
     const allIds = state.locations.map((l) => Number(l.id));
     const allSelected =
       allIds.length > 0 && allIds.every((id) => state.form.selectedLocationIds.includes(id));
@@ -1102,7 +1114,6 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelectorAll('[data-location-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       const id = Number(btn.getAttribute('data-location-id'));
       state.form.selectedLocationIds = toggleSelection(
         state.form.selectedLocationIds,
@@ -1176,7 +1187,6 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelectorAll('[data-gender]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       state.form.gender = Number(btn.getAttribute('data-gender'));
       if (state.form.gender) showFormError('');
       updateDefaultTitle();
@@ -1186,7 +1196,6 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelectorAll('[data-amenity-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       const id = Number(btn.getAttribute('data-amenity-id'));
       if (state.form.amenityIds.has(id)) state.form.amenityIds.delete(id);
       else state.form.amenityIds.add(id);
@@ -1199,7 +1208,6 @@ function bindStepEvents() {
   });
 
   stepPanelsEl.querySelector('[data-private-room]')?.addEventListener('click', (e) => {
-    haptic();
     state.form.privateRoom = !state.form.privateRoom;
     e.currentTarget.setAttribute(
       'aria-checked',
@@ -1236,7 +1244,6 @@ function bindStepEvents() {
   });
 
   stepPanelsEl.querySelector('[data-description-template]')?.addEventListener('click', () => {
-    haptic();
     const lang = UyDosh.getLang();
     const text = UyDosh.descriptionTemplateText(
       state.form.listingTypeId,
@@ -1256,13 +1263,11 @@ function bindStepEvents() {
   });
 
   stepPanelsEl.querySelector('[data-add-photo]')?.addEventListener('click', () => {
-    haptic();
     photoInput.click();
   });
 
   stepPanelsEl.querySelectorAll('[data-remove-photo]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      haptic();
       const index = Number(btn.getAttribute('data-remove-photo'));
       const removed = state.form.photos[index];
       if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
@@ -1272,7 +1277,6 @@ function bindStepEvents() {
   });
 
   stepPanelsEl.querySelector('[data-share-phone]')?.addEventListener('click', async () => {
-    haptic();
     UyDosh.logMiniAppEvent('create_share_phone_tap');
     const contactRaw = await UyDosh.requestTelegramContactShare();
     const phoneNumber = UyDosh.phoneNumberFromContactShareResponse(contactRaw);
@@ -1518,12 +1522,14 @@ function goNext() {
     submitListing();
     return;
   }
-  haptic();
   state.step += 1;
   renderStep();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Shared by the DOM "Back" button (which opts out of the auto tap-feedback
+// binder via data-haptic="none" to avoid a double buzz) and Telegram's native
+// BackButton (not a DOM element, so it needs this explicit call).
 function goBack() {
   haptic();
   if (state.step <= 0) {

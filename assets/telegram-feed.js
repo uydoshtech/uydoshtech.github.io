@@ -34,7 +34,6 @@ const scrollTopBtnEl = document.getElementById('scroll-top-btn');
 fabCreateEl?.addEventListener('click', () => {
   UyDosh.getTelegramInitData();
   UyDosh.logMiniAppEvent('create_listing_tap');
-  window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
 });
 let filtersScrollAnchorY = 0;
 let filtersScrollRaf = 0;
@@ -99,7 +98,6 @@ function updateScrollTopButton() {
 function scrollToFeedTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   resetFiltersScrollAnchor(0);
-  window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
 }
 
 function handleFeedScrollForFilters() {
@@ -239,8 +237,9 @@ if (urlListingTypeId != null) {
   persistFilters();
 }
 
+/** Feedback for map interactions that aren't a plain DOM button/link tap (e.g. a native map-pin tap) — see `onHaptic` above. */
 function filterTapHaptic() {
-  window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+  UyDosh.haptic.light();
 }
 
 function listingTypeQueryParam() {
@@ -312,7 +311,6 @@ function updateViewTabs() {
 
 function switchView(nextView) {
   if (state.view === nextView) return;
-  filterTapHaptic();
   state.view = nextView;
   updateViewTabs();
   updateScrollTopButton();
@@ -353,6 +351,7 @@ function renderFilters() {
       type="button"
       class="chip"
       data-listing-type="${opt.value}"
+      data-haptic="selection"
       aria-pressed="${pressed ? 'true' : 'false'}"
     >${icon}<span class="chip-label">${UyDosh.escapeHtml(opt.label)}</span></button>
   `;
@@ -366,6 +365,7 @@ function renderFilters() {
       type="button"
       class="chip chip-icon-only"
       data-listing-type="${opt.value}"
+      data-haptic="selection"
       aria-pressed="${pressed ? 'true' : 'false'}"
       aria-label="${UyDosh.escapeHtml(opt.label)}"
     >${icon}</button>
@@ -381,6 +381,7 @@ function renderFilters() {
       type="button"
       class="gender-switch-segment"
       data-gender="${opt.value}"
+      data-haptic="selection"
       aria-pressed="${pressed ? 'true' : 'false'}"
       aria-label="${UyDosh.escapeHtml(opt.label)}"
     >${icon}<span class="chip-label">${UyDosh.escapeHtml(opt.label)}</span></button>
@@ -406,6 +407,7 @@ function renderFilters() {
       type="button"
       class="chip chip-icon-only chip-gender"
       data-gender="${opt.value}"
+      data-haptic="selection"
       aria-pressed="${pressed ? 'true' : 'false'}"
       aria-label="${UyDosh.escapeHtml(opt.label)}"
     >${icon}</button>
@@ -418,6 +420,7 @@ function renderFilters() {
       type="button"
       class="chip chip-photo"
       data-with-photo
+      data-haptic="selection"
       aria-pressed="${photoPressed ? 'true' : 'false'}"
       aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.photo.aria', lang))}"
     >${UyDosh.filterPhotoIcon({ pressed: false })}</button>
@@ -429,6 +432,7 @@ function renderFilters() {
       type="button"
       class="chip chip-period"
       data-period-cycle
+      data-haptic="selection"
       aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.period.aria', lang))}: ${UyDosh.escapeHtml(currentPeriod.label)}"
     ><span class="chip-label">${UyDosh.escapeHtml(currentPeriod.label)}</span></button>
   `;
@@ -503,7 +507,6 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-filters-toggle]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      filterTapHaptic();
       const nextCollapsed = !state.filtersCollapsed;
       state.filtersCollapsed = nextCollapsed;
       filtersCollapsedByScroll = false;
@@ -526,7 +529,6 @@ function renderFilters() {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-listing-type'));
       const toggledOff = state.filters.listingTypeId === next;
-      filterTapHaptic();
       state.filters.listingTypeId = toggledOff ? LISTING_TYPE_ALL : next;
       persistFilters();
       logSearchEvent();
@@ -539,7 +541,6 @@ function renderFilters() {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-subway-line'));
       const toggledOff = state.filters.subwayLineId === next;
-      filterTapHaptic();
       state.filters.subwayLineId = toggledOff ? METRO_LINE_ANY : next;
       // Flip aria-pressed on the existing buttons (instead of letting the
       // upcoming full re-render replace them) so the CSS transition that
@@ -556,7 +557,6 @@ function renderFilters() {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-gender'));
       const toggledOff = state.filters.gender === next;
-      filterTapHaptic();
       state.filters.gender = toggledOff ? GENDER_ANY : next;
       persistFilters();
       logSearchEvent();
@@ -567,7 +567,6 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-with-photo]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      filterTapHaptic();
       state.filters.withPhoto = !state.filters.withPhoto;
       state.withPhotoExplicit = true;
       persistFilters();
@@ -581,7 +580,6 @@ function renderFilters() {
     btn.addEventListener('click', () => {
       const currentIndex = PERIOD_OPTION_VALUES.indexOf(state.filters.createdWithinDays);
       const nextIndex = (currentIndex + 1) % PERIOD_OPTION_VALUES.length;
-      filterTapHaptic();
       state.filters.createdWithinDays = PERIOD_OPTION_VALUES[nextIndex];
       persistFilters();
       logSearchEvent();

@@ -237,7 +237,7 @@ function renderUniversityList() {
     const id = Number(u.id);
     const pressed = Number(state.selectedUniversityId) === id;
     return `
-      <button type="button" class="station-item" data-university-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
+      <button type="button" class="station-item" data-university-id="${id}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
         ${UyDosh.escapeHtml(UyDosh.titleCaseWords(UyDosh.localized(u, lang)))}
       </button>`;
   }).join('');
@@ -311,6 +311,7 @@ function renderLifestyleFields() {
           class="chip"
           data-lifestyle-key="${field.key}"
           data-option-index="${i}"
+          data-haptic="selection"
           aria-pressed="${pressed ? 'true' : 'false'}"
         >${chipIconHtml(opt.icon)}${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`;
     }).join('');
@@ -370,7 +371,6 @@ function render() {
 function bindEvents() {
   for (const btn of tabButtons) {
     btn.addEventListener('click', () => {
-      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
       setActiveTab(btn.getAttribute('data-profile-tab'));
       render();
     });
@@ -477,9 +477,11 @@ async function onSave() {
     // the account menu's "profile not populated" dot no longer applies.
     UyDosh.dismissProfileNudge?.();
     UyDosh.hideProfileMenuBadge?.();
+    UyDosh.haptic.success();
     showFormSuccess(UyDosh.t('profile.saved'));
   } catch (err) {
     console.error('Failed to save profile', err);
+    UyDosh.haptic.error();
     if (err?.status === 401) {
       UyDosh.clearTelegramInitData();
       showFormError(UyDosh.t('profile.errorAuth'));
