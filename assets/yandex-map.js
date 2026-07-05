@@ -945,6 +945,16 @@
    * it can trigger the WebView's native text-selection highlight, drawn as a solid rectangle in
    * the OS/app accent color (e.g. green) floating over the cluster. `user-select: none` (plus
    * the callout reset, for iOS's copy/lookup menu) suppresses that too.
+   *
+   * Separately, every custom pin/group icon (`iconLayout: 'default#image'`) is a plain `<img>`
+   * pointing at a canvas `toDataURL()` bitmap — no text at all, so the fixes above don't touch
+   * it. Android WebViews still treat that `<img>` as a native "draggable" element: tapping a
+   * composite/group pin and then tapping elsewhere (any tiny finger movement in between reads as
+   * a drag start) can kick off the browser's built-in image drag-and-select gesture, which
+   * paints a solid highlight rectangle in the OS/app accent color at the drag's start/end box —
+   * and it can get left on screen since we never get a real `dragend`/`drop` to clear it (we
+   * `preventDefault()` the click, not the drag). `-webkit-user-drag: none` opts every element
+   * out of that native drag affordance so a tap can never be misread as one.
    */
   const MAP_INTERACTION_STYLE_ID = 'uydosh-map-interaction-styles';
 
@@ -959,6 +969,8 @@
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
+        -webkit-user-drag: none;
+        user-drag: none;
       }
     `;
     document.head.appendChild(style);
