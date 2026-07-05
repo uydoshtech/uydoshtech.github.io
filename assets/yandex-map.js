@@ -1076,7 +1076,9 @@
   const LAYER_CONTROLS_CLASS = 'uydosh-map-layer-controls';
   const LAYER_CONTROL_BTN_CLASS = 'uydosh-map-layer-btn';
   const LAYER_CONTROLS_STYLE_ID = 'uydosh-map-layer-controls-styles';
+  const LAYER_CONTROL_BG_COLOR = '#000';
   const LAYER_CONTROL_MUTED_COLOR = '#94a3b8';
+  const LAYER_CONTROL_ACTIVE_COLOR = '#60a5fa';
   const LAYER_CONTROLS_BOTTOM_GUTTER = 34;
 
   const METRO_LAYER_BUTTON_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none">
@@ -1116,7 +1118,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: #fff;
+        background: ${LAYER_CONTROL_BG_COLOR};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
         cursor: pointer;
       }
@@ -1177,18 +1179,20 @@
       const mode = instance.metroLayer.mode;
       const lineId = metroLayerModeLineId(mode);
       const lang = window.UyDosh?.getLang?.() || 'ru';
+      // Background stays solid black regardless of state; only the icon's
+      // color communicates on/off (muted gray) vs. active (accent, or the
+      // selected line's own color).
       let color = LAYER_CONTROL_MUTED_COLOR;
       let label = window.UyDosh?.t?.('map.layers.metro.show', lang) ?? 'Metro';
       if (mode === 'all') {
-        color = MAP_CONTROL_ICON_COLOR;
+        color = LAYER_CONTROL_ACTIVE_COLOR;
         label = window.UyDosh?.t?.('map.layers.metro.all', lang) ?? label;
       } else if (lineId != null) {
-        color = window.UyDosh?.metroLineColor?.(lineId) || MAP_CONTROL_ICON_COLOR;
+        color = window.UyDosh?.metroLineColor?.(lineId) || LAYER_CONTROL_ACTIVE_COLOR;
         const lineName = window.UyDosh?.metroLineLabel?.(lineId, lang) || `Line ${lineId}`;
         label = (window.UyDosh?.t?.('map.layers.metro.line', lang) ?? 'Metro: {line}').replace('{line}', lineName);
       }
       metroBtn.style.color = color;
-      metroBtn.style.background = mode === 'off' ? '#fff' : hexWithAlpha(color, 0.16);
       metroBtn.setAttribute('aria-pressed', mode === 'off' ? 'false' : 'true');
       metroBtn.setAttribute('aria-label', label);
       metroBtn.title = label;
@@ -1201,8 +1205,7 @@
         visible ? 'map.layers.districts.hide' : 'map.layers.districts.show',
         lang,
       ) ?? (visible ? 'Hide districts' : 'Show districts');
-      districtBtn.style.color = visible ? MAP_CONTROL_ICON_COLOR : LAYER_CONTROL_MUTED_COLOR;
-      districtBtn.style.background = visible ? '#eef2ff' : '#fff';
+      districtBtn.style.color = visible ? LAYER_CONTROL_ACTIVE_COLOR : LAYER_CONTROL_MUTED_COLOR;
       districtBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
       districtBtn.setAttribute('aria-label', label);
       districtBtn.title = label;
