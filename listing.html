@@ -506,7 +506,11 @@
       .roomscan-toggle-icon svg * { stroke: currentColor; fill: none; }
       .roomscan-toggle-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
       .roomscan-toggle-label { font-size: 15px; font-weight: 700; }
-      .roomscan-toggle-meta { font-size: 13px; color: var(--muted); }
+      .roomscan-toggle-meta { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+      .roomscan-toggle-meta-row { display: flex; align-items: center; gap: 6px; }
+      .roomscan-toggle-meta-icon { width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; opacity: 0.85; }
+      .roomscan-toggle-meta-icon svg { width: 14px; height: 14px; display: block; }
+      .roomscan-toggle-meta-icon svg * { stroke: currentColor; fill: none; }
       .roomscan-chevron { color: var(--muted); font-size: 18px; line-height: 1; flex-shrink: 0;
         transition: transform 180ms ease; }
       .roomscan-section[aria-expanded="true"] .roomscan-chevron { transform: rotate(180deg); }
@@ -2279,20 +2283,35 @@
         </svg>`;
       }
 
+      function roomScanMetaRowHtml(icon, text) {
+        return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
+      }
+
+      /** Mirrors the mobile app's room-3D tile: dimensions + height + area, one row each (see room_3d_tile.dart). */
       function buildRoomScanSectionHtml(l) {
         const glbUrl = typeof l.room_scan_glb_url === 'string' ? l.room_scan_glb_url.trim() : '';
         if (!glbUrl) return '';
+        const floorLong = Number(l.room_scan_floor_long_m);
+        const floorShort = Number(l.room_scan_floor_short_m);
+        const heightM = Number(l.room_scan_height_m);
         const areaM2 = Number(l.room_scan_floor_area_m2);
-        const metaText = Number.isFinite(areaM2) && areaM2 > 0
-          ? `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`
-          : '';
+        const isPositive = (n) => Number.isFinite(n) && n > 0;
+        let metaHtml = '';
+        if (isPositive(floorLong) && isPositive(floorShort) && isPositive(heightM) && isPositive(areaM2)) {
+          metaHtml =
+            roomScanMetaRowHtml(UyDosh.iconRectangleOutline(), `${UyDosh.t('detail.roomScanDimensions')}: ${floorLong.toFixed(1)} × ${floorShort.toFixed(1)} m`) +
+            roomScanMetaRowHtml(UyDosh.iconHeightArrows(), `${UyDosh.t('detail.roomScanHeight')}: ${heightM.toFixed(1)} m`) +
+            roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ~${areaM2.toFixed(1)} m²`);
+        } else if (isPositive(areaM2)) {
+          metaHtml = roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`);
+        }
         return `
           <section class="roomscan-section" data-roomscan-section aria-expanded="false">
             <button type="button" class="roomscan-toggle" data-roomscan-toggle aria-expanded="false">
               <span class="roomscan-toggle-icon" aria-hidden="true">${UyDosh.iconCube()}</span>
               <span class="roomscan-toggle-title">
                 <span class="roomscan-toggle-label">${UyDosh.escapeHtml(UyDosh.t('detail.roomScan'))}</span>
-                ${metaText ? `<span class="roomscan-toggle-meta">${UyDosh.escapeHtml(metaText)}</span>` : ''}
+                ${metaHtml ? `<span class="roomscan-toggle-meta">${metaHtml}</span>` : ''}
               </span>
               <span class="roomscan-chevron" aria-hidden="true">▾</span>
             </button>

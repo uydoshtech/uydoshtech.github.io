@@ -320,6 +320,28 @@ function iconCube() {
   `);
 }
 
+/** Floor outline — room scan "dimensions" row. Mirrors mobile app's Icons.rectangle_outlined. */
+function iconRectangleOutline() {
+  return iconSvg(null, `
+    <rect x="3" y="6" width="18" height="12" rx="2" stroke-width="2"></rect>
+  `);
+}
+
+/** Double-headed vertical arrow — room scan "height" row. Mirrors mobile app's Icons.height. */
+function iconHeightArrows() {
+  return iconSvg(null, `
+    <path d="M12 3v18M12 3l-3.5 3.5M12 3l3.5 3.5M12 21l-3.5-3.5M12 21l3.5-3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+/** Overlapping rectangles — room scan "area" row. Mirrors mobile app's Icons.flip_to_front_outlined. */
+function iconOverlapRects() {
+  return iconSvg(null, `
+    <rect x="3" y="3" width="13" height="13" rx="2" stroke-width="2"></rect>
+    <path d="M9 21h10a2 2 0 0 0 2-2V9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
 /** "My location" crosshair — used by the create-listing address field's "Use current location" button. */
 function iconLocateMe(color = null) {
   return iconSvg(color, `
@@ -524,6 +546,9 @@ Object.assign(window.UyDosh, {
   iconPin,
   iconHome,
   iconCube,
+  iconRectangleOutline,
+  iconHeightArrows,
+  iconOverlapRects,
   iconLocateMe,
   iconMetro,
   iconClock,
