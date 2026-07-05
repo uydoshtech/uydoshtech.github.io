@@ -312,6 +312,14 @@ function iconHome() {
   `);
 }
 
+/** Isometric cube — 3D room scan tile (listing detail). */
+function iconCube() {
+  return iconSvg(null, `
+    <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" stroke-width="2" stroke-linejoin="round"></path>
+    <path d="M12 12v9M12 12l8-4.5M12 12 4 7.5" stroke-width="2" stroke-linejoin="round"></path>
+  `);
+}
+
 /** "My location" crosshair — used by the create-listing address field's "Use current location" button. */
 function iconLocateMe(color = null) {
   return iconSvg(color, `
@@ -515,6 +523,7 @@ Object.assign(window.UyDosh, {
   metroTransferSuffixHtml,
   iconPin,
   iconHome,
+  iconCube,
   iconLocateMe,
   iconMetro,
   iconClock,

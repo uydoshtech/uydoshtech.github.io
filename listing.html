@@ -130,12 +130,20 @@
 
       /* Owner-only "views" panel — sits above the gallery, matching the mobile
          app's ListingDetailOwnerToolbar position at the top of an owner's own
-         listing detail screen. */
+         listing detail screen. The edit button shares the row, pinned to the
+         far right edge (website-only affordance — the mobile app links to
+         editing from "My Listings" instead). */
+      .owner-toolbar-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0 0 16px;
+      }
       .owner-toolbar {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        margin: 0 0 16px;
         padding: 9px 16px;
         border-radius: 999px;
         border: 1px solid var(--stroke);
@@ -150,6 +158,29 @@
         color: var(--muted);
         display: inline-flex;
         align-items: center;
+      }
+      .owner-edit-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 16px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        color: var(--fg);
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.15s ease;
+      }
+      .owner-edit-btn:hover { background: rgba(255, 255, 255, 0.06); }
+      .owner-edit-btn:active { opacity: 0.85; }
+      .owner-edit-btn .icon { width: 16px; height: 16px; display: inline-flex; color: var(--muted); }
+      .owner-edit-btn .icon svg { width: 16px; height: 16px; display: block; }
+      .owner-edit-btn .icon svg * { stroke: currentColor; fill: none; }
+      @media (prefers-color-scheme: light) {
+        .owner-edit-btn:hover { background: rgba(15, 23, 42, 0.05); }
       }
       .owner-toolbar-spinner {
         width: 14px;
@@ -457,6 +488,63 @@
         background: transparent; color: var(--fg); font-weight: 700; font-size: 13px; cursor: pointer;
       }
       .compat-cta-btn:hover { text-decoration: none; background: rgba(127, 127, 127, 0.08); }
+
+      /* 3D room scan tile — collapsible summary (mirrors .map-section) that
+         expands into an inline <model-viewer> (Google's web component,
+         lazy-loaded only when this tile is actually expanded — most
+         listings don't have a scan, and even fewer viewers ever open it).
+         See buildRoomScanSectionHtml()/bindRoomScanSection() below. */
+      .roomscan-section { margin: 16px 0; border: 1px solid var(--stroke); background: var(--card);
+        border-radius: 14px; overflow: hidden; }
+      .roomscan-toggle {
+        appearance: none; width: 100%; border: 0; background: transparent; color: inherit;
+        cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left;
+      }
+      .roomscan-toggle:active { opacity: 0.9; }
+      .roomscan-toggle-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--brand2); }
+      .roomscan-toggle-icon svg { width: 22px; height: 22px; display: block; }
+      .roomscan-toggle-icon svg * { stroke: currentColor; fill: none; }
+      .roomscan-toggle-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+      .roomscan-toggle-label { font-size: 15px; font-weight: 700; }
+      .roomscan-toggle-meta { font-size: 13px; color: var(--muted); }
+      .roomscan-chevron { color: var(--muted); font-size: 18px; line-height: 1; flex-shrink: 0;
+        transition: transform 180ms ease; }
+      .roomscan-section[aria-expanded="true"] .roomscan-chevron { transform: rotate(180deg); }
+      .roomscan-body { padding: 0 16px 16px; }
+      .roomscan-body[hidden] { display: none; }
+      .roomscan-viewer-wrap {
+        position: relative; height: 280px; border-radius: 12px; overflow: hidden;
+        border: 1px solid var(--stroke); background: rgba(127, 127, 127, 0.08);
+      }
+      .roomscan-viewer-wrap model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+      .roomscan-fullscreen-btn {
+        position: absolute; top: 10px; right: 10px; z-index: 1;
+        appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
+        width: 34px; height: 34px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      }
+      .roomscan-fullscreen-btn:active { opacity: 0.85; }
+      .roomscan-fullscreen-btn svg { width: 18px; height: 18px; display: block; }
+      .roomscan-fullscreen-btn svg * { stroke: currentColor; fill: none; }
+      .roomscan-status {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        padding: 12px; text-align: center; color: var(--muted); font-size: 13px;
+      }
+      .roomscan-backdrop {
+        position: fixed; inset: 0; z-index: 220; background: #000;
+        opacity: 0; transition: opacity 0.18s ease;
+      }
+      .roomscan-backdrop[hidden] { display: none !important; }
+      .roomscan-backdrop.is-open { opacity: 1; }
+      .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+      .roomscan-backdrop-close {
+        position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; z-index: 1;
+        appearance: none; border: 0; background: rgba(0, 0, 0, 0.55); color: #fff;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 16px; line-height: 1;
+      }
+      .roomscan-backdrop-close:active { opacity: 0.85; }
 
       .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
       .complaints-group + .complaints-group {
@@ -930,12 +1018,13 @@
 
     <div id="complaint-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
     <div id="listing-complaints-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
+    <div id="roomscan-backdrop" class="roomscan-backdrop" hidden aria-hidden="true"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260705-98"></script>
     <script src="assets/uydosh-api.js?v=20260705-99"></script>
-    <script src="assets/uydosh-i18n.js?v=20260705-23"></script>
-    <script src="assets/uydosh-icons.js?v=20260705-102"></script>
+    <script src="assets/uydosh-i18n.js?v=20260705-24"></script>
+    <script src="assets/uydosh-icons.js?v=20260705-103"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-profile-match.js?v=20260705-1"></script>
@@ -1216,16 +1305,25 @@
        * `ListingDetailOwnerToolbar`, which sits at the very top of a listing's own
        * detail screen. Only rendered inside the Mini App (the regular website has no
        * concept of a logged-in viewer) once ownership is confirmed via the resolved
-       * session user id (see `ensureViewerIdentity`).
+       * session user id (see `ensureViewerIdentity`). The edit link (website-only,
+       * mirrors the "My Listings" edit action in `telegram-account.js`) sits in the
+       * same row, pinned to the far right corner.
        */
-      function ownerToolbarHtml(isOwner) {
+      function ownerToolbarHtml(isOwner, listingId) {
         if (!isOwner) return '';
+        const editHref = `/telegram/create.html?id=${encodeURIComponent(listingId)}`;
         return `
-          <div class="owner-toolbar" data-owner-toolbar>
-            ${UyDosh.iconEye()}
-            <span class="owner-toolbar-text" data-owner-toolbar-text>
-              <span class="owner-toolbar-spinner" aria-hidden="true"></span>
-            </span>
+          <div class="owner-toolbar-row">
+            <div class="owner-toolbar" data-owner-toolbar>
+              ${UyDosh.iconEye()}
+              <span class="owner-toolbar-text" data-owner-toolbar-text>
+                <span class="owner-toolbar-spinner" aria-hidden="true"></span>
+              </span>
+            </div>
+            <a class="owner-edit-btn" href="${editHref}">
+              ${UyDosh.iconPencil()}
+              <span>${UyDosh.escapeHtml(UyDosh.t('account.edit'))}</span>
+            </a>
           </div>
         `;
       }
@@ -2146,6 +2244,166 @@
         });
       }
 
+      // --- 3D room scan (Convert3D-converted GLB) ---------------------------
+      // Collapsible tile (mirrors .map-section) that, once expanded, lazy-loads
+      // Google's <model-viewer> web component and points it at the listing's
+      // GLB — backend-converted from the owner's RoomPlan USDZ scan (see
+      // uydosh_backend's UsdzToGlbConversionService). Renders nothing when the
+      // listing has no room_scan_glb_url yet (no scan, or conversion still
+      // pending/failed — USDZ-only listings fall back to the native app/iOS
+      // viewer, unaffected by this tile).
+      const MODEL_VIEWER_SRC = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js';
+      let modelViewerLoadPromise = null;
+
+      function loadModelViewerScript() {
+        if (window.customElements?.get('model-viewer')) return Promise.resolve();
+        if (modelViewerLoadPromise) return modelViewerLoadPromise;
+        modelViewerLoadPromise = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.type = 'module';
+          script.src = MODEL_VIEWER_SRC;
+          script.onload = () => resolve();
+          script.onerror = () => {
+            modelViewerLoadPromise = null;
+            reject(new Error('Failed to load model-viewer'));
+          };
+          document.head.appendChild(script);
+        });
+        return modelViewerLoadPromise;
+      }
+
+      function roomScanFullscreenIconHtml() {
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4"></path>
+        </svg>`;
+      }
+
+      function buildRoomScanSectionHtml(l) {
+        const glbUrl = typeof l.room_scan_glb_url === 'string' ? l.room_scan_glb_url.trim() : '';
+        if (!glbUrl) return '';
+        const areaM2 = Number(l.room_scan_floor_area_m2);
+        const metaText = Number.isFinite(areaM2) && areaM2 > 0
+          ? `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`
+          : '';
+        return `
+          <section class="roomscan-section" data-roomscan-section aria-expanded="false">
+            <button type="button" class="roomscan-toggle" data-roomscan-toggle aria-expanded="false">
+              <span class="roomscan-toggle-icon" aria-hidden="true">${UyDosh.iconCube()}</span>
+              <span class="roomscan-toggle-title">
+                <span class="roomscan-toggle-label">${UyDosh.escapeHtml(UyDosh.t('detail.roomScan'))}</span>
+                ${metaText ? `<span class="roomscan-toggle-meta">${UyDosh.escapeHtml(metaText)}</span>` : ''}
+              </span>
+              <span class="roomscan-chevron" aria-hidden="true">▾</span>
+            </button>
+            <div class="roomscan-body" hidden>
+              <div class="roomscan-viewer-wrap" data-roomscan-viewer-wrap></div>
+            </div>
+          </section>
+        `;
+      }
+
+      /**
+       * Builds a <model-viewer> element pointed at `glbUrl`. `ios-src` (the
+       * original USDZ, when present) plus the `ar` attribute makes Safari /
+       * Telegram's iOS in-app browser offer a native AR Quick Look button on
+       * top of the inline 3D preview — same USDZ, no extra work.
+       */
+      function createModelViewerEl(glbUrl, usdzUrl) {
+        const el = document.createElement('model-viewer');
+        el.setAttribute('src', glbUrl);
+        if (usdzUrl) {
+          el.setAttribute('ios-src', usdzUrl);
+          el.setAttribute('ar', '');
+          el.setAttribute('ar-modes', 'quick-look webxr scene-viewer');
+        }
+        el.setAttribute('camera-controls', '');
+        el.setAttribute('auto-rotate', '');
+        el.setAttribute('shadow-intensity', '1');
+        el.setAttribute('exposure', '1');
+        el.setAttribute('environment-image', 'neutral');
+        return el;
+      }
+
+      async function mountRoomScanViewer(container, glbUrl, usdzUrl) {
+        if (!container || container.dataset.roomscanMounted) return;
+        container.dataset.roomscanMounted = '1';
+        container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</div>`;
+        try {
+          await loadModelViewerScript();
+          const viewer = createModelViewerEl(glbUrl, usdzUrl);
+          container.innerHTML = '';
+          container.appendChild(viewer);
+          const fullscreenBtn = document.createElement('button');
+          fullscreenBtn.type = 'button';
+          fullscreenBtn.className = 'roomscan-fullscreen-btn';
+          fullscreenBtn.setAttribute('aria-label', UyDosh.t('detail.roomScanFullscreen'));
+          fullscreenBtn.innerHTML = roomScanFullscreenIconHtml();
+          fullscreenBtn.addEventListener('click', () => openRoomScanFullscreen(glbUrl, usdzUrl));
+          container.appendChild(fullscreenBtn);
+        } catch (err) {
+          console.error('Failed to load 3D room scan viewer', err);
+          container.dataset.roomscanMounted = '';
+          container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
+        }
+      }
+
+      function bindRoomScanSection() {
+        const toggle = rootEl.querySelector('[data-roomscan-toggle]');
+        const section = rootEl.querySelector('[data-roomscan-section]');
+        const body = rootEl.querySelector('.roomscan-section .roomscan-body');
+        const viewerWrap = rootEl.querySelector('[data-roomscan-viewer-wrap]');
+        if (!toggle || !section || !body || !viewerWrap) return;
+
+        const l = state.listing;
+        const glbUrl = UyDosh.photoUrl(l.room_scan_glb_url);
+        const usdzUrl = l.point_cloud_url ? UyDosh.photoUrl(l.point_cloud_url) : '';
+
+        toggle.addEventListener('click', () => {
+          const next = section.getAttribute('aria-expanded') !== 'true';
+          section.setAttribute('aria-expanded', next ? 'true' : 'false');
+          toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+          body.hidden = !next;
+          if (next) mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl);
+        });
+      }
+
+      const roomScanBackdropEl = document.getElementById('roomscan-backdrop');
+
+      function closeRoomScanFullscreen() {
+        if (!roomScanBackdropEl) return;
+        roomScanBackdropEl.classList.remove('is-open');
+        roomScanBackdropEl.setAttribute('aria-hidden', 'true');
+        setTimeout(() => {
+          roomScanBackdropEl.hidden = true;
+          roomScanBackdropEl.innerHTML = '';
+        }, 180);
+      }
+
+      async function openRoomScanFullscreen(glbUrl, usdzUrl) {
+        if (!roomScanBackdropEl) return;
+        UyDosh.haptic?.light?.();
+        roomScanBackdropEl.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</div>`;
+        roomScanBackdropEl.hidden = false;
+        roomScanBackdropEl.setAttribute('aria-hidden', 'false');
+        requestAnimationFrame(() => roomScanBackdropEl.classList.add('is-open'));
+        try {
+          await loadModelViewerScript();
+          const viewer = createModelViewerEl(glbUrl, usdzUrl);
+          const closeBtn = document.createElement('button');
+          closeBtn.type = 'button';
+          closeBtn.className = 'roomscan-backdrop-close';
+          closeBtn.setAttribute('aria-label', UyDosh.t('complaint.cancel'));
+          closeBtn.textContent = '✕';
+          closeBtn.addEventListener('click', closeRoomScanFullscreen);
+          roomScanBackdropEl.innerHTML = '';
+          roomScanBackdropEl.appendChild(viewer);
+          roomScanBackdropEl.appendChild(closeBtn);
+        } catch (err) {
+          console.error('Failed to load fullscreen 3D room scan viewer', err);
+          roomScanBackdropEl.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
+        }
+      }
+
       // --- 1-on-1 lifestyle compatibility with the listing owner -----------
       // Mirrors the mobile app's ListingDetailCompatibilitySection: scores
       // the viewer's and owner's `/profiles/:userId` records with the ported
@@ -2676,7 +2934,7 @@
         const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
 
         rootEl.innerHTML = `
-          ${ownerToolbarHtml(isOwner)}
+          ${ownerToolbarHtml(isOwner, l.id)}
           <div class="layout">
             <div class="gallery-col">
               ${buildGalleryHtml()}

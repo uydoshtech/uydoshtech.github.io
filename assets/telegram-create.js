@@ -947,9 +947,7 @@ function renderStep3(lang) {
     ? UyDosh.amenityIconsRowHtml(selectedAmenities, lang, { showAll: true, variant: 'form' })
     : UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang));
 
-  const moveIn = state.form.moveInDate
-    ? UyDosh.formatDate(state.form.moveInDate, lang)
-    : UyDosh.t('create.moveInAny', lang);
+  const moveIn = moveInValueText(lang);
 
   const rows = [
     {
