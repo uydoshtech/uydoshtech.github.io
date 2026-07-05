@@ -12,6 +12,10 @@ const footerEl = document.getElementById('profile-footer');
 const formErrorEl = document.getElementById('form-error');
 const formSuccessEl = document.getElementById('form-success');
 
+const tabButtons = Array.from(document.querySelectorAll('[data-profile-tab]'));
+const tabBasicEl = document.getElementById('tab-basic');
+const tabLifestyleEl = document.getElementById('tab-lifestyle');
+
 const studentYesBtn = document.getElementById('student-yes');
 const studentNoBtn = document.getElementById('student-no');
 const universityFieldEl = document.getElementById('university-field');
@@ -19,12 +23,136 @@ const universityPickedEl = document.getElementById('university-picked');
 const universityPickedNameEl = document.getElementById('university-picked-name');
 const universitySearchEl = document.getElementById('university-search');
 const universityListEl = document.getElementById('university-list');
+const lifestyleFieldsEl = document.getElementById('lifestyle-fields');
 
 const saveBtn = document.getElementById('save-btn');
 const saveBtnLabel = document.getElementById('save-btn-label');
 const saveBtnSpinner = document.getElementById('save-btn-spinner');
 
 let successTimer = null;
+
+const TAB_BASIC = 'basic';
+const TAB_LIFESTYLE = 'lifestyle';
+
+// Mirrors the lifestyle fields on the Flutter app's edit-profile screen
+// (`user_profiles` columns) — kept here as data so adding another field is
+// just one more config entry instead of new bespoke markup/handlers.
+const LIFESTYLE_FIELDS = [
+  {
+    key: 'employed',
+    labelKey: 'profile.lifestyle.employed',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: true, labelKey: 'profile.lifestyle.employedYes' },
+      { value: false, labelKey: 'profile.lifestyle.employedNo' },
+    ],
+  },
+  {
+    key: 'wakeup_time',
+    labelKey: 'profile.lifestyle.wakeupTime',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 'morning', labelKey: 'profile.lifestyle.morning' },
+      { value: 'evening', labelKey: 'profile.lifestyle.evening' },
+      { value: 'night', labelKey: 'profile.lifestyle.night' },
+    ],
+  },
+  {
+    key: 'sleep_time',
+    labelKey: 'profile.lifestyle.sleepTime',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 'morning', labelKey: 'profile.lifestyle.morning' },
+      { value: 'evening', labelKey: 'profile.lifestyle.evening' },
+      { value: 'night', labelKey: 'profile.lifestyle.night' },
+    ],
+  },
+  {
+    key: 'cleanliness',
+    labelKey: 'profile.lifestyle.cleanliness',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 1, labelKey: 'profile.lifestyle.veryMessy' },
+      { value: 2, labelKey: 'profile.lifestyle.messy' },
+      { value: 3, labelKey: 'profile.lifestyle.average' },
+      { value: 4, labelKey: 'profile.lifestyle.clean' },
+      { value: 5, labelKey: 'profile.lifestyle.veryClean' },
+    ],
+  },
+  {
+    key: 'noise_level',
+    labelKey: 'profile.lifestyle.noiseLevel',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 1, labelKey: 'profile.lifestyle.veryQuiet' },
+      { value: 2, labelKey: 'profile.lifestyle.quiet' },
+      { value: 3, labelKey: 'profile.lifestyle.average' },
+      { value: 4, labelKey: 'profile.lifestyle.loud' },
+      { value: 5, labelKey: 'profile.lifestyle.veryLoud' },
+    ],
+  },
+  {
+    key: 'sociability',
+    labelKey: 'profile.lifestyle.sociability',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 1, labelKey: 'profile.lifestyle.veryIntroverted' },
+      { value: 2, labelKey: 'profile.lifestyle.introverted' },
+      { value: 3, labelKey: 'profile.lifestyle.balanced' },
+      { value: 4, labelKey: 'profile.lifestyle.extroverted' },
+      { value: 5, labelKey: 'profile.lifestyle.veryExtroverted' },
+    ],
+  },
+  {
+    key: 'guests_allowed',
+    labelKey: 'profile.lifestyle.guestsAllowed',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: true, labelKey: 'profile.lifestyle.guestsYes' },
+      { value: false, labelKey: 'profile.lifestyle.guestsNo' },
+    ],
+  },
+  {
+    key: 'smoking_preference',
+    labelKey: 'profile.lifestyle.smokingPreference',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 'non-smoker', labelKey: 'profile.lifestyle.nonSmoker' },
+      { value: 'occasional', labelKey: 'profile.lifestyle.occasionalSmoker' },
+      { value: 'regular', labelKey: 'profile.lifestyle.regularSmoker' },
+    ],
+  },
+  {
+    key: 'alcohol_preference',
+    labelKey: 'profile.lifestyle.alcoholPreference',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 'non-drinker', labelKey: 'profile.lifestyle.nonDrinker' },
+      { value: 'occasional', labelKey: 'profile.lifestyle.occasionalDrinker' },
+      { value: 'regular', labelKey: 'profile.lifestyle.regularDrinker' },
+    ],
+  },
+  {
+    key: 'cooking_habits',
+    labelKey: 'profile.lifestyle.cookingHabits',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: true, labelKey: 'profile.lifestyle.cook' },
+      { value: false, labelKey: 'profile.lifestyle.dontCook' },
+    ],
+  },
+  {
+    key: 'pets_preference',
+    labelKey: 'profile.lifestyle.petsPreference',
+    options: [
+      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+      { value: 'dont_like_pets', labelKey: 'profile.lifestyle.dontLikePets' },
+      { value: 'like_pets', labelKey: 'profile.lifestyle.likePets' },
+      { value: 'have_cat', labelKey: 'profile.lifestyle.haveCat' },
+      { value: 'have_dog', labelKey: 'profile.lifestyle.haveDog' },
+    ],
+  },
+];
 
 const state = {
   userId: null,
@@ -34,12 +162,15 @@ const state = {
   // `user_profiles` row yet (e.g. never posted a listing / used the app) —
   // PUT /profiles/:userId can't create one, so we can't offer the form yet.
   noProfile: false,
+  activeTab: TAB_BASIC,
   universities: [],
   universitiesError: false,
   // null = not answered yet, true/false once the user (or existing data) answers.
   isStudent: null,
   selectedUniversityId: null,
   searchQuery: '',
+  // Keyed by LIFESTYLE_FIELDS[].key (snake_case, matching the API body directly).
+  lifestyle: Object.fromEntries(LIFESTYLE_FIELDS.map((f) => [f.key, null])),
   saving: false,
 };
 
@@ -106,6 +237,43 @@ function closeUniversitySuggestions() {
   universityListEl.innerHTML = '';
 }
 
+/**
+ * Renders the lifestyle chip fields into `#lifestyle-fields` from scratch.
+ * Called once on boot (the field/option set never changes) and again after
+ * any lifestyle chip is clicked, so `aria-pressed` reflects the new value.
+ */
+function renderLifestyleFields() {
+  lifestyleFieldsEl.innerHTML = LIFESTYLE_FIELDS.map((field) => {
+    const current = state.lifestyle[field.key];
+    const chips = field.options.map((opt, i) => {
+      const pressed = current === opt.value;
+      return `
+        <button
+          type="button"
+          class="chip"
+          data-lifestyle-key="${field.key}"
+          data-option-index="${i}"
+          aria-pressed="${pressed ? 'true' : 'false'}"
+        >${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`;
+    }).join('');
+    return `
+      <div class="field">
+        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t(field.labelKey))}</div>
+        <div class="chips">${chips}</div>
+      </div>`;
+  }).join('');
+}
+
+function setActiveTab(tab) {
+  if (state.activeTab === tab) return;
+  state.activeTab = tab;
+  for (const btn of tabButtons) {
+    btn.setAttribute('aria-selected', btn.getAttribute('data-profile-tab') === tab ? 'true' : 'false');
+  }
+  tabBasicEl.hidden = tab !== TAB_BASIC;
+  tabLifestyleEl.hidden = tab !== TAB_LIFESTYLE;
+}
+
 function render() {
   const lang = UyDosh.getLang();
 
@@ -134,12 +302,33 @@ function render() {
     }
   }
 
+  if (state.activeTab === TAB_LIFESTYLE) renderLifestyleFields();
+
   saveBtn.disabled = state.saving;
   saveBtnLabel.textContent = state.saving ? UyDosh.t('profile.saving') : UyDosh.t('profile.save');
   saveBtnSpinner.hidden = !state.saving;
 }
 
 function bindEvents() {
+  for (const btn of tabButtons) {
+    btn.addEventListener('click', () => {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+      setActiveTab(btn.getAttribute('data-profile-tab'));
+      render();
+    });
+  }
+
+  lifestyleFieldsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-lifestyle-key]');
+    if (!btn) return;
+    const field = LIFESTYLE_FIELDS.find((f) => f.key === btn.getAttribute('data-lifestyle-key'));
+    const option = field?.options[Number(btn.getAttribute('data-option-index'))];
+    if (!field || !option) return;
+    state.lifestyle[field.key] = option.value;
+    showFormError('');
+    render();
+  });
+
   studentYesBtn.addEventListener('click', () => {
     if (state.isStudent === true) return;
     state.isStudent = true;
@@ -199,10 +388,13 @@ async function onSave() {
   state.saving = true;
   render();
 
-  const body = state.isStudent
-    ? { university_id: state.selectedUniversityId }
-    // `0` (not null/undefined) is what actually clears university_id server-side.
-    : { university_id: 0 };
+  const body = {
+    ...(state.isStudent
+      ? { university_id: state.selectedUniversityId }
+      // `0` (not null/undefined) is what actually clears university_id server-side.
+      : { university_id: 0 }),
+    ...state.lifestyle,
+  };
 
   try {
     await UyDosh.updateProfile(state.userId, body);
@@ -240,6 +432,10 @@ async function loadProfile() {
     const universityId = profile?.university_id != null ? Number(profile.university_id) : null;
     state.isStudent = universityId != null ? true : null;
     state.selectedUniversityId = universityId;
+    for (const field of LIFESTYLE_FIELDS) {
+      const raw = profile?.[field.key];
+      state.lifestyle[field.key] = raw === undefined ? null : raw;
+    }
   } catch (err) {
     if (err?.status === 404) {
       state.noProfile = true;

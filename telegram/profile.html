@@ -322,36 +322,52 @@
         <span class="loading-spinner" aria-hidden="true"></span>
       </div>
 
-      <div id="form-root" class="content-gutter" hidden>
-        <p class="profile-intro" data-i18n="profile.subtitle"></p>
+      <div id="form-root" hidden>
+        <p class="profile-intro content-gutter" data-i18n="profile.subtitle"></p>
 
-        <div class="field">
-          <div class="field-label" data-i18n="profile.studentQuestion"></div>
-          <div class="chips">
-            <button type="button" class="chip" id="student-yes" aria-pressed="false" data-i18n="profile.studentYes"></button>
-            <button type="button" class="chip" id="student-no" aria-pressed="false" data-i18n="profile.studentNo"></button>
+        <div class="view-tabs" role="tablist" aria-label="Profile">
+          <button type="button" class="view-tab" role="tab" data-profile-tab="basic" aria-selected="true">
+            <span class="view-tab-icon" aria-hidden="true" data-icon="person"></span>
+            <span data-i18n="profile.tabs.basic"></span>
+          </button>
+          <button type="button" class="view-tab" role="tab" data-profile-tab="lifestyle" aria-selected="false">
+            <span class="view-tab-icon" aria-hidden="true" data-icon="sparkles"></span>
+            <span data-i18n="profile.tabs.lifestyle"></span>
+          </button>
+        </div>
+
+        <div id="tab-basic" class="content-gutter">
+          <div class="field">
+            <div class="field-label" data-i18n="profile.studentQuestion"></div>
+            <div class="chips">
+              <button type="button" class="chip" id="student-yes" aria-pressed="false" data-i18n="profile.studentYes"></button>
+              <button type="button" class="chip" id="student-no" aria-pressed="false" data-i18n="profile.studentNo"></button>
+            </div>
+          </div>
+
+          <div class="field" id="university-field" hidden>
+            <div class="field-label" data-i18n="profile.universityLabel"></div>
+            <div id="university-picked" class="university-picked" hidden>
+              <span class="icon" aria-hidden="true" data-icon="graduationCap"></span>
+              <span class="university-picked-name" id="university-picked-name"></span>
+            </div>
+            <div class="university-search-wrap">
+              <input
+                type="text"
+                id="university-search"
+                data-i18n="profile.universitySearchPlaceholder"
+                data-i18n-attr="placeholder"
+                autocomplete="off"
+              />
+              <div class="station-list" id="university-list" hidden></div>
+            </div>
           </div>
         </div>
 
-        <div class="field" id="university-field" hidden>
-          <div class="field-label" data-i18n="profile.universityLabel"></div>
-          <div id="university-picked" class="university-picked" hidden>
-            <span class="icon" aria-hidden="true" data-icon="graduationCap"></span>
-            <span class="university-picked-name" id="university-picked-name"></span>
-          </div>
-          <div class="university-search-wrap">
-            <input
-              type="text"
-              id="university-search"
-              data-i18n="profile.universitySearchPlaceholder"
-              data-i18n-attr="placeholder"
-              autocomplete="off"
-            />
-            <div class="station-list" id="university-list" hidden></div>
-          </div>
+        <div id="tab-lifestyle" class="content-gutter" hidden>
+          <div id="lifestyle-fields"></div>
+          <div class="profile-more-note" data-i18n="profile.lifestyle.moreComingSoon"></div>
         </div>
-
-        <div class="profile-more-note" data-i18n="profile.moreComingSoon"></div>
       </div>
 
       <div id="form-error" class="form-error-banner" role="alert" hidden></div>
@@ -369,11 +385,11 @@
 
     <script src="../assets/uydosh-core.js?v=20260705-95"></script>
     <script src="../assets/uydosh-api.js?v=20260705-95"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260705-17"></script>
-    <script src="../assets/uydosh-icons.js?v=20260705-94"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260705-18"></script>
+    <script src="../assets/uydosh-icons.js?v=20260705-95"></script>
     <script src="../assets/uydosh-map-pins.js?v=20260705-79"></script>
     <script src="../assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="../assets/uydosh-mini-app.js?v=20260705-97"></script>
-    <script src="../assets/telegram-profile.js?v=20260705-2"></script>
+    <script src="../assets/telegram-profile.js?v=20260705-3"></script>
   </body>
 </html>
