@@ -14,6 +14,93 @@ const STEP_COUNT = 4;
 // Keep in sync with the backend's per-listing photo cap (listingPhotoService.ts).
 const MAX_PHOTOS = 5;
 
+/**
+ * Static metro station + district data, transcribed from the Flutter app's
+ * `MetroCache`/`LocationCache` (lib/base/cache/metro_cache.dart,
+ * lib/base/cache/location_cache.dart). The mobile app reads this data
+ * straight out of the compiled binary instead of calling the API ("Use
+ * cache instead of API call for better performance" — see
+ * SubwayStationsBloc); this mirrors that here so the create-listing wizard
+ * doesn't need `/subway-stations` or `/locations` round trips either, and
+ * so switching the UI language doesn't require a refetch (every station and
+ * district carries all three languages up front, unlike the API's
+ * per-request-language response shape).
+ *
+ * These almost never change (Tashkent doesn't add metro stations often) — if
+ * they ever do, update both this list and the Flutter cache together.
+ */
+const STATIC_METRO_STATIONS = [
+  // Line 1 — Chilanzar
+  { id: 1, line: 1, ordinal: 1, name_uz: 'Chinor', name_ru: 'Чинор', name_en: 'Chinor', latitude: 41.20669650, longitude: 69.21895750, location_id: 12 },
+  { id: 2, line: 1, ordinal: 2, name_uz: 'Yangikhayot', name_ru: 'Янгихаёт', name_en: 'Yangikhayot', latitude: 41.21350990, longitude: 69.21401500, location_id: 12 },
+  { id: 3, line: 1, ordinal: 3, name_uz: 'Sergeli', name_ru: 'Сергели', name_en: 'Sergeli', latitude: 41.22064000, longitude: 69.20884500, location_id: 12 },
+  { id: 4, line: 1, ordinal: 4, name_uz: 'Uzgarish', name_ru: 'Узгариш', name_en: 'Uzgarish', latitude: 41.22733640, longitude: 69.20397140, location_id: 12 },
+  { id: 5, line: 1, ordinal: 5, name_uz: 'Chashtepa', name_ru: 'Чаштепа', name_en: 'Chashtepa', latitude: 41.23824960, longitude: 69.19603450, location_id: 12 },
+  { id: 6, line: 1, ordinal: 6, name_uz: 'Almazar', name_ru: 'Алмазар', name_en: 'Almazar', latitude: 41.25667240, longitude: 69.19610450, location_id: 7 },
+  { id: 7, line: 1, ordinal: 7, name_uz: 'Chilanzar', name_ru: 'Чиланзар', name_en: 'Chilanzar', latitude: 41.27435900, longitude: 69.20497350, location_id: 7 },
+  { id: 8, line: 1, ordinal: 8, name_uz: 'Mirzo Ulugbek', name_ru: 'Мирзо Улугбек', name_en: 'Mirzo Ulugbek', latitude: 41.28203420, longitude: 69.21258340, location_id: 7 },
+  { id: 9, line: 1, ordinal: 9, name_uz: 'Novza', name_ru: 'Новза', name_en: 'Novza', latitude: 41.29187220, longitude: 69.22361650, location_id: 7 },
+  { id: 10, line: 1, ordinal: 10, name_uz: 'Milliy bog', name_ru: 'Нац. Парк', name_en: 'National Park', latitude: 41.30339440, longitude: 69.23566630, location_id: 7 },
+  { id: 11, line: 1, ordinal: 11, name_uz: 'Xalqlar doʻstligi', name_ru: 'Дружба народов', name_en: 'Friendship of Nations', latitude: 41.31189870, longitude: 69.24309590, location_id: 8 },
+  { id: 12, line: 1, ordinal: 12, name_uz: 'Paxtakor', name_ru: 'Пахтакор', name_en: 'Pakhtakor', latitude: 41.31779140, longitude: 69.25508820, location_id: 8 },
+  { id: 13, line: 1, ordinal: 13, name_uz: 'Mustaqil. Maydoni', name_ru: 'Пл. Независимости', name_en: 'Indep. Square', latitude: 41.31494530, longitude: 69.27106460, location_id: 9 },
+  { id: 14, line: 1, ordinal: 14, name_uz: 'A. Temur Xiyoboni', name_ru: 'Сквер Амира Темура', name_en: 'A. Temur Square', latitude: 41.31267380, longitude: 69.28326910, location_id: 3 },
+  { id: 15, line: 1, ordinal: 15, name_uz: 'Hamid Olimjon', name_ru: 'Хамид Алимджан', name_en: 'Hamid Olimjon', latitude: 41.31816440, longitude: 69.29574190, location_id: 3 },
+  { id: 16, line: 1, ordinal: 16, name_uz: 'Pushkin', name_ru: 'Пушкин', name_en: 'Pushkin', latitude: 41.32194810, longitude: 69.31110200, location_id: 3 },
+  { id: 17, line: 1, ordinal: 17, name_uz: 'Buyuk Ipak Yoli', name_ru: 'Вел. Шелковый Путь', name_en: 'Great Silk Road', latitude: 41.32610540, longitude: 69.32855980, location_id: 3 },
+  // Line 2 — Oʻzbekiston
+  { id: 18, line: 2, ordinal: 18, name_uz: 'Beruniy', name_ru: 'Беруни', name_en: 'Beruniy', latitude: 41.34461520, longitude: 69.20620460, location_id: 8 },
+  { id: 19, line: 2, ordinal: 19, name_uz: 'Tinchlik', name_ru: 'Тинчлик', name_en: 'Tinchlik', latitude: 41.33230140, longitude: 69.21911550, location_id: 8 },
+  { id: 20, line: 2, ordinal: 20, name_uz: 'Chorsu', name_ru: 'Чорсу', name_en: 'Chorsu', latitude: 41.32586490, longitude: 69.23681520, location_id: 8 },
+  { id: 21, line: 2, ordinal: 21, name_uz: 'Gafur Gulom', name_ru: 'Гафур Гулям', name_en: 'Gafur Gulom', latitude: 41.32788280, longitude: 69.24583420, location_id: 6 },
+  { id: 22, line: 2, ordinal: 22, name_uz: 'Alisher Navoiy', name_ru: 'Алишер Навои', name_en: 'Alisher Navoi', latitude: 41.31892180, longitude: 69.25429730, location_id: 8 },
+  { id: 23, line: 2, ordinal: 23, name_uz: 'Oʻzbekiston', name_ru: 'Узбекистан', name_en: 'Uzbekistan', latitude: 41.31194370, longitude: 69.25340570, location_id: 8 },
+  { id: 24, line: 2, ordinal: 24, name_uz: 'Kosmonavtlar', name_ru: 'Космонавты', name_en: 'Cosmonauts', latitude: 41.30516180, longitude: 69.26472070, location_id: 10 },
+  { id: 25, line: 2, ordinal: 25, name_uz: 'Oybek', name_ru: 'Ойбек', name_en: 'Oybek', latitude: 41.29801280, longitude: 69.27405010, location_id: 4 },
+  { id: 26, line: 2, ordinal: 26, name_uz: 'Toshkent', name_ru: 'Ташкент', name_en: 'Tashkent', latitude: 41.29328860, longitude: 69.28772120, location_id: 4 },
+  { id: 27, line: 2, ordinal: 27, name_uz: 'Mashinasozlar', name_ru: 'Машиностроители', name_en: 'Machine Builders', latitude: 41.29898470, longitude: 69.30512760, location_id: 11 },
+  { id: 28, line: 2, ordinal: 28, name_uz: 'Doʻstlik', name_ru: 'Дустлик', name_en: 'Dustlik', latitude: 41.29364010, longitude: 69.32224450, location_id: 11 },
+  // Line 3 — Yunusobod
+  { id: 29, line: 3, ordinal: 29, name_uz: 'Mingurik', name_ru: 'Мингурик', name_en: 'Mingurik', latitude: 41.29966100, longitude: 69.27441020, location_id: 4 },
+  { id: 30, line: 3, ordinal: 30, name_uz: 'Yunus Rajabiy', name_ru: 'Юнус Раджаби', name_en: 'Yunus Rajabiy', latitude: 41.31388710, longitude: 69.28350770, location_id: 3 },
+  { id: 31, line: 3, ordinal: 31, name_uz: 'Abdulla Qodiriy', name_ru: 'Абдулла Кадыри', name_en: 'Abdulla Qodiriy', latitude: 41.32019240, longitude: 69.28175900, location_id: 9 },
+  { id: 32, line: 3, ordinal: 32, name_uz: 'Minor', name_ru: 'Минор', name_en: 'Minor', latitude: 41.32689230, longitude: 69.28341630, location_id: 9 },
+  { id: 33, line: 3, ordinal: 33, name_uz: 'Bodomzor', name_ru: 'Бодомзор', name_en: 'Bodomzor', latitude: 41.33717010, longitude: 69.28456970, location_id: 9 },
+  { id: 34, line: 3, ordinal: 34, name_uz: 'Shahriston', name_ru: 'Шахристан', name_en: 'Shahriston', latitude: 41.35311850, longitude: 69.28810690, location_id: 9 },
+  { id: 35, line: 3, ordinal: 35, name_uz: 'Yunusobod', name_ru: 'Юнусабад', name_en: 'Yunusabad', latitude: 41.36684110, longitude: 69.29230030, location_id: 9 },
+  { id: 36, line: 3, ordinal: 36, name_uz: 'Turkiston', name_ru: 'Туркистан', name_en: 'Turkiston', latitude: 41.37752170, longitude: 69.29601510, location_id: 9 },
+  // Line 4 — Halqa (Circle)
+  { id: 37, line: 4, ordinal: 37, name_uz: 'Texnopark', name_ru: 'Технопарк', name_en: 'Technopark', latitude: 41.29462800, longitude: 69.32318670, location_id: 11 },
+  { id: 38, line: 4, ordinal: 38, name_uz: 'Yashnobod', name_ru: 'Яшнабад', name_en: 'Yashnobod', latitude: 41.29758590, longitude: 69.34978310, location_id: 11 },
+  { id: 39, line: 4, ordinal: 39, name_uz: 'Tuzel', name_ru: 'Тузель', name_en: 'Tuzel', latitude: 41.29201250, longitude: 69.35618440, location_id: 11 },
+  { id: 40, line: 4, ordinal: 40, name_uz: 'Olmos', name_ru: 'Алмаз', name_en: 'Olmos', latitude: 41.28170500, longitude: 69.36033380, location_id: 11 },
+  { id: 41, line: 4, ordinal: 41, name_uz: 'Rohat', name_ru: 'Рохат', name_en: 'Rohat', latitude: 41.26529070, longitude: 69.36475170, location_id: 11 },
+  { id: 42, line: 4, ordinal: 42, name_uz: 'Yangiobod', name_ru: 'Янгиабад', name_en: 'Yangiobod', latitude: 41.25650750, longitude: 69.35872420, location_id: 11 },
+  { id: 43, line: 4, ordinal: 43, name_uz: 'Quyliuq', name_ru: 'Куйлюк', name_en: 'Quyliuq', latitude: 41.23745790, longitude: 69.32700010, location_id: 2 },
+  { id: 44, line: 4, ordinal: 44, name_uz: 'Matonat', name_ru: 'Матонат', name_en: 'Matonat', latitude: 41.24447130, longitude: 69.30832290, location_id: 4 },
+  { id: 45, line: 4, ordinal: 45, name_uz: 'Qiyot', name_ru: 'Киёт', name_en: 'Qiyot', latitude: 41.24447960, longitude: 69.29972800, location_id: 5 },
+  { id: 46, line: 4, ordinal: 46, name_uz: 'Tolarik', name_ru: 'Толарик', name_en: 'Tolarik', latitude: 41.24451390, longitude: 69.28495680, location_id: 5 },
+  { id: 47, line: 4, ordinal: 47, name_uz: 'Xonabod', name_ru: 'Ханабад', name_en: 'Xonabod', latitude: 41.23001030, longitude: 69.27043530, location_id: 5 },
+  { id: 48, line: 4, ordinal: 48, name_uz: 'Quruvchilar', name_ru: 'Курувчилар', name_en: 'Quruvchilar', latitude: 41.22163670, longitude: 69.26050330, location_id: 5 },
+  { id: 49, line: 4, ordinal: 49, name_uz: 'Turon', name_ru: 'Турон', name_en: 'Turon', latitude: 41.21068130, longitude: 69.23415400, location_id: 12 },
+  { id: 50, line: 4, ordinal: 50, name_uz: 'Qipchoq', name_ru: 'Кипчок', name_en: 'Qipchoq', latitude: 41.20542290, longitude: 69.22141120, location_id: 12 },
+];
+
+const STATIC_LOCATIONS = [
+  { id: 1, name_uz: 'Uchtepa Tumani', name_ru: 'Учтепинский район', name_en: 'Uchtepa District', short_name_uz: 'Uchtepa', short_name_ru: 'Учтепа', short_name_en: 'Uchtepa', latitude: 41.296048, longitude: 69.175168 },
+  { id: 2, name_uz: 'Bektemir Tumani', name_ru: 'Бектемирский район', name_en: 'Bektemir District', short_name_uz: 'Bektemir', short_name_ru: 'Бектемир', short_name_en: 'Bektemir', latitude: 41.2333, longitude: 69.3344 },
+  { id: 3, name_uz: 'Mirzo Ulugbek Tumani', name_ru: 'Мирзо‑Улугбекский район', name_en: 'Mirzo Ulugbek District', short_name_uz: 'Mirzo Ulugbek', short_name_ru: 'Мирзо‑Улугбек', short_name_en: 'Mirzo Ulugbek', latitude: 41.3257, longitude: 69.3257 },
+  { id: 4, name_uz: 'Mirobod Tumani', name_ru: 'Мирабадский район', name_en: 'Mirabad District', short_name_uz: 'Mirobod', short_name_ru: 'Мирабад', short_name_en: 'Mirabad', latitude: 41.2774, longitude: 69.2972 },
+  { id: 5, name_uz: 'Sergeli Tumani', name_ru: 'Сергелийский район', name_en: 'Sergeli District', short_name_uz: 'Sergeli', short_name_ru: 'Сергели', short_name_en: 'Sergeli', latitude: 41.2100, longitude: 69.2317 },
+  { id: 6, name_uz: 'Olmazor Tumani', name_ru: 'Алмазарский район', name_en: 'Almazar District', short_name_uz: 'Olmazor', short_name_ru: 'Алмазар', short_name_en: 'Almazar', latitude: 41.3614, longitude: 69.2254 },
+  { id: 7, name_uz: 'Chilanzar Tumani', name_ru: 'Чиланзарский район', name_en: 'Chilanzar District', short_name_uz: 'Chilanzar', short_name_ru: 'Чиланзар', short_name_en: 'Chilanzar', latitude: 41.2743, longitude: 69.2049 },
+  { id: 8, name_uz: 'Shayxontohur Tumani', name_ru: 'Шайхантаурский район', name_en: 'Shaykhantahur District', short_name_uz: 'Shayxontohur', short_name_ru: 'Шайхантаур', short_name_en: 'Shaykhantahur', latitude: 41.3223, longitude: 69.2101 },
+  { id: 9, name_uz: 'Yunusobod Tumani', name_ru: 'Юнусабадский район', name_en: 'Yunusabad District', short_name_uz: 'Yunusobod', short_name_ru: 'Юнусабад', short_name_en: 'Yunusabad', latitude: 41.3666, longitude: 69.2922 },
+  { id: 10, name_uz: 'Yakkasaroy Tumani', name_ru: 'Яккасарайский район', name_en: 'Yakkasaray District', short_name_uz: 'Yakkasaroy', short_name_ru: 'Яккасарай', short_name_en: 'Yakkasaray', latitude: 41.2807, longitude: 69.2557 },
+  { id: 11, name_uz: 'Yashnobod Tumani', name_ru: 'Яшнабадский район', name_en: 'Yashnabad District', short_name_uz: 'Yashnobod', short_name_ru: 'Яшнабад', short_name_en: 'Yashnabad', latitude: 41.2832, longitude: 69.3339 },
+  { id: 12, name_uz: 'Yangi Hayot Tumani', name_ru: 'Янгихаётский район', name_en: 'Yangihayot District', short_name_uz: 'Yangi Hayot', short_name_ru: 'Янгихаёт', short_name_en: 'Yangihayot', latitude: 41.0655, longitude: 69.4457 },
+];
+
 const loadingEl = document.getElementById('loading');
 const formRoot = document.getElementById('form-root');
 const successRoot = document.getElementById('success-root');
@@ -63,6 +150,14 @@ const state = {
   /// the "Use current location" address button (step 0), so the button can
   /// show a spinner and ignore repeat taps.
   locatingAddress: false,
+  /// `{ station, minutes }[]`, nearest-first, populated by `findNearbyStations`
+  /// after a successful "Use current location" — lets step 0 suggest metro
+  /// stations within `MAX_SUGGESTED_WALK_MINUTES` of the author's location.
+  nearbyStations: [],
+  /// True once a "Use current location" lookup has actually searched for
+  /// nearby stations, so the metro panel can tell "never asked" apart from
+  /// "asked, found nothing within range" (see renderStep0).
+  nearbyStationsChecked: false,
   form: {
     listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
     locationMode: LOCATION_MODE_METRO,
@@ -441,6 +536,39 @@ function stationListHtml(lang) {
   return (selectAllRow + stationItems) || `<div class="status">…</div>`;
 }
 
+/**
+ * "Stations near you" suggestion chips shown under the "Use current
+ * location" button once `findNearbyStations` has run (see
+ * `data-use-current-location` in bindStepEvents). Only relevant for metro
+ * mode — district mode has its own auto-select (see
+ * `findLocationIdByDistrictName`).
+ */
+function nearbyStationsHtml(lang) {
+  if (state.form.locationMode !== LOCATION_MODE_METRO) return '';
+  if (!state.nearbyStationsChecked) return '';
+  if (state.nearbyStations.length === 0) {
+    return `<div class="nearby-stations-empty">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationsEmpty', lang))}</div>`;
+  }
+  const chips = state.nearbyStations.map(({ station, minutes }) => {
+    const id = Number(station.id);
+    const lineId = Number(station.line) || state.form.subwayLineId;
+    const pressed = state.form.selectedStationIds.includes(id);
+    const minutesLabel = UyDosh.t('create.walkMinutes', lang)
+      .replace('{count}', String(Math.max(1, Math.round(minutes))));
+    return `
+      <button type="button" class="nearby-station-chip" data-nearby-station-id="${id}" data-nearby-station-line="${lineId}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
+        ${UyDosh.iconMetro(lineId)}
+        <span class="nearby-station-name">${UyDosh.escapeHtml(UyDosh.localized(station, lang))}</span>
+        <span class="nearby-station-time">${UyDosh.iconClock()}${UyDosh.escapeHtml(minutesLabel)}</span>
+      </button>`;
+  }).join('');
+  return `
+    <div class="nearby-stations">
+      <div class="nearby-stations-label">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStations', lang))}</div>
+      <div class="nearby-stations-list">${chips}</div>
+    </div>`;
+}
+
 function renderStep0(lang) {
   const typeOptions = [
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
@@ -555,6 +683,7 @@ function renderStep0(lang) {
           : UyDosh.iconLocateMe()}
         <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
       </button>
+      ${nearbyStationsHtml(lang)}
     </div>` : '';
 
   return `
@@ -899,11 +1028,14 @@ function renderStep() {
   sizeLocationList();
 }
 
+/**
+ * Kept `async` even though `STATIC_METRO_STATIONS` resolves synchronously —
+ * call sites (`selectSubwayLine`, `loadReferenceData`) still `await` this,
+ * and switching back to a live API fetch later (if the static list ever
+ * falls out of sync) wouldn't need to touch any caller.
+ */
 async function loadStationsForLine(lineId) {
-  const lang = UyDosh.getLang();
-  const data = await UyDosh.fetchSubwayStationsByLine(lineId, lang);
-  if (lineId !== state.form.subwayLineId) return;
-  state.stations = Array.isArray(data) ? data : (Array.isArray(data?.stations) ? data.stations : []);
+  state.stations = STATIC_METRO_STATIONS.filter((st) => Number(st.line) === Number(lineId));
   // Cache every station seen so far (across every line browsed) so a
   // multi-select made on one line survives switching to another line, and
   // so the review step can resolve names for off-line selections.
@@ -913,9 +1045,30 @@ async function loadStationsForLine(lineId) {
 }
 
 async function loadLocations() {
-  const lang = UyDosh.getLang();
-  const data = await UyDosh.fetchLocations({ page: 1, limit: 200, language: lang });
-  state.locations = Array.isArray(data?.locations) ? data.locations : [];
+  state.locations = STATIC_LOCATIONS;
+}
+
+/**
+ * Switches the active metro line and (re)loads its stations. Shared by the
+ * line-chip click handler and the "nearby stations" suggestion chips (see
+ * bindStepEvents) — selections survive the switch via `state.stationCache`,
+ * same as manual line browsing.
+ */
+async function selectSubwayLine(lineId) {
+  state.form.subwayLineId = lineId;
+  state.stationsLoading = true;
+  renderStationList();
+  try {
+    await loadStationsForLine(lineId);
+  } catch (err) {
+    console.error(err);
+    if (lineId === state.form.subwayLineId) state.stations = [];
+  } finally {
+    if (lineId === state.form.subwayLineId) {
+      state.stationsLoading = false;
+      renderStationList();
+    }
+  }
 }
 
 async function loadReferenceData() {
@@ -1003,6 +1156,58 @@ function findLocationIdByDistrictName(districtName, locations, lang) {
     }
   }
   return bestScore >= DISTRICT_MATCH_THRESHOLD ? bestId : null;
+}
+
+/**
+ * Metro station suggestions for "Use current location" (see the
+ * `data-use-current-location` handler in bindStepEvents): straight-line
+ * distance is a poor stand-in for actual walking distance, so this pads it
+ * with a fixed detour factor before converting to minutes at a comfortable
+ * urban walking pace — good enough for a "stations near you" shortlist, not
+ * meant to match a real routing engine.
+ */
+const EARTH_RADIUS_METERS = 6371000;
+const WALK_METERS_PER_MINUTE = 80; // ~4.8 km/h
+const WALK_DETOUR_FACTOR = 1.3; // streets/blocks vs. straight-line distance
+const MAX_SUGGESTED_WALK_MINUTES = 15;
+const MAX_SUGGESTED_STATIONS = 6;
+
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.min(1, a)));
+}
+
+function estimatedWalkMinutes(meters) {
+  return (meters * WALK_DETOUR_FACTOR) / WALK_METERS_PER_MINUTE;
+}
+
+/**
+ * Stations within `MAX_SUGGESTED_WALK_MINUTES` of `(latitude, longitude)`,
+ * nearest first, capped to `MAX_SUGGESTED_STATIONS`. Also merges every
+ * candidate into `state.stationCache` so the review step and cross-line
+ * multi-select keep working if the author picks a suggestion whose line
+ * they haven't opened yet.
+ */
+function findNearbyStations(latitude, longitude) {
+  const nearby = STATIC_METRO_STATIONS
+    .filter((st) => st.latitude != null && st.longitude != null)
+    .map((st) => ({
+      station: st,
+      minutes: estimatedWalkMinutes(
+        haversineMeters(latitude, longitude, Number(st.latitude), Number(st.longitude)),
+      ),
+    }))
+    .filter((entry) => entry.minutes <= MAX_SUGGESTED_WALK_MINUTES)
+    .sort((a, b) => a.minutes - b.minutes)
+    .slice(0, MAX_SUGGESTED_STATIONS);
+  for (const { station } of nearby) {
+    state.stationCache[Number(station.id)] = station;
+  }
+  return nearby;
 }
 
 function toggleSelection(list, id, multi) {
@@ -1144,6 +1349,8 @@ function bindStepEvents() {
         // safe to just replace the selection outright.
         if (matchedId != null) state.form.selectedLocationIds = [matchedId];
       }
+      state.nearbyStations = findNearbyStations(latitude, longitude);
+      state.nearbyStationsChecked = true;
       showFormError('');
     } catch (err) {
       console.error('Use current location failed', err);
@@ -1160,32 +1367,35 @@ function bindStepEvents() {
     btn.addEventListener('click', async () => {
       const nextLineId = Number(btn.getAttribute('data-subway-line'));
       if (nextLineId === state.form.subwayLineId && !state.stationsLoading) return;
-      state.form.subwayLineId = nextLineId;
       // Flip aria-pressed on the existing chip buttons (instead of letting a
       // full renderStep() replace them) so the CSS transition that expands
       // the tapped chip into its name actually gets to play, matching the
       // feed filter ribbon (see syncMetroLineChipPressedState there).
       syncSubwayLineChipPressedState();
-      // Selections are preserved across line switches (see loadStationsForLine /
-      // state.stationCache) so multi-select can span several lines, matching
-      // the mobile app's MultiStationPicker.
-      state.stationsLoading = true;
-      renderStationList();
-      try {
-        await loadStationsForLine(nextLineId);
-      } catch (err) {
-        console.error(err);
-        if (nextLineId === state.form.subwayLineId) state.stations = [];
-      } finally {
-        if (nextLineId === state.form.subwayLineId) {
-          state.stationsLoading = false;
-          renderStationList();
-        }
-      }
+      await selectSubwayLine(nextLineId);
     });
   });
 
   bindStationListEvents();
+
+  stepPanelsEl.querySelectorAll('[data-nearby-station-id]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.getAttribute('data-nearby-station-id'));
+      const lineId = Number(btn.getAttribute('data-nearby-station-line'));
+      if (lineId && lineId !== state.form.subwayLineId) {
+        await selectSubwayLine(lineId);
+      }
+      state.form.selectedStationIds = toggleSelection(
+        state.form.selectedStationIds,
+        id,
+        supportsMultiStation(),
+      );
+      if (state.form.selectedStationIds.length > 0 && state.validationError) {
+        showFormError('');
+      }
+      renderStep();
+    });
+  });
 
   stepPanelsEl.querySelector('[data-select-all-locations]')?.addEventListener('click', () => {
     const allIds = state.locations.map((l) => Number(l.id));
