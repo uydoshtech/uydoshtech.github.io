@@ -528,8 +528,9 @@
       .roomscan-fullscreen-btn svg * { stroke: currentColor; fill: none; }
       .roomscan-status {
         position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-        padding: 12px; text-align: center; color: var(--muted); font-size: 13px;
+        padding: 12px; text-align: center; color: #f59e0b; font-weight: 700; font-size: 13px;
       }
+      .roomscan-status[hidden] { display: none; }
       .roomscan-backdrop {
         position: fixed; inset: 0; z-index: 220; background: #000;
         opacity: 0; transition: opacity 0.18s ease;
