@@ -150,6 +150,19 @@ function localizedShort(obj, lang, fallback = '') {
   );
 }
 
+/**
+ * Displays a name in "Title Case" (every word capitalized) instead of
+ * whatever raw casing the source data uses — the university list, for one,
+ * is stored/returned in ALL CAPS (e.g. "WEBSTER UNIVERSITY IN TASHKENT") but
+ * reads much better as "Webster University In Tashkent" in the UI.
+ * Unicode-aware (`\p{L}`) so Cyrillic/Uzbek names capitalize correctly too.
+ */
+function titleCaseWords(str) {
+  return String(str ?? '')
+    .toLowerCase()
+    .replace(/(^|[\s\-'"(])\p{L}/gu, (m) => m.toUpperCase());
+}
+
 function listingTypeIdFromListing(listing) {
   return Number(listing?.listing_type_id ?? listing?.listing_type?.id) || 0;
 }
@@ -545,6 +558,7 @@ Object.assign(window.UyDosh, {
   setLang,
   localized,
   localizedShort,
+  titleCaseWords,
   localizedDescription,
   photoUrl,
   telegramAvatarUrl,

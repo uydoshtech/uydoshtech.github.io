@@ -42,29 +42,31 @@ const LIFESTYLE_FIELDS = [
     key: 'employed',
     labelKey: 'profile.lifestyle.employed',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: true, labelKey: 'profile.lifestyle.employedYes' },
-      { value: false, labelKey: 'profile.lifestyle.employedNo' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: true, labelKey: 'profile.lifestyle.employedYes', icon: 'checkCircle' },
+      { value: false, labelKey: 'profile.lifestyle.employedNo', icon: 'xCircle' },
     ],
   },
   {
     key: 'wakeup_time',
     labelKey: 'profile.lifestyle.wakeupTime',
+    icon: 'sun',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: 'morning', labelKey: 'profile.lifestyle.morning' },
-      { value: 'evening', labelKey: 'profile.lifestyle.evening' },
-      { value: 'night', labelKey: 'profile.lifestyle.night' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: 'morning', labelKey: 'profile.lifestyle.morning', icon: 'sun' },
+      { value: 'evening', labelKey: 'profile.lifestyle.evening', icon: 'sunset' },
+      { value: 'night', labelKey: 'profile.lifestyle.night', icon: 'moon' },
     ],
   },
   {
     key: 'sleep_time',
     labelKey: 'profile.lifestyle.sleepTime',
+    icon: 'moon',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: 'morning', labelKey: 'profile.lifestyle.morning' },
-      { value: 'evening', labelKey: 'profile.lifestyle.evening' },
-      { value: 'night', labelKey: 'profile.lifestyle.night' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: 'morning', labelKey: 'profile.lifestyle.morning', icon: 'sun' },
+      { value: 'evening', labelKey: 'profile.lifestyle.evening', icon: 'sunset' },
+      { value: 'night', labelKey: 'profile.lifestyle.night', icon: 'moon' },
     ],
   },
   {
@@ -74,6 +76,7 @@ const LIFESTYLE_FIELDS = [
     // chips — the option list is still used to look up the current value's
     // label text shown below the track.
     type: 'scale',
+    icon: 'sparkles',
     options: [
       { value: null, labelKey: 'profile.lifestyle.notSpecified' },
       { value: 1, labelKey: 'profile.lifestyle.veryMessy' },
@@ -87,6 +90,7 @@ const LIFESTYLE_FIELDS = [
     key: 'noise_level',
     labelKey: 'profile.lifestyle.noiseLevel',
     type: 'scale',
+    icon: 'volume',
     options: [
       { value: null, labelKey: 'profile.lifestyle.notSpecified' },
       { value: 1, labelKey: 'profile.lifestyle.veryQuiet' },
@@ -100,6 +104,7 @@ const LIFESTYLE_FIELDS = [
     key: 'sociability',
     labelKey: 'profile.lifestyle.sociability',
     type: 'scale',
+    icon: 'chatBubble',
     options: [
       { value: null, labelKey: 'profile.lifestyle.notSpecified' },
       { value: 1, labelKey: 'profile.lifestyle.veryIntroverted' },
@@ -113,49 +118,49 @@ const LIFESTYLE_FIELDS = [
     key: 'guests_allowed',
     labelKey: 'profile.lifestyle.guestsAllowed',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: true, labelKey: 'profile.lifestyle.guestsYes' },
-      { value: false, labelKey: 'profile.lifestyle.guestsNo' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: true, labelKey: 'profile.lifestyle.guestsYes', icon: 'users' },
+      { value: false, labelKey: 'profile.lifestyle.guestsNo', icon: 'xCircle' },
     ],
   },
   {
     key: 'smoking_preference',
     labelKey: 'profile.lifestyle.smokingPreference',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: 'non-smoker', labelKey: 'profile.lifestyle.nonSmoker' },
-      { value: 'occasional', labelKey: 'profile.lifestyle.occasionalSmoker' },
-      { value: 'regular', labelKey: 'profile.lifestyle.regularSmoker' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: 'non-smoker', labelKey: 'profile.lifestyle.nonSmoker', icon: 'smokeFree' },
+      { value: 'occasional', labelKey: 'profile.lifestyle.occasionalSmoker', icon: 'cigarette' },
+      { value: 'regular', labelKey: 'profile.lifestyle.regularSmoker', icon: 'cigarette' },
     ],
   },
   {
     key: 'alcohol_preference',
     labelKey: 'profile.lifestyle.alcoholPreference',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: 'non-drinker', labelKey: 'profile.lifestyle.nonDrinker' },
-      { value: 'occasional', labelKey: 'profile.lifestyle.occasionalDrinker' },
-      { value: 'regular', labelKey: 'profile.lifestyle.regularDrinker' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: 'non-drinker', labelKey: 'profile.lifestyle.nonDrinker', icon: 'noDrink' },
+      { value: 'occasional', labelKey: 'profile.lifestyle.occasionalDrinker', icon: 'wineGlass' },
+      { value: 'regular', labelKey: 'profile.lifestyle.regularDrinker', icon: 'wineGlass' },
     ],
   },
   {
     key: 'cooking_habits',
     labelKey: 'profile.lifestyle.cookingHabits',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: true, labelKey: 'profile.lifestyle.cook' },
-      { value: false, labelKey: 'profile.lifestyle.dontCook' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: true, labelKey: 'profile.lifestyle.cook', icon: 'cookingPot' },
+      { value: false, labelKey: 'profile.lifestyle.dontCook', icon: 'takeout' },
     ],
   },
   {
     key: 'pets_preference',
     labelKey: 'profile.lifestyle.petsPreference',
     options: [
-      { value: null, labelKey: 'profile.lifestyle.notSpecified' },
-      { value: 'dont_like_pets', labelKey: 'profile.lifestyle.dontLikePets' },
-      { value: 'like_pets', labelKey: 'profile.lifestyle.likePets' },
-      { value: 'have_cat', labelKey: 'profile.lifestyle.haveCat' },
-      { value: 'have_dog', labelKey: 'profile.lifestyle.haveDog' },
+      { value: null, labelKey: 'profile.lifestyle.notSpecified', icon: 'dash' },
+      { value: 'dont_like_pets', labelKey: 'profile.lifestyle.dontLikePets', icon: 'xCircle' },
+      { value: 'like_pets', labelKey: 'profile.lifestyle.likePets', icon: 'heartOutline' },
+      { value: 'have_cat', labelKey: 'profile.lifestyle.haveCat', icon: 'cat' },
+      { value: 'have_dog', labelKey: 'profile.lifestyle.haveDog', icon: 'dog' },
     ],
   },
 ];
@@ -233,7 +238,7 @@ function renderUniversityList() {
     const pressed = Number(state.selectedUniversityId) === id;
     return `
       <button type="button" class="station-item" data-university-id="${id}" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.escapeHtml(UyDosh.localized(u, lang))}
+        ${UyDosh.escapeHtml(UyDosh.titleCaseWords(UyDosh.localized(u, lang)))}
       </button>`;
   }).join('');
 }
@@ -255,6 +260,15 @@ function scaleValueLabel(field, value) {
  * reflects the new value. Slider drags update in place instead (see
  * `bindEvents`) to avoid rebuilding the DOM node mid-drag.
  */
+function fieldLabelHtml(field) {
+  const icon = field.icon ? `<span class="field-label-icon" aria-hidden="true">${UyDosh.iconChrome(field.icon)}</span>` : '';
+  return `${icon}${UyDosh.escapeHtml(UyDosh.t(field.labelKey))}`;
+}
+
+function chipIconHtml(icon) {
+  return icon ? `<span class="chip-icon" aria-hidden="true">${UyDosh.iconChrome(icon)}</span>` : '';
+}
+
 function renderLifestyleFields() {
   lifestyleFieldsEl.innerHTML = LIFESTYLE_FIELDS.map((field) => {
     const current = state.lifestyle[field.key];
@@ -269,7 +283,7 @@ function renderLifestyleFields() {
       const sliderValue = current ?? min;
       return `
         <div class="field">
-          <div class="field-label">${UyDosh.escapeHtml(UyDosh.t(field.labelKey))}</div>
+          <div class="field-label">${fieldLabelHtml(field)}</div>
           <input
             type="range"
             class="lifestyle-slider"
@@ -294,11 +308,11 @@ function renderLifestyleFields() {
           data-lifestyle-key="${field.key}"
           data-option-index="${i}"
           aria-pressed="${pressed ? 'true' : 'false'}"
-        >${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`;
+        >${chipIconHtml(opt.icon)}${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`;
     }).join('');
     return `
       <div class="field">
-        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t(field.labelKey))}</div>
+        <div class="field-label">${fieldLabelHtml(field)}</div>
         <div class="chips">${chips}</div>
       </div>`;
   }).join('');
@@ -327,7 +341,7 @@ function render() {
     const selected = state.selectedUniversityId != null ? universityById(state.selectedUniversityId) : null;
     if (selected) {
       universityPickedEl.hidden = false;
-      universityPickedNameEl.textContent = UyDosh.localized(selected, lang);
+      universityPickedNameEl.textContent = UyDosh.titleCaseWords(UyDosh.localized(selected, lang));
     } else {
       universityPickedEl.hidden = true;
     }
