@@ -7,9 +7,12 @@
   --error: #f87171;
   --wizard-content-gutter: 25px;
   --wizard-footer-height: 72px;
-}
-body {
-  padding-bottom: calc(var(--wizard-footer-height) + 12px + env(safe-area-inset-bottom, 0));
+  /* Read by the shared 'html.mini-app body' rule in uydosh-mini-app.js
+     (ensureMiniAppSafeAreaStyles) to reserve room above the safe-area inset
+     for this page's fixed wizard footer — a plain 'body { padding-bottom }'
+     rule here would just get silently overridden by that shared, more
+     specific selector. */
+  --uydosh-fixed-footer-height: calc(var(--wizard-footer-height) + 12px);
 }
 .wrap {
   padding-bottom: 24px;
@@ -251,10 +254,9 @@ input[type="range"] {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  /* Fallback before JS measures the real remaining space (see
-     sizeLocationList in telegram-create.js), which then either
-     stretches the list down to the wizard footer (metro list) or
-     sizes it to its content with a max-height cap (district grid). */
+  /* Fallback before JS measures the real row height (see sizeLocationList
+     in telegram-create.js), which then caps the metro list to ~5.5 rows
+     and the district grid to its content, both with a max-height cap. */
   height: 220px;
   overflow: auto;
   border: 1px solid var(--stroke);
@@ -418,6 +420,24 @@ input[readonly] {
   width: 18px;
   height: 18px;
   display: block;
+}
+/* Once a number is set, the input shows a fixed "+998-" calling-code prefix
+   before the editable, formatted national number (e.g. "(50)-153-30-80").
+   The prefix is a plain overlay span (like .icon above), not a second input —
+   clicks/typing still land on the single underlying <input>. */
+.phone-input-wrap-split input {
+  padding-left: 84px;
+}
+.phone-code-prefix {
+  position: absolute;
+  left: 34px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  pointer-events: none;
+  white-space: nowrap;
 }
 .phone-share-btn {
   appearance: none;

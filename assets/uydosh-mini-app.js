@@ -498,7 +498,16 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app body {
       background: var(--bg);
-      padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px));
+      /* '--uydosh-fixed-footer-height' lets a page reserve extra room above
+         this safe-area padding for its OWN fixed bottom bar (e.g. the create
+         wizard's/profile form's footer) — set on ':root' in that page's own
+         CSS. Defaults to 0 so pages without one (feed, account, …) are
+         unaffected. This rule's selector is deliberately as specific as any
+         page-level 'body { padding-bottom: … }' override so it always wins
+         the cascade instead of silently discarding it (that used to drop the
+         page's fixed-footer reservation entirely, letting content hide
+         behind the footer with no way to scroll it into view). */
+      padding-bottom: calc(var(--uydosh-fixed-footer-height, 0px) + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
     }
     html.mini-app header {
       display: flex;

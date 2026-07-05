@@ -6,9 +6,12 @@
 :root {
   --error: #f87171;
   --profile-footer-height: 72px;
-}
-body {
-  padding-bottom: calc(var(--profile-footer-height) + 12px + env(safe-area-inset-bottom, 0));
+  /* Read by the shared 'html.mini-app body' rule in uydosh-mini-app.js
+     (ensureMiniAppSafeAreaStyles) to reserve room above the safe-area inset
+     for this page's fixed footer — a plain 'body { padding-bottom }' rule
+     here would just get silently overridden by that shared, more specific
+     selector (see the same fix in telegram-create.css). */
+  --uydosh-fixed-footer-height: calc(var(--profile-footer-height) + 12px);
 }
 .wrap {
   padding-bottom: 24px;

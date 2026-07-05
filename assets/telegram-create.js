@@ -425,6 +425,51 @@ function selectedLocationReviewHtml(lang) {
   return UyDosh.escapeHtml(summary);
 }
 
+/**
+ * Calling codes we know how to split off a shared/typed phone number, longest
+ * match first so e.g. "998..." isn't mistaken for a generic 1-digit code.
+ * Mirrors the CIS-heavy set the mobile app offers at sign-in (see
+ * `_allowedPhoneDialCodes` in `phone_sign_in_sheet.dart`), since the same
+ * pool of Telegram users applies here.
+ */
+const PHONE_DIAL_CODES = [
+  '998', '996', '995', '994', '993', '992', '380', '375', '374', '373', '372', '371', '370', '7', '1',
+].sort((a, b) => b.length - a.length);
+
+/** Default calling code shown before the user has any phone number yet — UZ is this app's primary market. */
+const DEFAULT_PHONE_DIAL_CODE = '998';
+
+/**
+ * Splits a raw phone number (E.164-ish, with or without "+") into its calling
+ * code and the remaining national digits, so the review step can render the
+ * code as a fixed prefix and the rest as an editable, formatted field.
+ */
+function splitPhoneForDisplay(rawPhone) {
+  const digits = String(rawPhone || '').replace(/\D/g, '');
+  if (!digits) return { code: DEFAULT_PHONE_DIAL_CODE, national: '' };
+  const code = PHONE_DIAL_CODES.find((c) => digits.startsWith(c)) || digits.slice(0, 3);
+  return { code, national: digits.slice(code.length) };
+}
+
+/**
+ * Formats national-number digits the way local Uzbek numbers are normally
+ * grouped: "(90)-123-45-67". Works incrementally on partial input too, so it
+ * can be reused as an input formatter while the user is still typing.
+ */
+function formatNationalPhoneNumber(rawDigits) {
+  const digits = String(rawDigits || '').replace(/\D/g, '').slice(0, 9);
+  if (!digits) return '';
+  const groups = [digits.slice(0, 2)];
+  if (digits.length > 2) groups.push(digits.slice(2, 5));
+  if (digits.length > 5) groups.push(digits.slice(5, 7));
+  if (digits.length > 7) groups.push(digits.slice(7, 9));
+  let out = `(${groups[0]}`;
+  if (digits.length < 2) return out;
+  out += ')';
+  for (let i = 1; i < groups.length; i++) out += `-${groups[i]}`;
+  return out;
+}
+
 function fieldInlineErrorHtml(message) {
   if (!message) return '';
   return `<div class="field-inline-error" role="alert">${UyDosh.escapeHtml(message)}</div>`;
@@ -963,11 +1008,35 @@ function renderStep3(lang) {
     </div>`;
   }).join('');
 
+  // Always tappable — even once a number is already set/pre-filled from the
+  // account — so the user can re-pull the latest number from Telegram at any
+  // time and overwrite whatever's currently typed.
   const phoneShareBtn = `
-    <button type="button" class="phone-share-btn" data-share-phone${state.form.phone ? ' hidden' : ''}>
+    <button type="button" class="phone-share-btn" data-share-phone>
       ${UyDosh.iconPhone()}
       <span>${UyDosh.escapeHtml(UyDosh.t('create.sharePhoneCta', lang))}</span>
     </button>`;
+
+  // Always a fixed "+998-" calling-code prefix (see `splitPhoneForDisplay`,
+  // defaults to UZ when nothing's set yet) plus an editable, formatted
+  // national number the user can type directly — not only fillable via the
+  // Telegram share button. Persisted to `users.phone_number` on blur/share,
+  // see bindStepEvents below.
+  const { code: phoneCode, national: phoneNational } = splitPhoneForDisplay(state.form.phone);
+  const phoneFieldHtml = `
+          <div class="phone-input-wrap phone-input-wrap-split">
+            ${UyDosh.iconPhone()}
+            <span class="phone-code-prefix">+${UyDosh.escapeHtml(phoneCode)}-</span>
+            <input
+              id="listing-phone"
+              type="tel"
+              inputmode="numeric"
+              autocomplete="tel-national"
+              data-phone-code="${UyDosh.escapeHtml(phoneCode)}"
+              placeholder="${UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang))}"
+              value="${UyDosh.escapeHtml(formatNationalPhoneNumber(phoneNational))}"
+            />
+          </div>`;
 
   const reviewPhotoUrls = [
     ...state.existingPhotos.map((photo) => UyDosh.photoUrl(photo)),
@@ -990,16 +1059,7 @@ function renderStep3(lang) {
       <div class="field">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.reviewPhone', lang))}</div>
         <div class="phone-share-row">
-          <div class="phone-input-wrap">
-            ${UyDosh.iconPhone()}
-            <input
-              id="listing-phone"
-              type="text"
-              readonly
-              placeholder="${UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang))}"
-              value="${UyDosh.escapeHtml(state.form.phone)}"
-            />
-          </div>
+          ${phoneFieldHtml}
           ${phoneShareBtn}
         </div>
       </div>
@@ -1010,44 +1070,71 @@ function renderStep3(lang) {
 const STEP_PANEL_GAP_PX = 14;
 
 /**
- * The metro-station list's CSS height is a fixed guess (see `.station-list`
- * in create.html), which leaves a large empty gap above the fixed wizard
- * footer on tall screens. Measure the real remaining space and stretch the
- * list to fill it down to the footer, leaving a fixed 10px gap (mirrors
- * syncFeedMapPanelHeight in telegram-feed-map.js).
- *
  * The district grid (`.station-list-grid`) is short (two columns of ~12
- * items), so stretching it the same way just leaves empty space below the
- * last row. Size it to its content instead, capping at the same available
- * space so it still scrolls rather than overlapping the footer.
+ * items). Size it to its content, capped by the real remaining space down
+ * to the fixed wizard footer so it still scrolls rather than overlapping
+ * it (mirrors syncFeedMapPanelHeight in telegram-feed-map.js).
  *
  * Step 0 (roommate-needed listings) also renders an address field + "use my
- * location" button *after* this list — without reserving room for those, the
- * list would grow to fill all the way down to the footer and push that whole
- * block underneath it, clipped and barely reachable by scrolling. Measure and
- * reserve whatever height the list's trailing siblings (within the same
- * step) actually need first.
+ * location" button *after* this list — without reserving room for those,
+ * the list would grow to fill all the way down to the footer and push that
+ * whole block underneath it, clipped and barely reachable by scrolling.
+ * Measure and reserve whatever height the list's trailing siblings (within
+ * the same step) actually need first.
+ *
+ * The metro station list is a single scrolling column that can hold 50+
+ * stations, so instead of stretching to fill the viewport (which used to
+ * leave a large empty box for short lines) it's capped to ~5.5 rows: five
+ * full rows plus a deliberately clipped half row that hints the list keeps
+ * going. If a station on the current line is already selected, the list
+ * scrolls so that row lands in the middle of the (now compact) viewport.
  */
 function sizeLocationList() {
   const list = stepPanelsEl.querySelector('.station-list');
   if (!list) return;
-  const viewportHeight = window.visualViewport?.height || window.innerHeight;
-  if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
-  const top = list.getBoundingClientRect().top;
-  if (!Number.isFinite(top)) return;
-  const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
-  let trailingHeight = 0;
-  for (let sib = list.closest('.field')?.nextElementSibling; sib; sib = sib.nextElementSibling) {
-    trailingHeight += sib.getBoundingClientRect().height + STEP_PANEL_GAP_PX;
-  }
-  const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - trailingHeight - 10));
+
   if (list.classList.contains('station-list-grid')) {
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
+    const top = list.getBoundingClientRect().top;
+    if (!Number.isFinite(top)) return;
+    const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
+    let trailingHeight = 0;
+    for (let sib = list.closest('.field')?.nextElementSibling; sib; sib = sib.nextElementSibling) {
+      trailingHeight += sib.getBoundingClientRect().height + STEP_PANEL_GAP_PX;
+    }
+    const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - trailingHeight - 10));
     list.style.height = 'auto';
     list.style.maxHeight = `${available}px`;
+    return;
+  }
+
+  const row = list.querySelector('.station-item');
+  if (row) {
+    const rowHeight = row.getBoundingClientRect().height;
+    const styles = getComputedStyle(list);
+    const gap = parseFloat(styles.rowGap || styles.gap) || 0;
+    const paddingY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+    const maxHeight = paddingY + rowHeight * 5.5 + gap * 5;
+    list.style.height = 'auto';
+    list.style.maxHeight = `${Math.round(maxHeight)}px`;
   } else {
-    list.style.height = `${available}px`;
+    list.style.height = '';
     list.style.maxHeight = '';
   }
+  scrollSelectedStationIntoView(list);
+}
+
+/** Centers an already-selected station row in the metro list's visible
+ * viewport — e.g. when editing a listing, or switching back to a line with
+ * a prior selection — so the compact 5.5-row list doesn't hide it off-screen. */
+function scrollSelectedStationIntoView(list) {
+  const selectedBtn = list.querySelector('[data-station-id][aria-pressed="true"]');
+  if (!selectedBtn) return;
+  const listRect = list.getBoundingClientRect();
+  const btnRect = selectedBtn.getBoundingClientRect();
+  const delta = (btnRect.top + btnRect.height / 2) - (listRect.top + listRect.height / 2);
+  list.scrollTop = Math.max(0, Math.round(list.scrollTop + delta));
 }
 
 let sizeLocationListRaf = 0;
@@ -1784,6 +1871,31 @@ function bindStepEvents() {
       UyDosh.logMiniAppEvent('create_share_phone_saved');
     } catch (err) {
       UyDosh.logMiniAppEvent('create_share_phone_save_failed', { status: err?.status });
+    }
+  });
+
+  // Editable national-number field (see `phoneFieldHtml` in renderStep3) —
+  // the "+998-" prefix next to it stays a plain, non-interactive span.
+  // Reformats live as digits are typed, and best-effort persists to
+  // `users.phone_number` on blur so manually-typed numbers are saved just
+  // like ones pulled in via the share button above.
+  const phoneInput = stepPanelsEl.querySelector('#listing-phone');
+  phoneInput?.addEventListener('input', () => {
+    const digits = phoneInput.value.replace(/\D/g, '').slice(0, 9);
+    const caretAtEnd = phoneInput.selectionEnd === phoneInput.value.length;
+    phoneInput.value = formatNationalPhoneNumber(digits);
+    if (caretAtEnd) phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
+    const code = phoneInput.dataset.phoneCode || DEFAULT_PHONE_DIAL_CODE;
+    state.form.phone = digits ? `+${code}${digits}` : '';
+  });
+  phoneInput?.addEventListener('blur', async () => {
+    const digits = phoneInput.value.replace(/\D/g, '');
+    if (digits.length < 7) return;
+    try {
+      await UyDosh.updateMyPhoneNumber(state.form.phone);
+      UyDosh.logMiniAppEvent('create_phone_edit_saved');
+    } catch (err) {
+      UyDosh.logMiniAppEvent('create_phone_edit_save_failed', { status: err?.status });
     }
   });
 }
