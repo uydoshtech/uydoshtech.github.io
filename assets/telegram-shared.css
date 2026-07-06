@@ -340,6 +340,12 @@ a { color: inherit; text-decoration: none; }
 .chip-district[aria-pressed="true"] {
   --line-color: #F44336;
 }
+/* The pin icon itself always stays dark (unlike the "M" badges, its color
+   isn't tied to --line-color) so it stays visible against the badge's white
+   background even when the border is neutral grey in the unselected state. */
+.chip-district .metro-m-badge {
+  color: #1f2937;
+}
 .district-pin-badge svg {
   width: 11px;
   height: 11px;

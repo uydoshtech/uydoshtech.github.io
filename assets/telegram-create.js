@@ -465,15 +465,57 @@ function selectedLocationSummary(lang) {
   return names.join(', ');
 }
 
+/**
+ * Review-step metro stations get their own line-colored train icon each
+ * (via `UyDosh.iconMetro`, same icon/coloring as the transfer-station
+ * suffix in `nearbyMetroSectionHtml`) instead of one plain comma-joined
+ * string, so multi-station listings read like the rest of the app's metro
+ * chrome instead of bare text.
+ */
 function selectedLocationReviewHtml(lang) {
+  if (state.form.locationMode === LOCATION_MODE_METRO) {
+    const stations = state.form.selectedStationIds
+      .map((id) => state.stationCache[id])
+      .filter(Boolean);
+    if (!stations.length) return UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang));
+    return stations.map((st) => `
+      <span class="review-location-item">${UyDosh.iconMetro(st.line)}<span>${UyDosh.escapeHtml(UyDosh.localized(st, lang))}</span></span>
+    `).join('');
+  }
   const summary = selectedLocationSummary(lang);
   if (!summary) {
     return UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang));
   }
-  if (state.form.locationMode === LOCATION_MODE_DISTRICT) {
-    return `${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(summary)}</span>`;
-  }
-  return UyDosh.escapeHtml(summary);
+  return `<span class="review-location-item">${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(summary)}</span></span>`;
+}
+
+/**
+ * Known localized spellings of "Uzbekistan" that Yandex Geosuggest tacks on
+ * as the broadest (first) segment of `formatted_address` — stripped from the
+ * review step's address line since it's implied and just wastes space.
+ */
+const ADDRESS_COUNTRY_SEGMENTS = new Set([
+  'узбекистан', 'uzbekistan', "o'zbekiston", 'oʻzbekiston', 'ozbekiston', 'ўзбекистон',
+]);
+
+/**
+ * Yandex's `formatted_address` reads broad → narrow, e.g. "Узбекистан,
+ * Ташкент, улица Тараса Шевченко, 12". The review step instead wants it
+ * narrow → broad the way people actually write addresses, with the country
+ * dropped entirely: "улица Тараса Шевченко, 12, Ташкент". Only reorders
+ * well-formed `city, ..., street[, house]` shapes (3+ segments after the
+ * country is removed); anything shorter is returned as-is since we can't
+ * reliably tell which segment is the city.
+ */
+function formatAddressForReview(addressText) {
+  const segments = String(addressText || '')
+    .split(',')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  const withoutCountry = segments.filter((segment) => !ADDRESS_COUNTRY_SEGMENTS.has(segment.toLowerCase()));
+  if (withoutCountry.length < 2) return withoutCountry.join(', ') || addressText;
+  const [city, ...rest] = withoutCountry;
+  return [...rest, city].join(', ');
 }
 
 /**
@@ -1355,6 +1397,9 @@ function renderStep3(lang) {
     },
     { label: UyDosh.t('create.titleLabel', lang), value: state.form.title, clip: true },
     { label: UyDosh.t('create.descriptionLabel', lang), value: state.form.description, clip: true },
+    ...(!isRoomNeeded() && state.form.addressText.trim()
+      ? [{ label: UyDosh.t('create.address', lang), value: formatAddressForReview(state.form.addressText.trim()), clip: true }]
+      : []),
     {
       label: UyDosh.t('create.reviewLocation', lang),
       valueHtml: selectedLocationReviewHtml(lang),
@@ -1365,9 +1410,6 @@ function renderStep3(lang) {
       valueHtml: formatPriceReviewHtml(lang),
       price: true,
     },
-    ...(!isRoomNeeded() && state.form.addressText.trim()
-      ? [{ label: UyDosh.t('create.address', lang), value: state.form.addressText.trim(), clip: true }]
-      : []),
     {
       label: UyDosh.t('create.reviewAmenities', lang),
       valueHtml: amenityValueHtml,

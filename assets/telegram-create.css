@@ -111,7 +111,7 @@ html.mini-app header.uydosh-mini-app-header .header-actions {
   width: 14px;
   height: 14px;
 }
-select, input[type="text"], input[type="number"], input[type="date"], textarea {
+select, input[type="text"], input[type="number"], input[type="date"], input[type="tel"], textarea {
   width: 100%;
   border: 1px solid var(--stroke);
   background: rgba(127, 127, 127, 0.08);
@@ -641,11 +641,17 @@ input[readonly] {
   flex: 1;
 }
 .review-row dd.review-location {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 5px;
+  gap: 6px 10px;
   flex: 1;
+}
+.review-row dd.review-location .review-location-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .review-row dd.review-location .icon svg {
   width: 14px;
