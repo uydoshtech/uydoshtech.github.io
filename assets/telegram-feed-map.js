@@ -428,6 +428,13 @@
         state.mapResultTotal = Number.isFinite(total) ? total : pins.length;
         rebuildMapCarouselIndex();
         if (pins.length === 0) {
+          // Bail out *before* touching the map — without this check, a slow "0 results"
+          // response for a since-superseded filter would destroy the map a faster, newer
+          // filter change already rendered. Since that newer render already set
+          // `state.mapLoaded`/`lastLoadedMapSignature`, `onEnterMapView()` would then think
+          // the (just-destroyed) map is still fine and never reload it, leaving the map
+          // permanently blank until a hard retry.
+          if (generation !== mapLoadGeneration) return;
           await UyDosh.loadYandexMapModule().then((m) => m.destroyMap(feedMapEl)).catch(() => {});
           if (generation !== mapLoadGeneration) return;
           showFeedMapEmpty();

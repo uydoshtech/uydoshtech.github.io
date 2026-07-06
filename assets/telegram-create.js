@@ -935,12 +935,13 @@ async function updateAddressMapPreview() {
 }
 
 /**
- * Straight guide lines from the address-map-preview pin to every metro
- * station the author has tagged the listing with (`selectedStationIds`) —
- * see `setPinGuideLines` in yandex-map.js for why these are plain geodesic
- * lines rather than real routed walking paths (which would need Yandex's
- * separately billed Router product). Colored per metro line, same palette
- * used for the line chips/icons elsewhere. Reads coordinates from
+ * Pedestrian-routed guide paths from the address-map-preview pin to every
+ * metro station the author has tagged the listing with
+ * (`selectedStationIds`) — see `setPinGuideLines` in yandex-map.js for how
+ * these are built as one-shot `multiRouter.MultiRoute` walking routes (free
+ * under Yandex's combined Geocoder+Router daily allowance, not a live-
+ * tracked/re-routed navigation session). Colored per metro line, same
+ * palette used for the line chips/icons elsewhere. Reads coordinates from
  * `state.stationCache`, which accumulates every station ever seen across
  * line switches and nearby-station suggestions (see `loadStationsForLine`/
  * `findNearbyStations`), so a selection made from any line/suggestion list
@@ -1903,12 +1904,63 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
 
 /** Runs `findNearbyStations` and spreads its result across the three
  * `state.nearbyStations*` fields the panel reads from (see call sites in
- * `bindStepEvents`). */
+ * `bindStepEvents`), then kicks off `refineNearbyStationWalkTimes` to
+ * upgrade the straight-line estimate to real walking-nav minutes. */
 function applyNearbyStations(latitude, longitude, maxMinutes) {
   const { stations, isFallback } = findNearbyStations(latitude, longitude, maxMinutes);
   state.nearbyStations = stations;
   state.nearbyStationsIsFallback = isFallback;
   state.nearbyStationsChecked = true;
+  refineNearbyStationWalkTimes(latitude, longitude, stations);
+}
+
+/**
+ * Upgrades the straight-line walk-time estimate `applyNearbyStations` just
+ * put in `state.nearbyStations` with real Yandex pedestrian-routing minutes
+ * (`fetchPedestrianWalkTimes` in yandex-map.js, headless — no map needed,
+ * so this also works for room-needed's legacy metro/district tabs which
+ * don't show a map at all). One Router access per candidate station,
+ * capped at `MAX_SUGGESTED_STATIONS` (12) by `findNearbyStations` already,
+ * so a single lookup never spends more than that.
+ *
+ * Deliberately keeps the existing nearest-first ordering (based on the
+ * straight-line estimate) even once real numbers come in — re-sorting a
+ * chip list the author might already be tapping through would be jarring —
+ * and patches only the `.nearby-station-time` text of each matching chip
+ * directly in the DOM instead of a full re-render, so it works the same way
+ * whether the panel currently has a dedicated partial-refresh path
+ * (`renderNearbyMetroPanel`, roommate-needed) or not (room-needed's legacy
+ * tabs, which only ever get a full `renderStep()`). Guarded by a token so a
+ * stale in-flight refinement from a previous location/radius can't clobber
+ * a newer one that resolved first, and silently keeps the straight-line
+ * numbers already on screen if the Router call fails or times out.
+ */
+function refineNearbyStationWalkTimes(latitude, longitude, stations) {
+  const token = (state.nearbyStationsRefineToken = (state.nearbyStationsRefineToken || 0) + 1);
+  if (!stations.length) return;
+  UyDosh.loadYandexMapModule()
+    .then((mapModule) => mapModule.fetchPedestrianWalkTimes(
+      UyDosh.getLang(),
+      { latitude, longitude },
+      stations.map(({ station }) => ({ latitude: station.latitude, longitude: station.longitude })),
+    ))
+    .then((results) => {
+      if (state.nearbyStationsRefineToken !== token || results.size === 0) return;
+      const lang = UyDosh.getLang();
+      for (const [index, { minutes }] of results) {
+        const entry = stations[index];
+        if (!entry) continue;
+        entry.minutes = minutes;
+        const timeEl = stepPanelsEl.querySelector(
+          `[data-nearby-station-id="${Number(entry.station.id)}"] .nearby-station-time`,
+        );
+        if (timeEl) {
+          const label = UyDosh.t('create.walkMinutes', lang).replace('{count}', String(Math.max(1, Math.round(minutes))));
+          timeEl.innerHTML = `${UyDosh.iconClock()}${UyDosh.escapeHtml(label)}`;
+        }
+      }
+    })
+    .catch(() => { /* keep the straight-line estimate already on screen */ });
 }
 
 function toggleSelection(list, id, multi) {

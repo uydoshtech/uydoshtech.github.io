@@ -333,6 +333,14 @@ function switchView(nextView) {
   } else {
     resetFiltersScrollAnchor();
     feedMap.onLeaveMapView();
+    // A filter changed while the Map tab was active still clears the list's own
+    // items/grid right away (see `resetAndLoad()`), but skips re-fetching them since
+    // `loadMore()` is a no-op while `state.view !== 'list'` — so without this, tabbing
+    // back to List could keep showing whatever was on screen before that filter change
+    // (or nothing) instead of loading fresh results for the now-active filters.
+    if (!state.loading && !state.reachedEnd && !state.errored && state.items.length === 0) {
+      loadMore();
+    }
   }
 }
 

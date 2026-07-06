@@ -470,6 +470,15 @@ function iconLocateMe(color = null) {
   `);
 }
 
+/** Two waypoints joined by a dashed path — "draw a route to this station" button (listing detail's metro rows). */
+function iconRoute() {
+  return iconSvg(null, `
+    <circle cx="5" cy="18" r="2.2" stroke-width="2"></circle>
+    <circle cx="19" cy="6" r="2.2" stroke-width="2"></circle>
+    <path d="M7 16.5C10 13 8.5 9.5 11.5 7.5S15 4 17 3" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 3.4"></path>
+  `);
+}
+
 function iconMetro(line) {
   const color = metroLineColor(line) || 'currentColor';
   return iconSvg(color, `
@@ -686,6 +695,7 @@ Object.assign(window.UyDosh, {
   iconOverlapRects,
   iconLocateMe,
   iconMetro,
+  iconRoute,
   iconClock,
   iconPhone,
   iconEye,

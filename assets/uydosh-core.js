@@ -661,13 +661,13 @@ const ADDRESS_HOUSE_NUMBER_RE = /^\d+[a-zA-Zа-яА-ЯёЁ]?$/;
 const ADDRESS_DISTRICT_SUFFIX_RE = /\sрайон$/i;
 
 /**
- * Single source of truth for how a raw Yandex address (Geosuggest's
- * `formatted_address`/`title.text`, the reverse-geocoder's `meta.text`, or
- * whatever's already saved on a listing) is presented anywhere in the Mini
- * App. Yandex's text reads broad → narrow and includes the country when
- * present, e.g. "Узбекистан, Ташкент, Учтепинский район, массив Чиланзар,
- * 26-й квартал, 8". The app only ever serves Tashkent, so both the country
- * and the (redundant) city are dropped entirely, a trailing house number is
+ * How a raw Yandex address (Geosuggest's `formatted_address`/`title.text`,
+ * the reverse-geocoder's `meta.text`, or whatever's already saved on a
+ * listing) is presented on the create-listing address preview/picker.
+ * Yandex's text reads broad → narrow and includes the country when present,
+ * e.g. "Узбекистан, Ташкент, Учтепинский район, массив Чиланзар, 26-й
+ * квартал, 8". The app only ever serves Tashkent, so both the country and
+ * the (redundant) city are dropped entirely, a trailing house number is
  * split out and labelled, and the rest reads narrow → broad the way people
  * actually write addresses: "26-й квартал, дом 8, Учтепинский р-н, массив
  * Чиланзар".
@@ -675,6 +675,10 @@ const ADDRESS_DISTRICT_SUFFIX_RE = /\sрайон$/i;
  * Applying this at display time (rather than only when the address is first
  * resolved) means old listings saved before this formatting existed render
  * identically to new ones.
+ *
+ * NOTE: the listing detail page uses `formatListingDetailAddressText`
+ * instead (keeps the city, doesn't label the house number) — see that
+ * function for why the two intentionally differ.
  */
 function formatAddressText(address) {
   const text = typeof address === 'string' ? address.trim() : '';
@@ -703,6 +707,50 @@ function formatAddressText(address) {
   if (house) parts.splice(1, 0, `дом ${house}`);
 
   return parts.join(', ');
+}
+
+const ADDRESS_STREET_TYPE_PREFIX_RE = /^(массив|мкр\.?|жилой массив|квартал)\s+/i;
+
+/**
+ * Listing detail page's own address format — "Street, District, City", e.g.
+ * "массив Чиланзар, Учтепинский р-н, Ташкент" — as opposed to
+ * `formatAddressText`'s "Street, House, District" (used on the
+ * create-listing preview), which drops the city entirely. Operates on the
+ * same raw broad → narrow Yandex text, dropping only the leading country
+ * segment, merging a trailing house number into the street/massif segment,
+ * and reversing what's left so the city stays as the last (most general)
+ * segment.
+ */
+function formatListingDetailAddressText(address) {
+  const text = typeof address === 'string' ? address.trim() : '';
+  if (!text) return text;
+
+  let segments = text.split(',').map((segment) => segment.trim()).filter(Boolean);
+  if (segments.length === 0) return text;
+
+  if (ADDRESS_COUNTRY_SEGMENTS.has(segments[0].toLowerCase())) {
+    segments = segments.slice(1);
+  }
+  if (segments.length === 0) return text;
+  if (segments.length < 2) return segments.join(', ');
+
+  const rest = [...segments];
+  let house = null;
+  if (rest.length > 2 && ADDRESS_HOUSE_NUMBER_RE.test(rest[rest.length - 1])) {
+    house = rest.pop();
+  }
+
+  if (rest.length < 2) {
+    return [...rest, house].filter(Boolean).join(', ');
+  }
+
+  const streetLike = rest.pop().replace(ADDRESS_STREET_TYPE_PREFIX_RE, '').trim();
+  const firstSegment = house ? `${streetLike} ${house}` : streetLike;
+  const broaderSegments = rest
+    .reverse()
+    .map((segment) => segment.replace(ADDRESS_DISTRICT_SUFFIX_RE, ' р-н'));
+
+  return [firstSegment, ...broaderSegments].join(', ');
 }
 
 // Walk-time estimate constants + straight-line distance math shared by the
@@ -822,6 +870,7 @@ Object.assign(window.UyDosh, {
   isFeatured,
   listingTypeBadgeLabel,
   formatAddressText,
+  formatListingDetailAddressText,
   haversineMeters,
   estimatedWalkMinutes,
   listingReferenceCoordinates,

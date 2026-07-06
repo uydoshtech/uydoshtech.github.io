@@ -1957,15 +1957,22 @@
     if (draggable && dragHintText) {
       const hint = attachDragHintOverlay(container, dragHintText);
       if (hint) {
-        // Yandex's event manager has no built-in "once" — remove the
-        // listener manually right after the first drag so it doesn't keep
-        // re-triggering `hint.remove()` (harmless, but pointless) on every
-        // subsequent drag of the same pin.
+        // Listen for both `dragstart` *and* `dragend` — some touch/WebView
+        // environments (observed: Telegram mini app on iOS/Android) never
+        // fire ymaps' synthetic `dragstart` for a touch-driven drag even
+        // though the drag itself completes fine (`dragend` still fires,
+        // since that's what `onDragEnd` above relies on to update the pin's
+        // position). Relying on `dragstart` alone left the hint stuck on
+        // screen forever after such a drag. Yandex's event manager has no
+        // built-in "once", so remove both listeners manually right after
+        // whichever fires first so `hint.remove()` doesn't get called twice.
         const dismissHintOnce = () => {
           hint.remove();
           placemark.events.remove('dragstart', dismissHintOnce);
+          placemark.events.remove('dragend', dismissHintOnce);
         };
         placemark.events.add('dragstart', dismissHintOnce);
+        placemark.events.add('dragend', dismissHintOnce);
       }
     }
     ensureMapInteractionStyles();
@@ -1980,23 +1987,33 @@
   }
 
   /**
-   * Straight guide lines from a `renderSinglePinMap` pin to a set of other
-   * points — used for the create-listing wizard's "distance to each tagged
-   * metro station" preview. Deliberately plain geodesic lines rather than
-   * real streets: an actual routed walking path needs Yandex's separately
-   * billed Router product (`multiRouter.MultiRoute`, fee-based per their own
-   * docs), whereas a `Polyline` between two already-known coordinates is
-   * free, synchronous, and matches the straight-line walk-time estimate the
-   * wizard already shows elsewhere (`findNearbyStations` in
-   * telegram-create.js). Safe to call repeatedly — e.g. every time the
-   * selected-stations list changes or the pin gets dragged — and always
-   * re-fits the camera around the pin plus every line's far endpoint so the
-   * whole picture stays on screen.
+   * Real pedestrian-routed guide paths from a `renderSinglePinMap` pin to a
+   * set of other points — used for the create-listing wizard's "walking
+   * distance to each tagged metro station" preview. Each line is a one-shot
+   * `multiRouter.MultiRoute` (routingMode: 'pedestrian', no live tracking or
+   * re-routing) rather than a plain straight `Polyline`: a single static
+   * route lookup is exactly what MultiRoute is for, and it's covered by
+   * Yandex's free-use terms' combined Geocoder+Router daily allowance (see
+   * https://yandex.ru/legal/maps_api/en/ §2.3.9.3 — up to 25,000 combined
+   * accesses/day, one MultiRoute build = one access), the same free bucket
+   * this app's Geocoder/Suggest calls already draw from. `reverseGeocoding`
+   * is left off since both endpoints are already known coordinates — turning
+   * it on would silently add a Geocoder call per route just to label the
+   * (hidden, `wayPointVisible: false`) endpoint markers.
+   *
+   * Safe to call repeatedly — e.g. every time the selected-stations list
+   * changes or the pin gets dragged: it fully replaces the previous set of
+   * routes (a stale in-flight request from a superseded call is ignored via
+   * `guideLinesToken`, not left to clobber a newer result) and, once every
+   * route in the new batch has resolved (or failed), re-fits the camera
+   * around the pin plus every route so the whole picture stays on screen.
    */
   function setPinGuideLines(container, lines = []) {
     const instance = activeMaps.get(container);
     const ymaps = window.ymaps;
-    if (!instance?.map || !instance?.placemark || !ymaps) return;
+    if (!instance?.map || !instance?.placemark || !ymaps?.multiRouter) return;
+
+    const token = (instance.guideLinesToken = (instance.guideLinesToken || 0) + 1);
 
     if (!instance.guideLinesLayer) {
       instance.guideLinesLayer = new ymaps.GeoObjectCollection();
@@ -2014,36 +2031,105 @@
       .filter((line) => Number.isFinite(line.latitude) && Number.isFinite(line.longitude));
     if (validLines.length === 0) return;
 
+    const map = instance.map;
     const pinCoords = instance.placemark.geometry.getCoordinates();
-    for (const line of validLines) {
-      layer.add(new ymaps.Polyline(
-        [pinCoords, [line.latitude, line.longitude]],
-        {},
-        {
-          strokeColor: line.color,
-          strokeWidth: 3,
-          strokeOpacity: 0.85,
-          interactivityModel: 'default#transparent',
-        },
-      ));
-    }
+    let pending = validLines.length;
 
-    let minLat = pinCoords[0];
-    let maxLat = pinCoords[0];
-    let minLon = pinCoords[1];
-    let maxLon = pinCoords[1];
+    const fitOnceAllSettled = () => {
+      if (instance.guideLinesToken !== token) return; // superseded by a newer call
+      pending -= 1;
+      if (pending > 0) return;
+      try {
+        const bounds = map.geoObjects.getBounds();
+        if (bounds) map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 48 });
+      } catch { /* ignore */ }
+    };
+
     for (const line of validLines) {
-      minLat = Math.min(minLat, line.latitude);
-      maxLat = Math.max(maxLat, line.latitude);
-      minLon = Math.min(minLon, line.longitude);
-      maxLon = Math.max(maxLon, line.longitude);
-    }
-    try {
-      instance.map.setBounds([[minLat, minLon], [maxLat, maxLon]], {
-        checkZoomRange: true,
-        zoomMargin: 48,
+      const route = new ymaps.multiRouter.MultiRoute(
+        {
+          referencePoints: [pinCoords, [line.latitude, line.longitude]],
+          params: { routingMode: 'pedestrian', reverseGeocoding: false },
+        },
+        {
+          wayPointVisible: false,
+          boundsAutoApply: false,
+          routeActiveStrokeColor: line.color,
+          routeActiveStrokeWidth: 4,
+          routeStrokeColor: line.color,
+          routeStrokeWidth: 4,
+        },
+      );
+      route.model.events.add('requestsuccess', fitOnceAllSettled);
+      route.model.events.add('requestfail', (event) => {
+        console.warn('[UyDoshMap] Pedestrian route request failed', event?.get?.('error'));
+        fitOnceAllSettled();
       });
-    } catch { /* ignore */ }
+      layer.add(route);
+    }
+  }
+
+  /**
+   * Real pedestrian walking time + distance from one origin to a batch of
+   * destinations — headless (`multiRouter.MultiRouteModel`, no `MultiRoute`
+   * view, nothing drawn/added to a map), so this works from panels that
+   * have no map on screen at all (e.g. the "find nearby metro stations"
+   * chip list in the create-listing wizard, see `findNearbyStations` in
+   * telegram-create.js). One model per destination — the JS API has no
+   * "distance to many points from one origin" batch call — each counting
+   * as one Router access under Yandex's free combined Geocoder+Router daily
+   * allowance (see `setPinGuideLines` above for the cost breakdown).
+   *
+   * Resolves with a `Map` from the input array's index to
+   * `{ minutes, meters }`; any destination whose route fails, times out, or
+   * comes back with unusable data is simply absent from the map — the
+   * caller keeps whatever straight-line estimate it already had for those,
+   * so a slow/broken Router response never blocks or breaks the UI, it just
+   * misses out on the more accurate number.
+   */
+  function fetchPedestrianWalkTimes(lang, origin, destinations, { timeoutMs = 8000 } = {}) {
+    if (!Array.isArray(destinations) || destinations.length === 0) {
+      return Promise.resolve(new Map());
+    }
+    return loadYandexScript(lang).then((ymaps) => {
+      if (!ymaps?.multiRouter) return new Map();
+      const results = new Map();
+      const tasks = destinations.map((dest, index) => new Promise((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        const timer = setTimeout(finish, timeoutMs);
+        try {
+          const model = new ymaps.multiRouter.MultiRouteModel(
+            [[origin.latitude, origin.longitude], [dest.latitude, dest.longitude]],
+            { routingMode: 'pedestrian', reverseGeocoding: false },
+          );
+          model.events.add('requestsuccess', () => {
+            clearTimeout(timer);
+            try {
+              const route = model.getRoutes()[0];
+              const meters = route?.properties.get('distance')?.value;
+              const seconds = route?.properties.get('duration')?.value;
+              if (Number.isFinite(meters) && Number.isFinite(seconds)) {
+                results.set(index, { meters, minutes: seconds / 60 });
+              }
+            } catch { /* ignore — index just stays unresolved */ }
+            finish();
+          });
+          model.events.add('requestfail', () => {
+            clearTimeout(timer);
+            finish();
+          });
+        } catch {
+          clearTimeout(timer);
+          finish();
+        }
+      }));
+      return Promise.all(tasks).then(() => results);
+    }).catch(() => new Map());
   }
 
   async function renderPinsMap(container, {
@@ -2277,6 +2363,7 @@
     yandexMapsLang,
     renderSinglePinMap,
     setPinGuideLines,
+    fetchPedestrianWalkTimes,
     renderPinsMap,
     setHighlightedDistrict,
     locateUserFromTap,

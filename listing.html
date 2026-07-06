@@ -995,20 +995,42 @@
         font-size: 13px;
         color: var(--muted);
       }
-      .map-section-actions {
-        display: flex;
+      .map-section-approx-note .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .map-section-approx-note .icon svg { width: 14px; height: 14px; display: block; }
+      .map-section-approx-note .icon svg * { stroke: currentColor; fill: none; }
+      /* "Draw a route to this station" pseudo-button appended to each metro
+         row (see buildMetroStationRowHtml) — a `role="button"` span rather
+         than a real `<button>` since the whole row already lives inside the
+         section's `.map-section-toggle` `<button>`, and nested `<button>`s
+         are invalid HTML / unreliable to click. `bindMetroStationRouteButtons`
+         stops the click from bubbling up to that outer toggle. */
+      .map-section-row-route-btn {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        margin-top: 12px;
-      }
-      .map-section-actions .btn-link {
-        border: 0;
-        background: transparent;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(127, 127, 127, 0.12);
         color: var(--brand2);
-        font-weight: 600;
-        font-size: 15px;
+        flex: 0 0 auto;
+        align-self: center;
+        margin-left: auto;
         cursor: pointer;
-        padding: 8px;
       }
+      .map-section-row-route-btn:active { opacity: 0.8; }
+      .map-section-row-route-btn .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-flex;
+      }
+      .map-section-row-route-btn .icon svg { width: 16px; height: 16px; display: block; }
+      .map-section-row-route-btn .icon svg * { stroke: currentColor; fill: none; }
       .map-section-status {
         min-height: 250px;
         display: grid;
@@ -1131,9 +1153,9 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260707-101"></script>
-    <script src="assets/uydosh-api.js?v=20260707-107"></script>
-    <script src="assets/uydosh-i18n.js?v=20260707-32"></script>
-    <script src="assets/uydosh-icons.js?v=20260707-106"></script>
+    <script src="assets/uydosh-api.js?v=20260707-109"></script>
+    <script src="assets/uydosh-i18n.js?v=20260707-33"></script>
+    <script src="assets/uydosh-icons.js?v=20260707-107"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-profile-match.js?v=20260705-1"></script>
@@ -1277,6 +1299,10 @@
         mapExpanded: false,
         mapLoaded: false,
         mapLoading: false,
+        // Bumped each time `refineMetroStationWalkTimes` runs so a stale
+        // in-flight Router lookup from a previous mount can't clobber a
+        // newer one — see there for why this only ever runs once per mount.
+        metroWalkRefineToken: 0,
         // `render()` re-runs on language change, so this guards against
         // recording the same page visit as multiple views.
         viewRecorded: false,
@@ -2290,7 +2316,18 @@
       /**
        * One metro-station summary row: name + (when we can compute one) a
        * clock icon with walking distance/time from the listing's location
-       * to that station — see `UyDosh.stationWalkInfo` in uydosh-core.js.
+       * to that station — see `UyDosh.stationWalkInfo` in uydosh-core.js —
+       * plus a "draw route" button (when the station has coordinates) that
+       * plots a pedestrian route from the listing's pin to it on the map
+       * below (see `bindMetroStationRouteButtons` / `setPinGuideLines`).
+       *
+       * The straight-line km/min shown here is only the *initial* number,
+       * good enough for the collapsed summary that's visible before any map
+       * traffic is spent — `refineMetroStationWalkTimes` swaps it for a
+       * real Yandex-routed figure once the map section actually opens. The
+       * row carries `data-station-id` and the text its own
+       * `.map-section-walk-text` span so that later patch can target it
+       * directly without a full re-render.
        */
       function buildMetroStationRowHtml(station, lang, fallbackLine, refCoords) {
         const name = UyDosh.localized(station, lang);
@@ -2298,24 +2335,40 @@
         const line = Number(station.line) || fallbackLine;
         const walk = UyDosh.stationWalkInfo(refCoords, station);
         const walkHtml = walk ? `
-          <span class="map-section-walk">${UyDosh.iconClock()}<span>${UyDosh.escapeHtml(
+          <span class="map-section-walk">${UyDosh.iconClock()}<span class="map-section-walk-text">${UyDosh.escapeHtml(
             UyDosh.t('detail.metroWalkInfo')
               .replace('{km}', walk.km.toFixed(1))
               .replace('{minutes}', String(Math.max(1, Math.round(walk.minutes)))),
           )}</span></span>` : '';
-        return `<div class="map-section-row map-section-row-metro">${UyDosh.iconMetro(line)}<span class="map-section-row-metro-text"><span class="map-section-row-label">${UyDosh.escapeHtml(name)}</span>${walkHtml}</span></div>`;
+        const stationLat = Number(station.latitude);
+        const stationLon = Number(station.longitude);
+        const routeBtn = Number.isFinite(stationLat) && Number.isFinite(stationLon)
+          ? `<span class="map-section-row-route-btn" data-station-route data-lat="${stationLat}" data-lon="${stationLon}" data-color="${UyDosh.escapeHtml(UyDosh.metroLineColor(line) || '')}" role="button" tabindex="0" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.showRouteToStation'))}">${UyDosh.iconRoute()}</span>`
+          : '';
+        const stationId = Number(station.id);
+        const idAttr = Number.isFinite(stationId) ? ` data-station-id="${stationId}"` : '';
+        return `<div class="map-section-row map-section-row-metro"${idAttr}>${UyDosh.iconMetro(line)}<span class="map-section-row-metro-text"><span class="map-section-row-label">${UyDosh.escapeHtml(name)}</span>${walkHtml}</span>${routeBtn}</div>`;
+      }
+
+      /**
+       * Several stations can be tagged on a listing (see multi-station
+       * selection in telegram-create.js) — `search_subway_stations` holds
+       * all of them, falling back to the single legacy `subway_station`.
+       * Shared by `buildMapSectionHtml` (initial render) and
+       * `refineMetroStationWalkTimes` (real-routing upgrade) so both agree
+       * on exactly which stations are shown.
+       */
+      function listingMetroStations(l) {
+        return Array.isArray(l?.search_subway_stations) && l.search_subway_stations.length > 0
+          ? l.search_subway_stations
+          : (l?.subway_station ? [l.subway_station] : []);
       }
 
       function buildMapSectionHtml(l, lang, amenities = []) {
         const locName = UyDosh.localized(l.location, lang);
         const metroLine = UyDosh.resolveMetroLine(l);
         const address = typeof l.address_text === 'string' ? l.address_text.trim() : '';
-        // Several stations can be tagged on a listing (see multi-station
-        // selection in telegram-create.js) — `search_subway_stations` holds
-        // all of them, falling back to the single legacy `subway_station`.
-        const stations = Array.isArray(l.search_subway_stations) && l.search_subway_stations.length > 0
-          ? l.search_subway_stations
-          : (l.subway_station ? [l.subway_station] : []);
+        const stations = listingMetroStations(l);
         const hasLocation = Boolean(locName);
         const hasMetro = stations.length > 0;
         const hasAddress = Boolean(address);
@@ -2333,12 +2386,12 @@
           // Extra top margin (on top of `.map-section-summary`'s row gap) so the
           // exact address stands apart from the district row above it — that
           // describes the general area, this is the precise address.
-          // The country/city segments are redundant inside the Mini App
-          // (Telegram users are already local), so they're reformatted away
-          // there (see `UyDosh.formatAddressText`); the standalone website
-          // keeps the full raw address.
+          // The country segment is redundant inside the Mini App (Telegram
+          // users are already local), so it's reformatted away there as
+          // "Street, District, City" (see `UyDosh.formatListingDetailAddressText`);
+          // the standalone website keeps the full raw address.
           const displayAddress = UyDosh.isMiniApp()
-            ? UyDosh.formatAddressText(address)
+            ? UyDosh.formatListingDetailAddressText(address)
             : address;
           rows.push(`<div class="map-section-row map-section-row-address">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(displayAddress)}</span></div>`);
         }
@@ -2374,10 +2427,7 @@
             </button>
           <div class="map-section-body" hidden>
             <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
-            <div class="map-section-approx-note" data-map-approx-note hidden>${UyDosh.escapeHtml(UyDosh.t('map.approximateLocation'))}</div>
-            <div class="map-section-actions">
-              <a class="btn-link" data-open-yandex-map href="#" hidden>${UyDosh.escapeHtml(UyDosh.t('detail.openMapView'))}</a>
-            </div>
+            <div class="map-section-approx-note" data-map-approx-note hidden>${UyDosh.iconLocateMe()}${UyDosh.escapeHtml(UyDosh.t('map.approximateLocation'))}</div>
           </div>
         </section>
       `;
@@ -2402,63 +2452,148 @@
         });
       }
 
-      async function mountListingMap() {
+      // Memoizes the in-flight mount so concurrent callers (the accordion
+      // toggle *and* any metro row's "draw route" button, see
+      // `bindMetroStationRouteButtons`) await the same load instead of one
+      // of them racing past the `state.mapLoading` guard before the map
+      // instance actually exists yet.
+      let mapMountPromise = null;
+
+      function mountListingMap() {
+        if (mapMountPromise) return mapMountPromise;
         const container = rootEl.querySelector('#listing-map');
-        if (!container || state.mapLoading || state.mapLoaded) return;
+        if (!container || state.mapLoaded) return Promise.resolve();
         state.mapLoading = true;
-        container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('map.loading'))}</div>`;
-        try {
-          await UyDosh.waitForElementLayout(container);
-          const mapModule = await UyDosh.withTimeout(
-            UyDosh.loadYandexMapModule(),
-            MAP_LOAD_TIMEOUT_MS,
-            'Map module load timed out',
-          );
-          const coords = mapModule.resolveListingMapCoordinates(state.listing);
-          if (!coords) {
-            container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.mapUnavailable'))}</div>`;
-            return;
+        mapMountPromise = (async () => {
+          container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('map.loading'))}</div>`;
+          try {
+            await UyDosh.waitForElementLayout(container);
+            const mapModule = await UyDosh.withTimeout(
+              UyDosh.loadYandexMapModule(),
+              MAP_LOAD_TIMEOUT_MS,
+              'Map module load timed out',
+            );
+            const coords = mapModule.resolveListingMapCoordinates(state.listing);
+            if (!coords) {
+              container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.mapUnavailable'))}</div>`;
+              return;
+            }
+            container.innerHTML = '';
+            await UyDosh.waitForElementLayout(container);
+            const map = await UyDosh.withTimeout(
+              mapModule.renderSinglePinMap(container, {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+                lang: UyDosh.getLang(),
+                pin: {
+                  id: state.listing?.id,
+                  listing_type_id: state.listing?.listing_type_id ?? state.listing?.listing_type?.id,
+                  listing_type_code: state.listing?.listing_type?.code ?? state.listing?.listing_type_code,
+                  host_resident: state.listing?.host_resident,
+                },
+                selected: true,
+              }),
+              MAP_LOAD_TIMEOUT_MS,
+              'Map render timed out',
+            );
+            if (!map) {
+              throw new Error('Listing map failed to render');
+            }
+            const approxNote = rootEl.querySelector('[data-map-approx-note]');
+            if (approxNote) {
+              approxNote.toggleAttribute('hidden', coords.source !== 'approximate');
+            }
+            state.mapLoaded = true;
+            UyDosh.reflowActiveMaps();
+            refineMetroStationWalkTimes(mapModule, state.listing);
+          } catch (err) {
+            console.error('Failed to load listing map', err);
+            showListingMapError(container);
+          } finally {
+            state.mapLoading = false;
           }
-          container.innerHTML = '';
-          await UyDosh.waitForElementLayout(container);
-          const map = await UyDosh.withTimeout(
-            mapModule.renderSinglePinMap(container, {
-              latitude: coords.latitude,
-              longitude: coords.longitude,
-              lang: UyDosh.getLang(),
-              pin: {
-                id: state.listing?.id,
-                listing_type_id: state.listing?.listing_type_id ?? state.listing?.listing_type?.id,
-                listing_type_code: state.listing?.listing_type?.code ?? state.listing?.listing_type_code,
-                host_resident: state.listing?.host_resident,
-              },
-              selected: true,
-            }),
-            MAP_LOAD_TIMEOUT_MS,
-            'Map render timed out',
-          );
-          if (!map) {
-            throw new Error('Listing map failed to render');
+        })();
+        mapMountPromise.finally(() => { mapMountPromise = null; });
+        return mapMountPromise;
+      }
+
+      /**
+       * Upgrades each metro row's straight-line walk-time text (see
+       * `buildMetroStationRowHtml` / `UyDosh.stationWalkInfo`) to a real
+       * Yandex pedestrian-routing number — mirrors
+       * `refineNearbyStationWalkTimes` in telegram-create.js. Deliberately
+       * *not* run on initial page load, only once `mountListingMap()`
+       * actually succeeds (i.e. the author opened the map section, or
+       * tapped a "draw route" button which opens it first): the summary row
+       * with the straight-line estimate is visible before that, and every
+       * listing page view running this eagerly would spend a Router access
+       * per tagged station on every single view — unlike the create
+       * wizard's one-off use while drafting, that's real recurring site
+       * traffic. Piggybacking on the same gesture that already lazy-loads
+       * the Yandex script keeps the free daily Router quota mostly spent on
+       * visitors who actually engage with the map.
+       *
+       * Patches only each row's own `.map-section-walk-text` (found via the
+       * `data-station-id` `buildMetroStationRowHtml` put on the row) instead
+       * of a full re-render, and is guarded by a token so a stale in-flight
+       * lookup from an earlier mount (map collapsed/expanded again) can't
+       * clobber a newer one.
+       */
+      function refineMetroStationWalkTimes(mapModule, listing) {
+        const refCoords = UyDosh.listingReferenceCoordinates(listing);
+        const stations = listingMetroStations(listing).filter(
+          (st) => Number.isFinite(Number(st?.latitude)) && Number.isFinite(Number(st?.longitude)),
+        );
+        if (!refCoords || stations.length === 0) return;
+
+        const token = (state.metroWalkRefineToken += 1);
+        mapModule.fetchPedestrianWalkTimes(
+          UyDosh.getLang(),
+          refCoords,
+          stations.map((st) => ({ latitude: Number(st.latitude), longitude: Number(st.longitude) })),
+        ).then((results) => {
+          if (state.metroWalkRefineToken !== token || results.size === 0) return;
+          for (const [index, { minutes, meters }] of results) {
+            const station = stations[index];
+            const stationId = Number(station?.id);
+            if (!Number.isFinite(stationId)) continue;
+            const textEl = rootEl.querySelector(
+              `.map-section-row-metro[data-station-id="${stationId}"] .map-section-walk-text`,
+            );
+            if (!textEl) continue;
+            textEl.textContent = UyDosh.t('detail.metroWalkInfo')
+              .replace('{km}', (meters / 1000).toFixed(1))
+              .replace('{minutes}', String(Math.max(1, Math.round(minutes))));
           }
-          const openLink = rootEl.querySelector('[data-open-yandex-map]');
-          if (openLink) {
-            openLink.href = mapModule.yandexMapsOpenUrl(coords.latitude, coords.longitude);
-            openLink.removeAttribute('hidden');
-            openLink.setAttribute('target', '_blank');
-            openLink.setAttribute('rel', 'noopener noreferrer');
-          }
-          const approxNote = rootEl.querySelector('[data-map-approx-note]');
-          if (approxNote) {
-            approxNote.toggleAttribute('hidden', coords.source !== 'approximate');
-          }
-          state.mapLoaded = true;
-          UyDosh.reflowActiveMaps();
-        } catch (err) {
-          console.error('Failed to load listing map', err);
-          showListingMapError(container);
-        } finally {
-          state.mapLoading = false;
-        }
+        }).catch(() => { /* keep the straight-line estimate already on screen */ });
+      }
+
+      /**
+       * Opens the map accordion (matching the toggle's own transition
+       * timing) and awaits `mountListingMap()`, resolving immediately if
+       * it's already open/loaded — shared by the toggle button itself and
+       * every metro row's "draw route" button (see
+       * `bindMetroStationRouteButtons`), so clicking a route button while
+       * the map is still collapsed opens it and waits for the pin to exist
+       * before trying to draw a line to it.
+       */
+      function expandMapSection() {
+        const toggle = rootEl.querySelector('[data-map-toggle]');
+        const section = rootEl.querySelector('[data-map-section]');
+        const body = rootEl.querySelector('.map-section-body');
+        if (!toggle || !section || !body) return Promise.resolve();
+        if (state.mapExpanded) return mountListingMap();
+
+        state.mapExpanded = true;
+        section.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-expanded', 'true');
+        body.hidden = false;
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            if (state.mapExpanded) mountListingMap().then(resolve, resolve);
+            else resolve();
+          }, 350);
+        });
       }
 
       function bindMapSection() {
@@ -2468,22 +2603,67 @@
         if (!toggle || !section || !body) return;
 
         toggle.addEventListener('click', () => {
-          const next = !state.mapExpanded;
-          state.mapExpanded = next;
-          section.setAttribute('aria-expanded', next ? 'true' : 'false');
-          toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
-          body.hidden = !next;
-          if (next) {
-            setTimeout(() => {
-              if (state.mapExpanded) mountListingMap();
-            }, 350);
-          } else {
-            state.mapLoaded = false;
-            state.mapLoading = false;
-            UyDosh.loadYandexMapModule()
-              .then((mapModule) => mapModule.destroyMap(body.querySelector('#listing-map')))
-              .catch(() => { /* ignore */ });
+          if (!state.mapExpanded) {
+            expandMapSection();
+            return;
           }
+          state.mapExpanded = false;
+          section.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-expanded', 'false');
+          body.hidden = true;
+          state.mapLoaded = false;
+          state.mapLoading = false;
+          UyDosh.loadYandexMapModule()
+            .then((mapModule) => mapModule.destroyMap(body.querySelector('#listing-map')))
+            .catch(() => { /* ignore */ });
+        });
+
+        bindMetroStationRouteButtons();
+      }
+
+      /**
+       * Delegated click/keyboard handler for every metro row's
+       * `[data-station-route]` pseudo-button (see `buildMetroStationRowHtml`)
+       * — attached to `.map-section-summary`, a descendant of (but distinct
+       * element from) the outer `.map-section-toggle` `<button>`, so calling
+       * `stopPropagation()` here keeps a route-button tap from also
+       * triggering — or, worse, collapsing — the accordion toggle. Ensures
+       * the map is open (`expandMapSection`) before asking it to draw a
+       * pedestrian route from the listing's pin to that station.
+       */
+      function bindMetroStationRouteButtons() {
+        const summary = rootEl.querySelector('.map-section-summary');
+        if (!summary) return;
+
+        const activate = async (btn) => {
+          const latitude = Number(btn.dataset.lat);
+          const longitude = Number(btn.dataset.lon);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+          const color = btn.dataset.color || undefined;
+          try {
+            await expandMapSection();
+            const mapModule = await UyDosh.loadYandexMapModule();
+            const mapContainer = rootEl.querySelector('#listing-map');
+            mapModule.setPinGuideLines(mapContainer, [{ latitude, longitude, color }]);
+          } catch (err) {
+            console.error('Failed to draw route to metro station', err);
+          }
+        };
+
+        summary.addEventListener('click', (event) => {
+          const btn = event.target.closest('[data-station-route]');
+          if (!btn) return;
+          event.preventDefault();
+          event.stopPropagation();
+          activate(btn);
+        });
+        summary.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          const btn = event.target.closest('[data-station-route]');
+          if (!btn) return;
+          event.preventDefault();
+          event.stopPropagation();
+          activate(btn);
         });
       }
 
