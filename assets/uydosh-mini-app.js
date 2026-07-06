@@ -438,7 +438,7 @@ function miniAppHeaderHtml(options = {}) {
   } = options;
   const brandContent =
     `<img src="${escapeHtml(iconSrc)}" width="44" height="44" alt="UyDosh" />` +
-    `<div><strong>UyDosh</strong><span data-i18n="${escapeHtml(subtitleKey)}"></span></div>`;
+    `<div><strong><span class="brand-uy">Uy</span><span class="brand-dosh">Dosh</span></strong><span data-i18n="${escapeHtml(subtitleKey)}"></span></div>`;
   const brand = brandLink
     ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
     : `<div class="brand">${brandContent}</div>`;
@@ -557,7 +557,11 @@ function ensureMiniAppSafeAreaStyles() {
          off the top instead of cutting into the skyline itself. */
       background-image: linear-gradient(180deg, rgba(6, 21, 37, 0.32), rgba(6, 21, 37, 0.55)), url('/images/telegram-header-bg.webp');
       background-size: cover;
-      background-position: center bottom;
+      /* Not fully bottom-anchored (100%) — that clipped the tops of the
+         taller buildings/tower. 80% keeps the skyline low enough to read as
+         a "header backdrop" while leaving the rooftops and tower tip clear
+         of the top edge on every header width. */
+      background-position: center 80%;
       background-repeat: no-repeat;
     }
     html.mini-app header,
@@ -567,6 +571,12 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app header .brand span {
       color: rgba(255, 255, 255, 0.72);
+    }
+    html.mini-app header .brand .brand-uy {
+      color: var(--brand, #e11d2e);
+    }
+    html.mini-app header .brand .brand-dosh {
+      color: rgba(255, 255, 255, 0.95);
     }
     html.mini-app header .theme-toggle-btn,
     html.mini-app header .account-menu-trigger {

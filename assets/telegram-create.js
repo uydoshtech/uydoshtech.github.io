@@ -862,6 +862,69 @@ function legacyLocationTabsHtml(lang) {
     ${locationBody}`;
 }
 
+function hasAddressCoords() {
+  return state.form.addressLatitude != null && state.form.addressLongitude != null;
+}
+
+/**
+ * Monotonic guard for `updateAddressMapPreview`'s async module load — a
+ * later call (address changed again, or the field was cleared) invalidates
+ * any in-flight load so it can't clobber a newer result once it resolves.
+ */
+let addressMapPreviewLoadToken = 0;
+
+/**
+ * Drops/(re)paints the small "pin preview" map under the address field once
+ * `state.form.addressLatitude/Longitude` resolve (see `resolveAddressLocation`
+ * and the `data-use-current-location` handler) — the same Yandex Maps module
+ * used for the listing detail page's single-pin map (`renderSinglePinMap`),
+ * lazy-loaded here for the first time so pages/steps that never show this
+ * field never pay for it. Keyed off `container.dataset.mapKey` (not a
+ * module-level cache) since `renderStep()` rebuilds `#address-map-preview`
+ * as a brand-new DOM node on every full re-render — comparing against the
+ * *new* node's (empty) dataset naturally forces a fresh render there, while
+ * `handleAddressInputChange`'s targeted clear reuses the existing node and
+ * skips redundant work if coordinates haven't actually changed.
+ */
+async function updateAddressMapPreview() {
+  const container = stepPanelsEl.querySelector('#address-map-preview');
+  if (!container) return;
+  const latitude = state.form.addressLatitude;
+  const longitude = state.form.addressLongitude;
+
+  if (latitude == null || longitude == null) {
+    container.hidden = true;
+    if (container.dataset.mapKey) {
+      delete container.dataset.mapKey;
+      UyDosh.loadYandexMapModule()
+        .then((mapModule) => mapModule.destroyMap(container))
+        .catch(() => { /* module never loaded — nothing to tear down */ });
+    }
+    return;
+  }
+
+  container.hidden = false;
+  const key = `${Number(latitude).toFixed(6)}_${Number(longitude).toFixed(6)}`;
+  if (container.dataset.mapKey === key) return;
+  container.dataset.mapKey = key;
+
+  const token = ++addressMapPreviewLoadToken;
+  try {
+    const mapModule = await UyDosh.loadYandexMapModule();
+    if (token !== addressMapPreviewLoadToken || container.dataset.mapKey !== key) return;
+    await UyDosh.waitForElementLayout(container);
+    await mapModule.renderSinglePinMap(container, {
+      latitude,
+      longitude,
+      lang: UyDosh.getLang(),
+      listingTypeId: state.form.listingTypeId,
+    });
+    UyDosh.reflowActiveMaps();
+  } catch (err) {
+    console.error('[Create] Address map preview failed', err);
+  }
+}
+
 /**
  * Nearby-metro panel for `roommateLocationSectionHtml`: the same selectable
  * chips as `nearbyStationsHtml` once an address has resolved to
@@ -925,6 +988,7 @@ function roommateLocationSectionHtml(lang) {
           <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
         </button>
       </div>
+      <div class="address-map-preview map-container" id="address-map-preview" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map', lang))}" ${hasAddressCoords() ? '' : 'hidden'}></div>
     </div>
     ${nearbyMetroSectionHtml(lang)}`;
 }
@@ -1102,6 +1166,7 @@ function handleAddressInputChange(value) {
     state.nearbyStationsChecked = false;
     state.nearbyStationsIsFallback = false;
     renderNearbyMetroPanel();
+    updateAddressMapPreview();
   }
 
   if (query.length < ADDRESS_SUGGEST_MIN_LENGTH) {
@@ -1638,6 +1703,7 @@ function renderStep() {
   bindStepEvents();
   updateWizardFooter();
   sizeLocationList();
+  updateAddressMapPreview();
 }
 
 /**

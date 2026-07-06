@@ -196,7 +196,10 @@
         padding: 6px;
         border-radius: 14px;
         border: 1px solid var(--stroke);
-        background: var(--card);
+        /* Solid (not `--card`, which is a faint tint meant for surfaces sitting on
+           the page background) — this menu floats over photos/map content, so it
+           needs an opaque backing to stay legible. Matches `.complaint-sheet`. */
+        background: var(--bg);
         box-shadow: var(--shadow);
       }
       .owner-menu-dropdown[hidden] { display: none !important; }

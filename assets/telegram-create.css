@@ -866,6 +866,20 @@ input[readonly] {
   border-radius: 50%;
   animation: uydosh-spin 0.75s linear infinite;
 }
+/* Small "pin preview" map under the address field (see
+   updateAddressMapPreview in telegram-create.js) — shows once the typed/
+   detected address resolves to coordinates. Shorter than the listing
+   detail page's map (`.map-container` in listing.html) since this is just
+   a confirmation glance, not the main content of the step. */
+.address-map-preview {
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.08);
+}
+.address-map-preview[hidden] { display: none; }
 /* "Stations near you" suggestions, shown under the "Find nearby metro
    stations" button once findNearbyStations resolves (see nearbyStationsHtml). */
 .nearby-stations {
