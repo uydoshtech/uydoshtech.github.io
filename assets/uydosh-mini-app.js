@@ -682,8 +682,10 @@ function ensureMiniAppSafeAreaStyles() {
       border: none;
       background: none;
       padding: 0;
-      width: 34px;
-      height: 34px;
+      /* Matches .brand img (the UyDosh logo) so both header circles/tiles
+         read as the same visual size. */
+      width: 44px;
+      height: 44px;
       /* Positioning context for the chevron badge, which overlaps this
          circle's bottom-right corner instead of sitting beside it in a
          separate pill — keeps the trigger a plain avatar-sized circle. */
@@ -710,8 +712,8 @@ function ensureMiniAppSafeAreaStyles() {
       color: var(--muted, rgba(255, 255, 255, 0.7));
     }
     html.mini-app .account-menu-avatar svg {
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       display: block;
     }
     html.mini-app .account-menu-avatar.has-avatar .account-menu-avatar-img {

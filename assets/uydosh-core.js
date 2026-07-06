@@ -549,12 +549,17 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
     : Number(cachedSubwayStation?.line) || Number(pin.subway_line_id) || null;
   const posted = listing?.created_at ? formatPublicationDate(listing.created_at, lang) : '';
 
+  // `dotsep` draws a "•" separator before a span (see .map-pin-tooltip-meta .dotsep::before
+  // in telegram-index.css) — only meaningful once something already precedes it on the same
+  // line, so it's applied conditionally here rather than hardcoded per field, otherwise
+  // whichever of these ends up first (e.g. metro/approximate-location without a location
+  // name) would render with a dangling leading bullet.
   const metaParts = [];
   if (locName) {
     metaParts.push(`<span>${iconPin()}${escapeHtml(locName)}</span>`);
   }
   if (metro) {
-    metaParts.push(`<span class="dotsep">${iconMetro(metroLine)}${escapeHtml(metro)}</span>`);
+    metaParts.push(`<span${metaParts.length ? ' class="dotsep"' : ''}>${iconMetro(metroLine)}${escapeHtml(metro)}</span>`);
   }
   if (posted) {
     metaParts.push(`<span class="map-pin-tooltip-date">${iconClock()}${escapeHtml(posted)}</span>`);
@@ -563,7 +568,7 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
     // Listing was placed on the map via the location-approx pipeline's
     // generated point (metro/district/landmark anchor), not a real address —
     // flag it the same way the mobile app's pin tooltip does.
-    metaParts.push(`<span class="dotsep">${iconLocateMe()}${escapeHtml(t('map.approximateLocation', lang))}</span>`);
+    metaParts.push(`<span${metaParts.length ? ' class="dotsep"' : ''}>${iconLocateMe()}${escapeHtml(t('map.approximateLocation', lang))}</span>`);
   }
 
   const badgesPriceRow = badges || price

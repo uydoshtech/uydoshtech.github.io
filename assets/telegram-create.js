@@ -922,11 +922,46 @@ async function updateAddressMapPreview() {
       onPinDragEnd: handleAddressPinDragEnd,
       dragHintText: UyDosh.t('create.addressMapDragHint', UyDosh.getLang()),
       zoomControl: true,
+      // Plain Yandex red pin for now instead of the app's custom listing-type icon —
+      // set to `false` (or drop this line) to switch back once we want this widget to
+      // reuse the custom icon again.
+      standardIcon: true,
     });
     UyDosh.reflowActiveMaps();
+    updateAddressMapGuideLines();
   } catch (err) {
     console.error('[Create] Address map preview failed', err);
   }
+}
+
+/**
+ * Straight guide lines from the address-map-preview pin to every metro
+ * station the author has tagged the listing with (`selectedStationIds`) —
+ * see `setPinGuideLines` in yandex-map.js for why these are plain geodesic
+ * lines rather than real routed walking paths (which would need Yandex's
+ * separately billed Router product). Colored per metro line, same palette
+ * used for the line chips/icons elsewhere. Reads coordinates from
+ * `state.stationCache`, which accumulates every station ever seen across
+ * line switches and nearby-station suggestions (see `loadStationsForLine`/
+ * `findNearbyStations`), so a selection made from any line/suggestion list
+ * resolves here regardless of which one is currently displayed. Safe to
+ * call whenever the pin or the selection changes — it's a no-op if the map
+ * hasn't been mounted (module not loaded yet, or address cleared).
+ */
+function updateAddressMapGuideLines() {
+  const container = stepPanelsEl.querySelector('#address-map-preview');
+  if (!container) return;
+  const lines = state.form.selectedStationIds
+    .map((id) => state.stationCache[Number(id)])
+    .filter((station) => station != null)
+    .map((station) => ({
+      latitude: station.latitude,
+      longitude: station.longitude,
+      color: UyDosh.metroLineColor?.(station.line) || undefined,
+    }));
+  UyDosh.loadYandexMapModule()
+    .then((mapModule) => mapModule.setPinGuideLines(container, lines))
+    .catch(() => { /* map module not loaded — nothing to draw onto yet */ });
 }
 
 /**
@@ -953,6 +988,7 @@ async function handleAddressPinDragEnd({ latitude, longitude }) {
   if (container) {
     container.dataset.mapKey = `${latitude.toFixed(6)}_${longitude.toFixed(6)}`;
   }
+  updateAddressMapGuideLines();
 
   applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
   renderNearbyMetroPanel();

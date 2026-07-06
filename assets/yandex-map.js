@@ -857,14 +857,23 @@
     };
   }
 
-  function createPlacemark(ymaps, pin, { onPinClick, draggable, onDragEnd, ...visualOverrides } = {}) {
-    const visualCtx = pinVisualContext(visualOverrides);
+  function createPlacemark(ymaps, pin, { onPinClick, draggable, onDragEnd, standardIcon = false, ...visualOverrides } = {}) {
+    // `standardIcon` swaps the app's custom pin bitmap (see `placemarkIconOptions` /
+    // `createMapPinIcon` in uydosh-map-pins.js) for Yandex's own default red teardrop
+    // marker — used for the draggable address-confirmation pin, which is meant to read as
+    // "a plain, standard map pin you're placing" rather than one of the app's own listing-
+    // type pins. `placemarkIconOptions` itself is untouched/still used everywhere else
+    // (listing detail page, feed pins) — flip this back to `false` (or just omit it) to
+    // restore the custom icon here too, once we're ready to reuse it for this widget.
+    const iconOptions = standardIcon
+      ? { preset: 'islands#redIcon' }
+      : placemarkIconOptions(pin, pinVisualContext(visualOverrides));
     const placemark = new ymaps.Placemark(
       [pin.latitude, pin.longitude],
       {},
       {
         ...mapObjectInteractionOptions(),
-        ...placemarkIconOptions(pin, visualCtx),
+        ...iconOptions,
         ...(draggable ? { draggable: true } : null),
       },
     );
@@ -1916,6 +1925,7 @@
     onPinDragEnd,
     dragHintText = '',
     zoomControl = false,
+    standardIcon = false,
   } = {}) {
     await destroyMap(container);
     const ymaps = await loadYandexScript(lang);
@@ -1941,6 +1951,7 @@
       selected,
       draggable,
       onDragEnd: onPinDragEnd,
+      standardIcon,
     });
     map.geoObjects.add(placemark);
     if (draggable && dragHintText) {
@@ -1966,6 +1977,73 @@
     trackedContainers.add(container);
     scheduleMapReflow(container);
     return map;
+  }
+
+  /**
+   * Straight guide lines from a `renderSinglePinMap` pin to a set of other
+   * points — used for the create-listing wizard's "distance to each tagged
+   * metro station" preview. Deliberately plain geodesic lines rather than
+   * real streets: an actual routed walking path needs Yandex's separately
+   * billed Router product (`multiRouter.MultiRoute`, fee-based per their own
+   * docs), whereas a `Polyline` between two already-known coordinates is
+   * free, synchronous, and matches the straight-line walk-time estimate the
+   * wizard already shows elsewhere (`findNearbyStations` in
+   * telegram-create.js). Safe to call repeatedly — e.g. every time the
+   * selected-stations list changes or the pin gets dragged — and always
+   * re-fits the camera around the pin plus every line's far endpoint so the
+   * whole picture stays on screen.
+   */
+  function setPinGuideLines(container, lines = []) {
+    const instance = activeMaps.get(container);
+    const ymaps = window.ymaps;
+    if (!instance?.map || !instance?.placemark || !ymaps) return;
+
+    if (!instance.guideLinesLayer) {
+      instance.guideLinesLayer = new ymaps.GeoObjectCollection();
+      instance.map.geoObjects.add(instance.guideLinesLayer);
+    }
+    const layer = instance.guideLinesLayer;
+    layer.removeAll();
+
+    const validLines = (lines || [])
+      .map((line) => ({
+        latitude: Number(line.latitude),
+        longitude: Number(line.longitude),
+        color: line.color || '#3b82f6',
+      }))
+      .filter((line) => Number.isFinite(line.latitude) && Number.isFinite(line.longitude));
+    if (validLines.length === 0) return;
+
+    const pinCoords = instance.placemark.geometry.getCoordinates();
+    for (const line of validLines) {
+      layer.add(new ymaps.Polyline(
+        [pinCoords, [line.latitude, line.longitude]],
+        {},
+        {
+          strokeColor: line.color,
+          strokeWidth: 3,
+          strokeOpacity: 0.85,
+          interactivityModel: 'default#transparent',
+        },
+      ));
+    }
+
+    let minLat = pinCoords[0];
+    let maxLat = pinCoords[0];
+    let minLon = pinCoords[1];
+    let maxLon = pinCoords[1];
+    for (const line of validLines) {
+      minLat = Math.min(minLat, line.latitude);
+      maxLat = Math.max(maxLat, line.latitude);
+      minLon = Math.min(minLon, line.longitude);
+      maxLon = Math.max(maxLon, line.longitude);
+    }
+    try {
+      instance.map.setBounds([[minLat, minLon], [maxLat, maxLon]], {
+        checkZoomRange: true,
+        zoomMargin: 48,
+      });
+    } catch { /* ignore */ }
   }
 
   async function renderPinsMap(container, {
@@ -2198,6 +2276,7 @@
     yandexMapsOpenUrl,
     yandexMapsLang,
     renderSinglePinMap,
+    setPinGuideLines,
     renderPinsMap,
     setHighlightedDistrict,
     locateUserFromTap,
