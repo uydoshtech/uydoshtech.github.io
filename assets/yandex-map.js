@@ -17,6 +17,53 @@
   const activeMaps = new WeakMap();
   const trackedContainers = new Set();
 
+  /** Best-effort stringification for `reportYandexMapIssue`'s `details` field. */
+  function safeIssueDetails(value) {
+    if (value == null) return undefined;
+    if (value instanceof Error) return value.message || value.name || 'Error';
+    if (typeof value === 'string') return value;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  /**
+   * Fire-and-forget report of a failed Yandex Maps API call (script load,
+   * pedestrian routing, etc.) to our own backend (`POST /app/yandex-maps-log`,
+   * see uydosh_backend's appRoutes.ts) — it just logs it server-side via
+   * plain `console.error`, which flows through the same PM2 -> CloudWatch
+   * Agent pipeline as every other server log, so these failures (invisible
+   * to us otherwise — they only ever reach a visitor's own browser console)
+   * show up somewhere we can actually grep/alert on. Uses `sendBeacon` when
+   * available so it still gets a chance to fire even if the map failure is
+   * followed shortly by a page navigation/close. Never throws or rejects:
+   * reporting a failure should never itself become a new one.
+   */
+  function reportYandexMapIssue(kind, message, details) {
+    try {
+      const apiBase = String(window.UyDosh?.API_BASE || 'https://api.uydosh.com').replace(/\/$/, '');
+      const url = `${apiBase}/app/yandex-maps-log`;
+      const payload = JSON.stringify({
+        kind: String(kind || 'unknown'),
+        message: String(message || ''),
+        page: (typeof location !== 'undefined' && location.href) || '',
+        details: safeIssueDetails(details),
+      });
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+        return;
+      }
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(() => { /* best-effort only */ });
+    } catch { /* best-effort only */ }
+  }
+
   function numberOrNull(value) {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
@@ -2002,32 +2049,45 @@
     return map;
   }
 
+  // Max time to wait for a pedestrian MultiRoute to resolve before giving up
+  // on it and drawing a plain straight line instead (see `setPinGuideLines`)
+  // — the Router request can fail silently (no `requestfail`, it just never
+  // fires) if the API key's account has no Router access/quota, so a bare
+  // `requestfail` listener alone isn't enough to guarantee something ends up
+  // on screen.
+  const GUIDE_LINE_ROUTE_TIMEOUT_MS = 6000;
+
   /**
-   * Real pedestrian-routed guide paths from a `renderSinglePinMap` pin to a
-   * set of other points — used for the create-listing wizard's "walking
-   * distance to each tagged metro station" preview. Each line is a one-shot
-   * `multiRouter.MultiRoute` (routingMode: 'pedestrian', no live tracking or
-   * re-routing) rather than a plain straight `Polyline`: a single static
-   * route lookup is exactly what MultiRoute is for, and it's covered by
-   * Yandex's free-use terms' combined Geocoder+Router daily allowance (see
-   * https://yandex.ru/legal/maps_api/en/ §2.3.9.3 — up to 25,000 combined
-   * accesses/day, one MultiRoute build = one access), the same free bucket
-   * this app's Geocoder/Suggest calls already draw from. `reverseGeocoding`
-   * is left off since both endpoints are already known coordinates — turning
-   * it on would silently add a Geocoder call per route just to label the
-   * (hidden, `wayPointVisible: false`) endpoint markers.
+   * Guide paths from a `renderSinglePinMap` pin to a set of other points —
+   * used for the create-listing wizard's "walking distance to each tagged
+   * metro station" preview, and the listing detail page's per-station
+   * "draw route" buttons. Tries a real pedestrian `multiRouter.MultiRoute`
+   * first (routingMode: 'pedestrian', no live tracking/re-routing — a single
+   * static route lookup is exactly what MultiRoute is for, and it's covered
+   * by Yandex's free-use terms' combined Geocoder+Router daily allowance,
+   * see https://yandex.ru/legal/maps_api/en/ §2.3.9.3), falling back to a
+   * plain dashed straight `Polyline` if that never pans out — either because
+   * `ymaps.multiRouter` isn't available at all, the request comes back with
+   * `requestfail` (e.g. no Router product enabled on this API key/account),
+   * or it just never resolves within `GUIDE_LINE_ROUTE_TIMEOUT_MS`. Without
+   * this fallback, any of those cases left the button that triggers this
+   * looking like it did nothing at all. `reverseGeocoding` is left off since
+   * both endpoints are already known coordinates — turning it on would
+   * silently add a Geocoder call per route just to label the (hidden,
+   * `wayPointVisible: false`) endpoint markers.
    *
    * Safe to call repeatedly — e.g. every time the selected-stations list
    * changes or the pin gets dragged: it fully replaces the previous set of
    * routes (a stale in-flight request from a superseded call is ignored via
    * `guideLinesToken`, not left to clobber a newer result) and, once every
-   * route in the new batch has resolved (or failed), re-fits the camera
-   * around the pin plus every route so the whole picture stays on screen.
+   * route in the new batch has resolved/failed/fallen back, re-fits the
+   * camera around the pin plus every route so the whole picture stays on
+   * screen.
    */
   function setPinGuideLines(container, lines = []) {
     const instance = activeMaps.get(container);
     const ymaps = window.ymaps;
-    if (!instance?.map || !instance?.placemark || !ymaps?.multiRouter) return;
+    if (!instance?.map || !instance?.placemark) return;
 
     const token = (instance.guideLinesToken = (instance.guideLinesToken || 0) + 1);
 
@@ -2062,6 +2122,35 @@
     };
 
     for (const line of validLines) {
+      let settled = false;
+      let timer = null;
+      const drawStraightFallback = () => {
+        if (instance.guideLinesToken !== token) return;
+        const straight = new ymaps.Polyline(
+          [pinCoords, [line.latitude, line.longitude]],
+          {},
+          { strokeColor: line.color, strokeWidth: 3, strokeStyle: 'shortdash' },
+        );
+        layer.add(straight);
+      };
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (timer != null) clearTimeout(timer);
+        fitOnceAllSettled();
+      };
+
+      if (!ymaps?.multiRouter) {
+        drawStraightFallback();
+        finish();
+        continue;
+      }
+
+      timer = setTimeout(() => {
+        drawStraightFallback();
+        finish();
+      }, GUIDE_LINE_ROUTE_TIMEOUT_MS);
+
       const route = new ymaps.multiRouter.MultiRoute(
         {
           referencePoints: [pinCoords, [line.latitude, line.longitude]],
@@ -2076,10 +2165,11 @@
           routeStrokeWidth: 4,
         },
       );
-      route.model.events.add('requestsuccess', fitOnceAllSettled);
+      route.model.events.add('requestsuccess', finish);
       route.model.events.add('requestfail', (event) => {
-        console.warn('[UyDoshMap] Pedestrian route request failed', event?.get?.('error'));
-        fitOnceAllSettled();
+        console.warn('[UyDoshMap] Pedestrian route request failed, falling back to a straight line', event?.get?.('error'));
+        drawStraightFallback();
+        finish();
       });
       layer.add(route);
     }
