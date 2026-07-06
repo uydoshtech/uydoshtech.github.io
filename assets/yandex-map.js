@@ -557,6 +557,114 @@
     });
   }
 
+  /**
+   * Small floating pill shown at the midpoint of a pin -> metro-station guide line/route
+   * (see `setPinGuideLines`), reading e.g. "↝ 2.0 km  🕐 33 min" — a real `ymaps.Placemark`
+   * (not a plain DOM overlay like `attachDragHintOverlay`) so it stays correctly anchored
+   * to that geo point through pans/zooms for free, same reasoning as
+   * `createDistrictLabelPlacemark` above.
+   */
+  const ROUTE_INFO_LABEL_CLASS = 'uydosh-route-info-label';
+  const ROUTE_INFO_STYLE_ID = 'uydosh-map-route-info-styles';
+
+  function ensureRouteInfoLabelStyles() {
+    if (document.getElementById(ROUTE_INFO_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = ROUTE_INFO_STYLE_ID;
+    style.textContent = `
+      .${ROUTE_INFO_LABEL_CLASS} {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: rgba(20, 20, 20, 0.86);
+        color: #fff;
+        font: 700 11px/1.2 system-ui, -apple-system, sans-serif;
+        white-space: nowrap;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+      .${ROUTE_INFO_LABEL_CLASS} > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .${ROUTE_INFO_LABEL_CLASS} .icon {
+        width: 12px;
+        height: 12px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .${ROUTE_INFO_LABEL_CLASS} .icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .${ROUTE_INFO_LABEL_CLASS} .icon svg * {
+        stroke: currentColor;
+      }
+      .${ROUTE_INFO_LABEL_CLASS}-sep {
+        width: 1px;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.32);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function routeInfoLabelHtml(meters, minutes, lang) {
+    const km = meters / 1000;
+    const roundedMinutes = Math.max(1, Math.round(minutes));
+    const distanceText = (window.UyDosh?.t?.('map.routeDistanceKm', lang) || '{km} km')
+      .replace('{km}', km.toFixed(1));
+    const durationText = (window.UyDosh?.t?.('map.routeDurationMin', lang) || '{minutes} min')
+      .replace('{minutes}', String(roundedMinutes));
+    const routeIcon = window.UyDosh?.iconRoute?.() ?? '';
+    const clockIcon = window.UyDosh?.iconClock?.() ?? '';
+    return `<span>${routeIcon}${distanceText}</span><span class="${ROUTE_INFO_LABEL_CLASS}-sep"></span><span>${clockIcon}${durationText}</span>`;
+  }
+
+  let routeInfoLayoutClass = null;
+  function ensureRouteInfoLayout(ymaps) {
+    if (routeInfoLayoutClass) return routeInfoLayoutClass;
+    const Layout = ymaps.templateLayoutFactory.createClass(
+      `<div class="${ROUTE_INFO_LABEL_CLASS}"></div>`,
+      {
+        build: function () {
+          Layout.superclass.build.call(this);
+          const props = this.getData().properties;
+          const el = this.getElement()?.firstChild;
+          if (!el) return;
+          el.innerHTML = props.get('html') || '';
+        },
+      },
+    );
+    routeInfoLayoutClass = Layout;
+    return Layout;
+  }
+
+  /** Midpoint between two `[lat, lng]` pairs — good enough for label placement at this
+   * (city, walking-distance) scale; doesn't need to follow the route's actual path shape. */
+  function midpointCoordinates(a, b) {
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }
+
+  function createRouteInfoPlacemark(ymaps, coordinates, meters, minutes, lang) {
+    ensureRouteInfoLabelStyles();
+    return new ymaps.Placemark(coordinates, {
+      html: routeInfoLabelHtml(meters, minutes, lang),
+    }, {
+      iconLayout: ensureRouteInfoLayout(ymaps),
+      iconShape: { type: 'Rectangle', coordinates: [[-55, -12], [55, 12]] },
+      hasHint: false,
+      hasBalloon: false,
+      interactivityModel: 'default#transparent',
+      zIndex: 30,
+    });
+  }
+
   /** All Tashkent metro stations, cached per language (static infrastructure data). */
   const subwayStationsPromiseByLang = new Map();
   function loadAllSubwayStations(lang) {
@@ -574,7 +682,7 @@
     return promise;
   }
 
-  function createMetroStationPlacemark(ymaps, station, lang) {
+  function createMetroStationPlacemark(ymaps, station, lang, onClick) {
     const lat = Number(station?.latitude);
     const lon = Number(station?.longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
@@ -591,7 +699,7 @@
           preset: 'islands#circleIcon',
           iconColor: window.UyDosh?.metroLineColor?.(station?.line) || '#616161',
         };
-    return new ymaps.Placemark([lat, lon], {
+    const placemark = new ymaps.Placemark([lat, lon], {
       hintContent: name,
     }, {
       ...iconOptions,
@@ -599,6 +707,269 @@
       hasBalloon: false,
       zIndex: customIcon?.zIndex ?? 50,
     });
+    if (typeof onClick === 'function') {
+      placemark.events.add('click', (event) => {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        onClick(station);
+      });
+    }
+    return placemark;
+  }
+
+  /**
+   * Tapping a metro station layer icon shows a small floating info card (name + district,
+   * mirrors the mobile app's `MetroStationMapTooltip`) plus a walking-distance circle around
+   * the station (mirrors `_createMetroStationWalkingRadius` in
+   * yandex_map_widget_map_objects.dart). Both are real `ymaps.Placemark`/`ymaps.Circle` geo-
+   * objects — not DOM overlays — so they stay correctly anchored through pans/zooms for free,
+   * same reasoning as `createRouteInfoPlacemark` above.
+   */
+  const METRO_STATION_WALK_MINUTES = 15;
+  const METRO_WALK_CIRCLE_COLOR = '#1E88E5';
+
+  const METRO_TOOLTIP_CLASS = 'uydosh-metro-tooltip';
+  const METRO_TOOLTIP_STYLE_ID = 'uydosh-map-metro-tooltip-styles';
+
+  function ensureMetroTooltipStyles() {
+    if (document.getElementById(METRO_TOOLTIP_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = METRO_TOOLTIP_STYLE_ID;
+    style.textContent = `
+      .${METRO_TOOLTIP_CLASS} {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 150px;
+        max-width: 220px;
+        padding: 10px 26px 10px 12px;
+        border-radius: 14px;
+        background: rgba(20, 20, 20, 0.92);
+        color: #fff;
+        font: 600 12px/1.3 system-ui, -apple-system, sans-serif;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+        transform: translate(-50%, calc(-100% - 16px));
+        pointer-events: auto;
+        cursor: default;
+      }
+      .${METRO_TOOLTIP_CLASS}::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: rgba(20, 20, 20, 0.92);
+      }
+      .${METRO_TOOLTIP_CLASS}-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .${METRO_TOOLTIP_CLASS}-row span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .${METRO_TOOLTIP_CLASS}-name {
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .${METRO_TOOLTIP_CLASS}-district {
+        opacity: 0.82;
+        font-weight: 600;
+      }
+      .${METRO_TOOLTIP_CLASS} .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .${METRO_TOOLTIP_CLASS} .icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .${METRO_TOOLTIP_CLASS}-district .icon svg * {
+        stroke: currentColor;
+      }
+      .${METRO_TOOLTIP_CLASS}-close {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: #fff;
+        opacity: 0.7;
+        width: 22px;
+        height: 22px;
+        margin: 0;
+        padding: 0;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        pointer-events: auto;
+      }
+      .${METRO_TOOLTIP_CLASS}-close:active { opacity: 1; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function metroTooltipHtml(station, lang) {
+    const escapeHtml = window.UyDosh?.escapeHtml || ((s) => String(s ?? ''));
+    const name = window.UyDosh?.localized?.(station, lang) || '';
+    const location = window.UyDosh?.getCachedLocationById?.(station?.location_id, lang);
+    const district = window.UyDosh?.localizedShort?.(location, lang) || '';
+    const metroIcon = window.UyDosh?.iconMetro?.(station?.line) ?? '';
+    const pinIcon = window.UyDosh?.iconPin?.() ?? '';
+    const closeLabel = window.UyDosh?.t?.('map.tooltip.close', lang) || 'Close';
+    const districtRow = district
+      ? `<div class="${METRO_TOOLTIP_CLASS}-row ${METRO_TOOLTIP_CLASS}-district">${pinIcon}<span>${escapeHtml(district)}</span></div>`
+      : '';
+    return `
+      <button type="button" class="${METRO_TOOLTIP_CLASS}-close" data-metro-tooltip-close aria-label="${escapeHtml(closeLabel)}">×</button>
+      <div class="${METRO_TOOLTIP_CLASS}-row ${METRO_TOOLTIP_CLASS}-name">${metroIcon}<span>${escapeHtml(name)}</span></div>
+      ${districtRow}
+    `;
+  }
+
+  let metroTooltipLayoutClass = null;
+  function ensureMetroTooltipLayout(ymaps) {
+    if (metroTooltipLayoutClass) return metroTooltipLayoutClass;
+    const Layout = ymaps.templateLayoutFactory.createClass(
+      `<div class="${METRO_TOOLTIP_CLASS}"></div>`,
+      {
+        build: function () {
+          Layout.superclass.build.call(this);
+          const el = this.getElement()?.firstChild;
+          if (!el) return;
+          el.innerHTML = this.getData().properties.get('html') || '';
+          this._closeHandler = (event) => {
+            event.stopPropagation();
+            this.getData().properties.get('onClose')?.();
+          };
+          el.querySelector('[data-metro-tooltip-close]')?.addEventListener('click', this._closeHandler);
+        },
+        clear: function () {
+          const el = this.getElement()?.firstChild;
+          const closeBtn = el?.querySelector('[data-metro-tooltip-close]');
+          if (closeBtn && this._closeHandler) closeBtn.removeEventListener('click', this._closeHandler);
+          Layout.superclass.clear.call(this);
+        },
+      },
+    );
+    metroTooltipLayoutClass = Layout;
+    return Layout;
+  }
+
+  function createMetroStationTooltipPlacemark(ymaps, station, lang, onClose) {
+    ensureMetroTooltipStyles();
+    const lat = Number(station?.latitude);
+    const lon = Number(station?.longitude);
+    return new ymaps.Placemark([lat, lon], {
+      html: metroTooltipHtml(station, lang),
+      onClose,
+    }, {
+      iconLayout: ensureMetroTooltipLayout(ymaps),
+      iconShape: { type: 'Rectangle', coordinates: [[-110, -90], [110, 6]] },
+      hasHint: false,
+      hasBalloon: false,
+      zIndex: 60,
+    });
+  }
+
+  function metroWalkRadiusMeters() {
+    return window.UyDosh?.estimatedWalkRadiusMeters?.(METRO_STATION_WALK_MINUTES)
+      ?? METRO_STATION_WALK_MINUTES * 80;
+  }
+
+  /** Circle geo-object for the "N min walk area" around a tapped metro station — geodesic
+   * radius in meters, so it renders as a real-world circle regardless of zoom/latitude. */
+  function createMetroWalkCircle(ymaps, station, radius) {
+    const lat = Number(station?.latitude);
+    const lon = Number(station?.longitude);
+    return new ymaps.Circle([[lat, lon], radius], {}, {
+      // Same 16%/42% fill/stroke alpha as the mobile app's walking-radius circle
+      // (`_createWalkingRadiusCircle` in yandex_map_widget_map_objects.dart).
+      fillColor: hexWithAlpha(METRO_WALK_CIRCLE_COLOR, 0.16),
+      strokeColor: hexWithAlpha(METRO_WALK_CIRCLE_COLOR, 0.42),
+      strokeWidth: 2,
+      interactivityModel: 'default#transparent',
+      zIndex: 15,
+    });
+  }
+
+  /** North-shifted `[lat, lng]` for placing the "N min walk area" label above a station,
+   * same fixed-latitude-degree approximation used elsewhere in this file (see `midpointCoordinates`) —
+   * good enough at this (city, few-km) scale. Mirrors `_pointOffsetNorth` in the mobile app. */
+  function offsetCoordinatesNorth(lat, lon, meters) {
+    const METERS_PER_DEGREE_LATITUDE = 111320;
+    return [lat + meters / METERS_PER_DEGREE_LATITUDE, lon];
+  }
+
+  function metroWalkAreaLabelHtml(minutes, lang) {
+    const text = (window.UyDosh?.t?.('map.metroWalkArea', lang) || '{minutes} min walk area')
+      .replace('{minutes}', String(minutes));
+    const clockIcon = window.UyDosh?.iconClock?.() ?? '';
+    return `<span>${clockIcon}${text}</span>`;
+  }
+
+  /** "N min walk area" pill placed near the top of the walk circle — reuses the route-info
+   * label's layout/styles (`ensureRouteInfoLayout`/`ensureRouteInfoLabelStyles`) since it's
+   * the same generic "dark pill with an icon" look, just different content. Mirrors the
+   * mobile app's `_createMetroStationWalkingRadiusLabel`. */
+  function createMetroWalkAreaLabel(ymaps, station, radiusMeters, lang) {
+    ensureRouteInfoLabelStyles();
+    const lat = Number(station?.latitude);
+    const lon = Number(station?.longitude);
+    const coordinates = offsetCoordinatesNorth(lat, lon, radiusMeters * 0.56);
+    return new ymaps.Placemark(coordinates, {
+      html: metroWalkAreaLabelHtml(METRO_STATION_WALK_MINUTES, lang),
+    }, {
+      iconLayout: ensureRouteInfoLayout(ymaps),
+      iconShape: { type: 'Rectangle', coordinates: [[-65, -12], [65, 12]] },
+      hasHint: false,
+      hasBalloon: false,
+      interactivityModel: 'default#transparent',
+      zIndex: 20,
+    });
+  }
+
+  /** Selects (or, if already selected, deselects) a metro station on the layer — shows/hides
+   * its info tooltip and walking-radius circle. See `setMetroLayerMode` for where the click
+   * that calls this is wired up, and the `map.events.add('click', ...)` in `renderPinsMap`
+   * for dismissing on an outside tap. */
+  function setSelectedMetroStation(container, station, lang) {
+    const instance = activeMaps.get(container);
+    const selection = instance?.metroLayer?.selection;
+    if (!instance?.map || !selection) return;
+    const stationId = Number(station?.id);
+    if (selection.stationId === stationId) {
+      clearSelectedMetroStation(container);
+      return;
+    }
+    selection.collection.removeAll();
+    selection.stationId = stationId;
+    const ymaps = window.ymaps;
+    const radius = metroWalkRadiusMeters();
+    selection.collection.add(createMetroWalkCircle(ymaps, station, radius));
+    selection.collection.add(createMetroWalkAreaLabel(ymaps, station, radius, lang));
+    selection.collection.add(createMetroStationTooltipPlacemark(ymaps, station, lang, () => {
+      clearSelectedMetroStation(container);
+    }));
+  }
+
+  function clearSelectedMetroStation(container) {
+    const instance = activeMaps.get(container);
+    const selection = instance?.metroLayer?.selection;
+    if (!selection) return;
+    selection.stationId = null;
+    selection.collection.removeAll();
   }
 
   /** off → all → line1 → line2 → line3 → line4 → off (matches the mobile app's metro layer cycle). */
@@ -735,6 +1106,10 @@
     const layer = instance?.metroLayer;
     if (!instance?.map || !layer) return;
     layer.mode = mode;
+    // Any mode change removes/rebuilds the layer's placemarks, so a tapped station's
+    // tooltip/walk-circle would otherwise be left pointing at a (possibly now-hidden)
+    // station — simplest correct behavior is to always clear the selection here.
+    clearSelectedMetroStation(container);
     if (mode === 'off') {
       layer.collection.removeAll();
       return;
@@ -751,7 +1126,9 @@
       const lang = window.UyDosh?.getLang?.() || 'ru';
       const byLine = new Map();
       for (const station of stations) {
-        const placemark = createMetroStationPlacemark(ymaps, station, lang);
+        const placemark = createMetroStationPlacemark(ymaps, station, lang, (clickedStation) => {
+          setSelectedMetroStation(container, clickedStation, lang);
+        });
         if (!placemark) continue;
         const line = Number(station.line) || 0;
         if (!byLine.has(line)) byLine.set(line, []);
@@ -905,6 +1282,39 @@
     };
   }
 
+  // Yandex's `islands#*Icon` preset family (used below for `standardIcon`) renders a
+  // ~30x42px teardrop with the coordinate anchored at the glyph's bottom tip — this is
+  // Yandex's own documented default for that preset family, not something we measure
+  // ourselves. Only used as the base size for `draggablePinIconShape` below.
+  const STANDARD_PRESET_ICON_WIDTH = 30;
+  const STANDARD_PRESET_ICON_HEIGHT = 42;
+
+  // Draggable pins get a bigger *invisible* touch/drag target than their visible glyph —
+  // small glyphs (especially the standard teardrop, which tapers to a point) are hard to
+  // grab precisely with a fingertip.
+  const DRAGGABLE_PIN_TOUCH_AREA_SCALE = 2;
+
+  /**
+   * Builds an `iconShape` rectangle scaled up from the icon's own bounding box —
+   * Yandex uses `iconShape` purely for hit-testing (click/drag), so this only changes
+   * how big an area responds to a touch/drag, not how the pin actually looks. Keeps the
+   * box's bottom edge pinned to the glyph's anchor point (y = 0) rather than centering it
+   * vertically, since the anchor is the glyph's bottom tip — centering would put half the
+   * extra hit area *below* the ground point, which would feel like dragging from thin air
+   * underneath the pin instead of from the pin itself.
+   */
+  function draggablePinIconShape(iconWidth, iconHeight) {
+    const halfWidth = (iconWidth * DRAGGABLE_PIN_TOUCH_AREA_SCALE) / 2;
+    const height = iconHeight * DRAGGABLE_PIN_TOUCH_AREA_SCALE;
+    return {
+      type: 'Rectangle',
+      coordinates: [
+        [-halfWidth, -height],
+        [halfWidth, 0],
+      ],
+    };
+  }
+
   function createPlacemark(ymaps, pin, { onPinClick, draggable, onDragEnd, standardIcon = false, ...visualOverrides } = {}) {
     // `standardIcon` swaps the app's custom pin bitmap (see `placemarkIconOptions` /
     // `createMapPinIcon` in uydosh-map-pins.js) for Yandex's own default red teardrop
@@ -916,13 +1326,18 @@
     const iconOptions = standardIcon
       ? { preset: 'islands#redIcon' }
       : placemarkIconOptions(pin, pinVisualContext(visualOverrides));
+    const [iconWidth, iconHeight] = standardIcon
+      ? [STANDARD_PRESET_ICON_WIDTH, STANDARD_PRESET_ICON_HEIGHT]
+      : iconOptions.iconImageSize ?? [STANDARD_PRESET_ICON_WIDTH, STANDARD_PRESET_ICON_HEIGHT];
     const placemark = new ymaps.Placemark(
       [pin.latitude, pin.longitude],
       {},
       {
         ...mapObjectInteractionOptions(),
         ...iconOptions,
-        ...(draggable ? { draggable: true } : null),
+        ...(draggable
+          ? { draggable: true, iconShape: draggablePinIconShape(iconWidth, iconHeight) }
+          : null),
       },
     );
     if (typeof onPinClick === 'function') {
@@ -1971,11 +2386,33 @@
     el.textContent = text;
     container.appendChild(el);
     return {
+      el,
       remove() {
         el.classList.add('uydosh-map-drag-hint-hide');
         setTimeout(() => el.remove(), 220);
       },
     };
+  }
+
+  /**
+   * Moves the drag-hint bubble to sit just above the placemark's *current* on-screen
+   * position — called on every `drag` event so the bubble tracks the pin's finger/mouse
+   * position throughout the gesture instead of staying frozen at its initial (mount-time,
+   * CSS-centered) spot. Switches the bubble from the default percentage-based centering
+   * (`left: 50%` in `ensureDragHintStyles`) to explicit pixel coordinates — inline styles
+   * win over the class's rules, so this only takes effect once a drag actually starts.
+   */
+  function repositionDragHint(el, container, map, coordinates) {
+    if (!el || !container || !map) return;
+    const projection = map.options.get('projection');
+    if (!projection) return;
+    const globalPixels = projection.toGlobalPixels(coordinates, map.getZoom());
+    const [pageX, pageY] = map.converter.globalToPage(globalPixels);
+    const containerRect = container.getBoundingClientRect();
+    const left = pageX - containerRect.left - window.pageXOffset;
+    const top = pageY - containerRect.top - window.pageYOffset;
+    el.style.left = `${left}px`;
+    el.style.top = `${top - DRAG_HINT_OFFSET_PX}px`;
   }
 
   async function renderSinglePinMap(container, {
@@ -2021,22 +2458,23 @@
     if (draggable && dragHintText) {
       const hint = attachDragHintOverlay(container, dragHintText);
       if (hint) {
-        // Listen for both `dragstart` *and* `dragend` — some touch/WebView
-        // environments (observed: Telegram mini app on iOS/Android) never
-        // fire ymaps' synthetic `dragstart` for a touch-driven drag even
-        // though the drag itself completes fine (`dragend` still fires,
-        // since that's what `onDragEnd` above relies on to update the pin's
-        // position). Relying on `dragstart` alone left the hint stuck on
-        // screen forever after such a drag. Yandex's event manager has no
-        // built-in "once", so remove both listeners manually right after
-        // whichever fires first so `hint.remove()` doesn't get called twice.
-        const dismissHintOnce = () => {
-          hint.remove();
-          placemark.events.remove('dragstart', dismissHintOnce);
-          placemark.events.remove('dragend', dismissHintOnce);
+        // Track the pin's live position throughout the gesture (see
+        // `repositionDragHint`) instead of dismissing on `dragstart` — some touch/
+        // WebView environments (observed: Telegram mini app on iOS/Android) never
+        // fire ymaps' synthetic `dragstart` for a touch-driven drag even though the
+        // drag itself completes fine, so dismissing there left the hint frozen at its
+        // original spot for the *entire* drag on those platforms. `dragend` is what
+        // `onDragEnd` above already relies on, so it's the reliable one to clean up on.
+        const followPinDuringDrag = () => {
+          repositionDragHint(hint.el, container, map, placemark.geometry.getCoordinates());
         };
-        placemark.events.add('dragstart', dismissHintOnce);
-        placemark.events.add('dragend', dismissHintOnce);
+        const dismissHint = () => {
+          placemark.events.remove('drag', followPinDuringDrag);
+          placemark.events.remove('dragend', dismissHint);
+          hint.remove();
+        };
+        placemark.events.add('drag', followPinDuringDrag);
+        placemark.events.add('dragend', dismissHint);
       }
     }
     ensureMapInteractionStyles();
@@ -2122,17 +2560,33 @@
       } catch { /* ignore */ }
     };
 
+    const lang = window.UyDosh?.getLang?.();
     for (const line of validLines) {
       let settled = false;
       let timer = null;
+      const destCoords = [line.latitude, line.longitude];
+      const addInfoLabel = (meters, minutes) => {
+        if (!Number.isFinite(meters) || !Number.isFinite(minutes)) return;
+        try {
+          layer.add(createRouteInfoPlacemark(
+            ymaps,
+            midpointCoordinates(pinCoords, destCoords),
+            meters,
+            minutes,
+            lang,
+          ));
+        } catch { /* the route/line itself already drew — the label is a nice-to-have */ }
+      };
       const drawStraightFallback = () => {
         if (instance.guideLinesToken !== token) return;
         const straight = new ymaps.Polyline(
-          [pinCoords, [line.latitude, line.longitude]],
+          [pinCoords, destCoords],
           {},
           { strokeColor: line.color, strokeWidth: 3, strokeStyle: 'shortdash' },
         );
         layer.add(straight);
+        const meters = window.UyDosh?.haversineMeters?.(pinCoords[0], pinCoords[1], line.latitude, line.longitude);
+        addInfoLabel(meters, window.UyDosh?.estimatedWalkMinutes?.(meters));
       };
       const finish = () => {
         if (settled) return;
@@ -2171,7 +2625,19 @@
           routeStrokeWidth: 4,
         },
       );
-      route.model.events.add('requestsuccess', finish);
+      route.model.events.add('requestsuccess', () => {
+        if (instance.guideLinesToken === token) {
+          try {
+            const activeRoute = route.getActiveRoute();
+            const distance = activeRoute?.properties?.get('distance');
+            const duration = activeRoute?.properties?.get('duration');
+            if (distance?.value != null && duration?.value != null) {
+              addInfoLabel(distance.value, duration.value / 60);
+            }
+          } catch { /* the route itself already drew — the label is a nice-to-have */ }
+        }
+        finish();
+      });
       route.model.events.add('requestfail', (event) => {
         const routeErr = event?.get?.('error');
         console.warn('[UyDoshMap] Pedestrian route request failed, falling back to a straight line', routeErr);
@@ -2307,12 +2773,11 @@
       suppressMapOpenBlock: true,
     });
 
-    if (typeof onMapClick === 'function') {
-      map.events.add('click', () => {
-        closeMapBalloon(map);
-        onMapClick();
-      });
-    }
+    map.events.add('click', () => {
+      closeMapBalloon(map);
+      clearSelectedMetroStation(container);
+      onMapClick?.();
+    });
 
     const mapInstance = { map };
     mapInstance.districtLayer = {
@@ -2327,9 +2792,17 @@
       mode: initialMetroLayerMode || 'off',
       objectsByLine: null,
       collection: new ymaps.GeoObjectCollection(),
+      // Tapped station's info tooltip + walk-radius circle (see `setSelectedMetroStation`) —
+      // a separate collection/z-order from the station icons themselves so it always renders
+      // on top of them regardless of add order.
+      selection: {
+        stationId: null,
+        collection: new ymaps.GeoObjectCollection(),
+      },
     };
     map.geoObjects.add(mapInstance.districtLayer.collection);
     map.geoObjects.add(mapInstance.metroLayer.collection);
+    map.geoObjects.add(mapInstance.metroLayer.selection.collection);
     activeMaps.set(container, mapInstance);
     // Re-apply the caller's remembered layer toggle state (see `initialMetroLayerMode`/
     // `initialDistrictLayerVisible` above) so switching a listing filter — which always

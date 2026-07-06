@@ -452,7 +452,7 @@ a { color: inherit; text-decoration: none; }
 }
 .view-tab[aria-selected="true"] {
   color: var(--fg);
-  border-color: var(--brand);
+  border-color: var(--brand2);
   background: rgba(127, 127, 127, 0.1);
 }
 .view-tab:active { opacity: 0.9; }

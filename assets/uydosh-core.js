@@ -795,6 +795,12 @@ function estimatedWalkMinutes(meters) {
   return (meters * WALK_DETOUR_FACTOR) / WALK_METERS_PER_MINUTE;
 }
 
+/** Inverse of estimatedWalkMinutes() — approx. straight-line radius reachable within
+ * `minutes` of walking, e.g. for the metro station "N min walk area" map circle. */
+function estimatedWalkRadiusMeters(minutes) {
+  return (minutes * WALK_METERS_PER_MINUTE) / WALK_DETOUR_FACTOR;
+}
+
 /**
  * Best-known reference point for "where the listing actually is", used to
  * measure walking distance to the metro stations it names: the exact
@@ -873,6 +879,7 @@ Object.assign(window.UyDosh, {
   formatListingDetailAddressText,
   haversineMeters,
   estimatedWalkMinutes,
+  estimatedWalkRadiusMeters,
   listingReferenceCoordinates,
   stationWalkInfo,
 });

@@ -427,13 +427,19 @@ input[type="range"] {
   font-weight: 600;
 }
 .amenity-chip[aria-pressed="true"] {
-  border-color: var(--brand);
+  border-color: var(--brand2);
+  background: var(--brand2);
+  color: #fff;
 }
 .amenity-chip .amenity-icon {
   flex-shrink: 0;
   display: inline-flex;
   color: var(--fg);
   opacity: 0.92;
+}
+.amenity-chip[aria-pressed="true"] .amenity-icon {
+  color: #fff;
+  opacity: 1;
 }
 .amenity-chip .amenity-icon svg {
   width: 16px;
