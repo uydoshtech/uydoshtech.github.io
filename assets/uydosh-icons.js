@@ -561,6 +561,13 @@ function iconTrash() {
   `);
 }
 
+/** Vertical three-dot "more actions" trigger — owner edit/delete menu on the listing detail page. */
+function iconKebab() {
+  return iconSvg(null, `
+    <path d="M12 5h.01M12 12h.01M12 19h.01" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
 function iconCamera(color) {
   return chipIconFilled(
     color,
@@ -688,6 +695,7 @@ Object.assign(window.UyDosh, {
   iconPencil,
   iconArrowUp,
   iconTrash,
+  iconKebab,
   iconCamera,
   filterPhotoIcon,
   iconCheckboxPair,

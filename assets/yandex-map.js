@@ -440,8 +440,8 @@
     });
   }
 
-  /** off → line1 → line2 → line3 → line4 → all → off (matches the mobile app's metro layer cycle). */
-  const METRO_LAYER_MODE_SEQUENCE = ['off', 'line1', 'line2', 'line3', 'line4', 'all'];
+  /** off → all → line1 → line2 → line3 → line4 → off (matches the mobile app's metro layer cycle). */
+  const METRO_LAYER_MODE_SEQUENCE = ['off', 'all', 'line1', 'line2', 'line3', 'line4'];
 
   function nextMetroLayerMode(mode) {
     const idx = METRO_LAYER_MODE_SEQUENCE.indexOf(mode);

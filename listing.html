@@ -159,29 +159,73 @@
         display: inline-flex;
         align-items: center;
       }
-      .owner-edit-btn {
+      /* Owner "..." menu — replaces a standalone edit button with a kebab
+         trigger that reveals Edit/Delete, mirroring the mobile app's owner
+         action sheet (see `ListingDetailScreen._buildActionMenuItems`). */
+      .owner-menu {
+        position: relative;
         flex-shrink: 0;
+      }
+      .owner-menu-btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 9px 16px;
-        border-radius: 999px;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         border: 1px solid var(--stroke);
         background: var(--card);
         color: var(--fg);
-        font-size: 14px;
-        font-weight: 600;
-        text-decoration: none;
+        cursor: pointer;
         transition: background 0.15s ease;
       }
-      .owner-edit-btn:hover { background: rgba(255, 255, 255, 0.06); }
-      .owner-edit-btn:active { opacity: 0.85; }
-      .owner-edit-btn .icon { width: 16px; height: 16px; display: inline-flex; color: var(--muted); }
-      .owner-edit-btn .icon svg { width: 16px; height: 16px; display: block; }
-      .owner-edit-btn .icon svg * { stroke: currentColor; fill: none; }
+      .owner-menu-btn:hover { background: rgba(255, 255, 255, 0.06); }
+      .owner-menu-btn:active { opacity: 0.85; }
+      .owner-menu-btn .icon { width: 18px; height: 18px; display: inline-flex; color: var(--fg); }
+      .owner-menu-btn .icon svg { width: 18px; height: 18px; display: block; }
+      .owner-menu-btn .icon svg * { stroke: currentColor; fill: none; }
       @media (prefers-color-scheme: light) {
-        .owner-edit-btn:hover { background: rgba(15, 23, 42, 0.05); }
+        .owner-menu-btn:hover { background: rgba(15, 23, 42, 0.05); }
       }
+      .owner-menu-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        z-index: 20;
+        min-width: 176px;
+        padding: 6px;
+        border-radius: 14px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        box-shadow: var(--shadow);
+      }
+      .owner-menu-dropdown[hidden] { display: none !important; }
+      .owner-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 0;
+        background: none;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg);
+        text-decoration: none;
+        cursor: pointer;
+        text-align: left;
+      }
+      .owner-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+      @media (prefers-color-scheme: light) {
+        .owner-menu-item:hover { background: rgba(15, 23, 42, 0.05); }
+      }
+      .owner-menu-item .icon { width: 18px; height: 18px; display: inline-flex; color: var(--muted); }
+      .owner-menu-item .icon svg { width: 18px; height: 18px; display: block; }
+      .owner-menu-item .icon svg * { stroke: currentColor; fill: none; }
+      .owner-menu-item-danger,
+      .owner-menu-item-danger .icon { color: #ef4444; }
       .owner-toolbar-spinner {
         width: 14px;
         height: 14px;
@@ -1358,9 +1402,10 @@
        * `ListingDetailOwnerToolbar`, which sits at the very top of a listing's own
        * detail screen. Only rendered inside the Mini App (the regular website has no
        * concept of a logged-in viewer) once ownership is confirmed via the resolved
-       * session user id (see `ensureViewerIdentity`). The edit link (website-only,
-       * mirrors the "My Listings" edit action in `telegram-account.js`) sits in the
-       * same row, pinned to the far right corner.
+       * session user id (see `ensureViewerIdentity`). A "..." menu (website-only,
+       * mirrors the owner action sheet in the mobile app's
+       * `ListingDetailScreen._buildActionMenuItems`, and the edit/delete row actions
+       * in `telegram-account.js`) sits in the same row, pinned to the far right corner.
        */
       function ownerToolbarHtml(isOwner, listingId) {
         if (!isOwner) return '';
@@ -1373,12 +1418,93 @@
                 <span class="owner-toolbar-spinner" aria-hidden="true"></span>
               </span>
             </div>
-            <a class="owner-edit-btn" href="${editHref}">
-              ${UyDosh.iconPencil()}
-              <span>${UyDosh.escapeHtml(UyDosh.t('account.edit'))}</span>
-            </a>
+            <div class="owner-menu" data-owner-menu>
+              <button
+                type="button"
+                class="owner-menu-btn"
+                data-owner-menu-toggle
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.ownerMenu'))}"
+              >${UyDosh.iconKebab()}</button>
+              <div class="owner-menu-dropdown" data-owner-menu-dropdown hidden>
+                <a class="owner-menu-item" href="${editHref}">
+                  ${UyDosh.iconPencil()}
+                  <span>${UyDosh.escapeHtml(UyDosh.t('account.edit'))}</span>
+                </a>
+                <button type="button" class="owner-menu-item owner-menu-item-danger" data-owner-menu-delete>
+                  ${UyDosh.iconTrash()}
+                  <span>${UyDosh.escapeHtml(UyDosh.t('account.delete'))}</span>
+                </button>
+              </div>
+            </div>
           </div>
         `;
+      }
+
+      /** Closes the owner "..." dropdown if it's currently open (looked up fresh each
+       * time since `render()` can replace the menu's DOM nodes, e.g. on language change). */
+      function closeOwnerMenu() {
+        const dropdownEl = rootEl.querySelector('[data-owner-menu-dropdown]');
+        const toggleBtn = rootEl.querySelector('[data-owner-menu-toggle]');
+        if (dropdownEl) dropdownEl.hidden = true;
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      // Bound once (not per-render, unlike the other `bind*` helpers below) since
+      // these listen on `document` rather than on nodes recreated by `render()` —
+      // attaching them again on every re-render would stack up duplicate handlers.
+      let ownerMenuGlobalListenersBound = false;
+
+      /**
+       * Wires the owner "..." menu's open/close toggle and its Delete action.
+       * Edit is a plain link (no JS needed). Delete reuses the same
+       * `deleteListingFromTelegramMiniApp` API and confirm/error copy as the
+       * "My Listings" row action in `telegram-account.js`, then bounces back
+       * to the feed since the listing no longer exists.
+       */
+      function bindOwnerMenu(listingId) {
+        const menuEl = rootEl.querySelector('[data-owner-menu]');
+        const toggleBtn = rootEl.querySelector('[data-owner-menu-toggle]');
+        const dropdownEl = rootEl.querySelector('[data-owner-menu-dropdown]');
+        const deleteBtn = rootEl.querySelector('[data-owner-menu-delete]');
+        if (!menuEl || !toggleBtn || !dropdownEl) return;
+
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (dropdownEl.hidden) {
+            dropdownEl.hidden = false;
+            toggleBtn.setAttribute('aria-expanded', 'true');
+          } else {
+            closeOwnerMenu();
+          }
+        });
+
+        deleteBtn?.addEventListener('click', async () => {
+          closeOwnerMenu();
+          const lang = UyDosh.getLang();
+          const confirmed = await confirmTelegramAction(UyDosh.t('account.deleteConfirm', lang));
+          if (!confirmed) return;
+          try {
+            await UyDosh.deleteListingFromTelegramMiniApp(listingId);
+            showTelegramAlert(UyDosh.t('account.deleteSuccess', lang));
+            window.location.href = UyDosh.feedPageUrl();
+          } catch (err) {
+            console.error('Failed to delete listing', err);
+            showTelegramAlert(UyDosh.t('account.deleteError', lang));
+          }
+        });
+
+        if (!ownerMenuGlobalListenersBound) {
+          ownerMenuGlobalListenersBound = true;
+          document.addEventListener('click', (e) => {
+            const menu = rootEl.querySelector('[data-owner-menu]');
+            if (menu && !menu.contains(e.target)) closeOwnerMenu();
+          });
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeOwnerMenu();
+          });
+        }
       }
 
       async function loadOwnerViewCount(listingId) {
@@ -1751,7 +1877,7 @@
       // App (claiming requires a verified Telegram session).
 
       /** Telegram-native confirm dialog when available, else a plain browser confirm(). */
-      function confirmClaimAction(message) {
+      function confirmTelegramAction(message) {
         return new Promise((resolve) => {
           const tg = window.Telegram?.WebApp;
           if (typeof tg?.showConfirm === 'function') {
@@ -1795,7 +1921,7 @@
           let pending = false;
           btn?.addEventListener('click', async () => {
             if (pending) return;
-            const confirmed = await confirmClaimAction(UyDosh.t('detail.claim.confirm'));
+            const confirmed = await confirmTelegramAction(UyDosh.t('detail.claim.confirm'));
             if (!confirmed) return;
 
             pending = true;
@@ -3123,8 +3249,10 @@
         bindFavoriteButton(l);
         bindReportButton(l);
         updateDetailContactBar(l);
-        if (isOwner) loadOwnerViewCount(l.id);
-        else {
+        if (isOwner) {
+          loadOwnerViewCount(l.id);
+          bindOwnerMenu(l.id);
+        } else {
           loadClaimBanner(l);
           recordNonOwnerView(l.id);
         }

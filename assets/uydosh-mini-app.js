@@ -548,8 +548,31 @@ function ensureMiniAppSafeAreaStyles() {
       padding: 12px 14px;
       min-height: 44px;
       box-sizing: border-box;
-      border: 1px solid var(--stroke);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 18px;
+      /* Header art is always a dark skyline, independent of the light/dark
+         theme toggle above — the gradient keeps brand text/icons legible
+         over it without needing per-theme image variants. 'bottom' anchoring
+         means any extra cover-crop (on wide/short header boxes) trims sky
+         off the top instead of cutting into the skyline itself. */
+      background-image: linear-gradient(180deg, rgba(6, 21, 37, 0.32), rgba(6, 21, 37, 0.55)), url('/images/telegram-header-bg.webp');
+      background-size: cover;
+      background-position: center bottom;
+      background-repeat: no-repeat;
+    }
+    html.mini-app header,
+    html.mini-app header .brand strong,
+    html.mini-app header .theme-toggle-btn:hover {
+      color: rgba(255, 255, 255, 0.95);
+    }
+    html.mini-app header .brand span {
+      color: rgba(255, 255, 255, 0.72);
+    }
+    html.mini-app header .theme-toggle-btn,
+    html.mini-app header .account-menu-trigger {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.85);
     }
     html.mini-app-desktop header {
       margin-top: var(--uydosh-tg-inset-top, 0px);
