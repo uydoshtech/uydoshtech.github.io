@@ -588,6 +588,19 @@ function fetchGeosuggest({ text, sessionToken, lang = getLang(), results = 6 }) 
 }
 
 /**
+ * Forward-geocodes a free-text address into coordinates via the backend's
+ * Yandex Geocoder proxy — used by the roommate-needed create-listing
+ * wizard's address field (see `resolveAddressLocation` in
+ * telegram-create.js) to resolve `{ latitude, longitude }` once the author
+ * picks/finishes typing an address, which in turn drives the "nearest metro
+ * stations" suggestions there. Resolves to `{ latitude, longitude,
+ * addressText }` (coordinates null on failure).
+ */
+function fetchGeocodeAddress({ text, lang = getLang() }) {
+  return fetchJsonAuth('/app/geosuggest/geocode', { params: { text, lang } });
+}
+
+/**
  * Shared error-response handling for the Telegram Mini App `init_data`-verifying
  * endpoints below: clears a stale/expired initData on 401, and — since these are
  * all "important" requests gated on `instance_id` (see TelegramMiniAppSessionService
@@ -1059,6 +1072,7 @@ Object.assign(window.UyDosh, {
   createListing,
   fetchReverseGeocodeAddress,
   fetchGeosuggest,
+  fetchGeocodeAddress,
   createListingFromTelegramMiniApp,
   updateListingFromTelegramMiniApp,
   fetchMyTelegramMiniAppListings,

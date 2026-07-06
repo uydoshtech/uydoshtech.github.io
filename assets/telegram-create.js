@@ -181,6 +181,16 @@ const state = {
   /// autocomplete fetch — see `fetchAddressSuggestions` (step 0).
   addressSuggestions: [],
   addressSuggestLoading: false,
+  /// True while `resolveAddressLocation` (roommate-needed's merged
+  /// address+nearby-metro step) is forward-geocoding the typed/picked
+  /// address into `{ latitude, longitude }` — lets the nearby-stations panel
+  /// show a spinner instead of the "type an address" hint while that's in
+  /// flight.
+  addressGeocoding: false,
+  /// The address text `resolveAddressLocation` last successfully geocoded —
+  /// lets the textarea's blur handler skip re-geocoding when the text hasn't
+  /// actually changed since (e.g. tabbing away without editing).
+  addressGeocodedText: null,
   form: {
     listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
     locationMode: LOCATION_MODE_METRO,
@@ -348,6 +358,36 @@ function hydrateFormFromListing(listing) {
   const addressLon = Number(listing.address_longitude);
   state.form.addressLatitude = Number.isFinite(addressLat) ? addressLat : null;
   state.form.addressLongitude = Number.isFinite(addressLon) ? addressLon : null;
+  if (state.form.addressText.trim() && state.form.addressLatitude != null) {
+    // Matches what a fresh forward-geocode of this exact text would resolve
+    // to, so `resolveAddressLocation` doesn't re-hit the geocoder the first
+    // time the author merely taps into and out of the field without editing
+    // it (see the comparison there).
+    state.addressGeocodedText = state.form.addressText.trim();
+  }
+
+  // Roommate-needed always uses the merged address+nearby-metro step now
+  // (see roommateLocationSectionHtml) — district mode only ever applied to
+  // it historically. Force metro mode so editing such a listing doesn't
+  // resurrect the retired district picker, and best-effort seed the nearby
+  // stations panel so the author sees their already-saved station(s)
+  // highlighted instead of a blank "type an address" hint: prefer the
+  // listing's own saved coordinates, falling back to its district's
+  // centroid for the (legacy, district-mode) listings that never had one.
+  if (typeId !== LISTING_TYPE_ROOM_NEEDED) {
+    const wasDistrictMode = state.form.locationMode === LOCATION_MODE_DISTRICT;
+    state.form.locationMode = LOCATION_MODE_METRO;
+    let seedLat = state.form.addressLatitude;
+    let seedLon = state.form.addressLongitude;
+    if ((seedLat == null || seedLon == null) && wasDistrictMode) {
+      const district = state.locations.find((loc) => Number(loc.id) === state.form.selectedLocationIds[0]);
+      seedLat = district ? Number(district.latitude) : null;
+      seedLon = district ? Number(district.longitude) : null;
+    }
+    if (Number.isFinite(seedLat) && Number.isFinite(seedLon)) {
+      applyNearbyStations(seedLat, seedLon, state.nearbyStationsRadiusMinutes);
+    }
+  }
   // Deliberately leave `state.lastGeneratedTitle` at its initial '' value (not
   // synced to the loaded title) — updateDefaultTitle() only overwrites the
   // title when it's empty or matches the last auto-generated text, so this
@@ -634,14 +674,13 @@ function nearbyRadiusChipsHtml(lang) {
 }
 
 /**
- * "Stations near you" panel shown under the "Find nearby metro stations"
- * button once `findNearbyStations` has run (see `data-find-nearby-metro` in
- * bindStepEvents): a radius toggle plus the matching station chips. Shown
- * for both location modes — metro mode uses picks here as the actual
- * required station selection, while district mode surfaces it purely as
- * informational context (district itself still comes from the district
- * grid / "Use current location" auto-select, see
- * `findLocationIdByDistrictName`).
+ * "Stations near you" panel: a radius toggle plus the matching station
+ * chips, populated once `findNearbyStations` has run. Reused in two places:
+ * room-needed's legacy metro/district tabs (behind the "Find nearby metro
+ * stations" button, see `nearbyMetroFinderHtml`/`data-find-nearby-metro`) and
+ * roommate-needed's merged address step (`nearbyMetroSectionHtml`), where it
+ * shows automatically once the address resolves to coordinates instead of
+ * needing a button tap.
  */
 function nearbyStationsHtml(lang) {
   if (!state.nearbyStationsChecked) return '';
@@ -684,14 +723,15 @@ function nearbyStationsHtml(lang) {
 
 /**
  * "Find nearby metro stations" button + the `nearbyStationsHtml` suggestions
- * panel it reveals — extracted so the same control can be reused in both the
- * metro station-list field and the district field (both listing types, now
- * that `supportsMultiStation` always allows several) instead of only inside
- * the roommate-needed address block. Geolocating for this doesn't require an
- * address: the click handler (see `data-find-nearby-metro` in
- * bindStepEvents) reuses/sets `state.form.addressLatitude/Longitude` purely
- * as a location cache, which is simply never sent for room-needed listings
- * (see the submit payload).
+ * panel it reveals — used by room-needed's legacy metro/district tabs (see
+ * `legacyLocationTabsHtml`), for both its station-list field and its
+ * district field. Roommate-needed's merged address step doesn't need this
+ * button: it resolves coordinates from the typed address itself and shows
+ * `nearbyStationsHtml` directly (see `nearbyMetroSectionHtml`). Geolocating
+ * here doesn't require an address: the click handler (see
+ * `data-find-nearby-metro` in bindStepEvents) reuses/sets
+ * `state.form.addressLatitude/Longitude` purely as a location cache, which
+ * is simply never sent for room-needed listings (see the submit payload).
  */
 function nearbyMetroFinderHtml(lang) {
   return `
@@ -712,18 +752,15 @@ function nearbyMetroFinderHtml(lang) {
     </div>`;
 }
 
-function renderStep0(lang) {
-  const typeOptions = [
-    { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
-    { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
-  ];
-  const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
-    attrs: { 'data-listing-type': opt.id },
-    pressed: state.form.listingTypeId === opt.id,
-    icon: UyDosh.filterListingTypeIcon(opt.id, { pressed: false }),
-    label: opt.label,
-  })).join('');
-
+/**
+ * Metro-line/station multi-select + district grid, gated behind the
+ * Метро/Район tabs — still used by room-needed listings (a "search" listing
+ * that can genuinely span several districts or several stations across
+ * lines, see `supportsMultiLocation`). Roommate-needed listings no longer
+ * use any of this; see `roommateLocationSectionHtml` for their single
+ * merged address + auto-detected-nearest-metro step instead.
+ */
+function legacyLocationTabsHtml(lang) {
   const modeChips = [
     { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang), icon: UyDosh.iconMetro() },
     { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: UyDosh.iconPin() },
@@ -803,10 +840,49 @@ function renderStep0(lang) {
       ${nearbyMetroFinderHtml(lang)}`;
   }
 
-  // Address is only ever persisted for roommate-needed (apartment) listings —
-  // mirrors the backend's `shouldPersistAddress` gating — so it's hidden for
-  // room-needed (demand-side) listings, which have no specific address to give.
-  const addressBody = !isRoomNeeded() ? `
+  return `
+    <div class="field">
+      <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.locationMode', lang))}</div>
+      <div class="chips">${modeChips}</div>
+    </div>
+    ${locationBody}`;
+}
+
+/**
+ * Nearby-metro panel for `roommateLocationSectionHtml`: the same selectable
+ * chips as `nearbyStationsHtml` once an address has resolved to
+ * coordinates (see `resolveAddressLocation`), a spinner while that resolve
+ * is in flight, or a hint prompting the author to type an address /
+ * use their location before either has happened yet.
+ */
+function nearbyMetroSectionHtml(lang) {
+  const field = fieldErrorAttrs('location');
+  let body;
+  if (state.nearbyStationsChecked) {
+    body = nearbyStationsHtml(lang);
+  } else if (state.addressGeocoding) {
+    body = `<div class="nearby-stations-loading" aria-busy="true" aria-live="polite"><span class="use-location-spinner" aria-hidden="true"></span></div>`;
+  } else {
+    body = `<div class="nearby-stations-hint">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationsHint', lang))}</div>`;
+  }
+  return `
+    <div class="field${field.className}" data-validation-anchor="location">
+      ${field.inline}
+      ${body}
+    </div>`;
+}
+
+/**
+ * Roommate-needed's merged location step: replaces the old Метро/Район tabs
+ * and their manual station/district pickers with a single free-text address
+ * field (autosuggest via `bindAddressAutocomplete`, same as before). Picking
+ * a suggestion or leaving the field resolves `{ latitude, longitude }` via
+ * forward geocoding (`resolveAddressLocation`) — which drives the
+ * `nearbyMetroSectionHtml` chips below, kept in sync every time the address
+ * changes instead of requiring a manual station multi-select.
+ */
+function roommateLocationSectionHtml(lang) {
+  return `
     <div class="field">
       <label for="listing-address">${UyDosh.escapeHtml(UyDosh.t('create.addressOptional', lang))}</label>
       <div class="address-input-wrap">
@@ -834,7 +910,25 @@ function renderStep0(lang) {
           <span>${UyDosh.escapeHtml(state.locatingAddress ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.useCurrentLocation', lang))}</span>
         </button>
       </div>
-    </div>` : '';
+    </div>
+    ${nearbyMetroSectionHtml(lang)}`;
+}
+
+function renderStep0(lang) {
+  const typeOptions = [
+    { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
+    { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
+  ];
+  const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
+    attrs: { 'data-listing-type': opt.id },
+    pressed: state.form.listingTypeId === opt.id,
+    icon: UyDosh.filterListingTypeIcon(opt.id, { pressed: false }),
+    label: opt.label,
+  })).join('');
+
+  const locationSection = isRoomNeeded()
+    ? legacyLocationTabsHtml(lang)
+    : roommateLocationSectionHtml(lang);
 
   return `
     <section class="panel active" data-step="0">
@@ -842,12 +936,7 @@ function renderStep0(lang) {
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}</div>
         <div class="chips">${typeChips}</div>
       </div>
-      <div class="field">
-        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.locationMode', lang))}</div>
-        <div class="chips">${modeChips}</div>
-      </div>
-      ${locationBody}
-      ${addressBody}
+      ${locationSection}
     </section>`;
 }
 
@@ -860,6 +949,12 @@ const ADDRESS_SUGGEST_BLUR_HIDE_DELAY_MS = 180;
 /// `fetchAddressSuggestions` below, not anything a re-render needs to read.
 let addressSuggestDebounceTimer = null;
 let addressSuggestRequestId = 0;
+
+/// Monotonically increasing request id for `resolveAddressLocation`'s
+/// forward-geocode fetch — same "ignore stale responses" pattern as
+/// `addressSuggestRequestId` above, needed since the textarea's blur handler
+/// and picking a suggestion can both trigger a geocode in quick succession.
+let addressGeocodeRequestId = 0;
 
 /** Random per-session id for Yandex Geosuggest billing (groups one typing session's requests together instead of billing per keystroke). */
 function newGeosuggestSessionToken() {
@@ -952,11 +1047,39 @@ async function fetchAddressSuggestions(query) {
   }
 }
 
+/** Repaints only the nearby-metro-stations field (`nearbyMetroSectionHtml`)
+ * of roommate-needed's merged location step — mirrors `renderStationList` /
+ * `renderAddressSuggestionsPanel` in touching just its own subtree instead
+ * of a full `renderStep()`, so it can run while the address textarea still
+ * has focus (e.g. the field being cleared mid-typing, see
+ * `handleAddressInputChange`) without stealing that focus. No-op for
+ * room-needed listings, which never render this field. */
+function renderNearbyMetroPanel() {
+  if (isRoomNeeded()) return;
+  const field = stepPanelsEl.querySelector('[data-validation-anchor="location"]');
+  if (!field) return;
+  field.outerHTML = nearbyMetroSectionHtml(UyDosh.getLang());
+  bindNearbyMetroEvents();
+}
+
 function handleAddressInputChange(value) {
   state.form.addressText = value;
   clearTimeout(addressSuggestDebounceTimer);
 
   const query = value.trim();
+  if (query.length === 0 && (state.form.addressLatitude != null || state.nearbyStationsChecked)) {
+    // Field fully cleared — drop the stale resolved location/nearby-metro
+    // list instead of leaving it pointing at whatever address used to be
+    // typed there.
+    state.form.addressLatitude = null;
+    state.form.addressLongitude = null;
+    state.addressGeocodedText = null;
+    state.nearbyStations = [];
+    state.nearbyStationsChecked = false;
+    state.nearbyStationsIsFallback = false;
+    renderNearbyMetroPanel();
+  }
+
   if (query.length < ADDRESS_SUGGEST_MIN_LENGTH) {
     addressSuggestRequestId++;
     state.addressSuggestions = [];
@@ -986,6 +1109,55 @@ function selectAddressSuggestion(index) {
   state.addressSuggestSessionToken = null;
   renderAddressSuggestionsPanel();
   haptic('selection');
+  // The textarea's own `blur` handler (fired just before this click) already
+  // schedules `resolveAddressLocation` with whatever text is in
+  // `state.form.addressText` at that point — which is now this suggestion's
+  // full address, set above — so no separate geocode call is needed here.
+}
+
+/**
+ * Forward-geocodes `text` into `{ latitude, longitude }` and refreshes the
+ * nearby-metro chips for it — roommate-needed's merged location step (see
+ * `roommateLocationSectionHtml`) replacement for a manual metro station
+ * picker. Triggered when the address field loses focus with new,
+ * not-yet-resolved text (see `bindAddressAutocomplete`), whether that's from
+ * picking an autosuggest entry or just typing a full address and tapping
+ * away. A no-op for room-needed listings, which never show this field.
+ */
+async function resolveAddressLocation(text) {
+  if (isRoomNeeded()) return;
+  const query = text.trim();
+
+  if (!query) {
+    // Already handled live by `handleAddressInputChange` as the field is
+    // cleared — nothing left to do once it loses focus.
+    return;
+  }
+  if (query === state.addressGeocodedText) return;
+
+  const requestId = ++addressGeocodeRequestId;
+  state.addressGeocoding = true;
+  renderStep();
+  try {
+    const result = await UyDosh.fetchGeocodeAddress({ text: query, lang: UyDosh.getLang() });
+    if (requestId !== addressGeocodeRequestId) return;
+    const latitude = Number(result?.latitude);
+    const longitude = Number(result?.longitude);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      state.form.addressLatitude = latitude;
+      state.form.addressLongitude = longitude;
+      state.addressGeocodedText = query;
+      applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
+      showFormError('');
+    }
+  } catch (err) {
+    console.error('Address geocode failed', err);
+  } finally {
+    if (requestId === addressGeocodeRequestId) {
+      state.addressGeocoding = false;
+      renderStep();
+    }
+  }
 }
 
 /** Wires the address textarea + its suggestions dropdown; no-op when the field isn't in the DOM (room-needed listings hide it). */
@@ -998,11 +1170,14 @@ function bindAddressAutocomplete() {
   input.addEventListener('focus', () => renderAddressSuggestionsPanel());
   input.addEventListener('blur', () => {
     // Delayed so a tap on a suggestion button — which blurs the textarea
-    // first — still lands on that button before the dropdown disappears.
+    // first — still lands on that button before the dropdown disappears,
+    // and so `state.form.addressText` already reflects a just-picked
+    // suggestion by the time `resolveAddressLocation` reads it below.
     setTimeout(() => {
       state.addressSuggestions = [];
       state.addressSuggestLoading = false;
       renderAddressSuggestionsPanel();
+      resolveAddressLocation(state.form.addressText);
     }, ADDRESS_SUGGEST_BLUR_HIDE_DELAY_MS);
   });
 
@@ -1494,113 +1669,6 @@ async function loadReferenceData() {
 }
 
 /**
- * Best-effort district auto-select for "Use current location" (see the
- * `data-use-current-location` handler in bindStepEvents): reverse-geocoding
- * only ever returns free-text, so this pulls the `kind: "district"` entry out
- * of Yandex's own address hierarchy (https://yandex.com/dev/geocode/doc/en/response)
- * and fuzzy-matches it against our `locations` list — Yandex's official
- * district names ("Шайхантахурский район") don't always match our DB's
- * spelling/short form ("Шайхантаур") character-for-character.
- */
-function extractDistrictNameFromGeocode(upstream) {
-  try {
-    const members = upstream?.response?.GeoObjectCollection?.featureMember;
-    const geoObject = Array.isArray(members) ? members[0]?.GeoObject : null;
-    const components = geoObject?.metaDataProperty?.GeocoderMetaData?.Address?.Components;
-    if (!Array.isArray(components)) return null;
-    const district = components.find((c) => c?.kind === 'district');
-    return typeof district?.name === 'string' ? district.name : null;
-  } catch {
-    return null;
-  }
-}
-
-// `\bword\b`-style regexes don't work for stripping these — JS's `\b` is
-// based on the ASCII-only `\w`, which never matches Cyrillic letters, so it
-// can't find a boundary next to them. Split on non-letter runs and drop
-// stopword tokens by exact match instead.
-const DISTRICT_NAME_STOPWORDS = new Set(['район', 'тумани', 'туман', 'shahri', 'shahar', 'district']);
-function normalizeDistrictName(s) {
-  return String(s || '')
-    .toLowerCase()
-    .split(/[^a-zа-яёʻʼ']+/i)
-    .filter((word) => word && !DISTRICT_NAME_STOPWORDS.has(word))
-    .join('');
-}
-
-function levenshteinDistance(a, b) {
-  if (a === b) return 0;
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-  let prevRow = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 0; i < a.length; i++) {
-    const currRow = [i + 1];
-    for (let j = 0; j < b.length; j++) {
-      currRow.push(a[i] === b[j]
-        ? prevRow[j]
-        : 1 + Math.min(prevRow[j], prevRow[j + 1], currRow[j]));
-    }
-    prevRow = currRow;
-  }
-  return prevRow[b.length];
-}
-
-/** 1 = identical, 0 = completely different (normalized by the longer string's length). */
-function nameSimilarity(a, b) {
-  const maxLen = Math.max(a.length, b.length);
-  if (maxLen === 0) return 0;
-  return 1 - levenshteinDistance(a, b) / maxLen;
-}
-
-const DISTRICT_MATCH_THRESHOLD = 0.75;
-
-function findLocationIdByDistrictName(districtName, locations, lang) {
-  const target = normalizeDistrictName(districtName);
-  if (!target) return null;
-  let bestId = null;
-  let bestScore = 0;
-  for (const loc of locations) {
-    const candidates = [UyDosh.localized(loc, lang), UyDosh.localizedShort(loc, lang)];
-    for (const candidate of candidates) {
-      const score = nameSimilarity(target, normalizeDistrictName(candidate));
-      if (score > bestScore) {
-        bestScore = score;
-        bestId = Number(loc.id);
-      }
-    }
-  }
-  return bestScore >= DISTRICT_MATCH_THRESHOLD ? bestId : null;
-}
-
-/**
- * Geographic fallback for "Use current location" district auto-select: some
- * coordinates — e.g. inside the Tashkent City redevelopment zone around the
- * old Ukchi street — geocode to a `text`/Components hierarchy with *no*
- * `kind: "district"` entry at all (Yandex simply has no tuman boundary data
- * for that point), so `extractDistrictNameFromGeocode` returns null and
- * `findLocationIdByDistrictName` never gets a name to match against. Rather
- * than leave the district unset in that case, fall back to whichever of our
- * 12 districts' centroid (`STATIC_LOCATIONS[].latitude/longitude`) is
- * closest to the author's actual position — always available since we
- * already have their coordinates, unlike the name-based match above.
- */
-function findNearestLocationId(latitude, longitude, locations) {
-  let bestId = null;
-  let bestDistance = Infinity;
-  for (const loc of locations) {
-    const locLat = Number(loc.latitude);
-    const locLon = Number(loc.longitude);
-    if (!Number.isFinite(locLat) || !Number.isFinite(locLon)) continue;
-    const distance = haversineMeters(latitude, longitude, locLat, locLon);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestId = Number(loc.id);
-    }
-  }
-  return bestId;
-}
-
-/**
  * Metro station suggestions for "Use current location" (see the
  * `data-use-current-location` handler in bindStepEvents): straight-line
  * distance is a poor stand-in for actual walking distance, so this pads it
@@ -1789,12 +1857,60 @@ function bindStationListEvents() {
   });
 }
 
+/**
+ * Wires the "nearby stations" walk-radius toggle + station chips — shared by
+ * the full `bindStepEvents()` pass and `renderNearbyMetroPanel()`'s partial
+ * refresh (roommate-needed's merged location step repaints just that one
+ * field in a couple of cases instead of the whole step; see there for why).
+ */
+function bindNearbyMetroEvents() {
+  // Walk-time radius toggle (10 / 20 / 30 min) — re-filters the already
+  // fetched location without another geolocation lookup.
+  stepPanelsEl.querySelectorAll('[data-nearby-radius]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const minutes = Number(btn.getAttribute('data-nearby-radius'));
+      if (!Number.isFinite(minutes) || minutes === state.nearbyStationsRadiusMinutes) return;
+      state.nearbyStationsRadiusMinutes = minutes;
+      const { addressLatitude: latitude, addressLongitude: longitude } = state.form;
+      if (latitude != null && longitude != null) {
+        applyNearbyStations(latitude, longitude, minutes);
+      }
+      renderStep();
+    });
+  });
+
+  stepPanelsEl.querySelectorAll('[data-nearby-station-id]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.getAttribute('data-nearby-station-id'));
+      const lineId = Number(btn.getAttribute('data-nearby-station-line'));
+      if (lineId && lineId !== state.form.subwayLineId) {
+        await selectSubwayLine(lineId);
+      }
+      state.form.selectedStationIds = toggleSelection(
+        state.form.selectedStationIds,
+        id,
+        supportsMultiStation(),
+      );
+      if (state.form.selectedStationIds.length > 0 && state.validationError) {
+        showFormError('');
+      }
+      renderStep();
+    });
+  });
+}
+
 function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
       if (!supportsMultiLocation()) {
         state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
+      }
+      // Roommate-needed only ever uses the merged address+nearby-metro step
+      // (see roommateLocationSectionHtml) — switching into it from
+      // room-needed's district tab must not carry district mode along.
+      if (!isRoomNeeded()) {
+        state.form.locationMode = LOCATION_MODE_METRO;
       }
       updateDefaultTitle();
       renderStep();
@@ -1821,27 +1937,13 @@ function bindStepEvents() {
       const result = await UyDosh.fetchReverseGeocodeAddress(latitude, longitude, UyDosh.getLang());
       if (result?.addressText) {
         state.form.addressText = result.addressText;
+        state.addressGeocodedText = result.addressText.trim();
         // Drop any stale autocomplete dropdown from typing before this
         // overwrote the field — the next full renderStep() below rebuilds
         // #address-suggestions hidden, but the in-memory list would
         // otherwise still show once the field regains focus.
         state.addressSuggestions = [];
         state.addressSuggestLoading = false;
-      }
-      if (state.form.locationMode === LOCATION_MODE_DISTRICT) {
-        const districtName = extractDistrictNameFromGeocode(result?.upstream);
-        const matchedId = districtName
-          ? findLocationIdByDistrictName(districtName, state.locations, UyDosh.getLang())
-          : null;
-        // Yandex's Components hierarchy sometimes has no `district` entry at
-        // all for a given point (see `findNearestLocationId`), so fall back
-        // to the geographically nearest district rather than leaving the
-        // field unset.
-        const resolvedId = matchedId ?? findNearestLocationId(latitude, longitude, state.locations);
-        // "Use current location" only ever shows for roommate-needed listings
-        // (see `addressBody` above), which only ever allow a single district —
-        // safe to just replace the selection outright.
-        if (resolvedId != null) state.form.selectedLocationIds = [resolvedId];
       }
       applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
       showFormError('');
@@ -1887,20 +1989,7 @@ function bindStepEvents() {
     }
   });
 
-  // Walk-time radius toggle (10 / 20 / 30 min) — re-filters the already
-  // fetched location without another geolocation lookup.
-  stepPanelsEl.querySelectorAll('[data-nearby-radius]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const minutes = Number(btn.getAttribute('data-nearby-radius'));
-      if (!Number.isFinite(minutes) || minutes === state.nearbyStationsRadiusMinutes) return;
-      state.nearbyStationsRadiusMinutes = minutes;
-      const { addressLatitude: latitude, addressLongitude: longitude } = state.form;
-      if (latitude != null && longitude != null) {
-        applyNearbyStations(latitude, longitude, minutes);
-      }
-      renderStep();
-    });
-  });
+  bindNearbyMetroEvents();
 
   stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -1916,25 +2005,6 @@ function bindStepEvents() {
   });
 
   bindStationListEvents();
-
-  stepPanelsEl.querySelectorAll('[data-nearby-station-id]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = Number(btn.getAttribute('data-nearby-station-id'));
-      const lineId = Number(btn.getAttribute('data-nearby-station-line'));
-      if (lineId && lineId !== state.form.subwayLineId) {
-        await selectSubwayLine(lineId);
-      }
-      state.form.selectedStationIds = toggleSelection(
-        state.form.selectedStationIds,
-        id,
-        supportsMultiStation(),
-      );
-      if (state.form.selectedStationIds.length > 0 && state.validationError) {
-        showFormError('');
-      }
-      renderStep();
-    });
-  });
 
   stepPanelsEl.querySelector('[data-select-all-locations]')?.addEventListener('click', () => {
     const allIds = state.locations.map((l) => Number(l.id));
