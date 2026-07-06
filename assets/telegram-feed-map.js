@@ -387,6 +387,11 @@
       setFeedMapStatus(UyDosh.t('map.loading'), true);
       const filterParams = getFilterParams();
       const signature = currentMapSignature(filterParams);
+      // Fire-and-forget, in parallel with the pins fetch below — by the time the user taps a
+      // pin, the district/subway-station name lookups are (usually) already cached, so the
+      // tooltip's location/metro line can render immediately instead of waiting on that pin's
+      // own full listing detail fetch (see showMapPinTooltip -> enrichMapPinTooltipListings).
+      UyDosh.warmLocationSubwayCaches(UyDosh.getLang());
       try {
         await UyDosh.waitForElementLayout(feedMapEl);
         if (generation !== mapLoadGeneration) return;

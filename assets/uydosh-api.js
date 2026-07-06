@@ -555,6 +555,82 @@ function fetchLocations({ page = 1, limit = 200, language = getLang() } = {}) {
   return fetchJson('/locations', { page, limit, language });
 }
 
+/**
+ * Id → {id, name, short_name} lookups for districts/subway stations, cached per language.
+ * Warmed by the feed map (see `warmLocationSubwayCaches`) as soon as it opens, so that by the
+ * time the user taps a pin the map-pin tooltip (`mapPinTooltipCardHtml` in uydosh-core.js) can
+ * resolve the district/metro-station name synchronously from the pin's own `location_id`/
+ * `subway_station_id` — both already present on the lightweight `/listings/map` pin payload —
+ * instead of waiting on a full `GET /listings/:id` round trip just to display two short labels.
+ * The full listing fetch still happens (for photos/description/etc) and still "corrects" the
+ * tooltip once it lands, but the visible pop-in most people notice (location/metro appearing a
+ * beat after the price/photo) goes away for pins whose lookups are already cached.
+ */
+const locationsByIdCache = new Map();
+const locationsLoadPromiseByLang = new Map();
+const subwayStationsByIdCache = new Map();
+const subwayStationsLoadPromiseByLang = new Map();
+
+function loadLocationsLookup(lang = getLang()) {
+  if (locationsByIdCache.has(lang)) return Promise.resolve(locationsByIdCache.get(lang));
+  let promise = locationsLoadPromiseByLang.get(lang);
+  if (!promise) {
+    promise = fetchLocations({ page: 1, limit: 200, language: lang })
+      .then((data) => {
+        const byId = new Map();
+        for (const loc of Array.isArray(data?.locations) ? data.locations : []) {
+          const id = Number(loc?.id);
+          if (id > 0) byId.set(id, loc);
+        }
+        locationsByIdCache.set(lang, byId);
+        return byId;
+      })
+      .finally(() => locationsLoadPromiseByLang.delete(lang));
+    locationsLoadPromiseByLang.set(lang, promise);
+  }
+  return promise;
+}
+
+function loadSubwayStationsLookup(lang = getLang()) {
+  if (subwayStationsByIdCache.has(lang)) return Promise.resolve(subwayStationsByIdCache.get(lang));
+  let promise = subwayStationsLoadPromiseByLang.get(lang);
+  if (!promise) {
+    promise = fetchSubwayStations(lang)
+      .then((stations) => {
+        const byId = new Map();
+        for (const station of Array.isArray(stations) ? stations : []) {
+          const id = Number(station?.id);
+          if (id > 0) byId.set(id, station);
+        }
+        subwayStationsByIdCache.set(lang, byId);
+        return byId;
+      })
+      .finally(() => subwayStationsLoadPromiseByLang.delete(lang));
+    subwayStationsLoadPromiseByLang.set(lang, promise);
+  }
+  return promise;
+}
+
+/** Best-effort — pins simply fall back to the per-listing fetch if this hasn't landed yet. */
+function warmLocationSubwayCaches(lang = getLang()) {
+  return Promise.all([
+    loadLocationsLookup(lang).catch(() => null),
+    loadSubwayStationsLookup(lang).catch(() => null),
+  ]);
+}
+
+function getCachedLocationById(locationId, lang = getLang()) {
+  const id = Number(locationId);
+  if (!(id > 0)) return null;
+  return locationsByIdCache.get(lang)?.get(id) ?? null;
+}
+
+function getCachedSubwayStationById(stationId, lang = getLang()) {
+  const id = Number(stationId);
+  if (!(id > 0)) return null;
+  return subwayStationsByIdCache.get(lang)?.get(id) ?? null;
+}
+
 function fetchAmenitiesOrdered() {
   return fetchJson('/amenities/ordered');
 }
@@ -1068,6 +1144,9 @@ Object.assign(window.UyDosh, {
   fetchSubwayStationsByLine,
   fetchSubwayStations,
   fetchLocations,
+  warmLocationSubwayCaches,
+  getCachedLocationById,
+  getCachedSubwayStationById,
   fetchAmenitiesOrdered,
   createListing,
   fetchReverseGeocodeAddress,

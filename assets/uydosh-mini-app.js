@@ -16,13 +16,35 @@ function isMiniApp() {
   return false;
 }
 
-function listingPageUrl(id) {
+/**
+ * @param {object} [options]
+ * @param {string} [options.backTo] Same-origin path (e.g. a favorites/my-listings
+ *   deep link) the Mini App's Telegram header BackButton should return to instead
+ *   of the feed — see `miniAppBackTargetFromUrl`/listing.html's BackButton handler.
+ */
+function listingPageUrl(id, options = {}) {
   const lid = String(id ?? '').trim();
   if (!lid) return MINI_APP_FEED_PATH;
   if (isMiniApp()) {
-    return `/listing.html?id=${encodeURIComponent(lid)}&mini=1`;
+    const params = new URLSearchParams({ id: lid, mini: '1' });
+    if (options.backTo) params.set('back', options.backTo);
+    return `/listing.html?${params.toString()}`;
   }
   return `/listing/${encodeURIComponent(lid)}`;
+}
+
+/**
+ * Reads the `?back=` deep-link param set by `listingPageUrl` (mine/favorites
+ * rows in telegram-account.js) and validates it's a safe same-site path before
+ * handing it to the Telegram header BackButton handler — guards against an
+ * open-redirect via a crafted `back=` value (e.g. `//evil.com`).
+ */
+function miniAppBackTargetFromUrl() {
+  let back = '';
+  try {
+    back = new URLSearchParams(location.search).get('back') || '';
+  } catch { /* ignore */ }
+  return back.startsWith('/') && !back.startsWith('//') ? back : MINI_APP_FEED_PATH;
 }
 
 function feedPageUrl() {
@@ -1282,6 +1304,7 @@ Object.assign(window.UyDosh, {
   isTelegramMobile,
   isTelegramDesktop,
   listingPageUrl,
+  miniAppBackTargetFromUrl,
   feedPageUrl,
   createPageUrl,
   bindMiniAppInternalNav,
@@ -1293,6 +1316,7 @@ Object.assign(window.UyDosh, {
   miniAppHeaderHtml,
   initMiniAppAccountMenus,
   MINI_APP_ACCOUNT_PATH,
+  MINI_APP_FAVORITES_PATH,
   MINI_APP_CREATE_PATH,
   MINI_APP_PROFILE_PATH,
   maybeShowProfileNudge,

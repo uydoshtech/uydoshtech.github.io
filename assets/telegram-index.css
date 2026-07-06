@@ -626,15 +626,23 @@ header {
 .map-pin-tooltip-badges .map-pin-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
   line-height: 0;
+  /* Listing-type/gender color, set inline per badge (see mapPinBadgesHtml) —
+     same solid-circle treatment for both badges, just tinted differently. */
+  background: var(--map-pin-badge-color, var(--muted));
 }
 .map-pin-tooltip-badges .chip-icon {
-  width: 1em;
-  height: 1em;
+  width: 12px;
+  height: 12px;
 }
 .map-pin-tooltip-badges .chip-icon svg {
-  width: 1em;
-  height: 1em;
+  width: 12px;
+  height: 12px;
   display: block;
 }
 .map-pin-tooltip-price {
@@ -664,6 +672,10 @@ header {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 8px;
+  /* Extra breathing room below the (often two-line) title specifically —
+     the body's own `gap: 4px` (badges-row -> title) stays tight on purpose,
+     this just widens the title -> location/metro gap. */
+  margin-top: 6px;
 }
 .map-pin-tooltip-meta span {
   display: inline-flex;

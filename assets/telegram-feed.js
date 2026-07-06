@@ -625,6 +625,14 @@ function syncDistrictChipState() {
   filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
     btn.setAttribute('aria-pressed', selected > 0 ? 'true' : 'false');
     btn.setAttribute('aria-label', ariaLabel);
+    // Each cycle can land on a different district, so its color (mirrors the
+    // mobile map's per-district palette — see `UyDosh.districtColor`) has to
+    // be re-applied here too, not just baked into the initial render.
+    if (selected > 0) {
+      btn.style.setProperty('--line-color', UyDosh.districtColor(selected));
+    } else {
+      btn.style.removeProperty('--line-color');
+    }
     const labelEl = btn.querySelector('.chip-label');
     if (labelEl) labelEl.textContent = label;
   });

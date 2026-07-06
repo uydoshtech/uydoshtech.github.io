@@ -353,7 +353,10 @@ function hydrateFormFromListing(listing) {
   );
   state.form.moveInDate = listing.move_in_date ? String(listing.move_in_date).slice(0, 10) : '';
   state.form.privateRoom = Boolean(listing.private_room);
-  state.form.addressText = listing.address_text || '';
+  // Reformatted (not just copied) so listings saved before this formatting
+  // existed show up identically to freshly-resolved ones — see
+  // `UyDosh.formatAddressText`.
+  state.form.addressText = UyDosh.formatAddressText(listing.address_text || '');
   const addressLat = Number(listing.address_latitude);
   const addressLon = Number(listing.address_longitude);
   state.form.addressLatitude = Number.isFinite(addressLat) ? addressLat : null;
@@ -490,35 +493,6 @@ function selectedLocationReviewHtml(lang) {
 }
 
 /**
- * Known localized spellings of "Uzbekistan" that Yandex Geosuggest tacks on
- * as the broadest (first) segment of `formatted_address` — stripped from the
- * review step's address line since it's implied and just wastes space.
- */
-const ADDRESS_COUNTRY_SEGMENTS = new Set([
-  'узбекистан', 'uzbekistan', "o'zbekiston", 'oʻzbekiston', 'ozbekiston', 'ўзбекистон',
-]);
-
-/**
- * Yandex's `formatted_address` reads broad → narrow, e.g. "Узбекистан,
- * Ташкент, улица Тараса Шевченко, 12". The review step instead wants it
- * narrow → broad the way people actually write addresses, with the country
- * dropped entirely: "улица Тараса Шевченко, 12, Ташкент". Only reorders
- * well-formed `city, ..., street[, house]` shapes (3+ segments after the
- * country is removed); anything shorter is returned as-is since we can't
- * reliably tell which segment is the city.
- */
-function formatAddressForReview(addressText) {
-  const segments = String(addressText || '')
-    .split(',')
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-  const withoutCountry = segments.filter((segment) => !ADDRESS_COUNTRY_SEGMENTS.has(segment.toLowerCase()));
-  if (withoutCountry.length < 2) return withoutCountry.join(', ') || addressText;
-  const [city, ...rest] = withoutCountry;
-  return [...rest, city].join(', ');
-}
-
-/**
  * Calling codes we know how to split off a shared/typed phone number, longest
  * match first so e.g. "998..." isn't mistaken for a generic 1-digit code.
  * Mirrors the CIS-heavy set the mobile app offers at sign-in (see
@@ -575,16 +549,16 @@ function moveInDisplayText(lang) {
   return `${UyDosh.t('create.moveInDate', lang)}: ${moveInValueText(lang)}`;
 }
 
-function fieldInlineErrorHtml(message) {
-  if (!message) return '';
-  return `<div class="field-inline-error" role="alert">${UyDosh.escapeHtml(message)}</div>`;
-}
-
+/**
+ * Only the field outline/label turn red (see `.has-error` in
+ * telegram-create.css) — the actual message shows once, in the fixed
+ * `formErrorEl` banner (see `showFormError`), instead of being duplicated
+ * inline next to the field too.
+ */
 function fieldErrorAttrs(anchor) {
   const active = state.validationError && state.validationAnchor === anchor;
   return {
     className: active ? ' has-error' : '',
-    inline: active ? fieldInlineErrorHtml(state.validationError) : '',
   };
 }
 
@@ -834,7 +808,6 @@ function legacyLocationTabsHtml(lang) {
       </div>
       <div class="field${stationField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(stationLabel)}</div>
-        ${stationField.inline}
         <div class="station-list station-list-metro">${stationListHtml(lang)}</div>
         ${nearbyMetroFinderHtml(lang)}
       </div>`;
@@ -876,7 +849,6 @@ function legacyLocationTabsHtml(lang) {
     locationBody = `
       <div class="field${districtField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(districtLabel)}</div>
-        ${districtField.inline}
         <div class="station-list station-list-grid">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
       </div>
       ${nearbyMetroFinderHtml(lang)}`;
@@ -895,10 +867,11 @@ function legacyLocationTabsHtml(lang) {
  * chips as `nearbyStationsHtml` once an address has resolved to
  * coordinates (see `resolveAddressLocation`), a spinner while that resolve
  * is in flight, or a hint prompting the author to type an address /
- * use their location before either has happened yet.
+ * use their location before either has happened yet. Tagging a station here
+ * is optional (see `validateStep`), so this panel never shows an error
+ * state itself — the address field above is what's required.
  */
 function nearbyMetroSectionHtml(lang) {
-  const field = fieldErrorAttrs('location');
   let body;
   if (state.nearbyStationsChecked) {
     body = nearbyStationsHtml(lang);
@@ -908,8 +881,7 @@ function nearbyMetroSectionHtml(lang) {
     body = `<div class="nearby-stations-hint">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationsHint', lang))}</div>`;
   }
   return `
-    <div class="field${field.className}" data-validation-anchor="location">
-      ${field.inline}
+    <div class="field nearby-metro-field">
       ${body}
     </div>`;
 }
@@ -924,9 +896,10 @@ function nearbyMetroSectionHtml(lang) {
  * changes instead of requiring a manual station multi-select.
  */
 function roommateLocationSectionHtml(lang) {
+  const field = fieldErrorAttrs('location');
   return `
-    <div class="field">
-      <label for="listing-address">${UyDosh.escapeHtml(UyDosh.t('create.addressOptional', lang))}</label>
+    <div class="field${field.className}" data-validation-anchor="location">
+      <label for="listing-address">${UyDosh.escapeHtml(UyDosh.t('create.address', lang))}</label>
       <div class="address-input-wrap">
         <textarea
           id="listing-address"
@@ -974,7 +947,7 @@ function renderStep0(lang) {
 
   return `
     <section class="panel active" data-step="0">
-      <div class="field">
+      <div class="field listing-type-field">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}</div>
         <div class="chips">${typeChips}</div>
       </div>
@@ -1098,7 +1071,9 @@ async function fetchAddressSuggestions(query) {
  * room-needed listings, which never render this field. */
 function renderNearbyMetroPanel() {
   if (isRoomNeeded()) return;
-  const field = stepPanelsEl.querySelector('[data-validation-anchor="location"]');
+  // `.nearby-metro-field` (not `[data-validation-anchor="location"]`, which
+  // the address field above it now also carries) — see `fieldErrorAttrs`.
+  const field = stepPanelsEl.querySelector('.nearby-metro-field');
   if (!field) return;
   field.outerHTML = nearbyMetroSectionHtml(UyDosh.getLang());
   bindNearbyMetroEvents();
@@ -1109,6 +1084,13 @@ function handleAddressInputChange(value) {
   clearTimeout(addressSuggestDebounceTimer);
 
   const query = value.trim();
+  if (query && state.validationError && state.validationAnchor === 'location') {
+    // Clear the error without a full `renderStep()` (which would blow away
+    // the textarea's focus/cursor mid-keystroke) — just drop the banner and
+    // this field's red outline directly.
+    showFormError('');
+    stepPanelsEl.querySelector('#listing-address')?.closest('.field')?.classList.remove('has-error');
+  }
   if (query.length === 0 && (state.form.addressLatitude != null || state.nearbyStationsChecked)) {
     // Field fully cleared — drop the stale resolved location/nearby-metro
     // list instead of leaving it pointing at whatever address used to be
@@ -1144,6 +1126,10 @@ function selectAddressSuggestion(index) {
   state.form.addressText = suggestion.displayText;
   const input = stepPanelsEl.querySelector('#listing-address');
   if (input) input.value = suggestion.displayText;
+  if (state.validationError && state.validationAnchor === 'location') {
+    showFormError('');
+    input?.closest('.field')?.classList.remove('has-error');
+  }
   state.addressSuggestions = [];
   state.addressSuggestLoading = false;
   // A pick ends this Geosuggest "session" — the next keystroke starts a new
@@ -1237,14 +1223,12 @@ function renderStep1(lang) {
     ? `
       <div class="field${priceField.className}" data-validation-anchor="price">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.price', lang))}</div>
-        ${priceField.inline}
         <div class="price-value">$${state.form.price}</div>
         <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.price}" data-price-single />
       </div>`
     : `
       <div class="field${priceField.className}" data-validation-anchor="price">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.priceRange', lang))}</div>
-        ${priceField.inline}
         <div class="price-value">$${state.form.priceMin} – $${state.form.priceMax}</div>
         <div class="price-row">
           <div>
@@ -1282,7 +1266,6 @@ function renderStep1(lang) {
       ${priceBlock}
       <div class="field${genderField.className}" data-validation-anchor="gender">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.gender', lang))}</div>
-        ${genderField.inline}
         <div class="chips">${genderChips}</div>
       </div>
       <div class="field">
@@ -1339,13 +1322,11 @@ function renderStep2(lang) {
     <section class="panel active" data-step="2">
       <div class="field${titleField.className}" data-validation-anchor="title">
         <label for="listing-title">${UyDosh.escapeHtml(UyDosh.t('create.titleLabel', lang))}</label>
-        ${titleField.inline}
         <input id="listing-title" type="text" maxlength="${TITLE_MAX}" value="${UyDosh.escapeHtml(state.form.title)}" placeholder="${UyDosh.escapeHtml(UyDosh.t('create.titlePlaceholder', lang))}" />
         <div class="char-count ${state.form.title.length > TITLE_MAX ? 'over' : ''}">${state.form.title.length}/${TITLE_MAX}</div>
       </div>
       <div class="field${descriptionField.className}" data-validation-anchor="description">
         <label for="listing-description">${UyDosh.escapeHtml(UyDosh.t('create.descriptionLabel', lang))}</label>
-        ${descriptionField.inline}
         <textarea id="listing-description" maxlength="${DESCRIPTION_MAX}" placeholder="${UyDosh.escapeHtml(UyDosh.t('create.descriptionPlaceholder', lang))}">${UyDosh.escapeHtml(state.form.description)}</textarea>
         <div class="description-footer">
           <button
@@ -1398,7 +1379,7 @@ function renderStep3(lang) {
     { label: UyDosh.t('create.titleLabel', lang), value: state.form.title, clip: true },
     { label: UyDosh.t('create.descriptionLabel', lang), value: state.form.description, clip: true },
     ...(!isRoomNeeded() && state.form.addressText.trim()
-      ? [{ label: UyDosh.t('create.address', lang), value: formatAddressForReview(state.form.addressText.trim()), clip: true }]
+      ? [{ label: UyDosh.t('create.address', lang), value: UyDosh.formatAddressText(state.form.addressText.trim()), clip: true }]
       : []),
     {
       label: UyDosh.t('create.reviewLocation', lang),
@@ -2093,9 +2074,7 @@ function bindStepEvents() {
   // pointer-capture/drag session on it, which is what made the handle jump
   // around erratically while dragging with a finger or mouse.
   function clearPriceFieldError(fieldEl) {
-    if (!fieldEl?.classList.contains('has-error')) return;
-    fieldEl.classList.remove('has-error');
-    fieldEl.querySelector('.field-inline-error')?.remove();
+    fieldEl?.classList.remove('has-error');
   }
 
   const priceSingleInput = stepPanelsEl.querySelector('[data-price-single]');
@@ -2283,15 +2262,25 @@ function bindStepEvents() {
 function validateStep(step) {
   const lang = UyDosh.getLang();
   if (step === 0) {
-    if (state.form.locationMode === LOCATION_MODE_METRO && state.form.selectedStationIds.length === 0) {
+    if (isRoomNeeded()) {
+      if (state.form.locationMode === LOCATION_MODE_METRO && state.form.selectedStationIds.length === 0) {
+        return {
+          message: UyDosh.t('create.errorLocationRequired', lang),
+          anchor: 'location',
+        };
+      }
+      if (state.form.locationMode === LOCATION_MODE_DISTRICT && state.form.selectedLocationIds.length === 0) {
+        return {
+          message: UyDosh.t('create.errorLocationRequired', lang),
+          anchor: 'location',
+        };
+      }
+    } else if (!state.form.addressText.trim()) {
+      // Roommate-needed's merged flow: the address is what drives the
+      // nearby-metro suggestions, so it's the only required field here —
+      // tagging a nearby station is just an optional refinement.
       return {
-        message: UyDosh.t('create.errorLocationRequired', lang),
-        anchor: 'location',
-      };
-    }
-    if (state.form.locationMode === LOCATION_MODE_DISTRICT && state.form.selectedLocationIds.length === 0) {
-      return {
-        message: UyDosh.t('create.errorLocationRequired', lang),
+        message: UyDosh.t('create.errorAddressRequired', lang),
         anchor: 'location',
       };
     }

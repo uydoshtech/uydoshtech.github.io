@@ -100,7 +100,7 @@ function listingRowHtml(listing) {
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
   const editHref = `/telegram/create.html?id=${encodeURIComponent(listing.id)}`;
-  const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id));
+  const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, { backTo: UyDosh.MINI_APP_ACCOUNT_PATH }));
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
   const visibilityIcon = listing.is_active ? UyDosh.iconEye() : UyDosh.iconEyeOff();
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
@@ -151,7 +151,7 @@ function favoriteRowHtml(favorite) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
-  const href = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id));
+  const href = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, { backTo: UyDosh.MINI_APP_FAVORITES_PATH }));
   return `
     <div class="account-row" data-favorite-row="${listing.id}">
       <a class="account-row-link" href="${href}">

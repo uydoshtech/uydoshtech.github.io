@@ -330,21 +330,26 @@ a { color: inherit; text-decoration: none; }
 }
 /*
  * District filter button (telegram-feed.js `districtChipHtml`) reuses the
- * metro line chip's badge/reveal animation wholesale, just with a fixed pin
- * color instead of a per-line `--line-color` and an icon instead of "M" text.
- * Unlike metro lines (which are always tinted with their own color so riders
- * can identify the line at a glance), the district pin has no inherent color
- * association, so it stays neutral/grey like the other filter chips until a
- * district is actually selected.
+ * metro line chip's badge/reveal animation wholesale, just with a per-district
+ * `--line-color` (set inline, one color per location id — see
+ * `UyDosh.districtColor`, kept in sync with the mobile map's district-layer
+ * palette) instead of a per-line one, and a pin icon instead of "M" text.
+ * Unlike metro lines (whose color is fixed/known up front), this one button
+ * cycles through every district, so we don't know which color to show until
+ * a district is actually selected — it stays neutral grey like the other
+ * filter chips until then (no `--line-color` set, falling back to
+ * `.chip-line`'s default).
  */
-.chip-district[aria-pressed="true"] {
-  --line-color: #F44336;
-}
-/* The pin icon itself always stays dark (unlike the "M" badges, its color
-   isn't tied to --line-color) so it stays visible against the badge's white
-   background even when the border is neutral grey in the unselected state. */
+/* The pin icon itself stays dark while nothing's selected (unlike the "M"
+   badges, its color isn't tied to --line-color yet) so it stays visible
+   against the badge's white background instead of fading into the neutral
+   grey border; once a district is picked, it switches to that district's
+   color like the metro badges do. */
 .chip-district .metro-m-badge {
   color: #1f2937;
+}
+.chip-district[aria-pressed="true"] .metro-m-badge {
+  color: var(--line-color);
 }
 .district-pin-badge svg {
   width: 11px;

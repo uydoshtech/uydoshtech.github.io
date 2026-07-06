@@ -213,6 +213,22 @@ function districtLabel(id, lang = getLang()) {
   return names?.[lang] || names?.en || '';
 }
 
+/**
+ * Per-district colors — mirrors the mobile app's `_districtLayerColor` (map
+ * district-boundary layer, `yandex_map_widget_map_objects.dart`) so a given
+ * district reads with the same color everywhere: the same cycling 12-color
+ * palette, indexed the same way, keyed by the same location id.
+ */
+const DISTRICT_COLORS = [
+  '#E53935', '#8E24AA', '#3949AB', '#1E88E5', '#00ACC1', '#43A047',
+  '#7CB342', '#FDD835', '#FFB300', '#FB8C00', '#6D4C41', '#546E7A',
+];
+
+function districtColor(id) {
+  const n = Number(id) || 0;
+  return DISTRICT_COLORS[Math.abs(n - 1) % DISTRICT_COLORS.length];
+}
+
 /** District ids ordered alphabetically by their current-language name — this is
  * the tap order for the feed's single-button district cycle below. */
 function districtIdsAlphabetical(lang = getLang()) {
@@ -252,6 +268,11 @@ function districtChipHtml(selectedId, lang = getLang(), { compact = false } = {}
   const selected = Number(selectedId) || 0;
   const label = selected > 0 ? districtLabel(selected, lang) : '';
   const ariaLabel = selected > 0 ? label : t('filter.district.aria', lang);
+  // Only set --line-color once a specific district is selected — this one
+  // button cycles through every district, so before a tap we don't yet know
+  // which color to show (stays neutral grey via the shared `.chip-line`
+  // default; see `syncDistrictChipState` for the in-place update on cycle).
+  const colorStyle = selected > 0 ? ` style="--line-color:${districtColor(selected)}"` : '';
   return `
     <button
       type="button"
@@ -259,7 +280,7 @@ function districtChipHtml(selectedId, lang = getLang(), { compact = false } = {}
       data-district-cycle
       data-haptic="selection"
       aria-pressed="${selected > 0 ? 'true' : 'false'}"
-      aria-label="${escapeHtml(ariaLabel)}"
+      aria-label="${escapeHtml(ariaLabel)}"${colorStyle}
     >${districtPinBadgeHtml()}<span class="chip-label-collapse"><span class="chip-label">${escapeHtml(label)}</span></span></button>
   `;
 }
@@ -616,6 +637,7 @@ Object.assign(window.UyDosh, {
   districtLabel,
   districtIdsAlphabetical,
   nextDistrictId,
+  districtColor,
   districtPinBadgeHtml,
   districtChipHtml,
   LISTING_TYPE_ALL,

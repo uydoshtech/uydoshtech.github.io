@@ -483,13 +483,19 @@ function mapPinBadgesHtml(pin) {
   const parts = [];
   const typeId = Number(pin?.listing_type_id);
   if (typeId > 0) {
-    const icon = filterListingTypeIcon(typeId, { pressed: false });
-    if (icon) parts.push(`<span class="map-pin-badge">${icon}</span>`);
+    // `pressed: true` forces the icon glyph itself to white (see filterListingTypeIcon/
+    // filterGenderIcon) — paired with the type/gender color as the circle's own background
+    // (below) instead of the icon's color, so both badges read as small solid, colored dots
+    // (like the map pins themselves) rather than a bare colored glyph.
+    const icon = filterListingTypeIcon(typeId, { pressed: true });
+    const color = listingTypeColor(typeId);
+    if (icon) parts.push(`<span class="map-pin-badge" style="--map-pin-badge-color:${escapeHtml(color || '')}">${icon}</span>`);
   }
   const gender = Number(pin?.gender);
   if (gender > 0) {
-    const icon = filterGenderIcon(gender, { pressed: false });
-    if (icon) parts.push(`<span class="map-pin-badge">${icon}</span>`);
+    const icon = filterGenderIcon(gender, { pressed: true });
+    const color = genderColor(gender);
+    if (icon) parts.push(`<span class="map-pin-badge" style="--map-pin-badge-color:${escapeHtml(color || '')}">${icon}</span>`);
   }
   return parts.join('');
 }
@@ -529,9 +535,18 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
   const badges = mapPinBadgesHtml(pin);
   const photoSrc = pin.photo_url ? photoUrl(pin.photo_url) : '';
   const listingUrl = listingPageUrl(pin.id);
-  const locName = listing ? localizedShort(listing.location, lang) : '';
-  const metro = listing ? localized(listing.subway_station, lang) : '';
-  const metroLine = listing ? resolveMetroLine(listing) : Number(pin.subway_line_id) || null;
+  // Full listing detail (fetched async, see enrichMapPinTooltipListings) wins once it lands —
+  // until then, fall back to the district/subway-station lookups cached by
+  // warmLocationSubwayCaches() so the pin's own location_id/subway_station_id (already present
+  // on the lightweight /listings/map payload) can resolve a name immediately instead of the
+  // tooltip's location/metro line staying blank until that fetch completes.
+  const cachedLocation = !listing ? getCachedLocationById?.(pin.location_id, lang) : null;
+  const cachedSubwayStation = !listing ? getCachedSubwayStationById?.(pin.subway_station_id, lang) : null;
+  const locName = listing ? localizedShort(listing.location, lang) : localizedShort(cachedLocation, lang);
+  const metro = listing ? localized(listing.subway_station, lang) : localized(cachedSubwayStation, lang);
+  const metroLine = listing
+    ? resolveMetroLine(listing)
+    : Number(cachedSubwayStation?.line) || Number(pin.subway_line_id) || null;
   const posted = listing?.created_at ? formatPublicationDate(listing.created_at, lang) : '';
 
   const metaParts = [];
@@ -628,21 +643,55 @@ function isFeatured(listing) {
   return Boolean(listing?.featured_at);
 }
 
+const ADDRESS_COUNTRY_SEGMENTS = new Set([
+  'узбекистан', 'uzbekistan', "o'zbekiston", 'oʻzbekiston', 'ozbekiston', 'ўзбекистон',
+]);
+const ADDRESS_HOUSE_NUMBER_RE = /^\d+[a-zA-Zа-яА-ЯёЁ]?$/;
+const ADDRESS_DISTRICT_SUFFIX_RE = /\sрайон$/i;
+
 /**
- * Drops the trailing country segment from a reverse-geocoded address string
- * (see backend's `reorderYandexAddressText`, which always emits exactly
- * `street[+house], district, city, country` — narrow to broad — once it has
- * successfully reordered an address). Only strips when there are at least 4
- * segments, since anything shorter means the backend left the raw text
- * unchanged (missing country/city/district) and we can't safely assume the
- * last segment is a country name. Returns the address unchanged otherwise.
+ * Single source of truth for how a raw Yandex address (Geosuggest's
+ * `formatted_address`/`title.text`, the reverse-geocoder's `meta.text`, or
+ * whatever's already saved on a listing) is presented anywhere in the Mini
+ * App. Yandex's text reads broad → narrow and includes the country when
+ * present, e.g. "Узбекистан, Ташкент, Учтепинский район, массив Чиланзар,
+ * 26-й квартал, 8". The app only ever serves Tashkent, so both the country
+ * and the (redundant) city are dropped entirely, a trailing house number is
+ * split out and labelled, and the rest reads narrow → broad the way people
+ * actually write addresses: "26-й квартал, дом 8, Учтепинский р-н, массив
+ * Чиланзар".
+ *
+ * Applying this at display time (rather than only when the address is first
+ * resolved) means old listings saved before this formatting existed render
+ * identically to new ones.
  */
-function addressWithoutCountry(address) {
+function formatAddressText(address) {
   const text = typeof address === 'string' ? address.trim() : '';
   if (!text) return text;
-  const segments = text.split(',').map((segment) => segment.trim()).filter(Boolean);
-  if (segments.length < 4) return text;
-  return segments.slice(0, -1).join(', ');
+
+  let segments = text.split(',').map((segment) => segment.trim()).filter(Boolean);
+  if (segments.length === 0) return text;
+
+  if (ADDRESS_COUNTRY_SEGMENTS.has(segments[0].toLowerCase())) {
+    segments = segments.slice(1);
+  }
+  if (segments.length === 0) return text;
+
+  // The city is redundant once other segments are present — drop it
+  // entirely instead of just moving it, unlike everything else below.
+  const rest = segments.length > 1 ? segments.slice(1) : segments;
+  if (rest.length === 0) return text;
+
+  let house = null;
+  if (rest.length > 1 && ADDRESS_HOUSE_NUMBER_RE.test(rest[rest.length - 1])) {
+    house = rest.pop();
+  }
+
+  const street = rest.pop();
+  const parts = [street, ...rest].map((segment) => segment.replace(ADDRESS_DISTRICT_SUFFIX_RE, ' р-н'));
+  if (house) parts.splice(1, 0, `дом ${house}`);
+
+  return parts.join(', ');
 }
 
 // Walk-time estimate constants + straight-line distance math shared by the
@@ -761,7 +810,7 @@ Object.assign(window.UyDosh, {
   listingPinCoordinateKey,
   isFeatured,
   listingTypeBadgeLabel,
-  addressWithoutCountry,
+  formatAddressText,
   haversineMeters,
   estimatedWalkMinutes,
   listingReferenceCoordinates,

@@ -1005,6 +1005,37 @@
     document.head.appendChild(style);
   }
 
+  /**
+   * `-webkit-user-drag: none` (above) opts elements out of Safari's *mouse*-driven native image
+   * drag, but several WebViews (observed: Telegram iOS Mini App, some Android WebViews) still
+   * start a native *touch*-driven "drag lift" on a placemark `<img>` from the CSS property alone
+   * — a quick, slightly-off-axis tap-then-tap (exactly what tapping a pin and then tapping the
+   * tooltip/another pin looks like) reads as a drag gesture. The OS then paints its solid
+   * highlight-colored ghost box at the gesture's start/end position and — since we
+   * `preventDefault()` the synthetic click, not the native `dragstart`/`dragend` pair — that
+   * ghost is never told the drag ended, so it's left floating over the map indefinitely (the
+   * blotchy pink/magenta rectangles reported after tapping pins). Intercepting `dragstart`
+   * directly stops the gesture before the OS ever paints anything, which is more reliable across
+   * WebView engines/versions than the CSS property alone. `selectstart` is a second belt for the
+   * same class of engines ignoring `user-select: none` on dynamically-inserted map elements.
+   * Delegated on `document` (once, globally) rather than per-container so it also covers markup
+   * added by ymaps well after `ensureMapInteractionStyles()` first ran (clusters re-painting on
+   * zoom, tooltip carousel re-renders, etc).
+   */
+  let mapNativeGestureGuardInstalled = false;
+
+  function ensureMapNativeGestureGuard() {
+    if (mapNativeGestureGuardInstalled) return;
+    mapNativeGestureGuardInstalled = true;
+    const preventInsideMapContainer = (event) => {
+      if (event.target?.closest?.('.map-container')) {
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('dragstart', preventInsideMapContainer, { passive: false });
+    document.addEventListener('selectstart', preventInsideMapContainer, { passive: false });
+  }
+
   // The light/dark toggle lives in the app header (see initThemeToggle() in uydosh-i18n.js)
   // and only affects the app's own UI colors — prefersDarkMapPins() always returns false, so
   // this listener is a deliberate no-op for the map tiles/pins, kept only in case that ever
@@ -1560,6 +1591,7 @@
     if (mapPin.longitude == null) mapPin.longitude = longitude;
     map.geoObjects.add(createPlacemark(ymaps, mapPin, { selected }));
     ensureMapInteractionStyles();
+    ensureMapNativeGestureGuard();
     applyMapTileTheme(container, window.UyDosh?.prefersDarkMapPins?.() ?? false);
     const instance = { map };
     attachUserLocationControl(ymaps, map, instance);
@@ -1637,6 +1669,7 @@
       darkMap,
     });
     ensureMapInteractionStyles();
+    ensureMapNativeGestureGuard();
     applyMapTileTheme(container, pinVisualDefaults.darkMap);
     window.UyDosh?.warmMapPinIconCache?.({ darkMap: pinVisualDefaults.darkMap });
 
