@@ -1249,6 +1249,15 @@
   const RESULTS_COUNT_STYLE_ID = 'uydosh-map-results-count-styles';
   const RESULTS_COUNT_CONTROL_SIZE = 34;
   const RESULTS_COUNT_CONTROL_GUTTER = 10;
+  // Same silhouette as `iconHome()` in uydosh-icons.js (a listing = a home),
+  // just recolored via `currentColor` instead of that icon's hardcoded pin
+  // red, so it inherits the tile's white text color — this module keeps its
+  // own inline SVGs rather than depending on uydosh-icons.js (see the layer
+  // control icons above for the same pattern).
+  const RESULTS_COUNT_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none">
+    <path d="M4 10.5 12 4l8 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>`;
 
   function ensureResultsCountStyles() {
     if (document.getElementById(RESULTS_COUNT_STYLE_ID)) return;
@@ -1262,17 +1271,24 @@
         z-index: 20;
         height: ${RESULTS_COUNT_CONTROL_SIZE}px;
         min-width: ${RESULTS_COUNT_CONTROL_SIZE}px;
-        padding: 0 8px;
+        padding: 0 10px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 5px;
         border-radius: 8px;
-        background: #fff;
-        color: ${MAP_CONTROL_ICON_COLOR};
+        background: #111;
+        color: #fff;
         font: 700 13px/1 system-ui, -apple-system, sans-serif;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
         pointer-events: none;
         white-space: nowrap;
+      }
+      .${RESULTS_COUNT_TILE_CLASS} svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+        flex: 0 0 auto;
       }
     `;
     document.head.appendChild(style);
@@ -1302,7 +1318,7 @@
       tile.setAttribute('role', 'status');
       container.appendChild(tile);
     }
-    tile.textContent = resultsCountLabel(count);
+    tile.innerHTML = `${RESULTS_COUNT_ICON_SVG}<span>${resultsCountLabel(count)}</span>`;
     tile.setAttribute(
       'aria-label',
       window.UyDosh?.t?.('map.resultsCountAria')?.replace('{count}', String(count)) ??
