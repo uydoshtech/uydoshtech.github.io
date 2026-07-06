@@ -1213,6 +1213,13 @@ function initTelegramMiniApp() {
     getTelegramInitData();
     try { tg.ready(); } catch { /* ignore */ }
     try { tg.expand(); } catch { /* ignore */ }
+    // Telegram doesn't reset the header BackButton to match whatever page
+    // you've navigated to — it can carry over "shown" from wherever you came
+    // from (e.g. back from a listing to the feed). Default it off here, on
+    // every page, since only specific pages need it: `listing.html` and
+    // `telegram-create.js` (see `updateTelegramBackButton`) explicitly show
+    // it themselves, after this runs.
+    try { tg.BackButton?.hide(); } catch { /* ignore */ }
     if (redirectFromMiniAppStartParam()) return true;
     // Single active Mini App instance per Telegram user: register this launch,
     // then start the ~10s heartbeat / realtime socket that detect being

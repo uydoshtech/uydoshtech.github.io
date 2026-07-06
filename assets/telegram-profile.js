@@ -6,6 +6,19 @@
 
 UyDosh.initTelegramMiniApp();
 
+// Reached from the account menu on any page — the header's BackButton
+// defaults to hidden (see `initTelegramMiniApp`), so show it here and send
+// the user back to wherever a `?back=` deep link points, falling back to
+// the feed (same pattern as listing.html/telegram-account.js).
+if (UyDosh.isMiniApp()) {
+  const webApp = window.Telegram?.WebApp;
+  webApp?.BackButton?.show();
+  webApp?.BackButton?.onClick(() => {
+    UyDosh.haptic.light();
+    location.href = UyDosh.miniAppBackTargetFromUrl();
+  });
+}
+
 const loadingEl = document.getElementById('loading');
 const formRootEl = document.getElementById('form-root');
 const footerEl = document.getElementById('profile-footer');
