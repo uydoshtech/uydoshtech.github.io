@@ -332,8 +332,12 @@ a { color: inherit; text-decoration: none; }
  * District filter button (telegram-feed.js `districtChipHtml`) reuses the
  * metro line chip's badge/reveal animation wholesale, just with a fixed pin
  * color instead of a per-line `--line-color` and an icon instead of "M" text.
+ * Unlike metro lines (which are always tinted with their own color so riders
+ * can identify the line at a glance), the district pin has no inherent color
+ * association, so it stays neutral/grey like the other filter chips until a
+ * district is actually selected.
  */
-.chip-district {
+.chip-district[aria-pressed="true"] {
   --line-color: #F44336;
 }
 .district-pin-badge svg {
