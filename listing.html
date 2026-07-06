@@ -909,6 +909,12 @@
       .map-section-row-address:not(:first-child) {
         margin-top: 8px;
       }
+      /* Applied only to the first metro station row (see buildMapSectionHtml)
+         when district/address rows precede it, so the metro group visually
+         separates from them the same way the address row does above. */
+      .map-section-row-metro-group-start {
+        margin-top: 8px;
+      }
       .map-section-row .icon svg { width: 18px; height: 18px; display: block; }
       .map-section-row .icon svg * { stroke: currentColor; fill: none; }
       .map-section-chevron {
@@ -1069,13 +1075,13 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260706-99"></script>
-    <script src="assets/uydosh-api.js?v=20260706-101"></script>
-    <script src="assets/uydosh-i18n.js?v=20260706-27"></script>
+    <script src="assets/uydosh-api.js?v=20260706-102"></script>
+    <script src="assets/uydosh-i18n.js?v=20260706-28"></script>
     <script src="assets/uydosh-icons.js?v=20260706-104"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-profile-match.js?v=20260705-1"></script>
-    <script src="assets/uydosh-mini-app.js?v=20260706-101"></script>
+    <script src="assets/uydosh-mini-app.js?v=20260706-102"></script>
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
       UyDosh.initTelegramMiniApp();
@@ -2177,20 +2183,18 @@
         const hasAddress = Boolean(address);
         if (!hasLocation && !hasMetro && !hasAddress) return '';
 
+        // District, then exact address, then metro stations last — the
+        // general-to-specific area info comes first, with nearby-transit
+        // details (which can run to several rows/lines for multi-station
+        // listings) trailing at the bottom of the summary.
         const rows = [];
-        if (hasMetro) {
-          const refCoords = UyDosh.listingReferenceCoordinates(l);
-          rows.push(...stations
-            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords))
-            .filter(Boolean));
-        }
         if (hasLocation) {
           rows.push(`<div class="map-section-row">${UyDosh.iconPin()}<span>${UyDosh.escapeHtml(locName)}</span></div>`);
         }
         if (hasAddress) {
           // Extra top margin (on top of `.map-section-summary`'s row gap) so the
-          // exact address stands apart from the district/metro rows above it —
-          // those describe the general area, this is the precise address.
+          // exact address stands apart from the district row above it — that
+          // describes the general area, this is the precise address.
           // The country segment is redundant inside the Mini App (Telegram
           // users are already local), so it's dropped there; the standalone
           // website keeps the full address.
@@ -2198,6 +2202,22 @@
             ? UyDosh.addressWithoutCountry(address)
             : address;
           rows.push(`<div class="map-section-row map-section-row-address">${UyDosh.iconHome()}<span>${UyDosh.escapeHtml(displayAddress)}</span></div>`);
+        }
+        if (hasMetro) {
+          const refCoords = UyDosh.listingReferenceCoordinates(l);
+          const metroRows = stations
+            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords))
+            .filter(Boolean);
+          // Same "stands apart from the rows above it" treatment as the
+          // address row, but only on the first station row — multiple
+          // stations shouldn't each get extra spacing from one another.
+          if (metroRows.length && rows.length) {
+            metroRows[0] = metroRows[0].replace(
+              'map-section-row-metro',
+              'map-section-row-metro map-section-row-metro-group-start',
+            );
+          }
+          rows.push(...metroRows);
         }
         if (l.move_in_date) {
           rows.push(

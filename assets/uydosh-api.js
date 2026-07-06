@@ -93,6 +93,196 @@ function clearTelegramInitData() {
   clearPersistedTelegramInitData();
 }
 
+// --- Single active Mini App instance per Telegram user -------------------
+// See backend TelegramMiniAppSessionService: exactly one `instance_id` may be
+// "active" per Telegram user at a time. On launch we mint one, register it
+// via `startTelegramMiniAppSession`, then keep it alive with a ~10s
+// heartbeat. Opening the Mini App again elsewhere (or on the initial launch
+// racing this one) revokes whichever instance loses — see
+// `onMiniAppSessionRevoked` (wired up in uydosh-mini-app.js) for how the
+// loser reacts.
+
+const MINI_APP_INSTANCE_ID_KEY = 'uydosh_mini_app_instance_id';
+const MINI_APP_HEARTBEAT_INTERVAL_MS = 10_000;
+const MINI_APP_SOCKET_IO_SRC = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+
+function generateMiniAppInstanceId() {
+  try {
+    if (typeof crypto?.randomUUID === 'function') return crypto.randomUUID();
+  } catch { /* ignore */ }
+  return `mai_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Stable id for this Mini App launch (tab/WebView), minted once and cached
+ * for the rest of this browsing session — NOT shared across separate
+ * launches, which is exactly the point: each launch races to become the
+ * single "active" instance for its Telegram user (see
+ * `startTelegramMiniAppSession`).
+ */
+function getOrCreateMiniAppInstanceId() {
+  try {
+    const existing = sessionStorage.getItem(MINI_APP_INSTANCE_ID_KEY);
+    if (existing) return existing;
+  } catch { /* ignore */ }
+  const id = generateMiniAppInstanceId();
+  try {
+    sessionStorage.setItem(MINI_APP_INSTANCE_ID_KEY, id);
+  } catch { /* ignore */ }
+  return id;
+}
+
+let _miniAppSessionRevokedHandler = null;
+let _miniAppHeartbeatTimer = null;
+let _miniAppSocket = null;
+let _miniAppSessionRevoked = false;
+
+/**
+ * Registers the callback invoked (at most once) when this instance's session
+ * is revoked — either by an explicit `session_revoked` socket push or a 409
+ * from the heartbeat. See `handleMiniAppSessionRevoked` in uydosh-mini-app.js
+ * for the actual blocking-screen UI.
+ */
+function onMiniAppSessionRevoked(handler) {
+  _miniAppSessionRevokedHandler = typeof handler === 'function' ? handler : null;
+}
+
+function _triggerMiniAppSessionRevoked(reason) {
+  if (_miniAppSessionRevoked) return;
+  _miniAppSessionRevoked = true;
+  stopMiniAppHeartbeatLoop();
+  if (_miniAppSocket) {
+    try { _miniAppSocket.disconnect(); } catch { /* ignore */ }
+    _miniAppSocket = null;
+  }
+  _miniAppSessionRevokedHandler?.(reason);
+}
+
+/** True once this tab's Mini App instance has been superseded by another one. */
+function isMiniAppSessionRevoked() {
+  return _miniAppSessionRevoked;
+}
+
+let _socketIoClientPromise = null;
+
+/** Lazy-loads the Socket.IO client from CDN — only Mini App pages need it. */
+function loadSocketIoClient() {
+  if (window.io) return Promise.resolve(window.io);
+  if (_socketIoClientPromise) return _socketIoClientPromise;
+  _socketIoClientPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = MINI_APP_SOCKET_IO_SRC;
+    script.async = true;
+    script.onload = () => {
+      if (window.io) resolve(window.io);
+      else {
+        _socketIoClientPromise = null;
+        reject(new Error('socket.io client missing after load'));
+      }
+    };
+    script.onerror = () => {
+      _socketIoClientPromise = null;
+      reject(new Error('Failed to load socket.io client'));
+    };
+    document.head.appendChild(script);
+  });
+  return _socketIoClientPromise;
+}
+
+/**
+ * Connects to the backend's Mini App realtime channel for an immediate
+ * `session_revoked` push (see TelegramMiniAppRealtimeService server-side) —
+ * the ~10s heartbeat is the fallback for whenever this socket is dropped
+ * (backgrounded tab, flaky network). Best-effort: never throws.
+ */
+async function connectMiniAppSessionSocket(instanceId) {
+  try {
+    const io = await loadSocketIoClient();
+    if (_miniAppSocket) {
+      try { _miniAppSocket.disconnect(); } catch { /* ignore */ }
+    }
+    _miniAppSocket = io(API_BASE, {
+      path: '/telegram-mini-app/socket.io',
+      transports: ['websocket', 'polling'],
+      auth: { instanceId },
+      reconnection: true,
+    });
+    _miniAppSocket.on('session_revoked', () => _triggerMiniAppSessionRevoked('socket'));
+  } catch (err) {
+    console.warn('[UyDosh] Mini App realtime connect failed', err);
+  }
+}
+
+function startMiniAppHeartbeatLoop() {
+  if (_miniAppHeartbeatTimer) return;
+  _miniAppHeartbeatTimer = setInterval(sendTelegramMiniAppHeartbeat, MINI_APP_HEARTBEAT_INTERVAL_MS);
+}
+
+function stopMiniAppHeartbeatLoop() {
+  if (_miniAppHeartbeatTimer) {
+    clearInterval(_miniAppHeartbeatTimer);
+    _miniAppHeartbeatTimer = null;
+  }
+}
+
+/**
+ * POST /app/telegram-mini-app-session/heartbeat — keeps this instance marked
+ * alive. A 409 `{ code: 'SESSION_REVOKED' }` means a different instance has
+ * taken over for this Telegram user; any other failure (network hiccup,
+ * transient 5xx) is ignored so a flaky connection doesn't tear down a still
+ * legitimately-active session.
+ */
+async function sendTelegramMiniAppHeartbeat() {
+  if (_miniAppSessionRevoked) return;
+  const initData = getTelegramInitData();
+  if (!initData) return;
+  const instanceId = getOrCreateMiniAppInstanceId();
+  try {
+    const res = await fetch(`${API_BASE}/app/telegram-mini-app-session/heartbeat`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ init_data: initData, instance_id: instanceId }),
+    });
+    if (res.status === 409) {
+      let payload = null;
+      try { payload = await res.json(); } catch { /* ignore */ }
+      if (payload?.code === 'SESSION_REVOKED') {
+        _triggerMiniAppSessionRevoked('heartbeat');
+      }
+    }
+  } catch (err) {
+    console.warn('[UyDosh] Mini App heartbeat failed', err);
+  }
+}
+
+/**
+ * POST /app/telegram-mini-app-session/start — registers this launch's
+ * instance id as the single active one for the current Telegram user,
+ * revoking any other instance previously active for them. Call once on
+ * startup (see `initTelegramMiniApp`). Best-effort: swallows failures (no
+ * Telegram identity yet, offline) since it must never block app startup —
+ * "important" API calls independently re-check instance validity server-side.
+ */
+async function startTelegramMiniAppSession() {
+  const initData = getTelegramInitData();
+  if (!initData) return false;
+  const instanceId = getOrCreateMiniAppInstanceId();
+  try {
+    const res = await fetch(`${API_BASE}/app/telegram-mini-app-session/start`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ init_data: initData, instance_id: instanceId }),
+    });
+    if (!res.ok) return false;
+    connectMiniAppSessionSocket(instanceId);
+    startMiniAppHeartbeatLoop();
+    return true;
+  } catch (err) {
+    console.warn('[UyDosh] Failed to start Mini App session', err);
+    return false;
+  }
+}
+
 function getSessionToken() {
   try {
     return sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
@@ -261,7 +451,7 @@ async function reportTelegramMiniAppLocation(latitude, longitude, contactRaw) {
   const initData = getTelegramInitData();
   if (!initData) return false;
   try {
-    const body = { init_data: initData, latitude, longitude };
+    const body = { init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), latitude, longitude };
     if (contactRaw) body.contact = contactRaw;
     const res = await fetch(`${API_BASE}/app/telegram-mini-app-location`, {
       method: 'POST',
@@ -397,6 +587,21 @@ function fetchGeosuggest({ text, sessionToken, lang = getLang(), results = 6 }) 
   });
 }
 
+/**
+ * Shared error-response handling for the Telegram Mini App `init_data`-verifying
+ * endpoints below: clears a stale/expired initData on 401, and — since these are
+ * all "important" requests gated on `instance_id` (see TelegramMiniAppSessionService
+ * server-side) — triggers the blocking "session revoked" UI on a 409 `SESSION_REVOKED`
+ * so the user isn't just shown a raw error for an action that can never succeed again
+ * on this instance.
+ */
+function _handleMiniAppApiErrorPayload(res, payload) {
+  if (res.status === 401) clearTelegramInitData();
+  if (res.status === 409 && payload?.code === 'SESSION_REVOKED') {
+    _triggerMiniAppSessionRevoked('api');
+  }
+}
+
 /** Create a listing from the Telegram Mini App (verify initData on submit). */
 async function createListingFromTelegramMiniApp(listing) {
   const initData = getTelegramInitData();
@@ -411,14 +616,14 @@ async function createListingFromTelegramMiniApp(listing) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ init_data: initData, listing }),
+    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), listing }),
   });
   let payload = null;
   try {
     payload = await res.json();
   } catch { /* ignore */ }
   if (!res.ok) {
-    if (res.status === 401) clearTelegramInitData();
+    _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
     err.payload = payload;
@@ -445,14 +650,14 @@ async function updateListingFromTelegramMiniApp(listingId, listing) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ init_data: initData, listing }),
+    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), listing }),
   });
   let payload = null;
   try {
     payload = await res.json();
   } catch { /* ignore */ }
   if (!res.ok) {
-    if (res.status === 401) clearTelegramInitData();
+    _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
     err.payload = payload;
@@ -469,7 +674,25 @@ async function fetchMyTelegramMiniAppListings() {
     err.status = 401;
     throw err;
   }
-  return fetchJson('/listings/telegram-miniapp/mine', { init_data: initData });
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/mine?${new URLSearchParams({
+      init_data: initData,
+      instance_id: getOrCreateMiniAppInstanceId(),
+    })}`,
+    { headers: { Accept: 'application/json' } },
+  );
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    _handleMiniAppApiErrorPayload(res, payload);
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
 }
 
 /**
@@ -489,14 +712,14 @@ async function toggleListingActiveFromTelegramMiniApp(listingId) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ init_data: initData }),
+    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId() }),
   });
   let payload = null;
   try {
     payload = await res.json();
   } catch { /* ignore */ }
   if (!res.ok) {
-    if (res.status === 401) clearTelegramInitData();
+    _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
     err.payload = payload;
@@ -524,14 +747,14 @@ async function renewListingFromTelegramMiniApp(listingId) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ init_data: initData }),
+    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId() }),
   });
   let payload = null;
   try {
     payload = await res.json();
   } catch { /* ignore */ }
   if (!res.ok) {
-    if (res.status === 401) clearTelegramInitData();
+    _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
     err.payload = payload;
@@ -557,14 +780,14 @@ async function deleteListingFromTelegramMiniApp(listingId) {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ init_data: initData }),
+    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId() }),
   });
   let payload = null;
   try {
     payload = await res.json();
   } catch { /* ignore */ }
   if (!res.ok) {
-    if (res.status === 401) clearTelegramInitData();
+    _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
     err.payload = payload;
@@ -869,6 +1092,10 @@ Object.assign(window.UyDosh, {
   getTelegramInitData,
   clearTelegramInitData,
   isTelegramInitDataUsable,
+  getOrCreateMiniAppInstanceId,
+  startTelegramMiniAppSession,
+  onMiniAppSessionRevoked,
+  isMiniAppSessionRevoked,
   getSessionToken,
   setSessionToken,
   getSessionUserId,

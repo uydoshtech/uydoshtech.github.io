@@ -53,10 +53,12 @@ function amenitiesRowHtml(listing, lang) {
 }
 
 /**
- * Eye icon + view count badge, overlaid on the thumbnail's top-left corner (see
- * `accountThumbHtml`). Starts hidden — filled in and revealed by `bindViewCounts`
- * once the owner-only `/listings/:id/view-count` request resolves (see also the
+ * Eye icon + raw view count, shown above the thumbnail (see `listingRowHtml`).
+ * Starts hidden — filled in and revealed by `bindViewCounts` once the
+ * owner-only `/listings/:id/view-count` request resolves (see also the
  * listing detail page's owner toolbar, which reuses the same endpoint/helpers).
+ * Intentionally just the icon + number (no "views" word) to stay legible in
+ * the narrow My Listings column.
  */
 function viewCountHtml(listing) {
   return `
@@ -66,20 +68,17 @@ function viewCountHtml(listing) {
   `;
 }
 
-function accountThumbHtml(listing, { showViews = false } = {}) {
+function accountThumbHtml(listing) {
   const photo = UyDosh.primaryPhoto(listing);
   const photoSrc = photo ? UyDosh.photoUrl(photo) : '';
   const placeholderSrc = !photoSrc ? UyDosh.noPhotoPlaceholderImageUrl(listing) : '';
-  // Views badge overlays the thumb's top-left corner (My Listings only —
-  // it's owner-only data, so favorites rows never pass showViews).
-  const views = showViews ? viewCountHtml(listing) : '';
   if (photoSrc) {
-    return `<div class="account-thumb">${views}<img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="" onerror="this.parentElement.classList.add('empty'); this.remove();" /></div>`;
+    return `<div class="account-thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="" onerror="this.parentElement.classList.add('empty'); this.remove();" /></div>`;
   }
   if (placeholderSrc) {
-    return `<div class="account-thumb">${views}<img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="" /></div>`;
+    return `<div class="account-thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="" /></div>`;
   }
-  return `<div class="account-thumb empty">${views}</div>`;
+  return `<div class="account-thumb empty"></div>`;
 }
 
 /** Days remaining until `nextRenewalAtIso` (ISO string) is reached; 0 or less means renewal is available now. */
@@ -109,7 +108,8 @@ function listingRowHtml(listing) {
     <div class="account-row" data-listing-row="${listing.id}">
       <a class="account-row-link" href="${detailHref}">
         <div class="account-thumb-col">
-          ${accountThumbHtml(listing, { showViews: true })}
+          ${viewCountHtml(listing)}
+          ${accountThumbHtml(listing)}
           ${amenitiesRowHtml(listing, lang)}
         </div>
         <div class="account-row-body">
@@ -264,7 +264,8 @@ function applyViewCountToRow(id, count) {
   const el = listEl.querySelector(`[data-view-count="${id}"]`);
   if (!el) return;
   const textEl = el.querySelector('[data-view-count-text]');
-  if (textEl) textEl.textContent = UyDosh.listingViewsCountText(count, UyDosh.getLang());
+  // Icon-only badge — just the raw number, no "views" word (see `viewCountHtml`).
+  if (textEl) textEl.textContent = String(Math.max(0, Math.trunc(Number(count) || 0)));
   el.hidden = false;
 }
 

@@ -1061,6 +1061,121 @@ function bindMiniAppHapticFeedback() {
   }, true);
 }
 
+// --- Single active Mini App instance: blocking "session revoked" screen ---
+// Paired with `startTelegramMiniAppSession`/`onMiniAppSessionRevoked` in
+// uydosh-api.js. Shown when this tab/WebView's instance has been superseded
+// by another one opened for the same Telegram user (either pushed instantly
+// over the Socket.IO channel, or discovered on the next ~10s heartbeat).
+
+const MINI_APP_SESSION_REVOKED_STYLE_ID = 'uydosh-mini-app-session-revoked-styles';
+
+function ensureMiniAppSessionRevokedStyles() {
+  if (document.getElementById(MINI_APP_SESSION_REVOKED_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = MINI_APP_SESSION_REVOKED_STYLE_ID;
+  style.textContent = `
+    .mini-app-session-revoked-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: color-mix(in srgb, var(--bg, #061525) 96%, black);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+    .mini-app-session-revoked-card {
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .mini-app-session-revoked-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--brand2, #60a5fa) 16%, transparent);
+      color: var(--brand2, #60a5fa);
+    }
+    .mini-app-session-revoked-icon svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+    .mini-app-session-revoked-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+      margin: 0;
+    }
+    .mini-app-session-revoked-message {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      margin: 0;
+    }
+    .mini-app-session-revoked-close {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 28px;
+      margin-top: 6px;
+      background: var(--brand2, #60a5fa);
+      color: #06121f;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .mini-app-session-revoked-close:active {
+      opacity: 0.88;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+/**
+ * Renders the full-screen blocking overlay and attempts `Telegram.WebApp.close()`
+ * when the user taps its button — satisfies "show a blocking screen or call
+ * Telegram.WebApp.close()" without abruptly closing the app out from under the
+ * user before they understand why.
+ */
+function showMiniAppSessionRevokedScreen() {
+  if (document.querySelector('.mini-app-session-revoked-overlay')) return;
+  ensureMiniAppSessionRevokedStyles();
+  const lang = getLang();
+  const overlay = document.createElement('div');
+  overlay.className = 'mini-app-session-revoked-overlay';
+  overlay.setAttribute('role', 'alertdialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.innerHTML = `
+    <div class="mini-app-session-revoked-card">
+      <span class="mini-app-session-revoked-icon" aria-hidden="true">${UyDosh.iconChrome ? UyDosh.iconChrome('house') : ''}</span>
+      <h2 class="mini-app-session-revoked-title">${escapeHtml(t('session.revokedTitle', lang))}</h2>
+      <p class="mini-app-session-revoked-message">${escapeHtml(t('session.revokedMessage', lang))}</p>
+      <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t('session.revokedClose', lang))}</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-session-revoked-close]')?.addEventListener('click', () => {
+    try {
+      if (typeof window.Telegram?.WebApp?.close === 'function') {
+        window.Telegram.WebApp.close();
+        return;
+      }
+    } catch { /* ignore */ }
+    // Outside Telegram (desktop browser testing) there's nothing to "close" —
+    // leave the blocking overlay up, which already prevents further interaction.
+  });
+}
+
 /** Call on mini-app pages after telegram-web-app.js is loaded. */
 function initTelegramMiniApp() {
   // Persist the bot-selected `?lang=` for the rest of this session so
@@ -1077,6 +1192,12 @@ function initTelegramMiniApp() {
     try { tg.ready(); } catch { /* ignore */ }
     try { tg.expand(); } catch { /* ignore */ }
     if (redirectFromMiniAppStartParam()) return true;
+    // Single active Mini App instance per Telegram user: register this launch,
+    // then start the ~10s heartbeat / realtime socket that detect being
+    // superseded by another instance (see uydosh-api.js + backend
+    // TelegramMiniAppSessionService). Fire-and-forget — must never block startup.
+    onMiniAppSessionRevoked(showMiniAppSessionRevokedScreen);
+    startTelegramMiniAppSession();
     // Fire-and-forget: inits the LocationManager and requests the user's location right away.
     // On a user's very first Mini App visit ever, this is what triggers Telegram's native
     // location permission prompt; on every visit after that (granted or denied), it silently
@@ -1182,4 +1303,5 @@ Object.assign(window.UyDosh, {
   logMiniAppEvent,
   logMiniAppScreen,
   MINI_APP_FEED_PATH,
+  showMiniAppSessionRevokedScreen,
 });

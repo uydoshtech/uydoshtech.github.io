@@ -167,25 +167,16 @@ header {
   font-weight: 700;
   color: var(--muted);
 }
-/* Overlaid on the thumbnail's top-left corner (see `accountThumbHtml`) —
-   a small pill with its own dark backdrop so the count stays legible
-   over any photo. */
+/* Shown above the thumbnail (see `listingRowHtml`) — icon + raw count only,
+   no "views" word, styled like the muted amenity/meta text below the photo. */
 .account-row-views {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(2px);
   font-size: 10px;
   font-weight: 600;
   line-height: 1.4;
-  color: #fff;
+  color: var(--muted);
 }
 .account-row-views .icon { width: 12px; height: 12px; display: inline-flex; }
 .account-row-views .icon svg { width: 12px; height: 12px; display: block; }
