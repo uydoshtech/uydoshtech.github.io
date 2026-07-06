@@ -918,10 +918,55 @@ async function updateAddressMapPreview() {
       longitude,
       lang: UyDosh.getLang(),
       listingTypeId: state.form.listingTypeId,
+      draggable: true,
+      onPinDragEnd: handleAddressPinDragEnd,
+      dragHintText: UyDosh.t('create.addressMapDragHint', UyDosh.getLang()),
+      zoomControl: true,
     });
     UyDosh.reflowActiveMaps();
   } catch (err) {
     console.error('[Create] Address map preview failed', err);
+  }
+}
+
+/**
+ * Fired when the author drags the address-map-preview pin to correct its
+ * position (see `draggable`/`onPinDragEnd` above) — free-form finger drag,
+ * no Yandex request involved. Mirrors "Моя локация"'s reverse-geocode step
+ * so the address text stays in sync with wherever the pin actually ends up,
+ * instead of silently drifting from what's displayed in the textarea.
+ * Deliberately does *not* go through `updateAddressMapPreview()` /
+ * `renderStep()` — the map already shows the pin exactly where the author
+ * dropped it, so re-rendering the whole step (or recreating the map) here
+ * would just be wasted work and a jarring flash mid-gesture.
+ */
+async function handleAddressPinDragEnd({ latitude, longitude }) {
+  state.form.addressLatitude = latitude;
+  state.form.addressLongitude = longitude;
+  haptic('selection');
+  showFormError('');
+
+  // Keep the preview's dedupe key in sync with the drag so a later full
+  // `renderStep()` (e.g. moving to the next step and back) doesn't treat
+  // the dragged position as "stale" and pointlessly recreate the map.
+  const container = stepPanelsEl.querySelector('#address-map-preview');
+  if (container) {
+    container.dataset.mapKey = `${latitude.toFixed(6)}_${longitude.toFixed(6)}`;
+  }
+
+  applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
+  renderNearbyMetroPanel();
+
+  try {
+    const result = await UyDosh.fetchReverseGeocodeAddress(latitude, longitude, UyDosh.getLang());
+    if (result?.addressText) {
+      state.form.addressText = result.addressText;
+      state.addressGeocodedText = result.addressText.trim();
+      const input = stepPanelsEl.querySelector('#listing-address');
+      if (input) input.value = result.addressText;
+    }
+  } catch (err) {
+    console.error('[Create] Reverse geocode after pin drag failed', err);
   }
 }
 

@@ -31,9 +31,36 @@
     );
   }
 
-  /** Mirror backend resolveListingMapCoordinates (address → metro → district). */
+  /**
+   * Mirror backend resolveListingMapCoordinates: listings processed by the
+   * location-approx pipeline carry `location_precision` + a ready-to-use
+   * `display_lat`/`display_lng` (a real address point for `exact`, or a
+   * stable generated point around the metro/district/landmark anchor
+   * otherwise) — those take priority so this pin matches the feed map and
+   * mobile app instead of falling back to a shared station/district
+   * coordinate. `location_precision === 'unknown'` deliberately yields no
+   * pin. Listings never touched by that pipeline (older rows,
+   * `location_precision` null/undefined) fall back to the legacy
+   * resolution: address, then subway station, then district.
+   */
   function resolveListingMapCoordinates(listing) {
     if (!listing) return null;
+    if (listing.location_precision === 'unknown') return null;
+
+    const displayLatitude = numberOrNull(listing.display_lat);
+    const displayLongitude = numberOrNull(listing.display_lng);
+    if (
+      displayLatitude !== null &&
+      displayLongitude !== null &&
+      isValidCoordinate(displayLatitude, displayLongitude)
+    ) {
+      return {
+        latitude: displayLatitude,
+        longitude: displayLongitude,
+        source: listing.is_approximate_location === true ? 'approximate' : 'exact',
+      };
+    }
+
     const candidates = [
       {
         source: 'address',
@@ -280,6 +307,77 @@
     };
   }
 
+  function boundsFromRing(ring) {
+    if (!Array.isArray(ring) || ring.length === 0) return null;
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+    let minLon = Infinity;
+    let maxLon = -Infinity;
+    for (const point of ring) {
+      const lat = point?.[0];
+      const lon = point?.[1];
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLon = Math.min(minLon, lon);
+      maxLon = Math.max(maxLon, lon);
+    }
+    if (!Number.isFinite(minLat) || !Number.isFinite(minLon)) return null;
+    return { minLat, maxLat, minLon, maxLon };
+  }
+
+  function extendBoundsWithPins(bounds, pins) {
+    let { minLat, maxLat, minLon, maxLon } = bounds;
+    for (const pin of pins || []) {
+      minLat = Math.min(minLat, pin.latitude);
+      maxLat = Math.max(maxLat, pin.latitude);
+      minLon = Math.min(minLon, pin.longitude);
+      maxLon = Math.max(maxLon, pin.longitude);
+    }
+    return { minLat, maxLat, minLon, maxLon };
+  }
+
+  function boundsFromPins(pins) {
+    if (!pins || pins.length === 0) return null;
+    return extendBoundsWithPins(
+      { minLat: Infinity, maxLat: -Infinity, minLon: Infinity, maxLon: -Infinity },
+      pins,
+    );
+  }
+
+  function mergeBounds(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    return {
+      minLat: Math.min(a.minLat, b.minLat),
+      maxLat: Math.max(a.maxLat, b.maxLat),
+      minLon: Math.min(a.minLon, b.minLon),
+      maxLon: Math.max(a.maxLon, b.maxLon),
+    };
+  }
+
+  /** `[[minLat, minLon], [maxLat, maxLon]]`, the shape `ymaps.Map#setBounds` expects. */
+  function toYandexBounds(bounds) {
+    if (!bounds) return null;
+    return [[bounds.minLat, bounds.minLon], [bounds.maxLat, bounds.maxLon]];
+  }
+
+  /** Mirrors the mobile app's `_fitCameraToLatLonBounds` padding (yandex_map_widget.dart). */
+  function locationFromBounds(bounds) {
+    const latSpan = Math.abs(bounds.maxLat - bounds.minLat);
+    const lonSpan = Math.abs(bounds.maxLon - bounds.minLon);
+    const latPadding = Math.min(Math.max(latSpan * 0.18, 0.008), 0.06);
+    const lonPadding = Math.min(Math.max(lonSpan * 0.18, 0.008), 0.06);
+    const minLat = bounds.minLat - latPadding;
+    const maxLat = bounds.maxLat + latPadding;
+    const minLon = bounds.minLon - lonPadding;
+    const maxLon = bounds.maxLon + lonPadding;
+    return {
+      center: [(minLat + maxLat) / 2, (minLon + maxLon) / 2],
+      zoom: estimateZoom(minLat, maxLat, minLon, maxLon),
+    };
+  }
+
   /** Static Tashkent district boundary polygons (generated from the mobile app's dataset). */
   const DISTRICT_BOUNDARIES_PATH = '/assets/data/tashkent-districts.json';
   let districtBoundariesPromise = null;
@@ -369,13 +467,28 @@
     return Layout;
   }
 
-  function createDistrictPolygon(ymaps, district) {
+  /**
+   * Three polygon looks for the district-boundaries layer, mirroring the mobile app's
+   * `_DistrictPolygonStyle` (normal/dimmed/emphasized — see `_districtPolygonColors` in
+   * yandex_map_widget_map_objects.dart): "normal" for the plain all-districts toggle,
+   * "dimmed" for every other district once a location filter highlights one of them, and
+   * "emphasized" for that highlighted district itself.
+   */
+  const DISTRICT_POLYGON_STYLES = {
+    normal: { fillAlpha: 0.22, strokeAlpha: 0.78, strokeWidth: 2, zIndex: 4 },
+    dimmed: { fillAlpha: 0.08, strokeAlpha: 0.34, strokeWidth: 1.5, zIndex: 3 },
+    emphasized: { fillAlpha: 0.34, strokeAlpha: 0.95, strokeWidth: 3, zIndex: 6 },
+  };
+
+  function createDistrictPolygon(ymaps, district, style = 'normal') {
     const color = districtLayerColor(district.locationId);
+    const { fillAlpha, strokeAlpha, strokeWidth, zIndex } =
+      DISTRICT_POLYGON_STYLES[style] || DISTRICT_POLYGON_STYLES.normal;
     return new ymaps.Polygon([district.outerRing], {}, {
-      fillColor: hexWithAlpha(color, 0.22),
-      strokeColor: hexWithAlpha(color, 0.85),
-      strokeWidth: 2,
-      zIndex: 5,
+      fillColor: hexWithAlpha(color, fillAlpha),
+      strokeColor: hexWithAlpha(color, strokeAlpha),
+      strokeWidth,
+      zIndex,
       interactivityModel: 'default#transparent',
     });
   }
@@ -479,40 +592,94 @@
     }
   }
 
-  async function setDistrictLayerVisible(container, visible) {
+  /** Which polygon look (if any) a district should render with, given the layer's current
+   * "show all" toggle and location-filter highlight — mirrors the mobile app's
+   * `_createDistrictLayerMapObjects` (yandex_map_widget_map_objects.dart). */
+  function districtStyleForLayer(district, layer) {
+    if (layer.highlightedLocationId != null && Number(district.locationId) === layer.highlightedLocationId) {
+      return 'emphasized';
+    }
+    if (layer.visible) return layer.highlightedLocationId != null ? 'dimmed' : 'normal';
+    return null;
+  }
+
+  /**
+   * Rebuilds the district-boundaries collection from the layer's current `visible` (all-
+   * districts toggle) and `highlightedLocationId` (location filter) state. Called whenever
+   * either changes — see `setDistrictLayerVisible` and `setHighlightedDistrict` below.
+   */
+  async function syncDistrictLayer(container) {
     const instance = activeMaps.get(container);
     const layer = instance?.districtLayer;
     if (!instance?.map || !layer) return;
-    layer.visible = visible;
-    if (!visible) {
+    const token = (layer.syncToken = (layer.syncToken || 0) + 1);
+
+    if (!layer.visible && layer.highlightedLocationId == null) {
       layer.collection.removeAll();
+      layer.labelObjects = null;
       return;
     }
-    if (!layer.objects) {
+
+    if (!layer.allDistricts) {
       let districts = [];
       try {
         districts = await loadDistrictBoundaries();
       } catch (err) {
         console.warn('[UyDoshMap] Failed to load district boundaries', err);
       }
-      if (layer.visible !== true || !activeMaps.has(container)) return;
-      const ymaps = window.ymaps;
-      const lang = window.UyDosh?.getLang?.() || 'ru';
-      layer.objects = [];
-      layer.labelObjects = [];
-      for (const district of districts) {
-        layer.objects.push(createDistrictPolygon(ymaps, district));
-        const label = createDistrictLabelPlacemark(ymaps, district, lang);
-        if (label) {
-          layer.objects.push(label);
-          layer.labelObjects.push(label);
-        }
+      if (!activeMaps.has(container) || layer.syncToken !== token) return;
+      layer.allDistricts = districts;
+    }
+    if (layer.syncToken !== token) return;
+
+    if (!layer.visible && layer.highlightedLocationId == null) {
+      layer.collection.removeAll();
+      layer.labelObjects = null;
+      return;
+    }
+
+    const ymaps = window.ymaps;
+    const lang = window.UyDosh?.getLang?.() || 'ru';
+    const objects = [];
+    const labelObjects = [];
+    for (const district of layer.allDistricts) {
+      const style = districtStyleForLayer(district, layer);
+      if (!style) continue;
+      objects.push(createDistrictPolygon(ymaps, district, style));
+      // The highlighted (location-filter) district's own name is already shown in the
+      // filter chip, so its name bubble on the map would be redundant — skip it and only
+      // label the other, non-highlighted districts.
+      if (style === 'emphasized') continue;
+      const label = createDistrictLabelPlacemark(ymaps, district, lang);
+      if (label) {
+        objects.push(label);
+        labelObjects.push(label);
       }
     }
-    if (layer.visible) {
-      for (const obj of layer.objects) layer.collection.add(obj);
-      refreshDistrictLabelVisibility(instance);
-    }
+    layer.collection.removeAll();
+    for (const obj of objects) layer.collection.add(obj);
+    layer.labelObjects = labelObjects;
+    refreshDistrictLabelVisibility(instance);
+  }
+
+  async function setDistrictLayerVisible(container, visible) {
+    const instance = activeMaps.get(container);
+    const layer = instance?.districtLayer;
+    if (!instance?.map || !layer) return;
+    layer.visible = visible;
+    await syncDistrictLayer(container);
+  }
+
+  /** Highlights the district matching the active location filter (or clears it when `null`) —
+   * shows independently of the all-districts toggle, same as the mobile app. */
+  async function setHighlightedDistrict(container, locationId) {
+    const instance = activeMaps.get(container);
+    const layer = instance?.districtLayer;
+    if (!instance?.map || !layer) return;
+    const normalized = Number(locationId) > 0 ? Number(locationId) : null;
+    if (layer.highlightedLocationId === normalized) return;
+    layer.highlightedLocationId = normalized;
+    await syncDistrictLayer(container);
   }
 
   async function setMetroLayerMode(container, mode) {
@@ -690,7 +857,7 @@
     };
   }
 
-  function createPlacemark(ymaps, pin, { onPinClick, ...visualOverrides } = {}) {
+  function createPlacemark(ymaps, pin, { onPinClick, draggable, onDragEnd, ...visualOverrides } = {}) {
     const visualCtx = pinVisualContext(visualOverrides);
     const placemark = new ymaps.Placemark(
       [pin.latitude, pin.longitude],
@@ -698,6 +865,7 @@
       {
         ...mapObjectInteractionOptions(),
         ...placemarkIconOptions(pin, visualCtx),
+        ...(draggable ? { draggable: true } : null),
       },
     );
     if (typeof onPinClick === 'function') {
@@ -706,6 +874,12 @@
         event?.stopPropagation?.();
         closeMapBalloon(event.get('target')?.getMap?.());
         onPinClick(pin);
+      });
+    }
+    if (draggable && typeof onDragEnd === 'function') {
+      placemark.events.add('dragend', () => {
+        const [dragLatitude, dragLongitude] = placemark.geometry.getCoordinates();
+        onDragEnd({ latitude: dragLatitude, longitude: dragLongitude });
       });
     }
     return placemark;
@@ -1216,7 +1390,10 @@
     return btn;
   }
 
-  function attachLayerControls(container, instance) {
+  function attachLayerControls(container, instance, {
+    onMetroModeChange,
+    onDistrictVisibleChange,
+  } = {}) {
     if (!container || !window.UyDosh?.isMiniApp?.()) return;
     ensureLayerControlsStyles();
     if (getComputedStyle(container).position === 'static') {
@@ -1277,12 +1454,14 @@
       const nextMode = nextMetroLayerMode(instance.metroLayer.mode);
       setMetroLayerMode(container, nextMode).finally(refreshMetroButton);
       refreshMetroButton();
+      onMetroModeChange?.(nextMode);
     });
 
     districtBtn.addEventListener('click', () => {
       const nextVisible = !instance.districtLayer.visible;
       setDistrictLayerVisible(container, nextVisible).finally(refreshDistrictButton);
       refreshDistrictButton();
+      onDistrictVisibleChange?.(nextVisible);
     });
 
     refreshMetroButton();
@@ -1591,6 +1770,24 @@
   }
 
   /**
+   * Fits the map to every pin plus (when filtering by a location) that district's full
+   * boundary, so panning/zooming after the pins render never crops the highlighted district
+   * back out of view. Explicitly merging the district's own bounds here — rather than relying
+   * on `map.geoObjects.getBounds()` to pick up the (already-rendered) boundary polygon — keeps
+   * this correct regardless of the district layer's render/z-order timing.
+   */
+  function fitBoundsForPinsAndHighlight(map, validPins, highlightedDistrictBounds) {
+    if (validPins.length <= 1) return;
+    try {
+      const combined = mergeBounds(boundsFromPins(validPins), highlightedDistrictBounds);
+      const bounds = toYandexBounds(combined) ?? map.geoObjects.getBounds();
+      if (bounds) {
+        map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
+      }
+    } catch { /* ignore */ }
+  }
+
+  /**
    * Zoom/pan so every placemark inside a cluster becomes visible.
    * Yandex's built-in cluster click-zoom only steps in one grid level and does not
    * guarantee all member placemarks end up on screen, so we fit bounds manually instead.
@@ -1631,6 +1828,83 @@
     onPinClick(pin);
   }
 
+  /**
+   * One-time "you can drag this" bubble for a draggable single-pin map (see
+   * `renderSinglePinMap`'s `dragHintText` option) — plain DOM overlay, not a
+   * ymaps object, since it only ever needs to point at the pin's *initial*
+   * position: the map is always centered on the pin when this map mounts, so
+   * anchoring the bubble to the container's horizontal/vertical center (minus
+   * half the selected-pin icon's height, see `MAP_PIN_ICON_SIZE_SELECTED` in
+   * uydosh-map-pins.js) lines it up without needing to track the pin's
+   * screen position through pans/zooms. It disappears for good the moment
+   * the author actually drags the pin once — see the `dragstart` listener
+   * below — so it never needs to catch up with the pin moving anyway.
+   */
+  const DRAG_HINT_CLASS = 'uydosh-map-drag-hint';
+  const DRAG_HINT_STYLE_ID = 'uydosh-map-drag-hint-styles';
+  // Half of MAP_PIN_ICON_SIZE_SELECTED (28px) plus a small gap, so the
+  // bubble's arrow tip lands just above the pin instead of overlapping it.
+  const DRAG_HINT_OFFSET_PX = 20;
+
+  function ensureDragHintStyles() {
+    if (document.getElementById(DRAG_HINT_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = DRAG_HINT_STYLE_ID;
+    style.textContent = `
+      .${DRAG_HINT_CLASS} {
+        position: absolute;
+        left: 50%;
+        top: calc(50% - ${DRAG_HINT_OFFSET_PX}px);
+        transform: translate(-50%, -100%);
+        z-index: 15;
+        max-width: calc(100% - 24px);
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: rgba(20, 20, 20, 0.86);
+        color: #fff;
+        font: 600 12px/1.3 system-ui, -apple-system, sans-serif;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 180ms ease;
+      }
+      .${DRAG_HINT_CLASS}::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: rgba(20, 20, 20, 0.86);
+      }
+      .${DRAG_HINT_CLASS}.uydosh-map-drag-hint-hide { opacity: 0; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function attachDragHintOverlay(container, text) {
+    if (!container || !text) return null;
+    ensureDragHintStyles();
+    container.querySelector(`.${DRAG_HINT_CLASS}`)?.remove();
+    if (getComputedStyle(container).position === 'static') {
+      container.style.position = 'relative';
+    }
+    const el = document.createElement('div');
+    el.className = DRAG_HINT_CLASS;
+    el.textContent = text;
+    container.appendChild(el);
+    return {
+      remove() {
+        el.classList.add('uydosh-map-drag-hint-hide');
+        setTimeout(() => el.remove(), 220);
+      },
+    };
+  }
+
   async function renderSinglePinMap(container, {
     latitude,
     longitude,
@@ -1638,13 +1912,20 @@
     listingTypeId,
     pin,
     selected = true,
+    draggable = false,
+    onPinDragEnd,
+    dragHintText = '',
+    zoomControl = false,
   } = {}) {
     await destroyMap(container);
     const ymaps = await loadYandexScript(lang);
+    const controls = zoomControl
+      ? [...MAP_CONTROLS, new ymaps.control.ZoomControl({ options: { size: 'small' } })]
+      : MAP_CONTROLS;
     const map = new ymaps.Map(container, {
       center: [latitude, longitude],
       zoom: 15,
-      controls: MAP_CONTROLS,
+      controls,
     }, {
       suppressMapOpenBlock: true,
     });
@@ -1656,11 +1937,30 @@
     };
     if (mapPin.latitude == null) mapPin.latitude = latitude;
     if (mapPin.longitude == null) mapPin.longitude = longitude;
-    map.geoObjects.add(createPlacemark(ymaps, mapPin, { selected }));
+    const placemark = createPlacemark(ymaps, mapPin, {
+      selected,
+      draggable,
+      onDragEnd: onPinDragEnd,
+    });
+    map.geoObjects.add(placemark);
+    if (draggable && dragHintText) {
+      const hint = attachDragHintOverlay(container, dragHintText);
+      if (hint) {
+        // Yandex's event manager has no built-in "once" — remove the
+        // listener manually right after the first drag so it doesn't keep
+        // re-triggering `hint.remove()` (harmless, but pointless) on every
+        // subsequent drag of the same pin.
+        const dismissHintOnce = () => {
+          hint.remove();
+          placemark.events.remove('dragstart', dismissHintOnce);
+        };
+        placemark.events.add('dragstart', dismissHintOnce);
+      }
+    }
     ensureMapInteractionStyles();
     ensureMapNativeGestureGuard();
     applyMapTileTheme(container, window.UyDosh?.prefersDarkMapPins?.() ?? false);
-    const instance = { map };
+    const instance = { map, placemark };
     attachUserLocationControl(ymaps, map, instance);
     activeMaps.set(container, instance);
     trackedContainers.add(container);
@@ -1680,6 +1980,11 @@
     visitedListingIds,
     darkMap,
     total = null,
+    highlightedLocationId = null,
+    initialMetroLayerMode = 'off',
+    initialDistrictLayerVisible = false,
+    onMetroLayerModeChange,
+    onDistrictLayerVisibleChange,
   }) {
     await destroyMap(container);
     const validPins = (pins || []).filter((pin) => {
@@ -1692,9 +1997,30 @@
       return null;
     }
 
+    // A location filter always wins the initial camera framing (bounds of that district,
+    // extended to cover any pins outside it) — mirrors the mobile app's `_moveInitialCamera`
+    // prioritizing `highlightedLocationId` over plain pin-bounds fitting.
+    const normalizedHighlightId = Number(highlightedLocationId) > 0 ? Number(highlightedLocationId) : null;
+    let allDistrictsForHighlight = null;
+    let highlightedDistrict = null;
+    if (normalizedHighlightId != null) {
+      try {
+        allDistrictsForHighlight = await loadDistrictBoundaries();
+        highlightedDistrict = allDistrictsForHighlight.find(
+          (d) => Number(d.locationId) === normalizedHighlightId,
+        ) || null;
+      } catch (err) {
+        console.warn('[UyDoshMap] Failed to load highlighted district boundary', err);
+      }
+    }
+
     const ymaps = await loadYandexScript(lang);
     const pinGroups = groupPinsByCoordinate(validPins);
-    const location = locationFromPins(validPins);
+    let location = locationFromPins(validPins);
+    const highlightedDistrictBounds = highlightedDistrict ? boundsFromRing(highlightedDistrict.outerRing) : null;
+    if (highlightedDistrictBounds) {
+      location = locationFromBounds(extendBoundsWithPins(highlightedDistrictBounds, validPins));
+    }
     const map = new ymaps.Map(container, {
       center: location.center,
       zoom: location.zoom,
@@ -1711,18 +2037,42 @@
     }
 
     const mapInstance = { map };
-    mapInstance.districtLayer = { visible: false, objects: null, labelObjects: null, collection: new ymaps.GeoObjectCollection() };
-    mapInstance.metroLayer = { mode: 'off', objectsByLine: null, collection: new ymaps.GeoObjectCollection() };
+    mapInstance.districtLayer = {
+      visible: initialDistrictLayerVisible === true,
+      highlightedLocationId: normalizedHighlightId,
+      allDistricts: allDistrictsForHighlight,
+      labelObjects: null,
+      collection: new ymaps.GeoObjectCollection(),
+      syncToken: 0,
+    };
+    mapInstance.metroLayer = {
+      mode: initialMetroLayerMode || 'off',
+      objectsByLine: null,
+      collection: new ymaps.GeoObjectCollection(),
+    };
     map.geoObjects.add(mapInstance.districtLayer.collection);
     map.geoObjects.add(mapInstance.metroLayer.collection);
     activeMaps.set(container, mapInstance);
+    // Re-apply the caller's remembered layer toggle state (see `initialMetroLayerMode`/
+    // `initialDistrictLayerVisible` above) so switching a listing filter — which always
+    // rebuilds the map from scratch — doesn't silently turn the metro/district overlays
+    // back off if the user had already turned them on.
+    if (normalizedHighlightId != null || mapInstance.districtLayer.visible) {
+      syncDistrictLayer(container);
+    }
+    if (mapInstance.metroLayer.mode !== 'off') {
+      setMetroLayerMode(container, mapInstance.metroLayer.mode);
+    }
     attachUserLocationControl(ymaps, map, mapInstance);
     autoRequestUserLocation(container, ymaps, mapInstance, {
       onUnavailable: onLocationUnavailable,
       onResolved: onLocationResolved,
     });
     attachResultsCountTile(container, total ?? validPins.length);
-    attachLayerControls(container, mapInstance);
+    attachLayerControls(container, mapInstance, {
+      onMetroModeChange: onMetroLayerModeChange,
+      onDistrictVisibleChange: onDistrictLayerVisibleChange,
+    });
     map.events.add('boundschange', (event) => {
       if (event.get('newZoom') === event.get('oldZoom')) return;
       refreshDistrictLabelVisibility(mapInstance);
@@ -1821,25 +2171,11 @@
       trackedContainers.add(container);
       scheduleMapReflow(container);
       scheduleForceRefreshAllPinIcons(container);
-      if (validPins.length > 1) {
-        try {
-          const bounds = map.geoObjects.getBounds();
-          if (bounds) {
-            map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
-          }
-        } catch { /* ignore */ }
-      }
+      fitBoundsForPinsAndHighlight(map, validPins, highlightedDistrictBounds);
       return map;
     }
 
-    if (validPins.length > 1) {
-      try {
-        const bounds = map.geoObjects.getBounds();
-        if (bounds) {
-          map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
-        }
-      } catch { /* ignore */ }
-    }
+    fitBoundsForPinsAndHighlight(map, validPins, highlightedDistrictBounds);
 
     mapInstance.pins = validPins;
     mapInstance.pinGroups = pinGroups;
@@ -1863,6 +2199,7 @@
     yandexMapsLang,
     renderSinglePinMap,
     renderPinsMap,
+    setHighlightedDistrict,
     locateUserFromTap,
     refreshMapPinStates,
     panToPinIfNeeded,

@@ -986,6 +986,15 @@
         border: 1px solid var(--stroke);
         background: rgba(127, 127, 127, 0.08);
       }
+      .map-section-approx-note {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+      }
       .map-section-actions {
         display: flex;
         justify-content: center;
@@ -1121,9 +1130,9 @@
     <div id="roomscan-backdrop" class="roomscan-backdrop" hidden aria-hidden="true"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="assets/uydosh-core.js?v=20260706-100"></script>
-    <script src="assets/uydosh-api.js?v=20260707-104"></script>
-    <script src="assets/uydosh-i18n.js?v=20260706-31"></script>
+    <script src="assets/uydosh-core.js?v=20260707-101"></script>
+    <script src="assets/uydosh-api.js?v=20260707-105"></script>
+    <script src="assets/uydosh-i18n.js?v=20260707-32"></script>
     <script src="assets/uydosh-icons.js?v=20260707-106"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
@@ -2365,6 +2374,7 @@
             </button>
           <div class="map-section-body" hidden>
             <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
+            <div class="map-section-approx-note" data-map-approx-note hidden>${UyDosh.escapeHtml(UyDosh.t('map.approximateLocation'))}</div>
             <div class="map-section-actions">
               <a class="btn-link" data-open-yandex-map href="#" hidden>${UyDosh.escapeHtml(UyDosh.t('detail.openMapView'))}</a>
             </div>
@@ -2436,6 +2446,10 @@
             openLink.removeAttribute('hidden');
             openLink.setAttribute('target', '_blank');
             openLink.setAttribute('rel', 'noopener noreferrer');
+          }
+          const approxNote = rootEl.querySelector('[data-map-approx-note]');
+          if (approxNote) {
+            approxNote.toggleAttribute('hidden', coords.source !== 'approximate');
           }
           state.mapLoaded = true;
           UyDosh.reflowActiveMaps();

@@ -366,6 +366,11 @@ function accountMenuHtml() {
         <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
         <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
         <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
+        <div class="account-menu-divider" role="separator"></div>
+        <button type="button" class="account-menu-theme" role="menuitem" data-uydosh-theme-toggle>
+          <span data-theme-toggle-icon aria-hidden="true"></span>
+          <span data-theme-toggle-label></span>
+        </button>
       </div>
     </div>`;
 }
@@ -407,6 +412,11 @@ function bindAccountMenu(menu) {
       menu.classList.add('account-menu-open');
     }
   });
+  // Nav items (`<a>`) close the menu implicitly by navigating away; button
+  // items (e.g. the theme toggle) don't navigate, so close explicitly.
+  list.addEventListener('click', (e) => {
+    if (e.target.closest('button')) closeAccountMenu(menu);
+  });
 }
 
 /** Wire up open/close + outside-click/Escape handling for every account menu on the page. */
@@ -442,8 +452,7 @@ function miniAppHeaderHtml(options = {}) {
   const brand = brandLink
     ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
     : `<div class="brand">${brandContent}</div>`;
-  const themeToggle = `<button type="button" class="theme-toggle-btn" data-uydosh-theme-toggle></button>`;
-  return `${brand}<div class="header-actions">${themeToggle}${accountMenuHtml()}</div>`;
+  return `${brand}<div class="header-actions">${accountMenuHtml()}</div>`;
 }
 
 /** Inject the shared mini-app header into a <header> or mount element. */
@@ -550,11 +559,12 @@ function ensureMiniAppSafeAreaStyles() {
       box-sizing: border-box;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 18px;
-      /* Header art is always a dark skyline, independent of the light/dark
-         theme toggle above — the gradient keeps brand text/icons legible
-         over it without needing per-theme image variants. 'bottom' anchoring
-         means any extra cover-crop (on wide/short header boxes) trims sky
-         off the top instead of cutting into the skyline itself. */
+      /* Header art is always a dark skyline, independent of the app's
+         light/dark theme (toggled from inside the account menu now) — the
+         gradient keeps brand text/icons legible over it without needing
+         per-theme image variants. 'bottom' anchoring means any extra
+         cover-crop (on wide/short header boxes) trims sky off the top
+         instead of cutting into the skyline itself. */
       background-image: linear-gradient(180deg, rgba(6, 21, 37, 0.32), rgba(6, 21, 37, 0.55)), url('/images/telegram-header-bg.webp');
       background-size: cover;
       /* Not fully bottom-anchored (100%) — that clipped the tops of the
@@ -565,12 +575,19 @@ function ensureMiniAppSafeAreaStyles() {
       background-repeat: no-repeat;
     }
     html.mini-app header,
-    html.mini-app header .brand strong,
-    html.mini-app header .theme-toggle-btn:hover {
+    html.mini-app header .brand strong {
       color: rgba(255, 255, 255, 0.95);
     }
     html.mini-app header .brand span {
       color: rgba(255, 255, 255, 0.72);
+    }
+    html.mini-app header .brand .brand-uy,
+    html.mini-app header .brand .brand-dosh {
+      /* '.brand span' (below) forces display:block + 13px on every span
+         inside .brand for the tagline — override both back to inline
+         text so "Uy"/"Dosh" stay on one line at the title's font size. */
+      display: inline;
+      font-size: inherit;
     }
     html.mini-app header .brand .brand-uy {
       color: var(--brand, #e11d2e);
@@ -578,11 +595,17 @@ function ensureMiniAppSafeAreaStyles() {
     html.mini-app header .brand .brand-dosh {
       color: rgba(255, 255, 255, 0.95);
     }
-    html.mini-app header .theme-toggle-btn,
-    html.mini-app header .account-menu-trigger {
+    html.mini-app header .account-menu-avatar,
+    html.mini-app header .account-menu-chevron {
       border-color: rgba(255, 255, 255, 0.3);
       background: rgba(255, 255, 255, 0.12);
       color: rgba(255, 255, 255, 0.85);
+    }
+    html.mini-app header .account-menu-chevron {
+      /* Header bg is always the dark skyline image (not var(--bg)), so the
+         cutout ring needs a matching fixed dark tone instead of the
+         var(--bg)-based one used elsewhere. */
+      box-shadow: 0 0 0 2px rgba(6, 21, 37, 0.55);
     }
     html.mini-app-desktop header {
       margin-top: var(--uydosh-tg-inset-top, 0px);
@@ -656,29 +679,35 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app .account-menu-trigger {
       appearance: none;
-      border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
-      background: rgba(127, 127, 127, 0.08);
-      color: var(--muted, rgba(255, 255, 255, 0.7));
+      border: none;
+      background: none;
+      padding: 0;
+      width: 34px;
       height: 34px;
-      padding: 3px 9px 3px 3px;
-      border-radius: 999px;
+      /* Positioning context for the chevron badge, which overlaps this
+         circle's bottom-right corner instead of sitting beside it in a
+         separate pill — keeps the trigger a plain avatar-sized circle. */
+      position: relative;
       display: inline-flex;
-      align-items: center;
-      gap: 5px;
       cursor: pointer;
+      flex-shrink: 0;
     }
     html.mini-app .account-menu-trigger:active {
       opacity: 0.88;
     }
     html.mini-app .account-menu-avatar {
-      width: 28px;
-      height: 28px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
       border-radius: 50%;
       overflow: hidden;
       flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted, rgba(255, 255, 255, 0.7));
     }
     html.mini-app .account-menu-avatar svg {
       width: 16px;
@@ -692,17 +721,30 @@ function ensureMiniAppSafeAreaStyles() {
       display: block;
     }
     html.mini-app .account-menu-chevron {
+      position: absolute;
+      right: -3px;
+      bottom: -3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-sizing: border-box;
+      border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted, rgba(255, 255, 255, 0.7));
+      /* Cut the badge visually free of the avatar photo underneath it,
+         same trick used by the profile-completion dot below. */
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), black 6%);
       transition: transform 0.18s ease;
     }
     html.mini-app .account-menu-chevron svg {
-      width: 18px;
-      height: 18px;
+      width: 10px;
+      height: 10px;
       display: block;
-      stroke-width: 2.5;
+      stroke-width: 3;
     }
     html.mini-app .account-menu.account-menu-open .account-menu-chevron {
       transform: rotate(180deg);
@@ -736,7 +778,8 @@ function ensureMiniAppSafeAreaStyles() {
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
-    html.mini-app .account-menu-list a {
+    html.mini-app .account-menu-list a,
+    html.mini-app .account-menu-list button {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -747,10 +790,12 @@ function ensureMiniAppSafeAreaStyles() {
       font-weight: 600;
       text-decoration: none;
     }
-    html.mini-app .account-menu-list a:active {
+    html.mini-app .account-menu-list a:active,
+    html.mini-app .account-menu-list button:active {
       background: rgba(127, 127, 127, 0.16);
     }
-    html.mini-app .account-menu-list a svg {
+    html.mini-app .account-menu-list a svg,
+    html.mini-app .account-menu-list button svg {
       width: 18px;
       height: 18px;
       flex-shrink: 0;
@@ -771,29 +816,20 @@ function ensureMiniAppSafeAreaStyles() {
     html.mini-app .account-menu-badge[hidden] {
       display: none;
     }
-    html.mini-app .theme-toggle-btn {
-      appearance: none;
-      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
-      background: rgba(127, 127, 127, 0.08);
-      color: var(--muted, rgba(255, 255, 255, 0.7));
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
+    html.mini-app .account-menu-divider {
+      height: 1px;
+      margin: 4px 6px;
+      background: var(--stroke, rgba(127, 127, 127, 0.35));
       flex-shrink: 0;
     }
-    html.mini-app .theme-toggle-btn:hover {
-      color: var(--fg, rgba(255, 255, 255, 0.92));
-    }
-    html.mini-app .theme-toggle-btn:active {
-      opacity: 0.85;
-    }
-    html.mini-app .theme-toggle-btn svg {
-      display: block;
+    html.mini-app .account-menu-theme {
+      appearance: none;
+      width: 100%;
+      border: none;
+      background: none;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
     }
     html.mini-app [data-hide-in-mini-app] {
       display: none !important;

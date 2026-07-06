@@ -46,6 +46,14 @@
     let lastLoadedMapSignature = null;
     // Offered at most once per page session — see showLocateBanner() for why.
     let locateBannerOffered = false;
+    // The metro-stations cycle / all-districts-boundaries toggle live only on the current
+    // Yandex map instance (see yandex-map.js), and a filter change always tears that
+    // instance down and builds a brand new one via loadFeedMap() below — without
+    // remembering the user's choice here and re-applying it (see the `initial*`/`on*Change`
+    // options passed to `renderPinsMap`), picking a filter while either layer was on would
+    // silently reset it back off.
+    let metroLayerMode = 'off';
+    let districtLayerVisible = false;
 
     /**
      * The map panel's CSS `height` is a `calc(100dvh - ... - <fixed px>)` guess
@@ -445,6 +453,15 @@
             total: state.mapResultTotal,
             lang: UyDosh.getLang(),
             visitedListingIds: UyDosh.loadVisitedListingIds(),
+            highlightedLocationId: filterParams.locationId ?? null,
+            initialMetroLayerMode: metroLayerMode,
+            initialDistrictLayerVisible: districtLayerVisible,
+            onMetroLayerModeChange: (mode) => {
+              metroLayerMode = mode;
+            },
+            onDistrictLayerVisibleChange: (visible) => {
+              districtLayerVisible = visible;
+            },
             onPinClick: (pin) => {
               showMapPinTooltip(pin);
             },

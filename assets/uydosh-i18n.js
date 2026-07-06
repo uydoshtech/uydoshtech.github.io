@@ -100,6 +100,7 @@ const I18N = {
     'map.empty': 'Tanlangan filtrlarda xaritada ko‘rsatish uchun e’lon yo‘q.',
     'map.error': 'Xaritani yuklab bo‘lmadi.',
     'map.retry': 'Qayta urinish',
+    'map.approximateLocation': 'Taxminiy joylashuv',
     'theme.toggleLight': 'Yorug‘ rejimga o‘tish',
     'theme.toggleDark': 'Tungi rejimga o‘tish',
     'map.tooltip.close': 'Yopish',
@@ -155,6 +156,7 @@ const I18N = {
     'create.addressPlaceholder': 'Ko‘cha, uy raqami',
     'create.useCurrentLocation': 'Mening joylashuvim',
     'create.locatingAddress': 'Aniqlanmoqda…',
+    'create.addressMapDragHint': 'Aniq nuqtani ko‘rsatish uchun markerni suring',
     'create.errorLocationFailed': 'Joylashuvni aniqlab bo‘lmadi. Manzilni qo‘lda kiriting.',
     'create.findNearbyMetro': 'Yaqin atrofdagi metro',
     'create.nearbyStationsHint': 'Eng yaqin metro bekatlarini ko‘rish uchun manzilni kiriting yoki joylashuvingizdan foydalaning',
@@ -440,6 +442,7 @@ const I18N = {
     'map.empty': 'Нет объявлений для карты с выбранными фильтрами.',
     'map.error': 'Не удалось загрузить карту.',
     'map.retry': 'Попробовать ещё раз',
+    'map.approximateLocation': 'Примерное местоположение',
     'theme.toggleLight': 'Включить светлую тему',
     'theme.toggleDark': 'Включить тёмную тему',
     'map.tooltip.close': 'Закрыть',
@@ -495,6 +498,7 @@ const I18N = {
     'create.addressPlaceholder': 'Улица, дом',
     'create.useCurrentLocation': 'Моя локация',
     'create.locatingAddress': 'Определяем…',
+    'create.addressMapDragHint': 'Перетащите метку, чтобы уточнить точку',
     'create.errorLocationFailed': 'Не удалось определить местоположение. Введите адрес вручную.',
     'create.findNearbyMetro': 'Метро поблизости',
     'create.nearbyStationsHint': 'Введите адрес или используйте свою локацию, чтобы увидеть ближайшие станции метро',
@@ -780,6 +784,7 @@ const I18N = {
     'map.empty': 'No listings to show on the map for these filters.',
     'map.error': 'Could not load the map.',
     'map.retry': 'Try again',
+    'map.approximateLocation': 'Approximate location',
     'theme.toggleLight': 'Switch to light mode',
     'theme.toggleDark': 'Switch to dark mode',
     'map.tooltip.close': 'Close',
@@ -835,6 +840,7 @@ const I18N = {
     'create.addressPlaceholder': 'Street, building number',
     'create.useCurrentLocation': 'My location',
     'create.locatingAddress': 'Locating…',
+    'create.addressMapDragHint': 'Drag the pin to fine-tune the exact spot',
     'create.errorLocationFailed': 'Could not determine your location. Enter the address manually.',
     'create.findNearbyMetro': 'Nearby metro',
     'create.nearbyStationsHint': 'Enter an address or use your location to see the nearest metro stations',
@@ -1318,7 +1324,16 @@ function refreshThemeToggleButtons() {
   // Button shows the *target* mode's icon, so the label names the mode it switches to.
   const label = t(isDark ? 'theme.toggleLight' : 'theme.toggleDark');
   for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
-    btn.innerHTML = themeToggleButtonIconSvg(isDark);
+    // Menu-item form has separate icon/label slots (keeps its own text visible);
+    // the plain circle-button form has neither, so its whole innerHTML is the icon.
+    const iconSlot = btn.querySelector('[data-theme-toggle-icon]');
+    const labelSlot = btn.querySelector('[data-theme-toggle-label]');
+    if (iconSlot || labelSlot) {
+      if (iconSlot) iconSlot.innerHTML = themeToggleButtonIconSvg(isDark);
+      if (labelSlot) labelSlot.textContent = label;
+    } else {
+      btn.innerHTML = themeToggleButtonIconSvg(isDark);
+    }
     btn.setAttribute('aria-label', label);
     btn.title = label;
   }
