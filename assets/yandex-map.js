@@ -1475,8 +1475,10 @@
    * pin's setObjectOptions call (back to its normal size/color) can silently fail to repaint
    * in the Telegram iOS Mini App, leaving the old, now-stale bitmap on screen looking like a
    * plain colored box instead of the pin icon it's actually sized/positioned for. Re-applying
-   * the same (already-current) options a moment later nudges Yandex into repainting it
-   * properly, without the cost of refreshing every pin on the map for every tap.
+   * the *same* options via setObjectOptions alone wasn't enough to nudge some WebViews into
+   * repainting, so this does a full remove+re-add of the feature (see
+   * forceRebuildFeatureIcon) to force ObjectManager to throw away the stale overlay DOM node
+   * and build a brand new one, without the cost of rebuilding every pin on the map per tap.
    */
   function scheduleForceRefreshFeatureIcons(container, featureIds, visualCtx) {
     if (!featureIds || featureIds.size === 0) return;
@@ -1488,11 +1490,47 @@
           if (!instance) return;
           const ctx = visualCtx ?? instance.pinVisualDefaults ?? pinVisualContext();
           for (const featureId of ids) {
-            applyFeatureIconOptions(instance, featureId, ctx);
+            forceRebuildFeatureIcon(instance, featureId, ctx);
           }
         }, 250);
       });
     });
+  }
+
+  /**
+   * More forceful variant of applyFeatureIconOptions: instead of updating the existing
+   * overlay's options in place, removes the feature from the ObjectManager and re-adds it
+   * with the new options, so Yandex has to build a brand new overlay DOM node from scratch.
+   * Reserved for the retry pass in scheduleForceRefreshFeatureIcons above — plain
+   * setObjectOptions is cheaper and works fine for the immediate (non-retry) update, so it's
+   * still used there via applyFeatureIconOptions.
+   */
+  function forceRebuildFeatureIcon(instance, featureId, visualCtx) {
+    const objectManager = instance.objectManager;
+    if (!objectManager) {
+      applyFeatureIconOptions(instance, featureId, visualCtx);
+      return;
+    }
+
+    const featureKey = String(featureId);
+    const group = instance.groupsByFeatureId?.get(featureKey);
+    const id = group ? featureKey : Number(featureId);
+    const options = group
+      ? groupPlacemarkIconOptions(group, visualCtx)
+      : (() => {
+          const pin = instance.pinsById?.get(id);
+          return pin ? placemarkIconOptions(pin, visualCtx) : null;
+        })();
+    if (!options) return;
+
+    const feature = objectManager.objects.getById(id);
+    if (!feature) {
+      applyFeatureIconOptions(instance, featureId, visualCtx);
+      return;
+    }
+
+    objectManager.remove([id]);
+    objectManager.add({ ...feature, options: { ...feature.options, ...options } });
   }
 
   /**

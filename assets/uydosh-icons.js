@@ -140,6 +140,26 @@ function feedEmptyStateHtml(lang = getLang()) {
   `;
 }
 
+/** Centered empty-map markup (crossed-out pin above the title), styled to
+ * match `feedEmptyStateHtml()` so the map view's "no results" state doesn't
+ * look like a bare fallback compared to the list view's. */
+function mapEmptyStateHtml(lang = getLang()) {
+  ensureFeedEmptyStateStyles();
+  const title = escapeHtml(t('map.empty', lang));
+  return `
+    <div class="feed-empty-state" role="status">
+      <div class="feed-empty-state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" stroke-width="1.75" stroke-linejoin="round"></path>
+          <circle cx="12" cy="9.5" r="2.25" stroke-width="1.75"></circle>
+          <path d="M4 20 20 4" stroke-width="1.75" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <p class="feed-empty-state-title">${title}</p>
+    </div>
+  `;
+}
+
 /** Tashkent metro line colors (match mobile app). */
 const METRO_LINE_COLORS = {
   1: '#E53E3E',
@@ -625,6 +645,7 @@ Object.assign(window.UyDosh, {
   iconChrome,
   hydrateIcons,
   feedEmptyStateHtml,
+  mapEmptyStateHtml,
   metroLineColor,
   metroLineLabel,
   metroLineBadgeHtml,

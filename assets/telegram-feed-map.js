@@ -97,6 +97,13 @@
       feedMapStatusEl.textContent = message;
     }
 
+    function showFeedMapEmpty() {
+      if (!feedMapStatusEl) return;
+      feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.hidden = false;
+      feedMapStatusEl.innerHTML = UyDosh.mapEmptyStateHtml();
+    }
+
     function showFeedMapError(onRetry) {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.add('interactive');
@@ -415,7 +422,7 @@
         if (pins.length === 0) {
           await UyDosh.loadYandexMapModule().then((m) => m.destroyMap(feedMapEl)).catch(() => {});
           if (generation !== mapLoadGeneration) return;
-          setFeedMapStatus(UyDosh.t('map.empty'), true);
+          showFeedMapEmpty();
           state.mapLoaded = false;
           return;
         }
