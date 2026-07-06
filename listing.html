@@ -1153,7 +1153,7 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260707-101"></script>
-    <script src="assets/uydosh-api.js?v=20260707-112"></script>
+    <script src="assets/uydosh-api.js?v=20260707-113"></script>
     <script src="assets/uydosh-i18n.js?v=20260707-33"></script>
     <script src="assets/uydosh-icons.js?v=20260707-107"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
@@ -2302,14 +2302,32 @@
         return `<div class="amenities amenities-inline">${chips}</div>`;
       }
 
-      function buildAmenitiesSectionHtml(amenities, lang) {
+      /**
+       * Move-in date + amenities, styled as extra rows inside the
+       * description card (see `map-section-extra` / `map-section-static`)
+       * so they sit directly under the listing description instead of
+       * trailing after the location/metro card.
+       */
+      function buildMoveInExtraHtml(l, lang) {
+        if (!l.move_in_date) return '';
+        return `
+          <div class="map-section-extra map-section-move-in-extra">
+            <dl class="meta-grid">
+              <dt>${UyDosh.escapeHtml(UyDosh.t('detail.moveIn'))}</dt>
+              <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.move_in_date, lang))}</dd>
+            </dl>
+          </div>
+        `;
+      }
+
+      function buildAmenitiesExtraHtml(amenities, lang) {
         const row = buildAmenitiesRowHtml(amenities, lang);
         if (!row) return '';
         return `
-          <section class="section">
+          <div class="map-section-extra map-section-amenities-extra">
             <h2 data-i18n="detail.amenities">${UyDosh.escapeHtml(UyDosh.t('detail.amenities'))}</h2>
             ${row}
-          </section>
+          </div>
         `;
       }
 
@@ -2364,7 +2382,7 @@
           : (l?.subway_station ? [l.subway_station] : []);
       }
 
-      function buildMapSectionHtml(l, lang, amenities = []) {
+      function buildMapSectionHtml(l, lang) {
         const locName = UyDosh.localized(l.location, lang);
         const metroLine = UyDosh.resolveMetroLine(l);
         const address = typeof l.address_text === 'string' ? l.address_text.trim() : '';
@@ -2411,13 +2429,6 @@
           }
           rows.push(...metroRows);
         }
-        if (l.move_in_date) {
-          rows.push(
-            `<div class="map-section-row map-section-move-in"><span>${UyDosh.escapeHtml(UyDosh.t('detail.moveIn'))} ${UyDosh.escapeHtml(UyDosh.formatDate(l.move_in_date, lang))}</span></div>`,
-          );
-        }
-        const amenityRow = buildAmenitiesRowHtml(amenities, lang);
-        if (amenityRow) rows.push(amenityRow);
 
         return `
           <section class="map-section" data-map-section aria-expanded="false">
@@ -3340,19 +3351,12 @@
         if (!hasMapSection && addressText) metaRows.push([UyDosh.t('detail.address'), addressText]);
         if (!hasMapSection && locName) metaRows.push([UyDosh.t('detail.location'), locName]);
         if (!hasMapSection && metro) metaRows.push([UyDosh.t('detail.metro'), metro]);
-        if (l.move_in_date && !hasMapSection) {
-          metaRows.push([UyDosh.t('detail.moveIn'), UyDosh.formatDate(l.move_in_date, lang)]);
-        }
         if (l.created_at && !isMiniApp) metaRows.push([UyDosh.t('detail.posted'), UyDosh.formatDate(l.created_at, lang)]);
         const metaHtml = metaRows.length ? `
           <dl class="meta-grid">
             ${metaRows.map(([k, v]) => `<dt>${UyDosh.escapeHtml(k)}</dt><dd>${UyDosh.escapeHtml(v)}</dd>`).join('')}
           </dl>
         ` : '';
-
-        const amenitiesHtml = hasMapSection
-          ? ''
-          : buildAmenitiesSectionHtml(amenities, lang);
 
         // Description and "posted"/author info share one card (dividers
         // between them), rendered above the location/metro/map card — see
@@ -3363,6 +3367,12 @@
             <div class="description">${UyDosh.escapeHtml(desc)}</div>
           </div>
         ` : '';
+
+        // Move-in date and amenities render directly under the description
+        // (inside the same card) rather than trailing after the
+        // location/metro card below.
+        const moveInExtraHtml = buildMoveInExtraHtml(l, lang);
+        const amenitiesExtraHtml = buildAmenitiesExtraHtml(amenities, lang);
 
         const authorHandle = isMiniApp ? UyDosh.listingContactTelegram(l) : '';
         const authorAvatarUrl = authorHandle ? UyDosh.telegramAvatarUrl(authorHandle) : '';
@@ -3388,13 +3398,14 @@
           </div>
         ` : '';
 
-        const cardExtraHtml = `${descriptionExtraHtml}${postedExtraHtml}`;
+        const cardExtraHtml = `${descriptionExtraHtml}${moveInExtraHtml}${amenitiesExtraHtml}${postedExtraHtml}`;
         // Plain (non-collapsible) card, styled like `.map-section` — placed
         // above the location/metro/map card in the template so the reading
-        // order is title → description → posted/author → location/map.
+        // order is title → description → move-in/amenities → posted/author
+        // → location/map.
         const descHtml = cardExtraHtml ? `<div class="map-section map-section-static">${cardExtraHtml}</div>` : '';
 
-        const mapHtml = buildMapSectionHtml(l, lang, hasMapSection ? amenities : []);
+        const mapHtml = buildMapSectionHtml(l, lang);
         const roomScanHtml = buildRoomScanSectionHtml(l);
         state.mapExpanded = false;
         state.mapLoaded = false;
@@ -3428,7 +3439,6 @@
               ${roomScanHtml}
               ${descHtml}
               ${mapHtml}
-              ${amenitiesHtml}
               ${metaHtml}
               <div class="cta-row app-cta-row">
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>

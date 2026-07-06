@@ -303,6 +303,7 @@
         return window.ymaps;
       } catch (err) {
         scriptPromise = null;
+        reportYandexMapIssue('script_load_failed', err?.message || String(err));
         throw err;
       }
     })();
@@ -2141,12 +2142,17 @@
       };
 
       if (!ymaps?.multiRouter) {
+        reportYandexMapIssue('pedestrian_route_unavailable', 'ymaps.multiRouter module not available');
         drawStraightFallback();
         finish();
         continue;
       }
 
       timer = setTimeout(() => {
+        reportYandexMapIssue(
+          'pedestrian_route_timeout',
+          `Pedestrian route request timed out after ${GUIDE_LINE_ROUTE_TIMEOUT_MS}ms`,
+        );
         drawStraightFallback();
         finish();
       }, GUIDE_LINE_ROUTE_TIMEOUT_MS);
@@ -2167,7 +2173,9 @@
       );
       route.model.events.add('requestsuccess', finish);
       route.model.events.add('requestfail', (event) => {
-        console.warn('[UyDoshMap] Pedestrian route request failed, falling back to a straight line', event?.get?.('error'));
+        const routeErr = event?.get?.('error');
+        console.warn('[UyDoshMap] Pedestrian route request failed, falling back to a straight line', routeErr);
+        reportYandexMapIssue('pedestrian_route_failed', 'Pedestrian route request failed', routeErr);
         drawStraightFallback();
         finish();
       });
