@@ -761,9 +761,11 @@
       return;
     }
 
-    for (const featureId of featureIdsNeedingPinRefresh(instance, prevCtx, nextCtx)) {
+    const changedFeatureIds = featureIdsNeedingPinRefresh(instance, prevCtx, nextCtx);
+    for (const featureId of changedFeatureIds) {
       applyFeatureIconOptions(instance, featureId, nextCtx);
     }
+    scheduleForceRefreshFeatureIcons(container, changedFeatureIds, nextCtx);
 
     instance.pinVisualDefaults = {
       selectedListingId: nextCtx.selectedListingId,
@@ -1462,6 +1464,33 @@
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setTimeout(() => forceRefreshAllPinIcons(container), 250);
+      });
+    });
+  }
+
+  /**
+   * Same blank/stuck-icon WebView issue as forceRefreshAllPinIcons above, but scoped to just
+   * the handful of features a selection change actually touched (see refreshMapPinStates) —
+   * e.g. tapping a pin to select it, then tapping a different one: the previously-selected
+   * pin's setObjectOptions call (back to its normal size/color) can silently fail to repaint
+   * in the Telegram iOS Mini App, leaving the old, now-stale bitmap on screen looking like a
+   * plain colored box instead of the pin icon it's actually sized/positioned for. Re-applying
+   * the same (already-current) options a moment later nudges Yandex into repainting it
+   * properly, without the cost of refreshing every pin on the map for every tap.
+   */
+  function scheduleForceRefreshFeatureIcons(container, featureIds, visualCtx) {
+    if (!featureIds || featureIds.size === 0) return;
+    const ids = [...featureIds];
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const instance = activeMaps.get(container);
+          if (!instance) return;
+          const ctx = visualCtx ?? instance.pinVisualDefaults ?? pinVisualContext();
+          for (const featureId of ids) {
+            applyFeatureIconOptions(instance, featureId, ctx);
+          }
+        }, 250);
       });
     });
   }
