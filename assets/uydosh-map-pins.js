@@ -455,7 +455,11 @@ const MAP_CLUSTER_PIN_SIZE = 32;
 let userLocationPinIconCache = null;
 let mapClusterPinIconCache = null;
 
-/** Compact violet cluster bubble (replaces oversized islands#violetClusterIcons preset). */
+// Brand blue (`--brand2` in telegram-shared.css) — kept as a literal here since
+// this canvas-drawing code runs independent of any stylesheet being loaded.
+const MAP_CLUSTER_PIN_FILL = '#60a5fa';
+
+/** Compact brand-blue cluster bubble (replaces oversized islands#blueClusterIcons preset). */
 function createMapClusterPinIcon() {
   if (typeof document === 'undefined') return null;
   if (mapClusterPinIconCache) return mapClusterPinIconCache;
@@ -483,7 +487,7 @@ function createMapClusterPinIcon() {
 
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, Math.PI * 2);
-  ctx.fillStyle = '#673AB7';
+  ctx.fillStyle = MAP_CLUSTER_PIN_FILL;
   ctx.fill();
 
   mapClusterPinIconCache = {

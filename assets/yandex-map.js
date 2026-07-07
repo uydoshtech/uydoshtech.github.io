@@ -2959,8 +2959,8 @@
               };
             })()
           : {
-              preset: 'islands#violetClusterIcons',
-              iconColor: '#673AB7',
+              preset: 'islands#blueClusterIcons',
+              iconColor: '#60a5fa',
             }),
         clusterIconContentLayout: ensureClusterListingCountLayout(ymaps),
       });
