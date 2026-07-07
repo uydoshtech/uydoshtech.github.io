@@ -641,7 +641,7 @@ function fetchAmenitiesOrdered() {
  * failure (network, etc.) defaults to visible, same as the mobile client.
  */
 function fetchGeminiListingUiHidden() {
-  return fetchJson('/settings/gemini-listing-ui-hidden')
+  return fetchJson('/app/settings/gemini-listing-ui-hidden')
     .then((data) => data?.hidden === true)
     .catch(() => false);
 }
@@ -655,7 +655,7 @@ function fetchGeminiListingUiHidden() {
  * feature-disabled (403 `gemini_listing_ui_disabled`) cases.
  */
 function improveListingDescription(text) {
-  return fetchJsonAuth('/gemini/improve-listing', { method: 'POST', body: { text } });
+  return fetchJsonAuth('/app/gemini/improve-listing', { method: 'POST', body: { text } });
 }
 
 /**
@@ -681,7 +681,7 @@ async function transcribeDescriptionAudio(blob, filename, language) {
   const form = new FormData();
   form.append('audio', blob, filename);
   if (language) form.append('language', language);
-  const res = await fetch(`${API_BASE}/openai/transcribe-description`, {
+  const res = await fetch(`${API_BASE}/app/openai/transcribe-description`, {
     method: 'POST',
     headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     body: form,

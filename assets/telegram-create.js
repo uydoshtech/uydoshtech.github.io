@@ -1555,7 +1555,7 @@ function renderStep2(lang) {
         <input id="listing-title" type="text" maxlength="${TITLE_MAX}" value="${UyDosh.escapeHtml(state.form.title)}" placeholder="${UyDosh.escapeHtml(UyDosh.t('create.titlePlaceholder', lang))}" />
         <div class="char-count ${state.form.title.length > TITLE_MAX ? 'over' : ''}">${state.form.title.length}/${TITLE_MAX}</div>
       </div>
-      <div class="field${descriptionField.className}" data-validation-anchor="description">
+      <div class="field field-description${descriptionField.className}" data-validation-anchor="description">
         <label for="listing-description">${UyDosh.escapeHtml(UyDosh.t('create.descriptionLabel', lang))}</label>
         <textarea id="listing-description" maxlength="${DESCRIPTION_MAX}" placeholder="${UyDosh.escapeHtml(UyDosh.t('create.descriptionPlaceholder', lang))}">${UyDosh.escapeHtml(state.form.description)}</textarea>
         <div class="description-footer">

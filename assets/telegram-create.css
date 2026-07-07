@@ -142,7 +142,7 @@ select, input[type="text"], input[type="number"], input[type="date"], input[type
   font: inherit;
   font-size: 15px;
 }
-textarea { min-height: 120px; resize: vertical; }
+textarea { min-height: 180px; resize: vertical; }
 /*
  * iOS Safari (Telegram's in-app browser on iOS) renders `type="date"`'s
  * formatted value flush against the control's own inner edge instead of
@@ -910,21 +910,46 @@ input[readonly] {
   color: var(--muted);
 }
 .char-count.over { color: var(--error); }
+/* Stays fully readable on the right of .description-footer even when
+   .description-actions is squeezed for space (see its `overflow-x: auto`). */
+.description-char-count {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+/* Extra breathing room before the photos field below — the description
+   field's own footer row (template/AI/dictate actions + counter) already
+   sits close under the textarea, so the standard `.panel { gap: 14px }`
+   between fields reads as too tight going into the next section. */
+.field-description {
+  margin-bottom: 12px;
+}
 .description-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-top: 4px;
 }
 /* Template + "Improve with AI" + "Dictate" live together on the left,
    left-most under the textarea — the char counter is the only thing that
-   stays right-aligned (see .description-footer's space-between above). */
+   stays right-aligned (see .description-footer's space-between above).
+   Kept to a single row (no wrap): `min-width: 0` lets this flex item shrink
+   below its content width so `overflow-x: auto` can kick in as a horizontal-
+   scroll fallback instead of the buttons ever dropping to a second line —
+   sized tight enough that everyday RU/EN/UZ labels fit without needing it. */
 .description-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 14px;
+  flex-wrap: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.description-actions::-webkit-scrollbar {
+  display: none;
 }
 .description-template-btn {
   appearance: none;
@@ -933,9 +958,11 @@ input[readonly] {
   padding: 2px 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  gap: 4px;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--fg);
@@ -944,8 +971,8 @@ input[readonly] {
 .description-template-btn:active { opacity: 0.75; }
 .description-template-btn:disabled { opacity: 0.6; cursor: default; }
 .description-template-btn .icon svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   display: block;
 }
 .description-template-btn .icon svg * {
@@ -960,16 +987,16 @@ input[readonly] {
   color: var(--brand2);
 }
 .description-ai-btn .use-location-spinner {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 /* "Dictate" (Whisper-backed, see toggleDescriptionDictation in
    telegram-create.js) — red + a soft pulsing glow while actively recording,
    same idle color as "Template" the rest of the time (no accent, since this
    isn't an AI action like .description-ai-btn). */
 .description-dictate-btn .use-location-spinner {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 .description-dictate-btn.is-recording {
   color: #E53935;

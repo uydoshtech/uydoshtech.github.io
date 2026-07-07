@@ -66,6 +66,17 @@ function applyTelegramTheme(tg) {
   if (p.secondary_bg_color) root.style.setProperty('--tg-card', p.secondary_bg_color);
 }
 
+/** Swaps the mini-app header's skyline photo to the light variant when the
+ * app's UI theme (see currentUiTheme() in uydosh-map-pins.js) is 'light' —
+ * kept in sync on manual toggle + Telegram theme changes via the
+ * 'uydosh:themechange' event (dispatched by both). */
+function applyHeaderBgTheme() {
+  document.documentElement.classList.toggle('mini-app-header-light', currentUiTheme() === 'light');
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('uydosh:themechange', applyHeaderBgTheme);
+}
+
 /**
  * "Add your university" nudge banner (feed page only — see `maybeShowProfileNudge`).
  * Dismissed permanently on this device either via its own close button or by
@@ -559,12 +570,13 @@ function ensureMiniAppSafeAreaStyles() {
       box-sizing: border-box;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 18px;
-      /* Header art is always a dark skyline, independent of the app's
-         light/dark theme (toggled from inside the account menu now) — the
-         gradient keeps brand text/icons legible over it without needing
-         per-theme image variants. 'bottom' anchoring means any extra
-         cover-crop (on wide/short header boxes) trims sky off the top
-         instead of cutting into the skyline itself. */
+      /* Header art is a skyline photo, dark by default (dark/blue theme) —
+         the gradient keeps brand text/icons legible over it. Light theme
+         swaps in a lighter skyline variant below ('mini-app-header-light'),
+         kept in sync with currentUiTheme() — see applyHeaderBgTheme().
+         'bottom' anchoring means any extra cover-crop (on wide/short header
+         boxes) trims sky off the top instead of cutting into the skyline
+         itself. */
       background-image: linear-gradient(180deg, rgba(6, 21, 37, 0.32), rgba(6, 21, 37, 0.55)), url('/images/telegram-header-bg.webp');
       background-size: cover;
       /* Not fully bottom-anchored (100%) — that clipped the tops of the
@@ -573,6 +585,9 @@ function ensureMiniAppSafeAreaStyles() {
          of the top edge on every header width. */
       background-position: center 80%;
       background-repeat: no-repeat;
+    }
+    html.mini-app-header-light header {
+      background-image: linear-gradient(180deg, rgba(6, 21, 37, 0.22), rgba(6, 21, 37, 0.45)), url('/images/telegram-header-bg-light.webp');
     }
     html.mini-app header,
     html.mini-app header .brand strong {
@@ -1305,6 +1320,7 @@ function initTelegramMiniApp() {
     requestAndReportUserLocation();
     applyTelegramTheme(tg);
     applyStoredManualTheme();
+    applyHeaderBgTheme();
     applyTelegramSafeAreaInsets(tg);
     if (typeof tg.onEvent === 'function') {
       tg.onEvent('themeChanged', () => {
@@ -1346,6 +1362,7 @@ function initTelegramMiniApp() {
   if (!isMiniApp()) return false;
   document.documentElement.classList.add('mini-app');
   applyStoredManualTheme();
+  applyHeaderBgTheme();
   ensureMiniAppSafeAreaStyles();
   applyTelegramSafeAreaInsets(tg);
   bindMiniAppInternalNav();
