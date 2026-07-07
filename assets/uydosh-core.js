@@ -564,12 +564,6 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
   if (posted) {
     metaParts.push(`<span class="map-pin-tooltip-date">${iconClock()}${escapeHtml(posted)}</span>`);
   }
-  if (pin.is_approximate_location === true) {
-    // Listing was placed on the map via the location-approx pipeline's
-    // generated point (metro/district/landmark anchor), not a real address —
-    // flag it the same way the mobile app's pin tooltip does.
-    metaParts.push(`<span${metaParts.length ? ' class="dotsep"' : ''}>${iconLocateMe()}${escapeHtml(t('map.approximateLocation', lang))}</span>`);
-  }
 
   const badgesPriceRow = badges || price
     ? `<div class="map-pin-tooltip-badges-row">
