@@ -2399,6 +2399,61 @@
     el.style.top = `${top - DRAG_HINT_OFFSET_PX}px`;
   }
 
+  // Same amplitude/period as `uydosh-map-drag-hint-bob` (the tooltip's CSS
+  // bounce) so the pin visually bobs in lockstep with its hint bubble.
+  const PIN_BOUNCE_AMPLITUDE_PX = 4;
+  const PIN_BOUNCE_PERIOD_MS = 1600;
+
+  /**
+   * Bobs the draggable address pin up/down in sync with its drag-hint bubble
+   * (see `ensureDragHintStyles`'s `uydosh-map-drag-hint-bob` keyframes) —
+   * plain CSS can't animate a placemark itself (its position is redrawn from
+   * geometry on every frame, not driven by a transform we could hook a
+   * `@keyframes` onto), so this nudges the placemark's *geometry* a few
+   * pixels north and back via `requestAnimationFrame`, converting the pixel
+   * offset to a lat/lng delta through the map's projection (same
+   * globalPixels round-trip `repositionDragHint` above uses).
+   *
+   * Purely a mount-time visual cue: must stop the instant a real drag starts
+   * (see the `drag` listener at the call site below) since from then on the
+   * placemark's position needs to track the user's finger/cursor exactly —
+   * fighting over `geometry.setCoordinates` between this loop and the live
+   * drag would make the pin jitter or lag behind the gesture.
+   */
+  function startPinBounceAnimation(container, map, placemark) {
+    const projection = map.options.get('projection');
+    if (!projection) return () => {};
+    const baseCoordinates = placemark.geometry.getCoordinates();
+    let rafId = 0;
+    let startTime = 0;
+    let stopped = false;
+
+    function frame(now) {
+      if (stopped) return;
+      // Bail out quietly if the map/container was torn down mid-bounce
+      // (e.g. the wizard step changed) instead of touching a dead placemark.
+      if (!activeMaps.has(container)) return;
+      if (!startTime) startTime = now;
+      const phase = ((now - startTime) % PIN_BOUNCE_PERIOD_MS) / PIN_BOUNCE_PERIOD_MS;
+      // 0 -> -amplitude -> 0 with an ease-in-out-like cosine curve, matching
+      // the CSS keyframes' 0%/50%/100% translateY(0)/translateY(-4px)/translateY(0).
+      const offsetY = -(PIN_BOUNCE_AMPLITUDE_PX / 2) * (1 - Math.cos(2 * Math.PI * phase));
+      const zoom = map.getZoom();
+      const basePixels = projection.toGlobalPixels(baseCoordinates, zoom);
+      const nextCoordinates = projection.fromGlobalPixels([basePixels[0], basePixels[1] + offsetY], zoom);
+      placemark.geometry.setCoordinates(nextCoordinates);
+      rafId = requestAnimationFrame(frame);
+    }
+    rafId = requestAnimationFrame(frame);
+
+    return function stopPinBounceAnimation() {
+      if (stopped) return;
+      stopped = true;
+      cancelAnimationFrame(rafId);
+      placemark.geometry.setCoordinates(baseCoordinates);
+    };
+  }
+
   async function renderSinglePinMap(container, {
     latitude,
     longitude,
@@ -2442,6 +2497,7 @@
     if (draggable && dragHintText) {
       const hint = attachDragHintOverlay(container, dragHintText);
       if (hint) {
+        const stopPinBounce = startPinBounceAnimation(container, map, placemark);
         // Track the pin's live position throughout the gesture (see
         // `repositionDragHint`) instead of dismissing on `dragstart` — some touch/
         // WebView environments (observed: Telegram mini app on iOS/Android) never
@@ -2452,12 +2508,22 @@
         const followPinDuringDrag = () => {
           repositionDragHint(hint.el, container, map, placemark.geometry.getCoordinates());
         };
+        // Unlike the hint bubble (which only *reads* the pin's position), the
+        // bounce loop *writes* to it every frame — it must stop on the very
+        // first `drag` event so it never fights a real, finger-driven drag.
+        const stopBounceOnDrag = () => {
+          stopPinBounce();
+          placemark.events.remove('drag', stopBounceOnDrag);
+        };
         const dismissHint = () => {
+          stopPinBounce();
           placemark.events.remove('drag', followPinDuringDrag);
+          placemark.events.remove('drag', stopBounceOnDrag);
           placemark.events.remove('dragend', dismissHint);
           hint.remove();
         };
         placemark.events.add('drag', followPinDuringDrag);
+        placemark.events.add('drag', stopBounceOnDrag);
         placemark.events.add('dragend', dismissHint);
       }
     }

@@ -176,11 +176,6 @@ const state = {
   /// the "Use current location" address button (step 0), so the button can
   /// show a spinner and ignore repeat taps.
   locatingAddress: false,
-  /// True while the dedicated "Find nearby metro stations" button (step 0,
-  /// below "Use current location") is fetching a location — separate from
-  /// `locatingAddress` since either button can trigger a geolocation lookup
-  /// independently of the other.
-  findingNearbyStations: false,
   /// `{ station, minutes }[]`, nearest-first, populated by `findNearbyStations`
   /// after a successful "Find nearby metro stations" lookup — lets step 0
   /// suggest metro stations within `nearbyStationsRadiusMinutes` of the
@@ -540,6 +535,38 @@ const PHONE_DIAL_CODES = [
 const DEFAULT_PHONE_DIAL_CODE = '998';
 
 /**
+ * Representative ISO-3166 country for each calling code above, purely for the flag emoji
+ * next to the field (see `phoneDialCodeFlagEmoji`) — mirrors the mobile app's phone
+ * sign-in picker (`_allowedPhoneDialCodes` in `phone_sign_in_sheet.dart`), including its
+ * choice of RU/US for the ambiguous shared codes "7"/"1" (also used by KZ and CA/etc.).
+ */
+const PHONE_DIAL_CODE_ISO = {
+  998: 'UZ', 996: 'KG', 995: 'GE', 994: 'AZ', 993: 'TM', 992: 'TJ',
+  380: 'UA', 375: 'BY', 374: 'AM', 373: 'MD', 372: 'EE', 371: 'LV', 370: 'LT',
+  7: 'RU', 1: 'US',
+};
+
+/**
+ * National significant-number length per calling code — caps how many digits the field
+ * will accept/format. Getting this wrong used to silently truncate valid numbers (a
+ * hardcoded 9-digit Uzbek cap chopped the last digit off any 10-digit number, e.g. US).
+ * Approximate for the less common codes; good enough to stop typing at a sane length
+ * without misrepresenting the number.
+ */
+const PHONE_NATIONAL_DIGIT_COUNT = {
+  998: 9, 996: 9, 995: 9, 994: 9, 993: 8, 992: 9,
+  380: 9, 375: 9, 374: 8, 373: 8, 372: 8, 371: 8, 370: 8,
+  7: 10, 1: 10,
+};
+
+/** Digit-group sizes for calling codes with a well-known local format, first group parenthesized. */
+const PHONE_GROUP_SIZES = {
+  998: [2, 3, 2, 2], // UZ: (90)-123-45-67
+  7: [3, 3, 2, 2], // RU/KZ: (912)-345-67-89
+  1: [3, 3, 4], // US/CA (NANP): (650)-669-0800
+};
+
+/**
  * Splits a raw phone number (E.164-ish, with or without "+") into its calling
  * code and the remaining national digits, so the review step can render the
  * code as a fixed prefix and the rest as an editable, formatted field.
@@ -551,23 +578,62 @@ function splitPhoneForDisplay(rawPhone) {
   return { code, national: digits.slice(code.length) };
 }
 
-/**
- * Formats national-number digits the way local Uzbek numbers are normally
- * grouped: "(90)-123-45-67". Works incrementally on partial input too, so it
- * can be reused as an input formatter while the user is still typing.
- */
-function formatNationalPhoneNumber(rawDigits) {
-  const digits = String(rawDigits || '').replace(/\D/g, '').slice(0, 9);
-  if (!digits) return '';
-  const groups = [digits.slice(0, 2)];
-  if (digits.length > 2) groups.push(digits.slice(2, 5));
-  if (digits.length > 5) groups.push(digits.slice(5, 7));
-  if (digits.length > 7) groups.push(digits.slice(7, 9));
+function phoneNationalMaxLength(code) {
+  return PHONE_NATIONAL_DIGIT_COUNT[code] || 10;
+}
+
+/** "(65)-123-45-67" — progressively parenthesizes/dashes `sizes`-shaped digit groups, rendering naturally on partial input while the user is still typing. */
+function groupPhoneDigitsWithParens(digits, sizes) {
+  const groups = [];
+  let idx = 0;
+  for (const size of sizes) {
+    if (idx >= digits.length) break;
+    groups.push(digits.slice(idx, idx + size));
+    idx += size;
+  }
+  if (!groups.length) return '';
   let out = `(${groups[0]}`;
-  if (digits.length < 2) return out;
-  out += ')';
+  if (groups[0].length === sizes[0]) out += ')';
   for (let i = 1; i < groups.length; i++) out += `-${groups[i]}`;
   return out;
+}
+
+/** Plain dash-separated groups (no parens) — fallback shape for calling codes without a known local format. */
+function groupPhoneDigitsPlain(digits, sizes) {
+  const groups = [];
+  let idx = 0;
+  for (const size of sizes) {
+    if (idx >= digits.length) break;
+    groups.push(digits.slice(idx, idx + size));
+    idx += size;
+  }
+  return groups.join('-');
+}
+
+/**
+ * Formats national-number digits per calling `code` — e.g. "(90)-123-45-67" for UZ,
+ * "(650)-669-0800" for US/CA. Works incrementally on partial input too, so it can be
+ * reused as an input formatter while the user is still typing. Codes without a curated
+ * `PHONE_GROUP_SIZES` entry fall back to plain 3-digit grouping instead of borrowing
+ * another country's shape (and digit cap) like this used to unconditionally do.
+ */
+function formatNationalPhoneNumber(code, rawDigits) {
+  const digits = String(rawDigits || '').replace(/\D/g, '').slice(0, phoneNationalMaxLength(code));
+  if (!digits) return '';
+  const sizes = PHONE_GROUP_SIZES[code];
+  return sizes ? groupPhoneDigitsWithParens(digits, sizes) : groupPhoneDigitsPlain(digits, [3, 3, 3, 3]);
+}
+
+/** Regional-indicator flag emoji for a 2-letter ISO country code, e.g. "UZ" -> "🇺🇿". */
+function isoCountryFlagEmoji(iso2) {
+  if (!iso2 || iso2.length !== 2) return '';
+  const points = [...iso2.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65);
+  return String.fromCodePoint(...points);
+}
+
+/** Flag shown in the phone field in place of a generic phone icon (see phoneFieldHtml) — reflects the number actually entered/shared, not a static icon. */
+function phoneDialCodeFlagEmoji(code) {
+  return isoCountryFlagEmoji(PHONE_DIAL_CODE_ISO[code]) || '🌐';
 }
 
 /** "Any date" once formatted, or the localized move-in date otherwise — shared between the step-1 field's inline display and the step-3 review row. */
@@ -723,12 +789,13 @@ function nearbyRadiusChipsHtml(lang) {
 
 /**
  * "Stations near you" panel: a radius toggle plus the matching station
- * chips, populated once `findNearbyStations` has run. Reused in two places:
- * room-needed's legacy metro/district tabs (behind the "Find nearby metro
- * stations" button, see `nearbyMetroFinderHtml`/`data-find-nearby-metro`) and
+ * chips, populated once `findNearbyStations` has run. Used by
  * roommate-needed's merged address step (`nearbyMetroSectionHtml`), where it
- * shows automatically once the address resolves to coordinates instead of
- * needing a button tap.
+ * shows automatically once the address resolves to coordinates. Room-needed's
+ * legacy metro/district tabs (`legacyLocationTabsHtml`) don't show this
+ * panel — pickers there already list every line/station/district directly,
+ * so a "find via current location" shortcut plus a walk-radius/nearest-
+ * station readout was redundant on top of that manual picker.
  */
 function nearbyStationsHtml(lang) {
   if (!state.nearbyStationsChecked) return '';
@@ -782,37 +849,6 @@ function nearbyStationsHtml(lang) {
 }
 
 /**
- * "Find nearby metro stations" button + the `nearbyStationsHtml` suggestions
- * panel it reveals — used by room-needed's legacy metro/district tabs (see
- * `legacyLocationTabsHtml`), for both its station-list field and its
- * district field. Roommate-needed's merged address step doesn't need this
- * button: it resolves coordinates from the typed address itself and shows
- * `nearbyStationsHtml` directly (see `nearbyMetroSectionHtml`). Geolocating
- * here doesn't require an address: the click handler (see
- * `data-find-nearby-metro` in bindStepEvents) reuses/sets
- * `state.form.addressLatitude/Longitude` purely as a location cache, which
- * is simply never sent for room-needed listings (see the submit payload).
- */
-function nearbyMetroFinderHtml(lang) {
-  return `
-    <div class="nearby-metro-finder">
-      <button
-        type="button"
-        class="use-location-btn"
-        data-find-nearby-metro
-        ${state.findingNearbyStations ? 'disabled' : ''}
-        aria-label="${UyDosh.escapeHtml(UyDosh.t('create.findNearbyMetro', lang))}"
-      >
-        ${state.findingNearbyStations
-          ? '<span class="use-location-spinner" aria-hidden="true"></span>'
-          : UyDosh.iconMetro()}
-        <span>${UyDosh.escapeHtml(state.findingNearbyStations ? UyDosh.t('create.locatingAddress', lang) : UyDosh.t('create.findNearbyMetro', lang))}</span>
-      </button>
-      ${nearbyStationsHtml(lang)}
-    </div>`;
-}
-
-/**
  * Metro-line/station multi-select + district grid, gated behind the
  * Метро/Район tabs — still used by room-needed listings (a "search" listing
  * that can genuinely span several districts or several stations across
@@ -853,7 +889,6 @@ function legacyLocationTabsHtml(lang) {
       <div class="field${stationField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(stationLabel)}</div>
         <div class="station-list station-list-metro">${stationListHtml(lang)}</div>
-        ${nearbyMetroFinderHtml(lang)}
       </div>`;
   } else {
     const multiLocation = supportsMultiLocation();
@@ -894,8 +929,7 @@ function legacyLocationTabsHtml(lang) {
       <div class="field${districtField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(districtLabel)}</div>
         <div class="station-list station-list-grid">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
-      </div>
-      ${nearbyMetroFinderHtml(lang)}`;
+      </div>`;
   }
 
   return `
@@ -1641,16 +1675,21 @@ function renderStep3(lang) {
       <span>${UyDosh.escapeHtml(UyDosh.t('create.sharePhoneCta', lang))}</span>
     </button>`;
 
-  // Always a fixed "+998-" calling-code prefix (see `splitPhoneForDisplay`,
+  // Always a fixed "+998" calling-code prefix (see `splitPhoneForDisplay`,
   // defaults to UZ when nothing's set yet) plus an editable, formatted
   // national number the user can type directly — not only fillable via the
   // Telegram share button. Persisted to `users.phone_number` on blur/share,
-  // see bindStepEvents below.
+  // see bindStepEvents below. The flag (`phoneDialCodeFlagEmoji`) reflects
+  // whichever calling code is currently active instead of a static phone
+  // icon, and the flag+code+input all live in one flex row (see
+  // `.phone-input-wrap-split` in telegram-create.css) so a 1-digit code
+  // ("+1") sits just as tight against the number as a 3-digit one ("+998")
+  // instead of leaving a gap sized for the widest case.
   const { code: phoneCode, national: phoneNational } = splitPhoneForDisplay(state.form.phone);
   const phoneFieldHtml = `
           <div class="phone-input-wrap phone-input-wrap-split">
-            ${UyDosh.iconPhone()}
-            <span class="phone-code-prefix">+${UyDosh.escapeHtml(phoneCode)}-</span>
+            <span class="phone-flag" aria-hidden="true">${UyDosh.escapeHtml(phoneDialCodeFlagEmoji(phoneCode))}</span>
+            <span class="phone-code-prefix">+${UyDosh.escapeHtml(phoneCode)}</span>
             <input
               id="listing-phone"
               type="tel"
@@ -1658,7 +1697,7 @@ function renderStep3(lang) {
               autocomplete="tel-national"
               data-phone-code="${UyDosh.escapeHtml(phoneCode)}"
               placeholder="${UyDosh.escapeHtml(UyDosh.t('create.reviewNotSet', lang))}"
-              value="${UyDosh.escapeHtml(formatNationalPhoneNumber(phoneNational))}"
+              value="${UyDosh.escapeHtml(formatNationalPhoneNumber(phoneCode, phoneNational))}"
             />
           </div>`;
 
@@ -2213,9 +2252,9 @@ function descriptionDictateButtonHtml(lang) {
  * urban walking pace — good enough for a "stations near you" shortlist, not
  * meant to match a real routing engine.
  */
-// Selectable walk-time radii for the "Find nearby metro stations" button
-// (see `nearbyRadiusChipsHtml`) — the author picks how far they're willing
-// to walk instead of being stuck with one fixed cutoff.
+// Selectable walk-time radii for the "stations near you" panel (see
+// `nearbyRadiusChipsHtml`) — the author picks how far they're willing to
+// walk instead of being stuck with one fixed cutoff.
 const NEARBY_STATION_RADIUS_OPTIONS = [10, 20, 30];
 const DEFAULT_NEARBY_STATION_RADIUS_MINUTES = NEARBY_STATION_RADIUS_OPTIONS[0];
 const MAX_SUGGESTED_STATIONS = 12;
@@ -2546,37 +2585,6 @@ function bindStepEvents() {
     }
   });
 
-  // Dedicated "Find nearby metro stations" button (step 0, under "Use
-  // current location"): reuses the address location if already known
-  // (e.g. from "Use current location") instead of asking twice, otherwise
-  // requests it fresh — then lists stations within the selected walk-time
-  // radius (see nearbyRadiusChipsHtml).
-  stepPanelsEl.querySelector('[data-find-nearby-metro]')?.addEventListener('click', async () => {
-    if (state.findingNearbyStations) return;
-    state.findingNearbyStations = true;
-    renderStep();
-    try {
-      let { addressLatitude: latitude, addressLongitude: longitude } = state.form;
-      if (latitude == null || longitude == null) {
-        const position = await UyDosh.requestUserLocation();
-        latitude = position.latitude;
-        longitude = position.longitude;
-        state.form.addressLatitude = latitude;
-        state.form.addressLongitude = longitude;
-      }
-      applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
-      showFormError('');
-    } catch (err) {
-      console.error('Find nearby metro stations failed', err);
-      haptic('heavy');
-      if (UyDosh.isMiniApp()) UyDosh.openTelegramLocationSettings();
-      showFormError(UyDosh.t('create.errorLocationFailed', UyDosh.getLang()));
-    } finally {
-      state.findingNearbyStations = false;
-      renderStep();
-    }
-  });
-
   bindNearbyMetroEvents();
 
   stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
@@ -2810,17 +2818,18 @@ function bindStepEvents() {
   });
 
   // Editable national-number field (see `phoneFieldHtml` in renderStep3) —
-  // the "+998-" prefix next to it stays a plain, non-interactive span.
-  // Reformats live as digits are typed, and best-effort persists to
-  // `users.phone_number` on blur so manually-typed numbers are saved just
-  // like ones pulled in via the share button above.
+  // the "+998" prefix next to it stays a plain, non-interactive span.
+  // Reformats live as digits are typed (per the active calling code's own
+  // group sizes/length, see formatNationalPhoneNumber), and best-effort
+  // persists to `users.phone_number` on blur so manually-typed numbers are
+  // saved just like ones pulled in via the share button above.
   const phoneInput = stepPanelsEl.querySelector('#listing-phone');
   phoneInput?.addEventListener('input', () => {
-    const digits = phoneInput.value.replace(/\D/g, '').slice(0, 9);
-    const caretAtEnd = phoneInput.selectionEnd === phoneInput.value.length;
-    phoneInput.value = formatNationalPhoneNumber(digits);
-    if (caretAtEnd) phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
     const code = phoneInput.dataset.phoneCode || DEFAULT_PHONE_DIAL_CODE;
+    const digits = phoneInput.value.replace(/\D/g, '').slice(0, phoneNationalMaxLength(code));
+    const caretAtEnd = phoneInput.selectionEnd === phoneInput.value.length;
+    phoneInput.value = formatNationalPhoneNumber(code, digits);
+    if (caretAtEnd) phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
     state.form.phone = digits ? `+${code}${digits}` : '';
   });
   phoneInput?.addEventListener('blur', async () => {

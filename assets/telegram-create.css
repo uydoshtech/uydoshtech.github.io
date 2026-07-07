@@ -600,45 +600,50 @@ input[readonly] {
   align-items: stretch;
   gap: 8px;
 }
-.phone-input-wrap {
-  position: relative;
+/*
+ * Flag + "+<code>" prefix + the editable national number all live as flex
+ * siblings in one pill (the wrapper carries the border/background that
+ * `input[type="tel"]` normally would, with the input itself reset to
+ * blend in) instead of overlaying the prefix on fixed pixel offsets sized
+ * for one particular code's width. That old approach left a large gap
+ * before the number for any code shorter than "+998" (e.g. "+1") — flex
+ * sizes to whatever the flag+code actually take up, 1-digit or 3-digit.
+ */
+.phone-input-wrap-split {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.08);
+  border-radius: 12px;
+  padding: 0 12px;
 }
-.phone-input-wrap input {
-  width: 100%;
-  padding-left: 38px;
-}
-.phone-input-wrap .icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  color: var(--muted);
-  pointer-events: none;
-}
-.phone-input-wrap .icon svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
-/* Once a number is set, the input shows a fixed "+998-" calling-code prefix
-   before the editable, formatted national number (e.g. "(50)-153-30-80").
-   The prefix is a plain overlay span (like .icon above), not a second input —
-   clicks/typing still land on the single underlying <input>. */
 .phone-input-wrap-split input {
-  padding-left: 84px;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  border: 0;
+  background: none;
+  border-radius: 0;
+  padding: 11px 0;
+}
+.phone-input-wrap-split input:focus {
+  outline: none;
+}
+.phone-input-wrap-split:focus-within {
+  border-color: var(--brand2);
+}
+.phone-flag {
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
 }
 .phone-code-prefix {
-  position: absolute;
-  left: 34px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex-shrink: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--fg);
-  pointer-events: none;
   white-space: nowrap;
 }
 .phone-share-btn {
@@ -823,8 +828,8 @@ input[readonly] {
   padding: 0;
 }
 .loading-spinner {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
   background: url("../images/uydosh-logo.svg") center / contain no-repeat;
   animation: uydosh-spin 0.9s linear infinite;
 }
@@ -979,14 +984,6 @@ input[readonly] {
   flex-wrap: wrap;
   gap: 8px;
 }
-/* "Find nearby metro" button + its suggestions panel (see
-   nearbyMetroFinderHtml in telegram-create.js) — lives inside the metro
-   station-list field, for both listing types. */
-.nearby-metro-finder {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .use-location-btn {
   appearance: none;
   border: 1px solid var(--stroke);
@@ -1016,12 +1013,18 @@ input[readonly] {
   stroke: currentColor;
   fill: none;
 }
+/* Plain rotating ring (see `.wizard-btn-spinner` in telegram-shared.css) —
+   tints via `currentColor` so it matches each button's own text color
+   (themed `--fg`, or `--brand2` on the AI button). */
 .use-location-spinner {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
-  animation: uydosh-spin 0.9s linear infinite;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: uydosh-spin 0.7s linear infinite;
+  box-sizing: border-box;
 }
 /* Small "pin preview" map under the address field (see
    updateAddressMapPreview in telegram-create.js) — shows once the typed/
