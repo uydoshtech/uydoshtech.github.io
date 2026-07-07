@@ -16,6 +16,12 @@ const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
 const FILTER_SCROLL_COLLAPSE_PX = 100;
 const FILTER_SCROLL_EXPAND_PX = 24;
+// Once already collapsed to the compact icon ribbon, scrolling further down
+// still leaves that full-width pill sitting over the listings underneath it.
+// Past this deeper threshold it folds away entirely except for the chevron
+// button (see `.filters--folded`); scrolling back up even a bit un-folds it.
+const FILTER_SCROLL_FOLD_PX = 240;
+const FILTER_SCROLL_UNFOLD_PX = 160;
 const SCROLL_TOP_HIDE_PX = 72;
 
 const gridEl = document.getElementById('grid');
@@ -38,6 +44,7 @@ fabCreateEl?.addEventListener('click', () => {
 let filtersScrollAnchorY = 0;
 let filtersScrollRaf = 0;
 let filtersCollapsedByScroll = false;
+let filtersFolded = false;
 let showScrollTopButton = false;
 
 function resetFiltersScrollAnchor(y = window.scrollY) {
@@ -75,6 +82,23 @@ function expandFiltersFromScroll() {
   filtersCollapsedByScroll = false;
   persistFiltersCollapsed();
   setFiltersCollapsedVisual(false);
+  unfoldFilters();
+}
+
+function setFiltersFoldedVisual(folded) {
+  filtersEl.classList.toggle('filters--folded', folded);
+}
+
+function foldFiltersFromScroll() {
+  if (filtersFolded || !state.filtersCollapsed || state.view !== 'list') return;
+  filtersFolded = true;
+  setFiltersFoldedVisual(true);
+}
+
+function unfoldFilters() {
+  if (!filtersFolded) return;
+  filtersFolded = false;
+  setFiltersFoldedVisual(false);
 }
 
 function scrollTopShowThresholdPx() {
@@ -114,8 +138,16 @@ function handleFeedScrollForFilters() {
     const delta = window.scrollY - filtersScrollAnchorY;
     if (!state.filtersCollapsed) {
       if (delta >= FILTER_SCROLL_COLLAPSE_PX) collapseFiltersFromScroll();
-    } else if (filtersCollapsedByScroll && delta <= FILTER_SCROLL_EXPAND_PX) {
+      return;
+    }
+    if (filtersCollapsedByScroll && delta <= FILTER_SCROLL_EXPAND_PX) {
       expandFiltersFromScroll();
+      return;
+    }
+    if (!filtersFolded && delta >= FILTER_SCROLL_FOLD_PX) {
+      foldFiltersFromScroll();
+    } else if (filtersFolded && delta <= FILTER_SCROLL_UNFOLD_PX) {
+      unfoldFilters();
     }
   });
 }
@@ -333,6 +365,7 @@ function switchView(nextView) {
   state.view = nextView;
   updateViewTabs();
   updateScrollTopButton();
+  unfoldFilters();
   if (nextView === 'map') {
     feedMap.onEnterMapView();
   } else {
@@ -508,12 +541,14 @@ function renderFilters() {
     </div>
   `;
   setFiltersCollapsedVisual(collapsed);
+  setFiltersFoldedVisual(filtersFolded);
 
   filtersEl.querySelectorAll('[data-filters-toggle]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const nextCollapsed = !state.filtersCollapsed;
       state.filtersCollapsed = nextCollapsed;
       filtersCollapsedByScroll = false;
+      unfoldFilters();
       if (!nextCollapsed) {
         resetFiltersScrollAnchor();
       }

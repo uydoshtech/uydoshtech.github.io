@@ -173,6 +173,7 @@ header {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: background-color 220ms ease, box-shadow 220ms ease;
 }
 .filters-toggle:active { opacity: 0.88; }
 .filters-toggle-icon {
@@ -193,6 +194,34 @@ header {
 .filters-toggle[aria-expanded="true"] .filters-toggle-icon {
   transform: rotate(180deg);
 }
+/* Folded: reached by scrolling further down while already in the compact
+   ribbon (see FILTER_SCROLL_FOLD_PX in telegram-feed.js). The card's own
+   border/background go transparent and stop capturing taps so the
+   full-width row no longer paints over — or blocks taps on — listings
+   scrolling underneath it; only the chevron opts back into visibility and
+   pointer events, floating like the page's other corner buttons
+   (`.scroll-top-btn`, `.fab-create`). Scrolling up a little, or tapping the
+   chevron, un-folds it again. */
+.filters.filters--folded {
+  border-color: transparent;
+  background: transparent;
+  pointer-events: none;
+}
+.filters--folded .filters-toggle {
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--card) 72%, var(--bg));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+.filters--folded .chips-compact {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .filters-toggle,
+  .chips-compact {
+    transition: none;
+  }
+}
 .chip.chip-icon-only {
   gap: 0;
   padding: 7px 9px;
@@ -207,6 +236,7 @@ header {
   -webkit-overflow-scrolling: touch;
   padding-bottom: 2px;
   scrollbar-width: none;
+  transition: opacity 160ms ease;
   /* Fade the scroll edges instead of hard-clipping chips mid-shape when
      the row is scrolled. */
   -webkit-mask-image: linear-gradient(
