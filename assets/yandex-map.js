@@ -1404,9 +1404,37 @@
   }
 
   /**
+   * Filters `pins` (each needs `latitude`/`longitude`) down to just the ones
+   * currently within the map's visible viewport — used to scope the tooltip
+   * carousel to on-screen listings only (see `showMapPinTooltip` in
+   * telegram-feed-map.js) instead of paging through every fetched pin
+   * regardless of whether it's actually in view right now.
+   */
+  function getVisiblePins(container, pins) {
+    const instance = activeMaps.get(container);
+    const map = instance?.map;
+    if (!map || !Array.isArray(pins)) return [];
+    let bounds;
+    try {
+      bounds = map.getBounds();
+    } catch {
+      return [];
+    }
+    return pins.filter((pin) => {
+      const lat = Number(pin?.latitude);
+      const lon = Number(pin?.longitude);
+      return Number.isFinite(lat) && Number.isFinite(lon) && isCoordinateWithinBounds(lat, lon, bounds);
+    });
+  }
+
+  /**
    * Recenters the map on `pin` only when it has scrolled outside the current
-   * viewport — used while swiping through the "all listings" tooltip carousel
-   * so pins that are already on screen don't cause the map to jump around.
+   * viewport — used while swiping through the tooltip carousel so pins that
+   * are already on screen don't cause the map to jump around (the carousel
+   * itself is now scoped to on-screen pins at the time it opens, see
+   * `getVisiblePins` above, so in practice this mostly guards against the
+   * viewport having shifted since then rather than actively following the
+   * carousel around).
    */
   function panToPinIfNeeded(container, pin) {
     const instance = activeMaps.get(container);
@@ -3052,6 +3080,7 @@
     setHighlightedDistrict,
     locateUserFromTap,
     refreshMapPinStates,
+    getVisiblePins,
     panToPinIfNeeded,
     destroyMap,
     reflowMap,

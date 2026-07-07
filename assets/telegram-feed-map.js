@@ -159,12 +159,13 @@
     // swipes onto them without fetching all (up to 300) map listings at once.
     const MAP_CAROUSEL_ENRICH_WINDOW = 2;
 
-    // Flat, ordered view of every listing currently on the map (coordinate
-    // groups kept adjacent) plus a reverse index of "which other listing ids
-    // share this listing's coordinates" — rebuilt whenever the map pins
-    // change. This is what lets the tooltip carousel page through the whole
-    // map instead of only the tapped pin's composite group.
-    let mapCarouselOrder = [];
+    // Reverse index of "which other listing ids share this listing's
+    // coordinates" (coordinate groups = composite/stacked pins) — rebuilt
+    // whenever the map pins change. Used purely to highlight a tapped pin's
+    // whole composite group on the map (see selectedMapPinGroupIds below);
+    // deliberately built from *every* fetched pin regardless of viewport,
+    // since a pin's group membership doesn't depend on what's currently on
+    // screen.
     let mapCarouselGroupIdsByListingId = new Map();
 
     function rebuildMapCarouselIndex() {
@@ -173,24 +174,39 @@
         const lon = Number(pin?.longitude);
         return Number.isFinite(lat) && Number.isFinite(lon);
       });
-      const order = [];
       const groupIdsByListingId = new Map();
       for (const group of UyDosh.groupPinsByCoordinate(validPins)) {
         const ids = group.pins.map((pin) => Number(pin.id)).filter((id) => id > 0);
         for (const pin of group.pins) {
-          order.push(pin);
           groupIdsByListingId.set(Number(pin.id), ids);
         }
       }
-      mapCarouselOrder = order;
       mapCarouselGroupIdsByListingId = groupIdsByListingId;
     }
 
-    function pinsToEnrichAround(index) {
-      if (mapCarouselOrder.length === 0) return [];
+    /**
+     * Flat, ordered view of only the listings currently within the map's
+     * visible viewport (coordinate groups kept adjacent) — computed fresh
+     * each time a pin is tapped (see showMapPinTooltip) rather than cached,
+     * since which pins are "visible" changes as the user pans/zooms. This is
+     * what the tooltip carousel pages through: on-screen listings only, not
+     * every fetched pin regardless of whether it's actually in view.
+     */
+    function visibleMapCarouselOrder() {
+      if (!state.mapModule || !feedMapEl) return [];
+      const visiblePins = state.mapModule.getVisiblePins(feedMapEl, state.mapPins || []);
+      const order = [];
+      for (const group of UyDosh.groupPinsByCoordinate(visiblePins)) {
+        order.push(...group.pins);
+      }
+      return order;
+    }
+
+    function pinsToEnrichAround(pins, index) {
+      if (pins.length === 0) return [];
       const start = Math.max(0, index - MAP_CAROUSEL_ENRICH_WINDOW);
-      const end = Math.min(mapCarouselOrder.length, index + MAP_CAROUSEL_ENRICH_WINDOW + 1);
-      return mapCarouselOrder.slice(start, end);
+      const end = Math.min(pins.length, index + MAP_CAROUSEL_ENRICH_WINDOW + 1);
+      return pins.slice(start, end);
     }
 
     function selectedMapPinGroupIds() {
@@ -289,7 +305,7 @@
       // visible viewport, so swiping within on-screen pins never yanks the map.
       state.mapModule?.panToPinIfNeeded?.(feedMapEl, pin);
       syncMapCarouselUi({ scrollToIndex: scroll ? nextIndex : null });
-      enrichMapPinTooltipListings(pinsToEnrichAround(nextIndex), state.mapTooltipRequestId);
+      enrichMapPinTooltipListings(pinsToEnrichAround(state.selectedMapPins, nextIndex), state.mapTooltipRequestId);
     }
 
     function bindMapPinTooltipEvents() {
@@ -379,11 +395,14 @@
       for (const pin of tappedPins) {
         UyDosh.markListingVisited(pin.id);
       }
-      // The carousel always sources from every listing on the map (falling
-      // back to just the tapped pin(s) if the index isn't ready yet), so
-      // swiping right from any pin keeps paging through the rest of the map
-      // instead of stopping at the tapped pin's own composite group.
-      const carouselPins = mapCarouselOrder.length > 0 ? mapCarouselOrder : tappedPins;
+      // The carousel sources from listings currently visible within the
+      // map's viewport (falling back to just the tapped pin(s) if that
+      // somehow comes back empty), so swiping right from any pin pages
+      // through what's actually on screen right now instead of every
+      // fetched listing — including ones far off-screen — regardless of the
+      // tapped pin's own composite group.
+      const visiblePins = visibleMapCarouselOrder();
+      const carouselPins = visiblePins.length > 0 ? visiblePins : tappedPins;
       const startIndex = Math.max(0, carouselPins.findIndex(
         (pin) => Number(pin.id) === Number(primaryPin.id),
       ));
@@ -392,7 +411,7 @@
       refreshFeedMapPinIcons();
       const requestId = ++state.mapTooltipRequestId;
       renderMapPinTooltip();
-      enrichMapPinTooltipListings(pinsToEnrichAround(startIndex), requestId);
+      enrichMapPinTooltipListings(pinsToEnrichAround(carouselPins, startIndex), requestId);
     }
 
     function currentMapSignature(filterParams) {

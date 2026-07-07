@@ -61,6 +61,48 @@ a { color: inherit; text-decoration: none; }
 }
 
 /*
+ * "Ghost" button — transparent fill with a 2px brand-blue outline, for a
+ * secondary-but-still-eye-catching action (vs. the plain neutral `.btn`'s
+ * translucent-gray fill/hairline border). Currently used by the
+ * create-listing review step's "share phone number" button
+ * (`.phone-share-btn` in telegram-create.css layers its own sizing/icon-color
+ * tweaks on top) — reuse this instead of recreating the outline treatment
+ * ad hoc for any other outlined-but-branded action button.
+ */
+.btn-ghost {
+  appearance: none;
+  border: 2px solid var(--brand2);
+  background: transparent;
+  border-radius: 999px;
+  color: var(--fg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-ghost:active {
+  opacity: 0.85;
+}
+.btn-ghost .icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.btn-ghost .icon svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+.btn-ghost .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+
+/*
  * Chip / pill toggle button — shared by the feed filter ribbon
  * (telegram/index.html), the create-listing wizard (telegram/create.html),
  * and the profile form (telegram/profile.html). Sizing (font-size/padding)

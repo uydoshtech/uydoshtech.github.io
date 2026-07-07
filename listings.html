@@ -160,7 +160,6 @@
         display: block;
       }
       .card .meta .icon svg * { stroke: currentColor; fill: none; }
-      .card .meta .dotsep::before { content: "•"; margin-right: 6px; opacity: 0.6; }
 
       .skeleton {
         border: 1px solid var(--stroke); background: var(--card); border-radius: 18px; overflow: hidden;
@@ -296,13 +295,13 @@
         }
         if (metro) {
           const line = UyDosh.resolveMetroLine(listing);
-          metaParts.push(`<span class="dotsep">${UyDosh.iconMetro(line)}${UyDosh.escapeHtml(metro)}</span>`);
+          metaParts.push(`<span>${UyDosh.iconMetro(line)}${UyDosh.escapeHtml(metro)}</span>`);
         }
         if (Number.isFinite(rooms) && rooms > 0) {
-          metaParts.push(`<span class="dotsep">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
+          metaParts.push(`<span>${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
         if (listing.private_room) {
-          metaParts.push(`<span class="dotsep">${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
+          metaParts.push(`<span>${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
         }
 
         const featured = UyDosh.isFeatured(listing)

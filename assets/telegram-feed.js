@@ -692,10 +692,10 @@ function listingCardHtml(listing) {
   }
   if (metro) {
     const line = UyDosh.resolveMetroLine(listing);
-    metaParts.push(`<span class="dotsep">${UyDosh.iconMetro(line)}${UyDosh.escapeHtml(metro)}</span>`);
+    metaParts.push(`<span>${UyDosh.iconMetro(line)}${UyDosh.escapeHtml(metro)}</span>`);
   }
   if (Number.isFinite(rooms) && rooms > 0) {
-    metaParts.push(`<span class="dotsep">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
+    metaParts.push(`<span>${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
   }
   const privateRoomHtml = listing.private_room
     ? `<div class="meta meta-private-room"><span>${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span></div>`

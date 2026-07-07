@@ -715,11 +715,6 @@ header {
   stroke: currentColor;
   fill: none;
 }
-.map-pin-tooltip-meta .dotsep::before {
-  content: "•";
-  margin-right: 4px;
-  opacity: 0.6;
-}
 .map-pin-tooltip-date {
   flex-basis: 100%;
 }
@@ -903,7 +898,6 @@ header {
 }
 .card .meta .icon svg { width: 13px; height: 13px; display: block; }
 .card .meta .icon svg * { stroke: currentColor; fill: none; }
-.card .meta .dotsep::before { content: "•"; margin-right: 4px; opacity: 0.6; }
 .card .card-footer {
   margin-top: 8px;
   padding-top: 10px;

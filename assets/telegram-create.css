@@ -645,39 +645,14 @@ input[readonly] {
   color: var(--fg);
   white-space: nowrap;
 }
+/* Base look (outline/fill/padding/icon sizing) comes from the shared
+   `.btn-ghost` (telegram-shared.css) — this just layers the page-specific
+   full-width sizing and the phone icon's own (brand red) color on top. */
 .phone-share-btn {
-  appearance: none;
-  border: 1px solid var(--stroke);
-  background: rgba(127, 127, 127, 0.08);
-  border-radius: 999px;
-  color: var(--fg);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   width: 100%;
-  padding: 12px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.phone-share-btn:active {
-  opacity: 0.85;
 }
 .phone-share-btn .icon {
-  width: 15px;
-  height: 15px;
   color: var(--brand);
-}
-.phone-share-btn .icon svg {
-  width: 15px;
-  height: 15px;
-  display: block;
-}
-.phone-share-btn .icon svg * {
-  stroke: currentColor;
-  fill: none;
 }
 .phone-share-btn[hidden] {
   display: none !important;
@@ -699,9 +674,25 @@ input[readonly] {
 }
 .review-row dt {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
   font-weight: 600;
   flex-shrink: 0;
+}
+.review-row dt .icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.review-row dt .icon svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+.review-row dt .icon svg * {
+  stroke: currentColor;
+  fill: none;
 }
 .review-row dd {
   margin: 0;
@@ -738,10 +729,12 @@ input[readonly] {
 }
 .review-row dd.review-location {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px 10px;
+  /* One station per line (was a wrapping row, which let short names like
+     "Ойбек"/"Мингурик" sit side by side instead of stacking) — matches how
+     the multi-station picker itself lists selections elsewhere. */
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
   flex: 1;
 }
 .review-row dd.review-location .review-location-item {
@@ -754,6 +747,14 @@ input[readonly] {
   height: 14px;
   display: block;
   flex-shrink: 0;
+}
+.review-row dd.review-location .icon svg * {
+  /* `iconMetro()`'s paths carry no stroke/fill of their own (only the
+     wrapping `.icon` span gets the line's `color:` inline style) — without
+     this, the metro glyph painted nothing at all (no visible icon), since an
+     SVG path's default stroke is "none". */
+  stroke: currentColor;
+  fill: none;
 }
 .review-row dd.review-price {
   display: inline-flex;
@@ -1010,23 +1011,13 @@ input[readonly] {
   flex-wrap: wrap;
   gap: 8px;
 }
+/* Base look (outline/fill/icon sizing) comes from the shared `.btn-ghost`
+   (telegram-shared.css) — this just layers the page-specific compact
+   vertical padding, flex-to-fill-row sizing, and disabled state on top. */
 .use-location-btn {
-  appearance: none;
-  border: 1px solid var(--stroke);
-  background: rgba(127, 127, 127, 0.08);
-  color: var(--fg);
-  border-radius: 999px;
   padding: 8px 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   flex: 1 1 auto;
-  white-space: nowrap;
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
 }
 .use-location-btn:active { opacity: 0.75; }
 .use-location-btn:disabled { opacity: 0.6; cursor: default; }
@@ -1034,10 +1025,6 @@ input[readonly] {
   width: 16px;
   height: 16px;
   display: block;
-}
-.use-location-btn .icon svg * {
-  stroke: currentColor;
-  fill: none;
 }
 /* Plain rotating ring (see `.wizard-btn-spinner` in telegram-shared.css) —
    tints via `currentColor` so it matches each button's own text color

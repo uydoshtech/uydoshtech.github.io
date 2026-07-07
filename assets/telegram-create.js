@@ -496,6 +496,21 @@ function selectedLocationSummary(lang) {
 }
 
 /**
+ * Truncates a review-step "clip" value (title/description) to a fixed
+ * character count with a trailing ellipsis, instead of relying purely on the
+ * `.review-value-clip` CSS (overflow/text-overflow), which cuts off wherever
+ * the row's available width happens to run out — that made the shown amount
+ * vary with screen width/font instead of being predictable, and could reveal
+ * much more of a long value than intended on a wide screen.
+ */
+const REVIEW_VALUE_CLIP_LENGTH = 15;
+
+function truncateReviewValue(text, maxLength = REVIEW_VALUE_CLIP_LENGTH) {
+  const trimmed = text.trim();
+  return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength)}…` : trimmed;
+}
+
+/**
  * Review-step metro stations get their own line-colored train icon each
  * (via `UyDosh.iconMetro`, same icon/coloring as the transfer-station
  * suffix in `nearbyMetroSectionHtml`) instead of one plain comma-joined
@@ -1156,7 +1171,7 @@ function roommateLocationSectionHtml(lang) {
       <div class="use-location-actions">
         <button
           type="button"
-          class="use-location-btn"
+          class="btn-ghost use-location-btn"
           data-use-current-location
           ${state.locatingAddress ? 'disabled' : ''}
           aria-label="${UyDosh.escapeHtml(UyDosh.t('create.useCurrentLocation', lang))}"
@@ -1659,17 +1674,18 @@ function renderStep3(lang) {
       valueHtml: amenityValueHtml,
       amenitiesIcons: true,
     },
-    { label: UyDosh.t('create.reviewMoveIn', lang), value: moveIn },
+    { label: UyDosh.t('create.reviewMoveIn', lang), value: moveIn, labelIcon: UyDosh.iconCalendar() },
   ];
 
   if (!isRoomNeeded()) {
     rows.push({
       label: UyDosh.t('create.reviewPrivateRoom', lang),
       value: state.form.privateRoom ? UyDosh.t('create.reviewYes', lang) : UyDosh.t('create.reviewNo', lang),
+      labelIcon: UyDosh.iconLock(),
     });
   }
 
-  const reviewRows = rows.map(({ label, value, valueHtml, clip, amenitiesIcons, badges, location, price }) => {
+  const reviewRows = rows.map(({ label, value, valueHtml, clip, amenitiesIcons, badges, location, price, labelIcon }) => {
     const ddClass = [
       clip ? 'review-value-clip' : '',
       amenitiesIcons ? 'review-amenities-icons' : '',
@@ -1677,10 +1693,11 @@ function renderStep3(lang) {
       location ? 'review-location' : '',
       price ? 'review-price' : '',
     ].filter(Boolean).join(' ');
-    const ddContent = valueHtml ?? UyDosh.escapeHtml(String(value ?? ''));
+    const rawValue = String(value ?? '');
+    const ddContent = valueHtml ?? UyDosh.escapeHtml(clip ? truncateReviewValue(rawValue) : rawValue);
     return `
     <div class="review-row">
-      <dt>${UyDosh.escapeHtml(label)}</dt>
+      <dt>${labelIcon || ''}${UyDosh.escapeHtml(label)}</dt>
       <dd${ddClass ? ` class="${ddClass}"` : ''}>${ddContent}</dd>
     </div>`;
   }).join('');
@@ -1689,7 +1706,7 @@ function renderStep3(lang) {
   // account — so the user can re-pull the latest number from Telegram at any
   // time and overwrite whatever's currently typed.
   const phoneShareBtn = `
-    <button type="button" class="phone-share-btn" data-share-phone>
+    <button type="button" class="btn-ghost phone-share-btn" data-share-phone>
       ${UyDosh.iconPhone()}
       <span>${UyDosh.escapeHtml(UyDosh.t('create.sharePhoneCta', lang))}</span>
     </button>`;
