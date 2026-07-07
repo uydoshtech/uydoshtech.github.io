@@ -775,10 +775,31 @@ function showSkeletons(n = 6) {
 }
 
 function showError() {
-  statusEl.innerHTML = `
-    <div>${UyDosh.escapeHtml(UyDosh.t('feed.error'))}</div>
-    <button class="btn" id="retry" type="button">${UyDosh.escapeHtml(UyDosh.t('feed.retry'))}</button>
+  const retryButtonHtml = `
+    <button class="btn" id="retry" type="button">${UyDosh.iconChrome('refresh')}<span>${UyDosh.escapeHtml(UyDosh.t('feed.retry'))}</span></button>
   `;
+  // Only center the error in the middle of the (otherwise empty) screen when there's
+  // nothing else on the page yet, i.e. the very first page failed to load — a
+  // *pagination* failure (loading page 2+ while earlier pages' cards are still showing)
+  // keeps the plain inline treatment below the existing grid instead, same as `showEnd()`
+  // distinguishes an empty feed from an in-progress one.
+  if (state.items.length === 0) {
+    feedListPanel?.classList.add('is-empty');
+    statusEl.className = 'status is-error-state';
+    statusEl.innerHTML = `
+      <div class="feed-error-state">
+        <p class="feed-error-state-title">${UyDosh.escapeHtml(UyDosh.t('feed.error'))}</p>
+        ${retryButtonHtml}
+      </div>
+    `;
+  } else {
+    feedListPanel?.classList.remove('is-empty');
+    statusEl.className = 'status';
+    statusEl.innerHTML = `
+      <div>${UyDosh.escapeHtml(UyDosh.t('feed.error'))}</div>
+      ${retryButtonHtml}
+    `;
+  }
   document.getElementById('retry')?.addEventListener('click', () => {
     state.errored = false;
     loadMore();

@@ -1523,7 +1523,29 @@
     document.head.appendChild(style);
   }
 
+  /**
+   * Hides Yandex's own "copyright"/logo control (bottom-left by default) — `suppressMapOpenBlock`
+   * (set on every map already) only removes the "Open in Yandex Maps" text link next to it, not
+   * the logo mark itself, and there's no documented Map option to hide the logo through the API.
+   * Same versioned-class caveat as the other control overrides above, hence the wildcard
+   * attribute selector instead of a hardcoded class name.
+   */
+  const COPYRIGHT_CONTROL_STYLE_ID = 'uydosh-copyright-control-styles';
+
+  function ensureCopyrightControlStyles() {
+    if (document.getElementById(COPYRIGHT_CONTROL_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = COPYRIGHT_CONTROL_STYLE_ID;
+    style.textContent = `
+      [class*="ymaps-"][class*="-copyright"] {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function attachUserLocationControl(ymaps, map, instance) {
+    ensureCopyrightControlStyles();
     if (!ymaps.control?.GeolocationControl) return;
     ensureGeolocationControlStyles();
     const control = new ymaps.control.GeolocationControl({
@@ -1673,6 +1695,14 @@
    * Delegated on `document` (once, globally) rather than per-container so it also covers markup
    * added by ymaps well after `ensureMapInteractionStyles()` first ran (clusters re-painting on
    * zoom, tooltip carousel re-renders, etc).
+   *
+   * Registered on the *capture* phase, not the (default) bubble phase: ymaps attaches its own
+   * `dragstart` handling directly on the placemark/cluster elements to implement pointer-drag
+   * panning, and on at least the ObjectManager/clusterer path that internal handler calls
+   * `stopPropagation()` — which stops the event before it ever bubbles up to a bubble-phase
+   * listener on `document`, letting the native ghost-drag artifact through untouched even with
+   * this guard installed. A capture-phase listener runs top-down, before that inner handler gets
+   * a chance to call `stopPropagation()`, so `preventDefault()` here always lands in time.
    */
   let mapNativeGestureGuardInstalled = false;
 
@@ -1684,8 +1714,8 @@
         event.preventDefault();
       }
     };
-    document.addEventListener('dragstart', preventInsideMapContainer, { passive: false });
-    document.addEventListener('selectstart', preventInsideMapContainer, { passive: false });
+    document.addEventListener('dragstart', preventInsideMapContainer, { capture: true, passive: false });
+    document.addEventListener('selectstart', preventInsideMapContainer, { capture: true, passive: false });
   }
 
   // The light/dark toggle lives in the app header (see initThemeToggle() in uydosh-i18n.js)
@@ -2473,7 +2503,16 @@
     await destroyMap(container);
     const ymaps = await loadYandexScript(lang);
     const controls = zoomControl
-      ? [...MAP_CONTROLS, new ymaps.control.ZoomControl({ options: { size: 'small' } })]
+      ? [...MAP_CONTROLS, new ymaps.control.ZoomControl({
+          options: {
+            size: 'small',
+            // Pinned to the bottom-left corner — where Yandex's own copyright/logo control
+            // used to sit before `ensureCopyrightControlStyles()` hid it (see
+            // `attachUserLocationControl`) — instead of the default float position, so the
+            // buttons take over that now-empty corner rather than floating mid-edge.
+            position: { left: 10, bottom: 10 },
+          },
+        })]
       : MAP_CONTROLS;
     const map = new ymaps.Map(container, {
       center: [latitude, longitude],
