@@ -67,21 +67,12 @@ html.mini-app header.uydosh-mini-app-header .header-actions {
 .progress-seg.done span,
 .progress-seg.active span { width: 100%; }
 .step-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
   margin-bottom: 24px;
 }
 .step-head h1 {
   margin: 0;
   font-size: 18px;
   line-height: 1.25;
-}
-.step-head small {
-  color: var(--muted);
-  font-size: 13px;
-  white-space: nowrap;
 }
 .panel {
   display: none;

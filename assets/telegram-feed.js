@@ -735,10 +735,12 @@ function listingCardHtml(listing) {
       ${thumb}
       <div class="body">
         <div class="title-row">
-          <div class="title">${title}</div>
+          <div class="title-col">
+            <div class="title">${title}</div>
+            ${metaParts.length ? `<div class="meta">${metaParts.join('')}</div>` : ''}
+          </div>
           ${priceColHtml}
         </div>
-        ${metaParts.length ? `<div class="meta">${metaParts.join('')}</div>` : ''}
         ${amenityHtml}
       </div>
     </a>

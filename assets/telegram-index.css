@@ -848,6 +848,18 @@ header {
   justify-content: space-between;
   gap: 8px;
 }
+/* Groups the title with its own location/metro `.meta` line so they stay
+   tight together regardless of `.price-col`'s height — `.price-col` can grow
+   taller than the title (e.g. price + the "private room" badge stacked
+   underneath it) without stretching `.title-row` and leaving a gap between
+   the title and `.meta` on the other side. */
+.card .title-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .card .title {
   font-size: 14px;
   font-weight: 700;
@@ -856,8 +868,6 @@ header {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex: 1;
-  min-width: 0;
 }
 .card .price-col {
   flex-shrink: 0;

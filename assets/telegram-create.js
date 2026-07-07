@@ -127,7 +127,6 @@ const successFeedIconEl = document.getElementById('success-feed-icon');
 const successPhotoWarningEl = document.getElementById('success-photo-warning');
 const stepPanelsEl = document.getElementById('step-panels');
 const stepTitleEl = document.getElementById('step-title');
-const stepCounterEl = document.getElementById('step-counter');
 const progressEl = document.getElementById('progress');
 const formErrorEl = document.getElementById('form-error');
 const wizardFooterEl = document.getElementById('wizard-footer');
@@ -1891,9 +1890,6 @@ function renderStep() {
   const lang = UyDosh.getLang();
   const titles = stepTitles(lang);
   stepTitleEl.textContent = titles[state.step] || '';
-  stepCounterEl.textContent = UyDosh.t('create.stepCounter', lang)
-    .replace('{current}', String(state.step + 1))
-    .replace('{total}', String(STEP_COUNT));
 
   renderProgress();
 

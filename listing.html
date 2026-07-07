@@ -738,14 +738,24 @@
       .meta-grid dt .icon svg { width: 100%; height: 100%; display: block; }
       .meta-grid dt .icon svg * { stroke: currentColor; fill: none; }
       .meta-grid dd { margin: 0; font-weight: 600; }
-      .author-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+      /* Author avatar sits outside the dt/dd grid flow, absolutely centered
+         against the *whole* posted block (author + posted-date rows
+         together) rather than just the author row it's conceptually tied
+         to — matches how a post's avatar typically anchors to its full
+         byline, not just the first line of it. `--with-avatar`'s extra
+         right padding on the block reserves room so neither row's text
+         runs under it. */
+      .map-section-posted {
+        position: relative;
+      }
+      .map-section-extra.map-section-posted--with-avatar {
+        padding-right: 55px;
       }
       .author-avatar {
-        flex-shrink: 0;
+        position: absolute;
+        top: 50%;
+        right: 16px;
+        transform: translateY(-50%);
         box-sizing: border-box;
         width: 31px;
         height: 31px;
@@ -896,8 +906,6 @@
         cursor: pointer;
         display: flex;
         align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
         padding: 14px 16px;
         text-align: left;
       }
@@ -980,16 +988,6 @@
       }
       .map-section-row .icon svg { width: 18px; height: 18px; display: block; }
       .map-section-row .icon svg * { stroke: currentColor; fill: none; }
-      .map-section-chevron {
-        color: var(--muted);
-        font-size: 18px;
-        line-height: 1;
-        flex-shrink: 0;
-        transition: transform 180ms ease;
-      }
-      .map-section[aria-expanded="true"] .map-section-chevron {
-        transform: rotate(180deg);
-      }
       .map-section-body {
         padding: 0 16px 16px;
       }
@@ -2398,6 +2396,27 @@
           : (l?.subway_station ? [l.subway_station] : []);
       }
 
+      /**
+       * Closest tagged metro station by straight-line walk distance (see
+       * `UyDosh.stationWalkInfo`), or `null` when the listing has no station
+       * with usable coordinates — used to auto-draw a route to it on map load
+       * (see `mountListingMap`) without waiting for the user to tap a
+       * per-station "draw route" button.
+       */
+      function nearestMetroStation(l) {
+        const refCoords = UyDosh.listingReferenceCoordinates(l);
+        if (!refCoords) return null;
+        let nearest = null;
+        let nearestKm = Infinity;
+        for (const station of listingMetroStations(l)) {
+          const walk = UyDosh.stationWalkInfo(refCoords, station);
+          if (!walk || walk.km >= nearestKm) continue;
+          nearestKm = walk.km;
+          nearest = station;
+        }
+        return nearest;
+      }
+
       function buildMapSectionHtml(l, lang) {
         const locName = UyDosh.localized(l.location, lang);
         const metroLine = UyDosh.resolveMetroLine(l);
@@ -2450,7 +2469,6 @@
           <section class="map-section" data-map-section aria-expanded="true">
             <button type="button" class="map-section-toggle" data-map-toggle aria-expanded="true">
               <div class="map-section-summary">${rows.join('')}</div>
-              <span class="map-section-chevron" aria-hidden="true">▾</span>
             </button>
           <div class="map-section-body">
             <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
@@ -2533,6 +2551,7 @@
             state.mapLoaded = true;
             UyDosh.reflowActiveMaps();
             refineMetroStationWalkTimes(mapModule, state.listing);
+            drawNearestMetroStationRoute(mapModule, container, state.listing);
           } catch (err) {
             console.error('Failed to load listing map', err);
             showListingMapError(container);
@@ -2593,6 +2612,27 @@
               .replace('{minutes}', String(Math.max(1, Math.round(minutes))));
           }
         }).catch(() => { /* keep the straight-line estimate already on screen */ });
+      }
+
+      /**
+       * Draws a pedestrian route from the listing's pin to its closest
+       * tagged metro station (see `nearestMetroStation`) as soon as the map
+       * finishes mounting — same `setPinGuideLines` call as a per-station
+       * "draw route" button tap (see `bindMetroStationRouteButtons`), just
+       * fired automatically instead of waiting for one. No-ops when the
+       * listing has no station with usable coordinates. A later manual tap
+       * on a different station's route button still fully replaces this
+       * line (see `setPinGuideLines`'s docstring).
+       */
+      function drawNearestMetroStationRoute(mapModule, container, listing) {
+        const station = nearestMetroStation(listing);
+        const latitude = Number(station?.latitude);
+        const longitude = Number(station?.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+        const line = Number(station.line) || UyDosh.resolveMetroLine(listing);
+        mapModule.setPinGuideLines(container, [
+          { latitude, longitude, color: UyDosh.metroLineColor(line) || undefined },
+        ]);
       }
 
       /**
@@ -3406,24 +3446,22 @@
         const authorHandle = isMiniApp ? UyDosh.listingContactTelegram(l) : '';
         const authorAvatarUrl = authorHandle ? UyDosh.telegramAvatarUrl(authorHandle) : '';
         const postedExtraHtml = (isMiniApp && (authorHandle || l.created_at)) ? `
-          <div class="map-section-extra map-section-posted">
+          <div class="map-section-extra map-section-posted${authorHandle ? ' map-section-posted--with-avatar' : ''}">
             <dl class="meta-grid">
               ${authorHandle ? `
                 <dt>${UyDosh.escapeHtml(UyDosh.t('detail.author'))}</dt>
-                <dd>
-                  <span class="author-row">
-                    <span>@${UyDosh.escapeHtml(authorHandle)}</span>
-                    <span class="author-avatar" aria-hidden="true">
-                      ${authorAvatarUrl ? `<img src="${UyDosh.escapeHtml(authorAvatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />` : UyDosh.iconChrome('person')}
-                    </span>
-                  </span>
-                </dd>
+                <dd>@${UyDosh.escapeHtml(authorHandle)}</dd>
               ` : ''}
               ${l.created_at ? `
                 <dt>${UyDosh.iconCalendar()}${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
                 <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.created_at, lang))}</dd>
               ` : ''}
             </dl>
+            ${authorHandle ? `
+              <span class="author-avatar" aria-hidden="true">
+                ${authorAvatarUrl ? `<img src="${UyDosh.escapeHtml(authorAvatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />` : UyDosh.iconChrome('person')}
+              </span>
+            ` : ''}
           </div>
         ` : '';
 
