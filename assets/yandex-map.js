@@ -718,12 +718,15 @@
   }
 
   /**
-   * Tapping a metro station layer icon shows a small floating info card (name + district,
-   * mirrors the mobile app's `MetroStationMapTooltip`) plus a walking-distance circle around
-   * the station (mirrors `_createMetroStationWalkingRadius` in
+   * Tapping a metro station layer icon shows a small floating info card (name + district +
+   * walk-time zone, mirrors the mobile app's `MetroStationMapTooltip`) plus a walking-distance
+   * circle around the station (mirrors `_createMetroStationWalkingRadius` in
    * yandex_map_widget_map_objects.dart). Both are real `ymaps.Placemark`/`ymaps.Circle` geo-
    * objects — not DOM overlays — so they stay correctly anchored through pans/zooms for free,
-   * same reasoning as `createRouteInfoPlacemark` above.
+   * same reasoning as `createRouteInfoPlacemark` above. The walk-time line used to be its own
+   * floating pill positioned north of the station, disconnected from the info card — folded
+   * into `metroTooltipHtml` instead so it doesn't float independently or need its own
+   * north-offset positioning math.
    */
   const METRO_STATION_WALK_MINUTES = 15;
   const METRO_WALK_CIRCLE_COLOR = '#1E88E5';
@@ -777,7 +780,8 @@
         font-size: 13px;
         font-weight: 800;
       }
-      .${METRO_TOOLTIP_CLASS}-district {
+      .${METRO_TOOLTIP_CLASS}-district,
+      .${METRO_TOOLTIP_CLASS}-walk {
         opacity: 0.82;
         font-weight: 600;
       }
@@ -792,8 +796,9 @@
         height: 100%;
         display: block;
       }
-      .${METRO_TOOLTIP_CLASS}-district .icon svg * {
+      .${METRO_TOOLTIP_CLASS} .icon svg * {
         stroke: currentColor;
+        fill: none;
       }
       .${METRO_TOOLTIP_CLASS}-close {
         position: absolute;
@@ -827,6 +832,9 @@
     const district = window.UyDosh?.localizedShort?.(location, lang) || '';
     const metroIcon = window.UyDosh?.iconMetro?.(station?.line) ?? '';
     const pinIcon = window.UyDosh?.iconPin?.() ?? '';
+    const clockIcon = window.UyDosh?.iconClock?.() ?? '';
+    const walkText = (window.UyDosh?.t?.('map.metroWalkArea', lang) || '{minutes} min walk area')
+      .replace('{minutes}', String(METRO_STATION_WALK_MINUTES));
     const closeLabel = window.UyDosh?.t?.('map.tooltip.close', lang) || 'Close';
     const districtRow = district
       ? `<div class="${METRO_TOOLTIP_CLASS}-row ${METRO_TOOLTIP_CLASS}-district">${pinIcon}<span>${escapeHtml(district)}</span></div>`
@@ -835,6 +843,7 @@
       <button type="button" class="${METRO_TOOLTIP_CLASS}-close" data-metro-tooltip-close aria-label="${escapeHtml(closeLabel)}">×</button>
       <div class="${METRO_TOOLTIP_CLASS}-row ${METRO_TOOLTIP_CLASS}-name">${metroIcon}<span>${escapeHtml(name)}</span></div>
       ${districtRow}
+      <div class="${METRO_TOOLTIP_CLASS}-row ${METRO_TOOLTIP_CLASS}-walk">${clockIcon}<span>${escapeHtml(walkText)}</span></div>
     `;
   }
 
@@ -904,42 +913,6 @@
     });
   }
 
-  /** North-shifted `[lat, lng]` for placing the "N min walk area" label above a station,
-   * same fixed-latitude-degree approximation used elsewhere in this file (see `midpointCoordinates`) —
-   * good enough at this (city, few-km) scale. Mirrors `_pointOffsetNorth` in the mobile app. */
-  function offsetCoordinatesNorth(lat, lon, meters) {
-    const METERS_PER_DEGREE_LATITUDE = 111320;
-    return [lat + meters / METERS_PER_DEGREE_LATITUDE, lon];
-  }
-
-  function metroWalkAreaLabelHtml(minutes, lang) {
-    const text = (window.UyDosh?.t?.('map.metroWalkArea', lang) || '{minutes} min walk area')
-      .replace('{minutes}', String(minutes));
-    const clockIcon = window.UyDosh?.iconClock?.() ?? '';
-    return `<span>${clockIcon}${text}</span>`;
-  }
-
-  /** "N min walk area" pill placed near the top of the walk circle — reuses the route-info
-   * label's layout/styles (`ensureRouteInfoLayout`/`ensureRouteInfoLabelStyles`) since it's
-   * the same generic "dark pill with an icon" look, just different content. Mirrors the
-   * mobile app's `_createMetroStationWalkingRadiusLabel`. */
-  function createMetroWalkAreaLabel(ymaps, station, radiusMeters, lang) {
-    ensureRouteInfoLabelStyles();
-    const lat = Number(station?.latitude);
-    const lon = Number(station?.longitude);
-    const coordinates = offsetCoordinatesNorth(lat, lon, radiusMeters * 0.56);
-    return new ymaps.Placemark(coordinates, {
-      html: metroWalkAreaLabelHtml(METRO_STATION_WALK_MINUTES, lang),
-    }, {
-      iconLayout: ensureRouteInfoLayout(ymaps),
-      iconShape: { type: 'Rectangle', coordinates: [[-65, -12], [65, 12]] },
-      hasHint: false,
-      hasBalloon: false,
-      interactivityModel: 'default#transparent',
-      zIndex: 20,
-    });
-  }
-
   /** Selects (or, if already selected, deselects) a metro station on the layer — shows/hides
    * its info tooltip and walking-radius circle. See `setMetroLayerMode` for where the click
    * that calls this is wired up, and the `map.events.add('click', ...)` in `renderPinsMap`
@@ -958,7 +931,6 @@
     const ymaps = window.ymaps;
     const radius = metroWalkRadiusMeters();
     selection.collection.add(createMetroWalkCircle(ymaps, station, radius));
-    selection.collection.add(createMetroWalkAreaLabel(ymaps, station, radius, lang));
     selection.collection.add(createMetroStationTooltipPlacemark(ymaps, station, lang, () => {
       clearSelectedMetroStation(container);
     }));
@@ -2322,17 +2294,24 @@
    * ymaps object, since it only ever needs to point at the pin's *initial*
    * position: the map is always centered on the pin when this map mounts, so
    * anchoring the bubble to the container's horizontal/vertical center (minus
-   * half the selected-pin icon's height, see `MAP_PIN_ICON_SIZE_SELECTED` in
-   * uydosh-map-pins.js) lines it up without needing to track the pin's
-   * screen position through pans/zooms. It disappears for good the moment
-   * the author actually drags the pin once — see the `dragstart` listener
-   * below — so it never needs to catch up with the pin moving anyway.
+   * the pin's height, see `DRAG_HINT_OFFSET_PX` below) lines it up without
+   * needing to track the pin's screen position through pans/zooms. It
+   * disappears for good the moment the author actually drags the pin once —
+   * see the `dragstart` listener below — so it never needs to catch up with
+   * the pin moving anyway.
    */
   const DRAG_HINT_CLASS = 'uydosh-map-drag-hint';
   const DRAG_HINT_STYLE_ID = 'uydosh-map-drag-hint-styles';
-  // Half of MAP_PIN_ICON_SIZE_SELECTED (28px) plus a small gap, so the
-  // bubble's arrow tip lands just above the pin instead of overlapping it.
-  const DRAG_HINT_OFFSET_PX = 20;
+  // `renderSinglePinMap`'s only caller (the create-listing address step)
+  // always passes `standardIcon: true`, i.e. Yandex's own `islands#redIcon`
+  // preset — a ~30x42px teardrop anchored at its *bottom* tip (see
+  // `STANDARD_PRESET_ICON_HEIGHT` above), not centered like the app's custom
+  // pins. That means the full icon height sits above the anchor point (the
+  // container's vertical center, since the map is always centered on the pin
+  // here) — offsetting by only half that height left the bubble's tail
+  // overlapping the pin's head. Add a small gap on top of the full height so
+  // the tail clears it instead.
+  const DRAG_HINT_OFFSET_PX = STANDARD_PRESET_ICON_HEIGHT + 10;
 
   function ensureDragHintStyles() {
     if (document.getElementById(DRAG_HINT_STYLE_ID)) return;
@@ -2359,6 +2338,7 @@
         pointer-events: none;
         opacity: 1;
         transition: opacity 180ms ease;
+        animation: uydosh-map-drag-hint-bob 1.6s ease-in-out infinite;
       }
       .${DRAG_HINT_CLASS}::after {
         content: '';
@@ -2370,6 +2350,10 @@
         border-top-color: rgba(20, 20, 20, 0.86);
       }
       .${DRAG_HINT_CLASS}.uydosh-map-drag-hint-hide { opacity: 0; }
+      @keyframes uydosh-map-drag-hint-bob {
+        0%, 100% { transform: translate(-50%, -100%) translateY(0); }
+        50% { transform: translate(-50%, -100%) translateY(-4px); }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -2556,7 +2540,12 @@
       if (pending > 0) return;
       try {
         const bounds = map.geoObjects.getBounds();
-        if (bounds) map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 48 });
+        // A tighter margin than `fitBoundsForPinsAndHighlight`'s (used for the
+        // full-screen feed map) — these guide-line previews live in a small
+        // ~250-280px-tall `.map-container`/`.address-map-preview` box, where a
+        // generous margin ate a large share of the height and left the pin/
+        // station pair looking farther apart than the actual route.
+        if (bounds) map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 24 });
       } catch { /* ignore */ }
     };
 

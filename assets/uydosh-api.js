@@ -635,6 +635,70 @@ function fetchAmenitiesOrdered() {
   return fetchJson('/amenities/ordered');
 }
 
+/**
+ * Server-side kill switch for the Gemini "improve description"/"translate" UI (admin
+ * toggle) — mirrors the mobile app's `ClientGeminiListingUiConfig`. Best-effort: any
+ * failure (network, etc.) defaults to visible, same as the mobile client.
+ */
+function fetchGeminiListingUiHidden() {
+  return fetchJson('/settings/gemini-listing-ui-hidden')
+    .then((data) => data?.hidden === true)
+    .catch(() => false);
+}
+
+/**
+ * "Improve with AI" for the create/edit listing description field — the same Gemini-backed
+ * endpoint the mobile app's `GeminiService.enhanceListingDescription` calls
+ * (`POST /gemini/improve-listing`), a same-language clarity/grammar pass only. Requires an
+ * authenticated session (see `fetchJsonAuth`); rejects with `err.status`/`err.payload.code`
+ * set so the caller can distinguish auth (401), quota (403 `gemini_quota_exceeded`), and
+ * feature-disabled (403 `gemini_listing_ui_disabled`) cases.
+ */
+function improveListingDescription(text) {
+  return fetchJsonAuth('/gemini/improve-listing', { method: 'POST', body: { text } });
+}
+
+/**
+ * Uploads a recorded description dictation clip for Whisper transcription — the same
+ * endpoint the mobile app's `DescriptionDictationService` calls
+ * (`POST /openai/transcribe-description`, multipart field `audio`). `blob` is a
+ * browser-recorded `Blob` (see `MediaRecorder` in telegram-create.js); `filename` should
+ * carry an extension matching `blob.type` (e.g. `.m4a`/`.webm`) purely for readability —
+ * the server trusts `blob.type` (sent as the part's Content-Type) for the actual format.
+ * Requires an authenticated session; rejects with `err.status` set (401 unauthenticated,
+ * 503 not configured) so the caller can show the right message. Deliberately bypasses
+ * `fetchJsonAuth`, which always JSON-encodes the body — this needs a real multipart
+ * `FormData` request instead (the browser sets the correct boundary automatically as long
+ * as `Content-Type` isn't set manually).
+ */
+async function transcribeDescriptionAudio(blob, filename, language) {
+  const token = getSessionToken();
+  if (!token) {
+    const err = new Error('Not authenticated');
+    err.status = 401;
+    throw err;
+  }
+  const form = new FormData();
+  form.append('audio', blob, filename);
+  if (language) form.append('language', language);
+  const res = await fetch(`${API_BASE}/openai/transcribe-description`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
 function createListing(body) {
   return fetchJsonAuth('/listings', { method: 'POST', body });
 }
@@ -1148,6 +1212,9 @@ Object.assign(window.UyDosh, {
   getCachedLocationById,
   getCachedSubwayStationById,
   fetchAmenitiesOrdered,
+  fetchGeminiListingUiHidden,
+  improveListingDescription,
+  transcribeDescriptionAudio,
   createListing,
   fetchReverseGeocodeAddress,
   fetchGeosuggest,

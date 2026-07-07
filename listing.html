@@ -232,10 +232,8 @@
       .owner-toolbar-spinner {
         width: 14px;
         height: 14px;
-        border: 2px solid color-mix(in srgb, var(--fg) 16%, transparent);
-        border-top-color: var(--brand2);
-        border-radius: 50%;
-        animation: owner-toolbar-spin 0.75s linear infinite;
+        background: url("images/uydosh-logo.svg") center / contain no-repeat;
+        animation: owner-toolbar-spin 0.9s linear infinite;
       }
       @keyframes owner-toolbar-spin {
         to { transform: rotate(360deg); }
@@ -507,9 +505,8 @@
       .compat-toggle-percent.is-bad { color: #ef4444; }
       .compat-spinner {
         display: inline-block; width: 14px; height: 14px;
-        border: 2px solid color-mix(in srgb, var(--fg) 16%, transparent);
-        border-top-color: var(--brand2); border-radius: 50%;
-        animation: owner-toolbar-spin 0.75s linear infinite; vertical-align: middle;
+        background: url("images/uydosh-logo.svg") center / contain no-repeat;
+        animation: owner-toolbar-spin 0.9s linear infinite; vertical-align: middle;
       }
       .compat-chevron { color: var(--muted); font-size: 18px; line-height: 1; flex-shrink: 0;
         transition: transform 180ms ease; }
@@ -725,14 +722,33 @@
         border-radius: 14px;
         font-size: 14px;
       }
-      .meta-grid dt { color: var(--muted); margin: 0; }
+      .meta-grid dt {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .meta-grid dt .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex-shrink: 0;
+      }
+      .meta-grid dt .icon svg { width: 100%; height: 100%; display: block; }
+      .meta-grid dt .icon svg * { stroke: currentColor; fill: none; }
       .meta-grid dd { margin: 0; font-weight: 600; }
-      .author-row { display: flex; align-items: center; gap: 8px; }
+      .author-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
       .author-avatar {
         flex-shrink: 0;
         box-sizing: border-box;
-        width: 26px;
-        height: 26px;
+        width: 31px;
+        height: 31px;
         border-radius: 50%;
         border: 1px solid var(--stroke);
         overflow: hidden;
@@ -742,7 +758,7 @@
         justify-content: center;
         color: var(--muted);
       }
-      .author-avatar svg { width: 15px; height: 15px; display: block; }
+      .author-avatar svg { width: 18px; height: 18px; display: block; }
       .author-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
       .section h2 {
@@ -1153,13 +1169,13 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="assets/uydosh-core.js?v=20260707-101"></script>
-    <script src="assets/uydosh-api.js?v=20260707-113"></script>
-    <script src="assets/uydosh-i18n.js?v=20260707-33"></script>
-    <script src="assets/uydosh-icons.js?v=20260707-107"></script>
+    <script src="assets/uydosh-api.js?v=20260707-115"></script>
+    <script src="assets/uydosh-i18n.js?v=20260707-35"></script>
+    <script src="assets/uydosh-icons.js?v=20260707-109"></script>
     <script src="assets/uydosh-map-pins.js?v=20260705-81"></script>
     <script src="assets/uydosh-badges.js?v=20260703-67"></script>
     <script src="assets/uydosh-profile-match.js?v=20260705-1"></script>
-    <script src="assets/uydosh-mini-app.js?v=20260706-104"></script>
+    <script src="assets/uydosh-mini-app.js?v=20260707-105"></script>
     <script>
       document.getElementById('y').textContent = new Date().getFullYear();
       UyDosh.initTelegramMiniApp();
@@ -2313,7 +2329,7 @@
         return `
           <div class="map-section-extra map-section-move-in-extra">
             <dl class="meta-grid">
-              <dt>${UyDosh.escapeHtml(UyDosh.t('detail.moveIn'))}</dt>
+              <dt>${UyDosh.iconCalendar()}${UyDosh.escapeHtml(UyDosh.t('detail.moveIn'))}</dt>
               <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.move_in_date, lang))}</dd>
             </dl>
           </div>
@@ -3351,10 +3367,10 @@
         if (!hasMapSection && addressText) metaRows.push([UyDosh.t('detail.address'), addressText]);
         if (!hasMapSection && locName) metaRows.push([UyDosh.t('detail.location'), locName]);
         if (!hasMapSection && metro) metaRows.push([UyDosh.t('detail.metro'), metro]);
-        if (l.created_at && !isMiniApp) metaRows.push([UyDosh.t('detail.posted'), UyDosh.formatDate(l.created_at, lang)]);
+        if (l.created_at && !isMiniApp) metaRows.push([UyDosh.t('detail.posted'), UyDosh.formatDate(l.created_at, lang), true]);
         const metaHtml = metaRows.length ? `
           <dl class="meta-grid">
-            ${metaRows.map(([k, v]) => `<dt>${UyDosh.escapeHtml(k)}</dt><dd>${UyDosh.escapeHtml(v)}</dd>`).join('')}
+            ${metaRows.map(([k, v, isDate]) => `<dt>${isDate ? UyDosh.iconCalendar() : ''}${UyDosh.escapeHtml(k)}</dt><dd>${UyDosh.escapeHtml(v)}</dd>`).join('')}
           </dl>
         ` : '';
 
@@ -3391,7 +3407,7 @@
                 </dd>
               ` : ''}
               ${l.created_at ? `
-                <dt>${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
+                <dt>${UyDosh.iconCalendar()}${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
                 <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.created_at, lang))}</dd>
               ` : ''}
             </dl>

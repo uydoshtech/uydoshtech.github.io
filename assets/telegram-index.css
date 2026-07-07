@@ -47,6 +47,15 @@ header {
   padding: 8px var(--feed-content-gutter, 25px) 0;
   box-sizing: border-box;
   background: var(--bg);
+  transition: background-color 220ms ease;
+}
+/* Collapsed ribbon: the sticky wrapper's own full-width opaque background
+   would otherwise show as a hard-edged rectangle behind the much narrower
+   pill, outside its rounded grey border. Drop that outer fill so only the
+   `.filters` card itself (border + its own content) stays visible, floating
+   over whatever scrolls underneath. */
+.feed-sticky.feed-sticky--collapsed {
+  background: transparent;
 }
 .filters {
   display: flex;
@@ -81,7 +90,6 @@ header {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-bottom: 2px;
   opacity: 1;
   transform: translateY(0);
   transition:
@@ -901,6 +909,8 @@ header {
   width: 14px;
   height: 14px;
 }
+.card .card-posted .icon svg { width: 14px; height: 14px; display: block; }
+.card .card-posted .icon svg * { stroke: currentColor; fill: none; }
 .card .amenity-inline {
   display: inline-flex;
   align-items: center;

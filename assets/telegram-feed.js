@@ -46,6 +46,11 @@ function resetFiltersScrollAnchor(y = window.scrollY) {
 
 function setFiltersCollapsedVisual(collapsed = state.filtersCollapsed) {
   filtersEl.classList.toggle('filters--collapsed', collapsed);
+  // Also drop the sticky wrapper's own opaque background once collapsed —
+  // see `.feed-sticky--collapsed` in telegram-index.css — so only the
+  // `.filters` card's own rounded grey border stays visible around the
+  // compact ribbon, instead of a full-width rectangle behind it.
+  filtersEl.parentElement?.classList.toggle('feed-sticky--collapsed', collapsed);
   const lang = UyDosh.getLang();
   const toggleLabel = collapsed
     ? UyDosh.t('filter.expand.aria', lang)

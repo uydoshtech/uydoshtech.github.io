@@ -1198,9 +1198,9 @@ function ensureMiniAppSessionRevokedStyles() {
       background: color-mix(in srgb, var(--brand2, #60a5fa) 16%, transparent);
       color: var(--brand2, #60a5fa);
     }
-    .mini-app-session-revoked-icon svg {
-      width: 28px;
-      height: 28px;
+    .mini-app-session-revoked-icon img {
+      width: 34px;
+      height: 34px;
       display: block;
     }
     .mini-app-session-revoked-title {
@@ -1250,7 +1250,7 @@ function showMiniAppSessionRevokedScreen() {
   overlay.setAttribute('aria-modal', 'true');
   overlay.innerHTML = `
     <div class="mini-app-session-revoked-card">
-      <span class="mini-app-session-revoked-icon" aria-hidden="true">${UyDosh.iconChrome ? UyDosh.iconChrome('house') : ''}</span>
+      <span class="mini-app-session-revoked-icon" aria-hidden="true"><img src="/images/uydosh-logo.svg" alt="" /></span>
       <h2 class="mini-app-session-revoked-title">${escapeHtml(t('session.revokedTitle', lang))}</h2>
       <p class="mini-app-session-revoked-message">${escapeHtml(t('session.revokedMessage', lang))}</p>
       <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t('session.revokedClose', lang))}</button>

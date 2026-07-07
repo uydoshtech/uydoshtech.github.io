@@ -509,6 +509,13 @@ function iconClock() {
   `);
 }
 
+/** Plain "+" — the "Add" link button next to a suggested nearby station. */
+function iconPlus() {
+  return iconSvg(null, `
+    <path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"></path>
+  `);
+}
+
 function iconPhone() {
   return iconSvg(null, `
     <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3.6c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8Z" stroke-width="2" stroke-linejoin="round"></path>
@@ -595,6 +602,32 @@ function iconArticle(color) {
   `);
 }
 
+/** Match mobile `Icons.auto_awesome` for the "Improve with AI" description action. */
+function iconSparkles(color) {
+  return iconSvg(color, `
+    <path d="M11 3c.6 3 2 4.4 5 5-3 .6-4.4 2-5 5-.6-3-2-4.4-5-5 3-.6 4.4-2 5-5Z" stroke-width="2" stroke-linejoin="round"></path>
+    <path d="M18.5 14.5c.3 1.4.9 2 2.3 2.3-1.4.3-2 .9-2.3 2.3-.3-1.4-.9-2-2.3-2.3 1.4-.3 2-.9 2.3-2.3Z" stroke-width="2" stroke-linejoin="round"></path>
+  `);
+}
+
+/** Match mobile `Icons.mic_none_outlined` — idle state for the description "Dictate" button. */
+function iconMic(color) {
+  return iconSvg(color, `
+    <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke-width="2" stroke-linejoin="round"></path>
+    <path d="M19 11a7 7 0 0 1-14 0" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M12 18v3" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M9 21h6" stroke-width="2" stroke-linecap="round"></path>
+  `);
+}
+
+/** Match mobile `Icons.stop_circle` — active-recording state for the "Dictate" button. */
+function iconStopCircle(color) {
+  return iconSvg(color, `
+    <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+    <rect x="9" y="9" width="6" height="6" rx="1" stroke-width="2"></rect>
+  `);
+}
+
 /** Listing description starter text; mirrors mobile [ListingDescriptionTemplateButton]. */
 function descriptionTemplateText(listingTypeId, gender, lang = getLang()) {
   const typeId = Number(listingTypeId);
@@ -653,7 +686,7 @@ function iconCheckboxUnchecked(color) {
 function iconCheckboxPair() {
   return `<span class="checkbox-icon" aria-hidden="true">` +
     `<span class="checkbox-icon-unchecked">${iconCheckboxUnchecked('var(--muted)')}</span>` +
-    `<span class="checkbox-icon-checked">${iconCheckboxChecked('var(--brand)')}</span>` +
+    `<span class="checkbox-icon-checked">${iconCheckboxChecked('var(--brand2)')}</span>` +
     `</span>`;
 }
 
@@ -697,6 +730,7 @@ Object.assign(window.UyDosh, {
   iconMetro,
   iconRoute,
   iconClock,
+  iconPlus,
   iconPhone,
   iconEye,
   iconEyeOff,
@@ -710,6 +744,9 @@ Object.assign(window.UyDosh, {
   filterPhotoIcon,
   iconCheckboxPair,
   iconArticle,
+  iconSparkles,
+  iconMic,
+  iconStopCircle,
   descriptionTemplateText,
   presetListingTitleText,
 });

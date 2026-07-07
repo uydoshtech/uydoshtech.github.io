@@ -10,6 +10,18 @@ const TITLE_MAX = 50;
 const DESCRIPTION_MAX = 1000;
 const PRICE_MIN = 10;
 const PRICE_MAX = 1000;
+
+/**
+ * `--range-progress` custom property consumed by the `input[type="range"]`
+ * rules in telegram-create.css to paint the filled (left of the thumb)
+ * portion of the price sliders blue (`var(--brand2)`, same as a selected
+ * amenity chip) instead of relying on `accent-color`, which doesn't render a
+ * filled track at all in every webview the mini app runs in.
+ */
+function rangeProgressStyle(value, min, max) {
+  const pct = max > min ? ((Number(value) - min) / (max - min)) * 100 : 0;
+  return `style="--range-progress: ${Math.min(100, Math.max(0, pct)).toFixed(2)}%"`;
+}
 const STEP_COUNT = 4;
 // Keep in sync with the backend's per-listing photo cap (listingPhotoService.ts).
 const MAX_PHOTOS = 5;
@@ -108,6 +120,10 @@ const successTitleEl = document.getElementById('success-title');
 const successHintEl = document.getElementById('success-hint');
 const successViewBtn = document.getElementById('success-view');
 const successFeedBtn = document.getElementById('success-feed');
+const successViewLabelEl = document.getElementById('success-view-label');
+const successFeedLabelEl = document.getElementById('success-feed-label');
+const successViewIconEl = document.getElementById('success-view-icon');
+const successFeedIconEl = document.getElementById('success-feed-icon');
 const successPhotoWarningEl = document.getElementById('success-photo-warning');
 const stepPanelsEl = document.getElementById('step-panels');
 const stepTitleEl = document.getElementById('step-title');
@@ -133,6 +149,16 @@ const state = {
   validationError: '',
   validationAnchor: '',
   lastGeneratedTitle: '',
+  /// True while the description field's "Improve with AI" button (Gemini-backed, see
+  /// `improveDescriptionWithAi`) has a request in flight.
+  aiImproveLoading: false,
+  /// Server-side kill switch for the Gemini description actions (admin toggle) — mirrors
+  /// the mobile app's `ClientGeminiListingUiConfig`. Fetched once at wizard init (see
+  /// `loadGeminiListingUiVisibility`); defaults to visible (false) until that resolves.
+  geminiListingUiHidden: false,
+  /// 'idle' | 'recording' | 'uploading' — the description field's "Dictate" button (see
+  /// `toggleDescriptionDictation`), mirrors the mobile app's `ListingDescriptionDictateButton`.
+  dictationState: 'idle',
   /// Set when editing an existing listing (from `?id=` on the URL). Only the
   /// listing's own owner can load/save it — enforced server-side via initData.
   editingListingId: null,
@@ -286,10 +312,17 @@ function listingTypeLabel(typeId, lang) {
   return UyDosh.t('filter.type.roommateNeeded', lang);
 }
 
+/**
+ * Labels for the "Для кого" gender picker (step 1). Deliberately its own
+ * `create.gender*` keys rather than the shared `filter.gender.*` ones (which
+ * stay short — "М"/"Ж" — for the feed's compact filter chips): here the
+ * buttons are large and standalone, so the full "Парень"/"Девушка" wording
+ * reads better than a bare letter.
+ */
 function genderLabel(gender, lang) {
   return gender === 2
-    ? UyDosh.t('filter.gender.female', lang)
-    : UyDosh.t('filter.gender.male', lang);
+    ? UyDosh.t('create.genderFemale', lang)
+    : UyDosh.t('create.genderMale', lang);
 }
 
 /** Pre-fill title with preset hashtag; preserves manual edits like mobile create flow. */
@@ -544,11 +577,6 @@ function moveInValueText(lang) {
     : UyDosh.t('create.moveInAny', lang);
 }
 
-/** "Заселение: Любая дата" / "Заселение: 5 июл." — the move-in field shows this as its own inline text (see renderStep1) instead of the native, unformattable date placeholder. */
-function moveInDisplayText(lang) {
-  return `${UyDosh.t('create.moveInDate', lang)}: ${moveInValueText(lang)}`;
-}
-
 /**
  * Only the field outline/label turn red (see `.has-error` in
  * telegram-create.css) — the actual message shows once, in the fixed
@@ -680,12 +708,16 @@ function stationListHtml(lang) {
  * `data-nearby-radius` handler in bindStepEvents).
  */
 function nearbyRadiusChipsHtml(lang) {
-  const chips = NEARBY_STATION_RADIUS_OPTIONS.map((minutes) => UyDosh.chipButtonHtml({
-    className: 'chip nearby-radius-chip',
-    attrs: { 'data-nearby-radius': minutes },
-    pressed: state.nearbyStationsRadiusMinutes === minutes,
-    label: UyDosh.t('create.walkRadiusOption', lang).replace('{count}', String(minutes)),
-  })).join('');
+  const chips = NEARBY_STATION_RADIUS_OPTIONS.map((minutes) => {
+    const pressed = state.nearbyStationsRadiusMinutes === minutes;
+    const labelKey = pressed ? 'create.walkRadiusOptionSelected' : 'create.walkRadiusOption';
+    return UyDosh.chipButtonHtml({
+      className: 'chip nearby-radius-chip',
+      attrs: { 'data-nearby-radius': minutes },
+      pressed,
+      label: UyDosh.t(labelKey, lang).replace('{count}', String(minutes)),
+    });
+  }).join('');
   return `<div class="chips nearby-radius-chips">${chips}</div>`;
 }
 
@@ -723,6 +755,18 @@ function nearbyStationsHtml(lang) {
         <span class="nearby-station-time">${UyDosh.iconClock()}${UyDosh.escapeHtml(minutesLabel)}</span>
       </button>`;
   }).join('');
+  // "Добавить" link — sits in the same row as the chips above and, since
+  // `state.nearbyStations` is nearest-first, mirrors the nearest station
+  // chip's own `data-nearby-station-id`/`-line` so the generic handler in
+  // `bindNearbyMetroEvents` toggles that same station without extra wiring.
+  const nearest = state.nearbyStations[0];
+  const nearestId = Number(nearest.station.id);
+  const nearestLineId = Number(nearest.station.line) || state.form.subwayLineId;
+  const addButton = `
+    <button type="button" class="nearby-station-chip nearby-station-add" data-nearby-station-id="${nearestId}" data-nearby-station-line="${nearestLineId}" data-haptic="selection">
+      ${UyDosh.iconPlus()}
+      <span class="nearby-station-name">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationAdd', lang))}</span>
+    </button>`;
   // Fallback ("closest station overall" — see `findNearbyStations`) gets its
   // own label instead of "Stations near you", since it's explicitly outside
   // the radius the author picked.
@@ -733,7 +777,7 @@ function nearbyStationsHtml(lang) {
     <div class="nearby-stations">
       ${radiusChips}
       <div class="nearby-stations-label">${UyDosh.escapeHtml(UyDosh.t(labelKey, lang))}</div>
-      <div class="nearby-stations-list">${chips}</div>
+      <div class="nearby-stations-list">${chips}${addButton}</div>
     </div>`;
 }
 
@@ -1371,7 +1415,7 @@ function renderStep1(lang) {
       <div class="field${priceField.className}" data-validation-anchor="price">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.price', lang))}</div>
         <div class="price-value">$${state.form.price}</div>
-        <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.price}" data-price-single />
+        <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.price}" ${rangeProgressStyle(state.form.price, PRICE_MIN, PRICE_MAX)} data-price-single />
       </div>`
     : `
       <div class="field${priceField.className}" data-validation-anchor="price">
@@ -1380,17 +1424,18 @@ function renderStep1(lang) {
         <div class="price-row">
           <div>
             <label>${UyDosh.escapeHtml(UyDosh.t('create.priceMin', lang))}</label>
-            <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.priceMin}" data-price-min />
+            <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.priceMin}" ${rangeProgressStyle(state.form.priceMin, PRICE_MIN, PRICE_MAX)} data-price-min />
           </div>
           <div>
             <label>${UyDosh.escapeHtml(UyDosh.t('create.priceMax', lang))}</label>
-            <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.priceMax}" data-price-max />
+            <input type="range" min="${PRICE_MIN}" max="${PRICE_MAX}" step="5" value="${state.form.priceMax}" ${rangeProgressStyle(state.form.priceMax, PRICE_MIN, PRICE_MAX)} data-price-max />
           </div>
         </div>
       </div>`;
 
   const genderField = fieldErrorAttrs('gender');
   const genderChips = [1, 2].map((g) => UyDosh.chipButtonHtml({
+    className: 'chip gender-chip',
     attrs: { 'data-gender': g },
     pressed: state.form.gender === g,
     icon: UyDosh.filterGenderIcon(g, { pressed: false }),
@@ -1420,6 +1465,7 @@ function renderStep1(lang) {
         <div class="amenity-grid">${amenityChips}</div>
       </div>
       <div class="field">
+        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.moveInDate', lang))}</div>
         <div class="date-field-wrap">
           <input
             id="move-in-date"
@@ -1427,7 +1473,10 @@ function renderStep1(lang) {
             aria-label="${UyDosh.escapeHtml(UyDosh.t('create.moveInDate', lang))}"
             value="${UyDosh.escapeHtml(state.form.moveInDate)}"
           />
-          <span class="date-field-display" aria-hidden="true">${UyDosh.escapeHtml(moveInDisplayText(lang))}</span>
+          <span class="date-field-display" aria-hidden="true">
+            ${UyDosh.iconCalendar()}
+            <span class="date-field-text">${UyDosh.escapeHtml(moveInValueText(lang))}</span>
+          </span>
         </div>
       </div>
       ${!isRoomNeeded() ? `
@@ -1476,15 +1525,29 @@ function renderStep2(lang) {
         <label for="listing-description">${UyDosh.escapeHtml(UyDosh.t('create.descriptionLabel', lang))}</label>
         <textarea id="listing-description" maxlength="${DESCRIPTION_MAX}" placeholder="${UyDosh.escapeHtml(UyDosh.t('create.descriptionPlaceholder', lang))}">${UyDosh.escapeHtml(state.form.description)}</textarea>
         <div class="description-footer">
-          <button
-            type="button"
-            class="description-template-btn"
-            data-description-template
-            aria-label="${UyDosh.escapeHtml(UyDosh.t('create.descriptionTemplateLabel', lang))}"
-          >
-            ${UyDosh.iconArticle(null)}
-            <span>${UyDosh.escapeHtml(UyDosh.t('create.descriptionTemplateLabel', lang))}</span>
-          </button>
+          <div class="description-actions">
+            <button
+              type="button"
+              class="description-template-btn"
+              data-description-template
+              aria-label="${UyDosh.escapeHtml(UyDosh.t('create.descriptionTemplateLabel', lang))}"
+            >
+              ${UyDosh.iconArticle(null)}
+              <span>${UyDosh.escapeHtml(UyDosh.t('create.descriptionTemplateLabel', lang))}</span>
+            </button>
+            ${state.geminiListingUiHidden ? '' : `
+            <button
+              type="button"
+              class="description-template-btn description-ai-btn${state.aiImproveLoading ? ' is-loading' : ''}"
+              data-description-ai-improve
+              ${state.aiImproveLoading ? 'disabled' : ''}
+              aria-label="${UyDosh.escapeHtml(UyDosh.t('create.descriptionAiImproveLabel', lang))}"
+            >
+              ${state.aiImproveLoading ? '<span class="use-location-spinner" aria-hidden="true"></span>' : UyDosh.iconSparkles(null)}
+              <span>${UyDosh.escapeHtml(UyDosh.t('create.descriptionAiImproveLabel', lang))}</span>
+            </button>`}
+            ${dictationSupported() ? descriptionDictateButtonHtml(lang) : ''}
+          </div>
           <div class="char-count description-char-count ${state.form.description.length > DESCRIPTION_MAX ? 'over' : ''}">${state.form.description.length}/${DESCRIPTION_MAX}</div>
         </div>
       </div>
@@ -1704,13 +1767,28 @@ function scrollSelectedStationIntoView(list) {
 }
 
 /**
+ * Input `type`s that actually bring up the on-screen keyboard when focused.
+ * Notably excludes `date` (and other picker-style types) — those open a
+ * native overlay picker instead, which the keyboard-focused reveal/reflow
+ * logic below would otherwise fight with (see `isEditingTextField` and the
+ * `focusin` handler further down).
+ */
+const KEYBOARD_INPUT_TYPES = new Set(['text', 'search', 'tel', 'email', 'number', 'password', 'url', '']);
+
+function opensOnScreenKeyboard(el) {
+  if (!(el instanceof HTMLElement)) return false;
+  if (el.tagName === 'TEXTAREA') return true;
+  return el.tagName === 'INPUT' && KEYBOARD_INPUT_TYPES.has(el.type || '');
+}
+
+/**
  * True while a text field inside the wizard has focus — i.e. the on-screen
  * keyboard is (most likely) open. See `scheduleSizeLocationList` below for
  * why this matters.
  */
 function isEditingTextField() {
   const active = document.activeElement;
-  return !!active && /^(INPUT|TEXTAREA)$/.test(active.tagName) && stepPanelsEl.contains(active);
+  return !!active && opensOnScreenKeyboard(active) && stepPanelsEl.contains(active);
 }
 
 let sizeLocationListRaf = 0;
@@ -1747,7 +1825,12 @@ window.visualViewport?.addEventListener('resize', scheduleSizeLocationList, { pa
  */
 stepPanelsEl.addEventListener('focusin', (e) => {
   const target = e.target;
-  if (!(target instanceof HTMLElement) || !/^(INPUT|TEXTAREA)$/.test(target.tagName)) return;
+  // Only fields that actually open the on-screen keyboard need this
+  // scroll-into-view nudge — forcing it for e.g. the move-in `date` input
+  // (which opens a native picker overlay, not a keyboard) instead fights
+  // that overlay: the smooth-scroll moves the page out from under it,
+  // which mobile browsers treat as a cue to dismiss the picker.
+  if (!opensOnScreenKeyboard(target)) return;
   const reveal = () => {
     if (document.activeElement === target) {
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -1837,6 +1920,289 @@ async function loadReferenceData() {
     Array.isArray(amenitiesData?.amenities) ? amenitiesData.amenities : [],
   );
   await Promise.all([loadStationsForLine(state.form.subwayLineId), loadLocations()]);
+}
+
+/**
+ * Best-effort, fire-and-forget (not awaited by the caller) so a slow/failed request never
+ * delays the wizard's first paint — the "Improve with AI" button simply shows by default
+ * (see `state.geminiListingUiHidden`'s initial value) and disappears if this later resolves
+ * true. Re-renders the description step if it's already showing so the button can appear/
+ * disappear without waiting for some unrelated state change.
+ */
+async function loadGeminiListingUiVisibility() {
+  try {
+    state.geminiListingUiHidden = await UyDosh.fetchGeminiListingUiHidden();
+  } catch {
+    state.geminiListingUiHidden = false;
+  }
+  if (state.step === 2) renderStep();
+}
+
+/**
+ * Pushes `text` into the description textarea + `state.form.description`, replaying the
+ * same 'input' event the field's own listener reacts to (char counter, validation-clear) —
+ * shared by the template, AI-improve, and dictate actions below.
+ */
+function setDescriptionText(text) {
+  state.form.description = text;
+  const textarea = stepPanelsEl.querySelector('#listing-description');
+  if (textarea) {
+    textarea.value = text;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+/**
+ * "Improve with AI" for the description textarea (step 2) — same Gemini-backed, same-
+ * language clarity/grammar pass as the mobile app's `ListingDescriptionAiEnhanceButton`
+ * (`GeminiService.enhanceListingDescription` -> `POST /gemini/improve-listing`).
+ */
+async function improveDescriptionWithAi() {
+  if (state.aiImproveLoading) return;
+  const lang = UyDosh.getLang();
+  const raw = state.form.description.trim();
+  if (!raw) {
+    showFormError(UyDosh.t('create.descriptionAiImproveEmpty', lang));
+    return;
+  }
+  state.aiImproveLoading = true;
+  renderStep();
+  try {
+    const result = await UyDosh.improveListingDescription(raw);
+    const improved = typeof result?.improvedText === 'string' ? result.improvedText.trim() : '';
+    if (!improved) {
+      showFormError(UyDosh.t('create.descriptionAiImproveError', lang));
+      return;
+    }
+    setDescriptionText(improved.length > DESCRIPTION_MAX ? improved.slice(0, DESCRIPTION_MAX) : improved);
+    showFormError('');
+  } catch (err) {
+    console.error('AI improve description failed', err, err.payload);
+    if (err.status === 401) UyDosh.clearTelegramInitData();
+    const code = err.payload?.code;
+    showFormError(
+      err.status === 401
+        ? UyDosh.t('create.errorAuth', lang)
+        : code === 'gemini_quota_exceeded'
+          ? UyDosh.t('create.descriptionAiImproveQuota', lang)
+          : code === 'gemini_listing_ui_disabled'
+            ? UyDosh.t('create.descriptionAiImproveUnavailable', lang)
+            : UyDosh.t('create.descriptionAiImproveError', lang),
+    );
+  } finally {
+    state.aiImproveLoading = false;
+    renderStep();
+  }
+}
+
+/**
+ * Description "Dictate" button (step 2) — records the mic via `MediaRecorder`, uploads the
+ * clip to Whisper via the same backend endpoint the mobile app's
+ * `ListingDescriptionDictateButton`/`DescriptionDictationService` use
+ * (`POST /openai/transcribe-description`), then appends the transcript. Module-level (not
+ * `state`) handles for the in-flight recorder/stream/chunks/timer, same convention as
+ * `addressSuggestDebounceTimer` above — these are imperative handles, not render inputs.
+ */
+let dictationRecorder = null;
+let dictationStream = null;
+let dictationChunks = [];
+let dictationMaxDurationTimer = null;
+const DICTATION_MAX_DURATION_MS = 60000;
+
+function dictationSupported() {
+  return !!(navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+}
+
+/**
+ * Explicit mimeType (never the `MediaRecorder` default) — Telegram's in-app WebViews have
+ * been observed producing empty/corrupt blobs when the encoder is left unspecified, since
+ * the implicit default differs by platform (e.g. `audio/mp4` on WebKit/iOS vs `audio/webm`
+ * on Chromium/Android).
+ */
+function pickDictationMimeType() {
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
+  const candidates = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+function dictationFileExtension(mimeType) {
+  if (mimeType.includes('mp4')) return 'm4a';
+  if (mimeType.includes('ogg')) return 'ogg';
+  return 'webm';
+}
+
+/**
+ * Mirrors the mobile app's `_appendTranscript` — appends with a single separating space
+ * (skipped if the field is empty or already ends with one), then clamps to DESCRIPTION_MAX.
+ */
+function appendDescriptionTranscript(transcript) {
+  const cur = state.form.description;
+  const sep = !cur || cur.endsWith(' ') ? '' : ' ';
+  let next = `${cur}${sep}${transcript}`.trim();
+  if (next.length > DESCRIPTION_MAX) next = next.slice(0, DESCRIPTION_MAX);
+  setDescriptionText(next);
+}
+
+function stopDictationTracks() {
+  dictationStream?.getTracks().forEach((track) => track.stop());
+  dictationStream = null;
+}
+
+/**
+ * Best-effort cleanup when leaving step 2 mid-recording (see goNext/goBack) — discards the
+ * in-progress clip instead of silently leaving the mic hot in the background. Detaches the
+ * 'stop' listener first so this doesn't also kick off a transcribe upload.
+ */
+function cancelActiveDictation() {
+  if (dictationMaxDurationTimer) {
+    clearTimeout(dictationMaxDurationTimer);
+    dictationMaxDurationTimer = null;
+  }
+  if (dictationRecorder && dictationRecorder.state !== 'inactive') {
+    dictationRecorder.removeEventListener('stop', onDictationRecorderStop);
+    try {
+      dictationRecorder.stop();
+    } catch { /* ignore */ }
+  }
+  dictationRecorder = null;
+  dictationChunks = [];
+  stopDictationTracks();
+  state.dictationState = 'idle';
+}
+
+async function onDictationRecorderStop() {
+  const chunks = dictationChunks;
+  const mimeType = dictationRecorder?.mimeType || pickDictationMimeType() || 'audio/webm';
+  dictationRecorder = null;
+  dictationChunks = [];
+  stopDictationTracks();
+
+  const lang = UyDosh.getLang();
+  const hasAudio = chunks.some((chunk) => chunk.size > 0);
+  if (!hasAudio) {
+    state.dictationState = 'idle';
+    renderStep();
+    showFormError(UyDosh.t('create.descriptionDictateFailed', lang));
+    return;
+  }
+
+  try {
+    const blob = new Blob(chunks, { type: mimeType });
+    const result = await UyDosh.transcribeDescriptionAudio(
+      blob,
+      `recording.${dictationFileExtension(mimeType)}`,
+      lang,
+    );
+    const transcript = typeof result?.text === 'string' ? result.text.trim() : '';
+    if (!transcript) {
+      showFormError(UyDosh.t('create.descriptionDictateFailed', lang));
+      return;
+    }
+    appendDescriptionTranscript(transcript);
+    showFormError('');
+  } catch (err) {
+    console.error('Dictation transcribe failed', err, err.payload);
+    if (err.status === 401) UyDosh.clearTelegramInitData();
+    showFormError(
+      err.status === 401
+        ? UyDosh.t('create.errorAuth', lang)
+        : err.status === 503
+          ? UyDosh.t('create.descriptionDictateNotConfigured', lang)
+          : UyDosh.t('create.descriptionDictateFailed', lang),
+    );
+  } finally {
+    state.dictationState = 'idle';
+    renderStep();
+  }
+}
+
+function stopDescriptionDictation() {
+  if (dictationMaxDurationTimer) {
+    clearTimeout(dictationMaxDurationTimer);
+    dictationMaxDurationTimer = null;
+  }
+  if (!dictationRecorder || dictationRecorder.state === 'inactive') return;
+  state.dictationState = 'uploading';
+  renderStep();
+  try {
+    dictationRecorder.stop();
+  } catch (err) {
+    console.error('Dictation stop failed', err);
+  }
+}
+
+async function toggleDescriptionDictation() {
+  if (state.dictationState === 'uploading') return;
+  if (state.dictationState === 'recording') {
+    haptic('light');
+    stopDescriptionDictation();
+    return;
+  }
+
+  const lang = UyDosh.getLang();
+  if (!dictationSupported()) {
+    showFormError(UyDosh.t('create.descriptionDictateUnsupported', lang));
+    return;
+  }
+
+  haptic('light');
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    console.error('Dictation mic permission failed', err);
+    showFormError(UyDosh.t('create.descriptionDictateMicDenied', lang));
+    return;
+  }
+
+  const mimeType = pickDictationMimeType();
+  let recorder;
+  try {
+    recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+  } catch (err) {
+    console.error('Dictation recorder init failed', err);
+    stream.getTracks().forEach((track) => track.stop());
+    showFormError(UyDosh.t('create.descriptionDictateFailed', lang));
+    return;
+  }
+
+  dictationStream = stream;
+  dictationRecorder = recorder;
+  dictationChunks = [];
+  recorder.addEventListener('dataavailable', (e) => {
+    if (e.data && e.data.size > 0) dictationChunks.push(e.data);
+  });
+  recorder.addEventListener('stop', onDictationRecorderStop);
+  recorder.start();
+
+  dictationMaxDurationTimer = setTimeout(() => {
+    if (state.dictationState === 'recording') stopDescriptionDictation();
+  }, DICTATION_MAX_DURATION_MS);
+
+  state.dictationState = 'recording';
+  renderStep();
+}
+
+function descriptionDictateButtonHtml(lang) {
+  const recording = state.dictationState === 'recording';
+  const uploading = state.dictationState === 'uploading';
+  const label = UyDosh.t('create.descriptionDictateLabel', lang);
+  const icon = uploading
+    ? '<span class="use-location-spinner" aria-hidden="true"></span>'
+    : recording
+      ? UyDosh.iconStopCircle(null)
+      : UyDosh.iconMic(null);
+  return `
+            <button
+              type="button"
+              class="description-template-btn description-dictate-btn${recording ? ' is-recording' : ''}${uploading ? ' is-loading' : ''}"
+              data-description-dictate
+              ${uploading ? 'disabled' : ''}
+              aria-label="${UyDosh.escapeHtml(label)}"
+            >
+              ${icon}
+              <span>${UyDosh.escapeHtml(label)}</span>
+            </button>`;
 }
 
 /**
@@ -2282,6 +2648,7 @@ function bindStepEvents() {
     const field = priceSingleInput.closest('.field');
     const valueEl = field?.querySelector('.price-value');
     if (valueEl) valueEl.textContent = `$${state.form.price}`;
+    e.target.style.setProperty('--range-progress', `${((state.form.price - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`);
     if (state.form.price >= PRICE_MIN) {
       showFormError('');
       clearPriceFieldError(field);
@@ -2296,12 +2663,17 @@ function bindStepEvents() {
     if (valueEl) valueEl.textContent = `$${state.form.priceMin} – $${state.form.priceMax}`;
     return field;
   }
+  function setRangeProgress(input, value) {
+    if (input) input.style.setProperty('--range-progress', `${((value - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`);
+  }
   priceMinInput?.addEventListener('input', (e) => {
     state.form.priceMin = Number(e.target.value);
     if (state.form.priceMin > state.form.priceMax) {
       state.form.priceMax = state.form.priceMin;
       if (priceMaxInput) priceMaxInput.value = String(state.form.priceMax);
+      setRangeProgress(priceMaxInput, state.form.priceMax);
     }
+    setRangeProgress(e.target, state.form.priceMin);
     const field = syncPriceRangeDisplay();
     if (priceBoundsForRequest().min >= PRICE_MIN) {
       showFormError('');
@@ -2313,7 +2685,9 @@ function bindStepEvents() {
     if (state.form.priceMax < state.form.priceMin) {
       state.form.priceMin = state.form.priceMax;
       if (priceMinInput) priceMinInput.value = String(state.form.priceMin);
+      setRangeProgress(priceMinInput, state.form.priceMin);
     }
+    setRangeProgress(e.target, state.form.priceMax);
     const field = syncPriceRangeDisplay();
     if (priceBoundsForRequest().min >= PRICE_MIN) {
       showFormError('');
@@ -2341,8 +2715,8 @@ function bindStepEvents() {
 
   stepPanelsEl.querySelector('#move-in-date')?.addEventListener('change', (e) => {
     state.form.moveInDate = e.target.value || '';
-    const display = stepPanelsEl.querySelector('.date-field-display');
-    if (display) display.textContent = moveInDisplayText(UyDosh.getLang());
+    const display = stepPanelsEl.querySelector('.date-field-text');
+    if (display) display.textContent = moveInValueText(UyDosh.getLang());
   });
 
   stepPanelsEl.querySelector('[data-private-room]')?.addEventListener('click', (e) => {
@@ -2388,16 +2762,19 @@ function bindStepEvents() {
       state.form.gender,
       lang,
     );
-    state.form.description = text;
-    const textarea = stepPanelsEl.querySelector('#listing-description');
-    if (textarea) {
-      textarea.value = text;
-      textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    setDescriptionText(text);
     if (state.form.description.trim() && state.validationError) {
       showFormError('');
       renderStep();
     }
+  });
+
+  stepPanelsEl.querySelector('[data-description-ai-improve]')?.addEventListener('click', () => {
+    improveDescriptionWithAi();
+  });
+
+  stepPanelsEl.querySelector('[data-description-dictate]')?.addEventListener('click', () => {
+    toggleDescriptionDictation();
   });
 
   stepPanelsEl.querySelector('[data-add-photo]')?.addEventListener('click', () => {
@@ -2651,16 +3028,23 @@ async function submitListing() {
       }
       // Edit mode: primary action returns to the "my listings" page the user
       // came from (not the feed) — the secondary feed link stays available too.
+      // Icons follow the swapped destination/label, not the fixed DOM element.
       if (successFeedBtn) {
         successFeedBtn.href = UyDosh.MINI_APP_ACCOUNT_PATH;
-        successFeedBtn.textContent = UyDosh.t('create.backToAccount', lang);
-        successFeedBtn.removeAttribute('data-i18n');
       }
+      if (successFeedLabelEl) {
+        successFeedLabelEl.textContent = UyDosh.t('create.backToAccount', lang);
+        successFeedLabelEl.removeAttribute('data-i18n');
+      }
+      if (successFeedIconEl) successFeedIconEl.innerHTML = UyDosh.iconChrome('person');
       if (successViewBtn) {
         successViewBtn.href = UyDosh.MINI_APP_FEED_PATH;
-        successViewBtn.textContent = UyDosh.t('create.backToFeed', lang);
-        successViewBtn.removeAttribute('data-i18n');
       }
+      if (successViewLabelEl) {
+        successViewLabelEl.textContent = UyDosh.t('create.backToFeed', lang);
+        successViewLabelEl.removeAttribute('data-i18n');
+      }
+      if (successViewIconEl) successViewIconEl.innerHTML = UyDosh.iconChrome('list');
     }
     successRoot.hidden = false;
     successRoot.classList.add('active');
@@ -2682,6 +3066,7 @@ async function submitListing() {
 }
 
 function goNext() {
+  if (state.dictationState === 'recording') cancelActiveDictation();
   const validation = validateStep(state.step);
   if (validation) {
     haptic('heavy');
@@ -2704,6 +3089,7 @@ function goNext() {
 // binder via data-haptic="none" to avoid a double buzz) and Telegram's native
 // BackButton (not a DOM element, so it needs this explicit call).
 function goBack() {
+  if (state.dictationState === 'recording') cancelActiveDictation();
   haptic();
   if (state.step <= 0) {
     location.href = UyDosh.MINI_APP_FEED_PATH;
@@ -2783,6 +3169,7 @@ async function boot() {
       state.form.phone = accountPhone.trim();
     }
     await loadReferenceData();
+    loadGeminiListingUiVisibility();
     if (state.editingListingId) {
       await loadListingForEdit(state.editingListingId);
     } else {

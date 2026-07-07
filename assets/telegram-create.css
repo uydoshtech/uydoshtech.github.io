@@ -58,7 +58,9 @@ html.mini-app header.uydosh-mini-app-header .header-actions {
   display: block;
   height: 100%;
   width: 0;
-  background: var(--brand);
+  /* Brand blue, same as selected amenity chips (var(--brand2)) — not the red
+     var(--brand), which reads as an error/warning color for a progress bar. */
+  background: var(--brand2);
   border-radius: inherit;
   transition: width 180ms ease;
 }
@@ -117,6 +119,19 @@ html.mini-app header.uydosh-mini-app-header .header-actions {
   width: 14px;
   height: 14px;
 }
+/* "Для кого" gender picker (step 1) — bigger than the default chip density
+   since these are the only two options in their row, not a dense filter
+   list, so they read better as larger, more tappable buttons. */
+.gender-chip {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 22px;
+  gap: 8px;
+}
+.gender-chip .chip-icon {
+  width: 20px;
+  height: 20px;
+}
 select, input[type="text"], input[type="number"], input[type="date"], input[type="tel"], textarea {
   width: 100%;
   border: 1px solid var(--stroke);
@@ -153,11 +168,14 @@ input[type="date"] {
 }
 /*
  * The native date control can only show a raw date or a locale placeholder
- * like "dd.mm.yyyy" — not the "Заселение: Любая дата" text product wants
- * while empty. So the input's own text is made transparent and a styled
- * span (`.date-field-display`, kept in sync in bindStepEvents) is overlaid
- * on top instead; `pointer-events: none` lets taps fall through to the real
- * input underneath so it still opens the native picker.
+ * like "dd.mm.yyyy" — not "Любая дата" ("Any date") product wants while
+ * empty. So the input's own text is made transparent and a styled span
+ * (`.date-field-display`, its `.date-field-text` kept in sync in
+ * bindStepEvents) is overlaid on top instead, with a calendar icon so the
+ * field doesn't read as plain unstyled text; `pointer-events: none` lets
+ * taps fall through to the real input underneath so it still opens the
+ * native picker. A `.field-label` above (see renderStep1) now carries the
+ * "Заселение" caption, matching every other field on this step.
  */
 .date-field-wrap {
   position: relative;
@@ -171,10 +189,30 @@ input[type="date"] {
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--fg);
   font-size: 15px;
+  font-weight: 500;
   pointer-events: none;
   white-space: nowrap;
+  overflow: hidden;
+}
+.date-field-wrap .date-field-display .icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.date-field-wrap .date-field-display .icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+.date-field-wrap .date-field-display .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+.date-field-wrap .date-field-text {
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -305,9 +343,59 @@ select:focus, input:focus, textarea:focus {
   font-weight: 800;
   color: var(--price-green);
 }
+/* Custom-painted range slider: the filled (left-of-thumb) portion is drawn
+   blue (var(--brand2), same as a selected amenity chip) via the
+   `--range-progress` custom property (set in telegram-create.js on render
+   and on every 'input' tick). Fully custom rather than `accent-color`
+   because not every webview the mini app runs in renders a filled track for
+   accent-color — only the thumb, leaving the track visually flat. */
 input[type="range"] {
+  --range-progress: 0%;
   width: 100%;
-  accent-color: var(--brand);
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--brand2) var(--range-progress),
+    rgba(127, 127, 127, 0.22) var(--range-progress)
+  );
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.22);
+}
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--brand2);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 .toggle-row {
   display: flex;
@@ -384,10 +472,8 @@ input[type="range"] {
 .station-list-spinner {
   width: 28px;
   height: 28px;
-  border: 2.5px solid color-mix(in srgb, var(--fg) 16%, transparent);
-  border-top-color: var(--brand2);
-  border-radius: 50%;
-  animation: uydosh-spin 0.75s linear infinite;
+  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  animation: uydosh-spin 0.9s linear infinite;
 }
 /* Base `.station-item` (+ icon/checkbox/transfer/select-all) styles
    live in telegram-shared.css, shared with the profile page's
@@ -739,10 +825,8 @@ input[readonly] {
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 2.5px solid color-mix(in srgb, var(--fg) 16%, transparent);
-  border-top-color: var(--brand2);
-  border-radius: 50%;
-  animation: uydosh-spin 0.75s linear infinite;
+  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  animation: uydosh-spin 0.9s linear infinite;
 }
 .success-panel {
   display: none;
@@ -750,7 +834,16 @@ input[readonly] {
   padding: 28px 12px;
   gap: 12px;
 }
-.success-panel.active { display: flex; flex-direction: column; align-items: center; }
+/* Centered as one block (title + hint + buttons) in the space below the
+   header instead of hugging the top — same `100dvh` minus header-inset
+   technique as `#loading:not(.error)` above. */
+.success-panel.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - var(--uydosh-tg-inset-top, 0px) - 160px);
+}
 .success-panel h2 { margin: 0; font-size: 20px; }
 .success-panel p { margin: 0; color: var(--muted); max-width: 320px; }
 .success-photo-warning {
@@ -761,7 +854,7 @@ input[readonly] {
 .success-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   width: 100%;
   max-width: 280px;
   margin-top: 8px;
@@ -770,6 +863,7 @@ input[readonly] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   padding: 12px 16px;
   border-radius: 12px;
   border: 1px solid var(--stroke);
@@ -778,10 +872,32 @@ input[readonly] {
   font-weight: 700;
   text-decoration: none;
 }
+/* Solid brand-blue fill — same blue as the feed's add-listing FAB — for
+   whichever action is the primary next step (view own listing / account). */
 .btn-link.primary {
-  background: var(--brand);
-  border-color: var(--brand);
+  background: var(--brand2);
+  border-color: var(--brand2);
   color: #fff;
+}
+/* Ghost/outline counterpart in the same blue, for the secondary action
+   (back to feed) — no fill, just a tinted border + text. */
+.btn-link.ghost-blue {
+  background: transparent;
+  border-color: var(--brand2);
+  color: var(--brand2);
+}
+.btn-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.btn-link-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 .char-count {
   text-align: right;
@@ -791,10 +907,19 @@ input[readonly] {
 .char-count.over { color: var(--error); }
 .description-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
   margin-top: 4px;
+}
+/* Template + "Improve with AI" + "Dictate" live together on the left,
+   left-most under the textarea — the char counter is the only thing that
+   stays right-aligned (see .description-footer's space-between above). */
+.description-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
 }
 .description-template-btn {
   appearance: none;
@@ -812,6 +937,7 @@ input[readonly] {
   cursor: pointer;
 }
 .description-template-btn:active { opacity: 0.75; }
+.description-template-btn:disabled { opacity: 0.6; cursor: default; }
 .description-template-btn .icon svg {
   width: 18px;
   height: 18px;
@@ -820,6 +946,33 @@ input[readonly] {
 .description-template-btn .icon svg * {
   stroke: currentColor;
   fill: none;
+}
+/* "Improve with AI" (Gemini-backed, see improveDescriptionWithAi in
+   telegram-create.js) — brand-blue accent (same as selected amenity chips)
+   to read as a distinct AI affordance, not a plain utility action like
+   "Template" right next to it. */
+.description-ai-btn {
+  color: var(--brand2);
+}
+.description-ai-btn .use-location-spinner {
+  width: 16px;
+  height: 16px;
+}
+/* "Dictate" (Whisper-backed, see toggleDescriptionDictation in
+   telegram-create.js) — red + a soft pulsing glow while actively recording,
+   same idle color as "Template" the rest of the time (no accent, since this
+   isn't an AI action like .description-ai-btn). */
+.description-dictate-btn .use-location-spinner {
+  width: 16px;
+  height: 16px;
+}
+.description-dictate-btn.is-recording {
+  color: #E53935;
+  animation: uydosh-dictate-pulse 1.4s ease-in-out infinite;
+}
+@keyframes uydosh-dictate-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 .use-location-actions {
   display: flex;
@@ -867,10 +1020,8 @@ input[readonly] {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  border: 2px solid color-mix(in srgb, var(--fg) 16%, transparent);
-  border-top-color: var(--brand2);
-  border-radius: 50%;
-  animation: uydosh-spin 0.75s linear infinite;
+  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  animation: uydosh-spin 0.9s linear infinite;
 }
 /* Small "pin preview" map under the address field (see
    updateAddressMapPreview in telegram-create.js) — shows once the typed/
@@ -932,6 +1083,23 @@ input[readonly] {
   background: color-mix(in srgb, var(--brand2) 14%, transparent);
 }
 .nearby-station-chip:active { opacity: 0.75; }
+/* "Добавить" link button — same row as the chips, tapping it adds the
+   nearest station (see nearbyStationsHtml in telegram-create.js). Styled as
+   a plain link rather than a pill so it doesn't read as its own toggle. */
+.nearby-station-chip.nearby-station-add {
+  border-color: transparent;
+  background: transparent;
+  color: var(--brand2);
+  font-weight: 600;
+  padding: 7px 4px;
+}
+.nearby-station-chip.nearby-station-add .icon svg {
+  width: 14px;
+  height: 14px;
+}
+.nearby-station-chip.nearby-station-add .icon svg * {
+  stroke: var(--brand2);
+}
 .nearby-station-chip .icon svg {
   width: 15px;
   height: 15px;

@@ -103,7 +103,7 @@ a { color: inherit; text-decoration: none; }
   opacity: 0.88;
 }
 .chip[aria-pressed="true"] {
-  border-color: var(--brand);
+  border-color: var(--brand2);
   background: color-mix(in srgb, var(--brand2) 12%, transparent);
   color: var(--fg);
 }
@@ -183,7 +183,7 @@ a { color: inherit; text-decoration: none; }
   display: none;
 }
 .station-item[aria-pressed="true"] {
-  border-color: var(--brand);
+  border-color: var(--brand2);
   background: rgba(127, 127, 127, 0.1);
   color: var(--fg);
 }
@@ -267,10 +267,8 @@ a { color: inherit; text-decoration: none; }
 .wizard-btn-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: uydosh-spin 0.75s linear infinite;
+  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  animation: uydosh-spin 0.9s linear infinite;
   flex-shrink: 0;
 }
 
@@ -454,5 +452,15 @@ a { color: inherit; text-decoration: none; }
   color: var(--fg);
   border-color: var(--brand2);
   background: rgba(127, 127, 127, 0.1);
+}
+/* Feed's List/Map switch only (`telegram/index.html`) — tint each tab's own
+   icon once active instead of the shared `--fg` text color, so "list" reads
+   blue (matching the tab border / add-listing FAB) and "map" reads red
+   (matching the map pin glyph itself), while the label text stays neutral. */
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="list"] {
+  color: var(--brand2);
+}
+.view-tab[aria-selected="true"] .view-tab-icon[data-icon="mapPin"] {
+  color: var(--brand);
 }
 .view-tab:active { opacity: 0.9; }
