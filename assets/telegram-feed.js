@@ -14,14 +14,14 @@ const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
-const FILTER_SCROLL_COLLAPSE_PX = 100;
+const FILTER_SCROLL_COLLAPSE_PX = 120;
 const FILTER_SCROLL_EXPAND_PX = 24;
 // Once already collapsed to the compact icon ribbon, scrolling further down
 // still leaves that full-width pill sitting over the listings underneath it.
 // Past this deeper threshold it folds away entirely except for the chevron
 // button (see `.filters--folded`); scrolling back up even a bit un-folds it.
-const FILTER_SCROLL_FOLD_PX = 240;
-const FILTER_SCROLL_UNFOLD_PX = 160;
+const FILTER_SCROLL_FOLD_PX = 160;
+const FILTER_SCROLL_UNFOLD_PX = 100;
 const SCROLL_TOP_HIDE_PX = 72;
 
 const gridEl = document.getElementById('grid');
@@ -170,9 +170,23 @@ function persistFiltersCollapsed() {
 
 function filterChevronIcon() {
   return `
-    <span class="filters-toggle-icon" aria-hidden="true">
+    <span class="filters-toggle-icon filters-toggle-icon-chevron" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </span>
+  `;
+}
+
+// Shown instead of the chevron once the ribbon is folded down to a lone
+// corner button (see `.filters--folded`): alone and out of context, a plain
+// chevron reads as an ambiguous "expand" arrow, whereas a funnel glyph
+// still reads as "filters" at a glance.
+function filterFunnelIcon() {
+  return `
+    <span class="filters-toggle-icon filters-toggle-icon-filter" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
       </svg>
     </span>
   `;
@@ -492,7 +506,7 @@ function renderFilters() {
         data-filters-toggle
         aria-expanded="${collapsed ? 'false' : 'true'}"
         aria-label="${UyDosh.escapeHtml(toggleLabel)}"
-      >${filterChevronIcon()}</button>
+      >${filterChevronIcon()}${filterFunnelIcon()}</button>
   `;
 
   filtersEl.innerHTML = `
@@ -786,6 +800,52 @@ function renderAll() {
   gridEl.innerHTML = state.items.map(listingCardHtml).join('');
 }
 
+/**
+ * Re-applies only the language-dependent bits of an already-rendered card
+ * (labels, badges, translated meta text) without touching its `<thumb><img>` —
+ * used on language change instead of `renderAll()` so previously loaded photos
+ * aren't torn down/re-decoded and long, already-scrolled grids don't repaint
+ * in one big expensive reflow. Falls back to `renderAll()` if anything about
+ * the existing DOM doesn't look like what this function expects.
+ */
+function patchCardThumbBadges(oldThumb, newThumb) {
+  const oldImg = oldThumb.querySelector(':scope > img');
+  const newImg = newThumb.querySelector(':scope > img');
+  for (const child of Array.from(oldThumb.children)) {
+    if (child !== oldImg) child.remove();
+  }
+  for (const child of Array.from(newThumb.children)) {
+    if (child !== newImg) oldThumb.appendChild(child);
+  }
+}
+
+function patchCardLanguage(cardEl, listing) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = listingCardHtml(listing);
+  const newCard = tmp.firstElementChild;
+  if (!newCard) return false;
+  const oldBody = cardEl.querySelector(':scope > .body');
+  const newBody = newCard.querySelector(':scope > .body');
+  if (!oldBody || !newBody) return false;
+  oldBody.replaceWith(newBody);
+  const oldThumb = cardEl.querySelector(':scope > .thumb');
+  const newThumb = newCard.querySelector(':scope > .thumb');
+  if (oldThumb && newThumb) patchCardThumbBadges(oldThumb, newThumb);
+  return true;
+}
+
+function updateCardsLanguage() {
+  const cards = gridEl.querySelectorAll(':scope > a.card');
+  if (cards.length !== state.items.length) {
+    // Structural mismatch (shouldn't normally happen) — fall back to a full rebuild.
+    renderAll();
+    return;
+  }
+  cards.forEach((cardEl, i) => {
+    if (!patchCardLanguage(cardEl, state.items[i])) renderAll();
+  });
+}
+
 function appendListings(list) {
   const frag = document.createElement('div');
   frag.innerHTML = list.map(listingCardHtml).join('');
@@ -962,7 +1022,7 @@ document.addEventListener('uydosh:langchange', () => {
   UyDosh.applyI18n();
   renderFilters();
   updateViewTabs();
-  renderAll();
+  updateCardsLanguage();
   if (state.reachedEnd && state.view === 'list') showEnd();
   if (state.view === 'map') {
     feedMap.onLangChange();

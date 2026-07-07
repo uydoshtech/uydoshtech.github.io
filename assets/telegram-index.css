@@ -191,8 +191,11 @@ header {
   stroke: currentColor;
   fill: none;
 }
-.filters-toggle[aria-expanded="true"] .filters-toggle-icon {
+.filters-toggle[aria-expanded="true"] .filters-toggle-icon-chevron {
   transform: rotate(180deg);
+}
+.filters-toggle-icon-filter {
+  display: none;
 }
 /* Folded: reached by scrolling further down while already in the compact
    ribbon (see FILTER_SCROLL_FOLD_PX in telegram-feed.js). The card's own
@@ -211,6 +214,12 @@ header {
   pointer-events: auto;
   background: color-mix(in srgb, var(--card) 72%, var(--bg));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+.filters--folded .filters-toggle-icon-chevron {
+  display: none;
+}
+.filters--folded .filters-toggle-icon-filter {
+  display: inline-flex;
 }
 .filters--folded .chips-compact {
   opacity: 0;
@@ -772,6 +781,16 @@ header {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
+}
+#grid .card {
+  /* Feed lists can grow to hundreds of cards over a long infinite-scroll session.
+     content-visibility skips layout/paint/style work for cards currently off
+     screen (a lightweight substitute for full list virtualization, which would
+     need much more machinery to coexist with the scroll-anchored filter-collapse
+     logic above) — contain-intrinsic-size keeps scrollbar height stable before
+     each card's first real measurement. */
+  content-visibility: auto;
+  contain-intrinsic-size: 220px 340px;
 }
 .card {
   border: 1px solid var(--stroke);

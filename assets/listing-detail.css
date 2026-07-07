@@ -1,0 +1,1065 @@
+/* Extracted from listing.html's inline <style> block — moved to an external,
+   cacheable file so repeat visits (and the page's own script bundle) don't
+   have to re-parse ~1000 lines of CSS embedded in the HTML on every load. */
+      :root {
+        color-scheme: light dark;
+        --blue: #00426e;
+        --bg: #061525;
+        --fg: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --card: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --brand: #e11d2e;
+        --brand2: #60a5fa;
+        --accent: #22c55e;
+        --price-green: #35c26b;
+        --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --fg: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.7);
+          --card: rgba(15, 23, 42, 0.04);
+          --stroke: rgba(15, 23, 42, 0.12);
+          --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        background:
+          radial-gradient(1200px 500px at 15% 0%, rgba(0, 66, 110, 0.36), transparent 58%),
+          radial-gradient(900px 600px at 85% 10%, rgba(96, 165, 250, 0.22), transparent 62%),
+          radial-gradient(800px 620px at 92% 82%, rgba(225, 29, 46, 0.12), transparent 62%),
+          var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+      }
+      a { color: inherit; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 80px; }
+      header {
+        display: flex; flex-wrap: wrap; align-items: center;
+        justify-content: space-between; gap: 16px 20px; padding: 10px 0 18px;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; }
+      .brand img { width: 56px; height: 56px; display: block; border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); background: rgba(255, 255, 255, 0.04); }
+      .brand strong { font-size: 16px; letter-spacing: 0.2px; }
+      nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        justify-content: flex-end; min-width: 0; flex: 1 1 auto; max-width: 100%; }
+      .lang.lang-dropdown { flex-shrink: 0; }
+      .pill { display: inline-flex; align-items: center; justify-content: center;
+        padding: 8px 12px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+      .pill:hover { background: rgba(255, 255, 255, 0.06); text-decoration: none; color: var(--fg); }
+      .pill.active { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
+
+      .back {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: var(--muted); font-size: 14px; margin: 4px 0 18px;
+      }
+      .back:hover { color: var(--fg); text-decoration: none; }
+      .back .back-icon {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 18px; height: 18px; flex-shrink: 0;
+      }
+      .back .back-icon svg { display: block; width: 16px; height: 16px; }
+      /* Mini App uses Telegram header BackButton — no custom back link styling needed.
+      html.mini-app .back {
+        margin: 0 0 14px;
+        padding: 8px 14px 8px 10px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-weight: 600;
+        gap: 5px;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+      html.mini-app .back:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--fg);
+      }
+      html.mini-app .back:active { opacity: 0.88; }
+      @media (prefers-color-scheme: light) {
+        html.mini-app .back {
+          background: rgba(15, 23, 42, 0.03);
+        }
+        html.mini-app .back:hover {
+          background: rgba(15, 23, 42, 0.06);
+        }
+      }
+      */
+
+      /* Owner-only "views" panel — sits above the gallery, matching the mobile
+         app's ListingDetailOwnerToolbar position at the top of an owner's own
+         listing detail screen. The edit button shares the row, pinned to the
+         far right edge (website-only affordance — the mobile app links to
+         editing from "My Listings" instead). */
+      .owner-toolbar-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0 0 16px;
+      }
+      .owner-toolbar {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+      }
+      .owner-toolbar .icon { width: 18px; height: 18px; display: inline-flex; color: var(--muted); }
+      .owner-toolbar .icon svg { width: 18px; height: 18px; display: block; }
+      .owner-toolbar .icon svg * { stroke: currentColor; fill: none; }
+      .owner-toolbar-text {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+      }
+      /* Owner "..." menu — replaces a standalone edit button with a kebab
+         trigger that reveals Edit/Delete, mirroring the mobile app's owner
+         action sheet (see `ListingDetailScreen._buildActionMenuItems`). */
+      .owner-menu {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .owner-menu-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        color: var(--fg);
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .owner-menu-btn:hover { background: rgba(255, 255, 255, 0.06); }
+      .owner-menu-btn:active { opacity: 0.85; }
+      .owner-menu-btn .icon { width: 18px; height: 18px; display: inline-flex; color: var(--fg); }
+      .owner-menu-btn .icon svg { width: 18px; height: 18px; display: block; }
+      .owner-menu-btn .icon svg * { stroke: currentColor; fill: none; }
+      @media (prefers-color-scheme: light) {
+        .owner-menu-btn:hover { background: rgba(15, 23, 42, 0.05); }
+      }
+      .owner-menu-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        z-index: 20;
+        min-width: 176px;
+        padding: 6px;
+        border-radius: 14px;
+        border: 1px solid var(--stroke);
+        /* Solid (not `--card`, which is a faint tint meant for surfaces sitting on
+           the page background) — this menu floats over photos/map content, so it
+           needs an opaque backing to stay legible. Matches `.complaint-sheet`. */
+        background: var(--bg);
+        box-shadow: var(--shadow);
+      }
+      .owner-menu-dropdown[hidden] { display: none !important; }
+      .owner-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 0;
+        background: none;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fg);
+        text-decoration: none;
+        cursor: pointer;
+        text-align: left;
+      }
+      .owner-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+      @media (prefers-color-scheme: light) {
+        .owner-menu-item:hover { background: rgba(15, 23, 42, 0.05); }
+      }
+      .owner-menu-item .icon { width: 18px; height: 18px; display: inline-flex; color: var(--muted); }
+      .owner-menu-item .icon svg { width: 18px; height: 18px; display: block; }
+      .owner-menu-item .icon svg * { stroke: currentColor; fill: none; }
+      .owner-menu-item-danger,
+      .owner-menu-item-danger .icon { color: #ef4444; }
+      .owner-toolbar-spinner {
+        width: 14px;
+        height: 14px;
+        background: url("images/uydosh-logo.svg") center / contain no-repeat;
+        animation: owner-toolbar-spin 0.9s linear infinite;
+      }
+      @keyframes owner-toolbar-spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 860px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      /* Gallery */
+      .gallery {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(225, 29, 46, 0.08));
+        box-shadow: var(--shadow);
+      }
+      .gallery .main {
+        aspect-ratio: 4 / 3;
+        display: block;
+        position: relative;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .gallery-placeholder-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .gallery-viewport {
+        position: relative;
+        overflow: hidden;
+      }
+      .gallery-track {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .gallery-track::-webkit-scrollbar { display: none; }
+      .gallery-slide {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        aspect-ratio: 4 / 3;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .gallery-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      .gallery .counter {
+        position: absolute; top: 14px; left: 14px;
+        padding: 4px 10px; border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 12px; font-weight: 600;
+        pointer-events: none;
+      }
+      .gallery-share-btn {
+        position: absolute; top: 14px; right: 14px; z-index: 2;
+        appearance: none; border: 0; padding: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fff; color: #0f172a; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      }
+      .gallery-share-btn:hover { background: #f3f4f6; }
+      .gallery-share-btn:active { opacity: 0.85; }
+      .gallery-share-btn .icon svg { width: 18px; height: 18px; display: block; }
+      .gallery-favorite-btn {
+        position: absolute; top: 58px; right: 14px; z-index: 2;
+        appearance: none; border: 0; padding: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fff; color: #0f172a; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .gallery-favorite-btn[hidden] { display: none !important; }
+      .gallery-favorite-btn:hover { background: #f3f4f6; }
+      .gallery-favorite-btn:active { opacity: 0.85; transform: scale(0.92); }
+      .gallery-favorite-btn .icon svg { width: 18px; height: 18px; display: block; }
+      .gallery-report-btn {
+        position: absolute; top: 102px; right: 14px; z-index: 2;
+        appearance: none; border: 0; padding: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fff; color: #0f172a; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      }
+      .gallery-report-btn[hidden] { display: none !important; }
+      .gallery-report-btn:hover { background: #f3f4f6; }
+      .gallery-report-btn:active { opacity: 0.85; }
+      .gallery-report-btn .icon svg { width: 18px; height: 18px; display: block; }
+
+      /* Complaint bottom sheet — reason selection + optional details, mirrors
+         the mobile app's CreateComplaintScreen flow in a compact Mini App form. */
+      .complaint-backdrop {
+        position: fixed; inset: 0; z-index: 200;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex; align-items: flex-end; justify-content: center;
+        padding: 0;
+        opacity: 0;
+        transition: opacity 0.18s ease;
+      }
+      .complaint-backdrop[hidden] { display: none !important; }
+      .complaint-backdrop.is-open { opacity: 1; }
+      .complaint-sheet {
+        width: 100%; max-width: 520px;
+        max-height: min(86vh, 640px);
+        display: flex; flex-direction: column;
+        background: var(--bg); color: var(--fg);
+        border: 1px solid var(--stroke);
+        border-bottom: 0;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.45);
+        padding: 16px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+        transform: translateY(24px);
+        transition: transform 0.2s ease;
+      }
+      .complaint-backdrop.is-open .complaint-sheet { transform: translateY(0); }
+      .complaint-sheet-header {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; margin-bottom: 14px; flex: 0 0 auto;
+      }
+      .complaint-sheet-header h2 { margin: 0; font-size: 17px; font-weight: 700; }
+      .complaint-close-btn {
+        appearance: none; border: 0; background: rgba(127, 127, 127, 0.12);
+        color: var(--fg); width: 30px; height: 30px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0;
+      }
+      .complaint-close-btn:active { opacity: 0.8; }
+      .complaint-body { overflow-y: auto; flex: 1 1 auto; }
+      .complaint-reason-list {
+        display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
+      }
+      .complaint-reason-item {
+        display: flex; align-items: center; gap: 10px;
+        border: 1px solid var(--stroke); border-radius: 12px;
+        padding: 11px 13px; cursor: pointer;
+        background: rgba(127, 127, 127, 0.05);
+      }
+      .complaint-reason-item.selected {
+        border-color: var(--brand2);
+        background: color-mix(in srgb, var(--brand2) 12%, transparent);
+      }
+      .complaint-reason-item input[type="radio"] {
+        accent-color: var(--brand2); width: 18px; height: 18px; flex-shrink: 0;
+      }
+      .complaint-reason-item span { font-size: 14px; line-height: 1.35; }
+      .complaint-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+      .complaint-field label { font-size: 13px; font-weight: 700; color: var(--muted); }
+      .complaint-field textarea {
+        width: 100%; min-height: 90px; resize: vertical;
+        border: 1px solid var(--stroke); background: rgba(127, 127, 127, 0.08);
+        color: var(--fg); border-radius: 12px; padding: 11px 12px;
+        font: inherit; font-size: 15px;
+      }
+      .complaint-field textarea:focus {
+        outline: 2px solid color-mix(in srgb, var(--brand2) 45%, transparent);
+        outline-offset: 1px;
+      }
+      .complaint-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
+      .complaint-error-text {
+        color: var(--brand); font-size: 13px; font-weight: 600; margin: 0 0 12px;
+      }
+      .complaint-actions { flex: 0 0 auto; padding-top: 4px; }
+      .complaint-submit-btn {
+        width: 100%; border: 0; border-radius: 14px; padding: 13px 16px;
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+      }
+      .complaint-submit-btn:disabled { opacity: 0.55; cursor: default; }
+      .complaint-submit-btn:active:not(:disabled) { opacity: 0.88; }
+
+      /* "Is this your listing?" claim banner — offers to transfer a scraped
+         listing (still owned by the import service account) to the Mini App
+         viewer once their linked Telegram identity matches the original
+         poster (see `loadClaimBanner`). Uses the accent (green) color to read
+         as a positive action, unlike the warning-colored complaints banner. */
+      .claim-banner { margin: 16px 0; }
+      .claim-banner[hidden] { display: none !important; }
+      .claim-banner-card {
+        display: flex; align-items: center; gap: 12px;
+        border-radius: 14px; padding: 14px 16px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      }
+      .claim-banner-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
+      .claim-banner-icon svg { width: 22px; height: 22px; display: block; }
+      .claim-banner-text { flex: 1; min-width: 0; }
+      .claim-banner-title { font-weight: 700; font-size: 14px; margin: 0 0 2px; }
+      .claim-banner-subtitle { font-size: 12px; color: var(--muted); margin: 0; }
+      .claim-banner-btn {
+        flex: 0 0 auto; border: 0; border-radius: 10px; padding: 9px 14px;
+        background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
+      }
+      .claim-banner-btn:disabled { opacity: 0.6; cursor: default; }
+      .claim-banner-btn:active:not(:disabled) { opacity: 0.85; }
+      @media (max-width: 480px) {
+        .claim-banner-card { flex-wrap: wrap; }
+        .claim-banner-btn { width: 100%; }
+      }
+
+      /* Complaints warning button + grouped-by-user complaints sheet — mirrors
+         the mobile app's "N complaints" banner and ListingComplaintsScreen.
+         Shown whenever a listing has at least one complaint; the underlying
+         data is public, but the button only renders in the Mini App (see
+         `loadComplaintsWarning`) to match the reporting flow above. */
+      .complaints-warning { margin-top: 20px; }
+      .complaints-warning[hidden] { display: none !important; }
+      .complaints-warning-btn {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+        border: 0; border-radius: 14px; padding: 13px 16px;
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+        animation: complaints-warning-pulse 1.6s ease-in-out infinite;
+      }
+      .complaints-warning-btn:active { opacity: 0.88; }
+      .complaints-warning-btn .icon { width: 20px; height: 20px; display: inline-flex; flex-shrink: 0; }
+      .complaints-warning-btn .icon svg { width: 20px; height: 20px; display: block; }
+      @keyframes complaints-warning-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.72; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .complaints-warning-btn { animation: none; }
+      }
+
+      /* 1-on-1 lifestyle compatibility with the listing owner — mirrors the
+         mobile app's ListingDetailCompatibilitySection (scoring ported in
+         assets/uydosh-profile-match.js). Only rendered in the Mini App, for a
+         signed-in viewer who isn't the owner (see `loadCompatibilityTile`). */
+      .compat-section { margin: 16px 0; border: 1px solid var(--stroke); background: var(--card);
+        border-radius: 14px; overflow: hidden; }
+      .compat-section[hidden] { display: none !important; }
+      .compat-toggle {
+        appearance: none; width: 100%; border: 0; background: transparent; color: inherit;
+        cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 14px 16px; text-align: left;
+      }
+      .compat-toggle:active { opacity: 0.9; }
+      .compat-avatars { position: relative; flex-shrink: 0; width: 42px; height: 30px; }
+      .compat-avatar {
+        position: absolute; top: 0; width: 28px; height: 28px; border-radius: 50%;
+        border: 2px solid var(--bg); overflow: hidden; background: rgba(127, 127, 127, 0.12);
+        display: flex; align-items: center; justify-content: center; color: var(--muted);
+      }
+      .compat-avatar svg { width: 15px; height: 15px; display: block; }
+      .compat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .compat-avatar[data-compat-avatar-owner] { left: 0; z-index: 1; }
+      .compat-avatar[data-compat-avatar-current] { left: 14px; z-index: 0; }
+      .compat-toggle-title { flex: 1; min-width: 0; display: flex; align-items: center;
+        justify-content: space-between; gap: 10px; }
+      .compat-toggle-label { font-size: 15px; font-weight: 700; }
+      .compat-toggle-percent { font-size: 15px; font-weight: 700; white-space: nowrap; color: var(--muted); }
+      .compat-toggle-percent.is-good { color: #22c55e; }
+      .compat-toggle-percent.is-ok { color: #f59e0b; }
+      .compat-toggle-percent.is-bad { color: #ef4444; }
+      .compat-spinner {
+        display: inline-block; width: 14px; height: 14px;
+        background: url("images/uydosh-logo.svg") center / contain no-repeat;
+        animation: owner-toolbar-spin 0.9s linear infinite; vertical-align: middle;
+      }
+      .compat-chevron { color: var(--muted); font-size: 18px; line-height: 1; flex-shrink: 0;
+        transition: transform 180ms ease; }
+      .compat-section[aria-expanded="true"] .compat-chevron { transform: rotate(180deg); }
+      .compat-body { padding: 0 16px 16px; }
+      .compat-body[hidden] { display: none; }
+      .compat-group { margin-top: 10px; }
+      .compat-group-title { font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.02em; color: var(--muted); margin: 0 0 6px; }
+      .compat-group-title.is-dealbreaker { color: #ef4444; }
+      .compat-row { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 13px; line-height: 1.4; }
+      .compat-row .icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--muted); margin-top: 1px; }
+      .compat-row.is-dealbreaker .icon { color: #ef4444; }
+      .compat-row .icon svg { width: 18px; height: 18px; display: block; }
+      .compat-row .icon svg * { stroke: currentColor; fill: none; }
+      .compat-row-text { flex: 1; min-width: 0; }
+      .compat-row-text b { font-weight: 700; }
+      .compat-based-on { margin-top: 10px; font-size: 12px; color: var(--muted); }
+      .compat-incomplete-text { font-size: 13px; color: var(--muted); margin: 4px 0 12px; line-height: 1.5; }
+      .compat-cta-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--fg);
+        background: transparent; color: var(--fg); font-weight: 700; font-size: 13px; cursor: pointer;
+      }
+      .compat-cta-btn:hover { text-decoration: none; background: rgba(127, 127, 127, 0.08); }
+
+      /* 3D room scan tile — collapsible summary (mirrors .map-section) that
+         expands into an inline <model-viewer> (Google's web component,
+         lazy-loaded only when this tile is actually expanded — most
+         listings don't have a scan, and even fewer viewers ever open it).
+         See buildRoomScanSectionHtml()/bindRoomScanSection() below. */
+      .roomscan-section { margin: 16px 0; border: 1px solid var(--stroke); background: var(--card);
+        border-radius: 14px; overflow: hidden; }
+      .roomscan-toggle {
+        appearance: none; width: 100%; border: 0; background: transparent; color: inherit;
+        cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left;
+      }
+      .roomscan-toggle:active { opacity: 0.9; }
+      .roomscan-toggle-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--brand2); }
+      .roomscan-toggle-icon svg { width: 22px; height: 22px; display: block; }
+      .roomscan-toggle-icon svg * { stroke: currentColor; fill: none; }
+      .roomscan-toggle-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+      .roomscan-toggle-label { font-size: 15px; font-weight: 700; }
+      .roomscan-toggle-meta { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+      .roomscan-toggle-meta-row { display: flex; align-items: center; gap: 6px; }
+      .roomscan-toggle-meta-icon { width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; opacity: 0.85; }
+      .roomscan-toggle-meta-icon svg { width: 14px; height: 14px; display: block; }
+      .roomscan-toggle-meta-icon svg * { stroke: currentColor; fill: none; }
+      .roomscan-chevron { color: var(--muted); font-size: 18px; line-height: 1; flex-shrink: 0;
+        transition: transform 180ms ease; }
+      .roomscan-section[aria-expanded="true"] .roomscan-chevron { transform: rotate(180deg); }
+      .roomscan-body { padding: 0 16px 16px; }
+      .roomscan-body[hidden] { display: none; }
+      .roomscan-viewer-wrap {
+        position: relative; height: 280px; border-radius: 12px; overflow: hidden;
+        border: 1px solid var(--stroke); background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
+      }
+      .roomscan-viewer-wrap model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+      .roomscan-fullscreen-btn {
+        position: absolute; top: 10px; right: 10px; z-index: 1;
+        appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
+        width: 34px; height: 34px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      }
+      .roomscan-fullscreen-btn:active { opacity: 0.85; }
+      .roomscan-fullscreen-btn svg { width: 18px; height: 18px; display: block; }
+      .roomscan-fullscreen-btn svg * { stroke: currentColor; fill: none; }
+      .roomscan-status {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        padding: 12px; text-align: center; color: #f59e0b; font-weight: 700; font-size: 13px;
+      }
+      .roomscan-status[hidden] { display: none; }
+      .roomscan-backdrop {
+        position: fixed; inset: 0; z-index: 220; background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
+        opacity: 0; transition: opacity 0.18s ease;
+      }
+      .roomscan-backdrop[hidden] { display: none !important; }
+      .roomscan-backdrop.is-open { opacity: 1; }
+      .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+      .roomscan-backdrop-close {
+        position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; z-index: 1;
+        appearance: none; border: 0; background: rgba(0, 0, 0, 0.55); color: #fff;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 16px; line-height: 1;
+      }
+      .roomscan-backdrop-close:active { opacity: 0.85; }
+
+      .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
+      .complaints-group + .complaints-group {
+        margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--stroke);
+      }
+      .complaints-group-header { display: flex; align-items: center; gap: 10px; }
+      .complaints-avatar {
+        position: relative;
+        width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+        background: rgba(127, 127, 127, 0.16);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 700; color: var(--muted);
+      }
+      .complaints-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+      .complaints-group-name { font-weight: 700; font-size: 15px; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .complaints-count-badge {
+        flex-shrink: 0; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px;
+        background: color-mix(in srgb, var(--brand2) 18%, transparent);
+        color: var(--brand2); font-size: 12px; font-weight: 800;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .complaints-entry { margin-top: 10px; padding-left: 46px; display: flex; flex-direction: column; gap: 4px; }
+      .complaints-entry-category { font-size: 13px; font-weight: 700; color: #f97316; }
+      .complaints-entry-text { font-size: 14px; line-height: 1.4; color: var(--fg); }
+      .complaints-entry-date { font-size: 12px; color: var(--muted); }
+      .gallery-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px 12px;
+      }
+      .gallery-dot {
+        appearance: none;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1.2px solid var(--fg);
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+      .gallery-dot[aria-current="true"] {
+        background: var(--fg);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .gallery-track { scroll-behavior: auto; }
+      }
+
+      .details { display: flex; flex-direction: column; gap: 14px; }
+      .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      h1 { font-size: clamp(22px, 2.6vw, 30px); margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
+      .price {
+        display: inline-flex; align-items: center; flex-shrink: 0;
+        gap: 3px; margin: 0; padding: 5px 12px; border-radius: 999px;
+        border: 1px solid var(--price-green);
+        background: color-mix(in srgb, var(--price-green) 12%, transparent);
+        font-size: 15px; line-height: 1; font-weight: 800; letter-spacing: -0.01em;
+        color: var(--price-green);
+      }
+      .price small { font-weight: 500; font-size: 11px; line-height: 1; color: var(--price-green); opacity: 0.85; margin-left: 1px; }
+      .badges-group { display: flex; flex-direction: column; gap: 8px; }
+      .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+      /* Price reads as the headline number for the listing, so it's pinned
+         to the far end of row 1 instead of trailing right after gender. */
+      .badges .price { margin-left: auto; margin-right: 4px; }
+      .badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 11px; border-radius: 999px;
+        font-size: 12px; font-weight: 600;
+        border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+      }
+      .badge.badge-type {
+        border-color: var(--badge-type-color, var(--stroke));
+        color: var(--badge-type-color, var(--muted));
+        background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 14%, transparent);
+      }
+      .badge.badge-gender {
+        border-color: var(--badge-gender-color, var(--stroke));
+        color: var(--badge-gender-color, var(--muted));
+        background: color-mix(in srgb, var(--badge-gender-color, var(--muted)) 14%, transparent);
+      }
+      @media (prefers-color-scheme: light) {
+        .badge.badge-gender[data-gender="1"] {
+          --badge-gender-color: #1565C0;
+        }
+      }
+      .badge .chip-icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .badge .chip-icon svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      .badge .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .badge .icon svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      .badge .icon svg * {
+        stroke: currentColor;
+        fill: none;
+      }
+      .badge.featured {
+        background: linear-gradient(135deg, #e11d2e, #f97316);
+        border-color: transparent; color: #fff;
+      }
+
+      .meta-grid {
+        display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px;
+        padding: 14px 16px;
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 14px;
+        font-size: 14px;
+      }
+      .meta-grid dt {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .meta-grid dt .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex-shrink: 0;
+      }
+      .meta-grid dt .icon svg { width: 100%; height: 100%; display: block; }
+      .meta-grid dt .icon svg * { stroke: currentColor; fill: none; }
+      .meta-grid dd { margin: 0; font-weight: 600; }
+      /* Author avatar sits outside the dt/dd grid flow, absolutely centered
+         against the *whole* posted block (author + posted-date rows
+         together) rather than just the author row it's conceptually tied
+         to — matches how a post's avatar typically anchors to its full
+         byline, not just the first line of it. `--with-avatar`'s extra
+         right padding on the block reserves room so neither row's text
+         runs under it. */
+      .map-section-posted {
+        position: relative;
+      }
+      .map-section-extra.map-section-posted--with-avatar {
+        padding-right: 55px;
+      }
+      .author-avatar {
+        position: absolute;
+        top: 50%;
+        right: 16px;
+        transform: translateY(-50%);
+        box-sizing: border-box;
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        border: 1px solid var(--stroke);
+        overflow: hidden;
+        background: rgba(127, 127, 127, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+      }
+      .author-avatar svg { width: 18px; height: 18px; display: block; }
+      .author-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+      .section h2 {
+        font-size: 16px; font-weight: 700; margin: 6px 0 10px;
+      }
+      .description {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        font-size: 15px;
+        color: var(--fg);
+      }
+      .amenities { display: flex; flex-wrap: wrap; gap: 8px; }
+      .amenity {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 13px;
+        color: var(--fg);
+      }
+      .amenity .amenity-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .amenity .amenity-icon svg { display: block; }
+      .map-section .amenities-inline {
+        margin-top: 4px;
+      }
+
+      .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 11px 16px; border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--fg); font-weight: 600; font-size: 15px;
+        cursor: pointer;
+      }
+      .btn:hover { background: rgba(255, 255, 255, 0.08); text-decoration: none; }
+      .btn.primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        box-shadow: 0 14px 40px rgba(34, 197, 94, 0.28);
+        color: white;
+      }
+
+      /* Skeleton + status */
+      .skel {
+        border-radius: 10px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+        background-size: 200% 100%;
+        animation: shimmer 1.2s linear infinite;
+      }
+      @media (prefers-color-scheme: light) {
+        .skel {
+          background: linear-gradient(90deg, rgba(15,23,42,0.05), rgba(15,23,42,0.12), rgba(15,23,42,0.05));
+          background-size: 200% 100%;
+        }
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      .skel.gallery-skel { aspect-ratio: 4/3; width: 100%; }
+      .skel.gallery-skel-rounded { border-radius: 20px; }
+      .skel.line { height: 14px; }
+      .skel.line.w40 { width: 40%; }
+      .skel.line.w60 { width: 60%; }
+      .skel.line.w80 { width: 80%; }
+      .skel.line.short { height: 10px; }
+
+      .status-page {
+        text-align: center; padding: 60px 0; color: var(--muted);
+      }
+      .status-page h2 { color: var(--fg); }
+      .status-page .btn { margin-top: 14px; }
+
+      footer {
+        margin-top: 40px;
+        color: var(--muted); font-size: 14px;
+        display: flex; gap: 12px; flex-wrap: wrap;
+        justify-content: space-between; align-items: center;
+      }
+      .links { display: flex; gap: 14px; flex-wrap: wrap; }
+
+      html.mini-app .site-nav-links,
+      html.mini-app .site-footer-links,
+      html.mini-app .app-cta-row { display: none !important; }
+      html.mini-app .back,
+      html.mini-app [data-hide-in-mini-app] { display: none !important; }
+      html.mini-app footer { justify-content: center; }
+
+      /* Listing details: a tight 20px horizontal margin everywhere, except
+         the photo gallery which bleeds full-width edge to edge (but keeps
+         rounded corners, so it reads as a floating card rather than a
+         flush-cropped rectangle).
+         Selector includes `body` so this reliably outranks the shared
+         `html.mini-app .wrap` safe-area rule injected into <head> at runtime
+         by uydosh-mini-app.js (same specificity would otherwise let the
+         later-inserted rule win the cascade and collapse this padding). */
+      /* Header is hidden entirely in Mini App on this page (photo stays at
+         the top always) — restore the top safe-area clearance the header
+         used to provide, directly on the wrap instead. */
+      html.mini-app body .wrap {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: calc(var(--uydosh-tg-inset-top, 72px) + 12px);
+      }
+      html.mini-app .gallery-col { margin-left: -20px; margin-right: -20px; }
+      html.mini-app .gallery-col .gallery,
+      html.mini-app .gallery-col .gallery-skel {
+        border-radius: 20px;
+        border-left: 0;
+        border-right: 0;
+        box-shadow: none;
+      }
+
+      .map-section {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .map-section-toggle {
+        appearance: none;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: flex-start;
+        padding: 14px 16px;
+        text-align: left;
+      }
+      .map-section-toggle:active { opacity: 0.9; }
+      .map-section-summary {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+      }
+      .map-section-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      .map-section-row .icon {
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      /* One row per metro station the publisher tagged (see
+         buildMetroStationRowHtml) — name on top, optional walking
+         distance/time on its own line underneath so a long estimate never
+         squeezes the station name down to an illegible sliver. */
+      .map-section-row-metro {
+        align-items: flex-start;
+      }
+      .map-section-row-metro .icon {
+        margin-top: 1px;
+      }
+      .map-section-row-metro-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+        flex: 1;
+      }
+      .map-section-row-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .map-section-walk {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex: 0 0 auto;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--muted);
+      }
+      .map-section-walk .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+      }
+      .map-section-walk .icon svg { width: 14px; height: 14px; display: block; }
+      .map-section-walk .icon svg * { stroke: currentColor; fill: none; }
+      /* Adds to (not replaces) `.map-section-summary`'s row gap, so the exact
+         address row sits further from the district/metro rows above it.
+         `:not(:first-child)` skips the extra gap on the rare listing that has
+         an address but no district/metro row above it. */
+      .map-section-row-address:not(:first-child) {
+        margin-top: 8px;
+      }
+      /* Applied only to the first metro station row (see buildMapSectionHtml)
+         when district/address rows precede it, so the metro group visually
+         separates from them the same way the address row does above. */
+      .map-section-row-metro-group-start {
+        margin-top: 8px;
+      }
+      .map-section-row .icon svg { width: 18px; height: 18px; display: block; }
+      .map-section-row .icon svg * { stroke: currentColor; fill: none; }
+      .map-section-body {
+        padding: 0 16px 16px;
+      }
+      .map-section-body[hidden] { display: none; }
+      .map-container {
+        width: 100%;
+        height: 250px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.08);
+      }
+      .map-section-approx-note {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .map-section-approx-note .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex: 0 0 auto;
+      }
+      .map-section-approx-note .icon svg { width: 14px; height: 14px; display: block; }
+      .map-section-approx-note .icon svg * { stroke: currentColor; fill: none; }
+      /* "Draw a route to this station" pseudo-button appended to each metro
+         row (see buildMetroStationRowHtml) — a `role="button"` span rather
+         than a real `<button>` since the whole row already lives inside the
+         section's `.map-section-toggle` `<button>`, and nested `<button>`s
+         are invalid HTML / unreliable to click. `bindMetroStationRouteButtons`
+         stops the click from bubbling up to that outer toggle. */
+      .map-section-row-route-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(127, 127, 127, 0.12);
+        color: var(--brand2);
+        flex: 0 0 auto;
+        align-self: center;
+        margin-left: auto;
+        cursor: pointer;
+      }
+      .map-section-row-route-btn:active { opacity: 0.8; }
+      .map-section-row-route-btn .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-flex;
+      }
+      .map-section-row-route-btn .icon svg { width: 16px; height: 16px; display: block; }
+      .map-section-row-route-btn .icon svg * { stroke: currentColor; fill: none; }
+      .map-section-status {
+        min-height: 250px;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 14px;
+        text-align: center;
+        padding: 16px;
+      }
+      .map-section-status-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      /* Description + "posted" date live inside the same card as the
+         location/metro summary above, separated by a hairline divider
+         instead of floating as disconnected sections. */
+      .map-section-extra {
+        padding: 14px 16px;
+        border-top: 1px solid var(--stroke);
+      }
+      .map-section-extra h2 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+      .map-section-extra .meta-grid {
+        border: 0;
+        background: transparent;
+        padding: 0;
+      }
+      .map-section-static {
+        display: flex;
+        flex-direction: column;
+      }
+      .map-section-static > .map-section-extra:first-child {
+        border-top: 0;
+      }
+      .map-section-status .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(127, 127, 127, 0.1);
+        color: var(--fg);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+      }
