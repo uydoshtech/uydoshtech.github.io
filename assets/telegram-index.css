@@ -3,10 +3,6 @@
  * Base/shared rules used across Telegram Mini App pages live in
  * telegram-shared.css instead.
  */
-:root {
-  --feed-content-gutter: 20px;
-  --feed-wrap-gutter: 14px;
-}
 body {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }

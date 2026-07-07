@@ -16,11 +16,22 @@
   --brand2: #60a5fa;
   --price-green: #35c26b;
   /*
-   * `.wrap` contributes `--feed-wrap-gutter` (14px) of padding already; this is
-   * the extra inset needed on top of that so content lines up with the wider
-   * gutter used by the mini-app header, filter ribbon, and view-tabs (25px
-   * total). Pages may override `--feed-content-gutter`/`--feed-wrap-gutter`
-   * before this is computed to change the effective gutter site-wide.
+   * `--feed-content-gutter` is the standard horizontal inset (from the
+   * viewport edge) for the mini-app header, filter ribbon, and view-tabs —
+   * shared by every page so they all line up. Originally the feed
+   * (telegram-index.css) was the only page overriding this to 20px while
+   * every other page silently fell back to the 25px default baked into each
+   * `var(--feed-content-gutter, 25px)` call site, which made the header/tabs
+   * sit ~5px further from the edge on those pages than on the feed. Set the
+   * feed's value here instead so it's the shared default; pages may still
+   * override it (and/or `--feed-wrap-gutter`) before this is computed if a
+   * screen genuinely needs a different gutter.
+   */
+  --feed-content-gutter: 20px;
+  /*
+   * `.wrap` contributes `--feed-wrap-gutter` (14px) of padding already; this
+   * is the extra inset needed on top of that so content lines up with the
+   * wider gutter above.
    */
   --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px));
 }
