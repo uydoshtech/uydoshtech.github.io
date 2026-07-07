@@ -64,9 +64,11 @@ def render_logo(render_px: int, u_color: str = "white") -> Image.Image:
         subprocess.run(
             [
                 "rsvg-convert",
+                # Only the width is pinned; height is left for rsvg-convert to
+                # derive from the SVG's native aspect ratio. Forcing both `-w`
+                # and `-h` to the same value stretches the artwork into a
+                # square and distorts the "U" glyph.
                 "-w",
-                str(render_px),
-                "-h",
                 str(render_px),
                 "-o",
                 tmp_png.name,

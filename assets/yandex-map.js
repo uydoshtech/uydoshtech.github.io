@@ -2441,11 +2441,17 @@
 
   /**
    * Moves the drag-hint bubble to sit just above the placemark's *current* on-screen
-   * position — called on every `drag` event so the bubble tracks the pin's finger/mouse
-   * position throughout the gesture instead of staying frozen at its initial (mount-time,
-   * CSS-centered) spot. Switches the bubble from the default percentage-based centering
-   * (`left: 50%` in `ensureDragHintStyles`) to explicit pixel coordinates — inline styles
-   * win over the class's rules, so this only takes effect once a drag actually starts.
+   * position — called on every `drag` event (marker dragged directly) *and* every
+   * `boundschange` event (map panned/zoomed underneath a marker that itself didn't
+   * move geographically) so the bubble tracks wherever the pin actually renders on
+   * screen throughout either gesture, instead of staying frozen at its initial
+   * (mount-time, CSS-centered) spot — panning the map alone doesn't fire the
+   * placemark's own `drag` event, so without the `boundschange` hookup the bubble
+   * would stay glued to the container's center (i.e. track the *map's* center) while
+   * the pin visibly slid out from under it. Switches the bubble from the default
+   * percentage-based centering (`left: 50%` in `ensureDragHintStyles`) to explicit
+   * pixel coordinates — inline styles win over the class's rules, so this only takes
+   * effect once one of those gestures actually starts.
    */
   function repositionDragHint(el, container, map, coordinates) {
     if (!el || !container || !map) return;
@@ -2590,11 +2596,20 @@
           placemark.events.remove('drag', followPinDuringDrag);
           placemark.events.remove('drag', stopBounceOnDrag);
           placemark.events.remove('dragend', dismissHint);
+          map.events.remove('boundschange', followPinDuringDrag);
           hint.remove();
         };
         placemark.events.add('drag', followPinDuringDrag);
         placemark.events.add('drag', stopBounceOnDrag);
         placemark.events.add('dragend', dismissHint);
+        // The marker itself has fixed geo-coordinates, so panning/zooming the
+        // *map* underneath it (as opposed to dragging the marker directly)
+        // never fires the placemark's own `drag` event — only the map's
+        // `boundschange` does. Without this, the bubble stayed glued to the
+        // container's center (i.e. it visually tracked the map's center)
+        // while the pin slid out from under it whenever the author panned
+        // the map instead of grabbing the pin.
+        map.events.add('boundschange', followPinDuringDrag);
       }
     }
     ensureMapInteractionStyles();
