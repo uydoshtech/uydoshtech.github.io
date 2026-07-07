@@ -700,6 +700,10 @@ function listingCardHtml(listing) {
   const privateRoomHtml = listing.private_room
     ? `<div class="meta meta-private-room"><span>${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span></div>`
     : '';
+  const priceHtml = price ? `<div class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></div>` : '';
+  const priceColHtml = (priceHtml || privateRoomHtml)
+    ? `<div class="price-col">${priceHtml}${privateRoomHtml}</div>`
+    : '';
 
   const featured = UyDosh.isFeatured(listing)
     ? `<div class="featured-badge">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</div>`
@@ -732,10 +736,9 @@ function listingCardHtml(listing) {
       <div class="body">
         <div class="title-row">
           <div class="title">${title}</div>
-          ${price ? `<div class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></div>` : ''}
+          ${priceColHtml}
         </div>
         ${metaParts.length ? `<div class="meta">${metaParts.join('')}</div>` : ''}
-        ${privateRoomHtml}
         ${amenityHtml}
       </div>
     </a>
@@ -859,6 +862,13 @@ async function loadMore() {
       state.reachedEnd = true;
       showEnd();
     }
+    // Warm up the Map tab's pins fetch + Yandex SDK script in the background
+    // right after the list's own first page succeeds, so the first-ever tap
+    // on "Карта" doesn't have to wait on a cold fetch + script download
+    // before it can start rendering (see prefetchMap() for details). Fired
+    // after (not alongside) the list request so it never competes with it
+    // for bandwidth on a slow connection.
+    if (nextPage === 1) feedMap.prefetchMap();
   } catch (err) {
     if (requestGeneration !== loadGeneration) return;
     console.error('Failed to load listings', err);

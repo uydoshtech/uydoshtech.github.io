@@ -69,6 +69,8 @@ a { color: inherit; text-decoration: none; }
 }
 .chip .chip-icon {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 .chip .chip-icon svg {

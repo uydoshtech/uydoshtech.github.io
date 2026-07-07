@@ -521,11 +521,6 @@ function ensureMiniAppSafeAreaStyles() {
       --fg: var(--tg-fg, rgba(255, 255, 255, 0.92));
       --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
       --card: var(--tg-card, rgba(255, 255, 255, 0.06));
-      /* Re-derive against the real runtime wrap gutter (set below on '.wrap')
-         instead of the stale 14px fallback baked into telegram-shared.css's
-         ':root', so list/grid content (and '.view-tabs') lines up with the
-         header + filters boxes instead of sitting closer to the edge. */
-      --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
     }
     html.mini-app .wrap {
       max-width: none;
@@ -535,6 +530,18 @@ function ensureMiniAppSafeAreaStyles() {
       --feed-wrap-gutter: max(5px, env(safe-area-inset-left, 0px));
       padding-left: var(--feed-wrap-gutter);
       padding-right: max(5px, env(safe-area-inset-right, 0px));
+      /* Must be declared here (not up on 'html.mini-app') so its
+         'var(--feed-wrap-gutter, ...)' resolves against the *runtime* value
+         just set above, not the stale 14px default baked into
+         telegram-index.css's/telegram-shared.css's ':root' — custom
+         properties resolve 'var()' using the value cascaded on the same
+         element they're declared on, not the element(s) that read them, so
+         declaring this on the 'html' ancestor captured the pre-override
+         14px and threw off every '.content-gutter'/'.view-tabs'/grid
+         consumer (they ended up ~9px closer to the edge than the header
+         and filter ribbon, which compute their own margins inline instead
+         of going through this variable). */
+      --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, max(5px, env(safe-area-inset-left, 0px))));
     }
     html.mini-app .grid {
       grid-template-columns: 1fr;
@@ -623,11 +630,9 @@ function ensureMiniAppSafeAreaStyles() {
       box-shadow: 0 0 0 2px rgba(6, 21, 37, 0.55);
     }
     /* Light-theme header (lighter skyline variant, see 'mini-app-header-light'
-       above) reads better with dark text/chrome than the white used over the
-       always-dark-blue-tinted default header. */
-    html.mini-app-header-light header .brand span {
-      color: rgba(0, 0, 0, 0.72);
-    }
+       above) — the tagline stays white (same as default) since the header's
+       photo is still dark-blue-tinted overall, but "Dosh" and the avatar
+       chrome read better dark here. */
     html.mini-app-header-light header .brand .brand-dosh {
       color: rgba(0, 0, 0, 0.92);
     }
@@ -635,9 +640,15 @@ function ensureMiniAppSafeAreaStyles() {
       border-color: rgba(0, 0, 0, 0.45);
     }
     html.mini-app-header-light header .account-menu-chevron {
-      border-color: rgba(0, 0, 0, 0.45);
-      background: rgba(0, 0, 0, 0.08);
+      /* Solid light cutout (unlike the avatar's translucent tint) so the
+         badge + its dark icon stay legible over whatever's directly behind
+         it — the header photo and/or the user's own (often dark) avatar
+         photo — instead of the previous translucent-black fill nearly
+         disappearing against dark parts of either. */
+      border-color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       color: rgba(0, 0, 0, 0.85);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
     }
     html.mini-app-desktop header {
       margin-top: var(--uydosh-tg-inset-top, 0px);
@@ -1221,18 +1232,13 @@ function ensureMiniAppSessionRevokedStyles() {
       gap: 14px;
     }
     .mini-app-session-revoked-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: color-mix(in srgb, var(--brand2, #60a5fa) 16%, transparent);
-      color: var(--brand2, #60a5fa);
     }
     .mini-app-session-revoked-icon img {
-      width: 34px;
-      height: 34px;
+      width: 68px;
+      height: 68px;
       display: block;
     }
     .mini-app-session-revoked-title {

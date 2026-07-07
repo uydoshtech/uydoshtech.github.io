@@ -54,6 +54,11 @@
     // silently reset it back off.
     let metroLayerMode = 'off';
     let districtLayerVisible = false;
+    // In-flight/completed background prefetch (see `prefetchMap()`) keyed by
+    // the same signature `loadFeedMap()` uses, so a matching prefetch can be
+    // reused instead of re-fetching when the user actually opens the tab.
+    let prefetchedMapSignature = null;
+    let prefetchedMapDataPromise = null;
 
     /**
      * The map panel's CSS `height` is a `calc(100dvh - ... - <fixed px>)` guess
@@ -394,6 +399,47 @@
       return JSON.stringify({ filters: filterParams, lang: UyDosh.getLang() });
     }
 
+    /**
+     * Warms up the map's pins fetch + Yandex module script in the background
+     * — without touching the (still `display:none`) map panel's DOM — so the
+     * first-ever switch to Map view doesn't have to wait on a cold fetch and
+     * a first-time SDK script download before `loadFeedMap()` can even start
+     * rendering. Meant to be called once the feed's own first list page has
+     * loaded (see telegram-feed.js), so it doesn't compete with that request
+     * for bandwidth on a slow connection. Safe to call repeatedly/on every
+     * filter change — no-ops if a matching prefetch is already in flight or
+     * done for the current filters+language.
+     */
+    function prefetchMap() {
+      if (state.mapLoading) return;
+      const signature = currentMapSignature(getFilterParams());
+      // Already showing a live, up-to-date map for these exact filters+lang
+      // (e.g. the user visited Map, came back to List without changing
+      // anything, and their first list page just reloaded) — nothing to warm.
+      if (state.mapLoaded && lastLoadedMapSignature === signature) return;
+      if (prefetchedMapSignature === signature) return;
+      prefetchedMapSignature = signature;
+      UyDosh.loadYandexMapModule().catch(() => { /* loadFeedMap() will retry + surface this */ });
+      const fetchPromise = UyDosh.fetchListingsForMap({
+        page: 1,
+        limit: 300,
+        ...getFilterParams(),
+      });
+      prefetchedMapDataPromise = fetchPromise;
+      // Separate (unchained) handler purely so a rejection here doesn't log as
+      // an unhandled promise rejection if `loadFeedMap()` never ends up
+      // reusing `fetchPromise` (e.g. filters changed before the tab was
+      // opened) — `fetchPromise` itself, stored above, is what `loadFeedMap()`
+      // actually awaits and reacts to (its own try/catch shows the retry UI)
+      // if it's still the current prefetch by the time that runs.
+      fetchPromise.catch(() => {
+        if (prefetchedMapSignature === signature) {
+          prefetchedMapSignature = null;
+          prefetchedMapDataPromise = null;
+        }
+      });
+    }
+
     async function loadFeedMap() {
       const generation = ++mapLoadGeneration;
       state.mapLoading = true;
@@ -407,12 +453,19 @@
       // tooltip's location/metro line can render immediately instead of waiting on that pin's
       // own full listing detail fetch (see showMapPinTooltip -> enrichMapPinTooltipListings).
       UyDosh.warmLocationSubwayCaches(UyDosh.getLang());
+      // Reuse a matching background prefetch (see `prefetchMap()`) instead of
+      // starting a fresh fetch — the common "first tap on Map view" case,
+      // since telegram-feed.js fires that prefetch right after the list's
+      // own first page loads.
+      const reusablePinsPromise = prefetchedMapSignature === signature ? prefetchedMapDataPromise : null;
+      prefetchedMapSignature = null;
+      prefetchedMapDataPromise = null;
       try {
         await UyDosh.waitForElementLayout(feedMapEl);
         if (generation !== mapLoadGeneration) return;
 
         const data = await UyDosh.withTimeout(
-          UyDosh.fetchListingsForMap({
+          reusablePinsPromise || UyDosh.fetchListingsForMap({
             page: 1,
             limit: 300,
             ...filterParams,
@@ -543,6 +596,7 @@
       MAP_LOAD_TIMEOUT_MS,
       applyViewLayout,
       loadFeedMap,
+      prefetchMap,
       retryFeedMap,
       hideMapPinTooltip,
       renderMapPinTooltip,

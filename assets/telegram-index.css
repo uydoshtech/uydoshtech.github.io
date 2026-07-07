@@ -66,6 +66,20 @@ header {
   border: 1px solid var(--stroke);
   border-radius: 18px;
   box-sizing: border-box;
+  /*
+   * The card's own opaque fill — previously this relied entirely on the
+   * `.feed-sticky` ancestor painting `var(--bg)` behind it, which worked
+   * fine while that ancestor always kept its background. Once
+   * `.feed-sticky--collapsed` below drops that ancestor fill (to avoid a
+   * hard-edged rectangle outside the rounded pill), this card had nothing
+   * of its own left to fall back on: the low-alpha `.chip` fills inside it
+   * (see telegram-shared.css) read fine over a solid `--bg` backdrop but
+   * become nearly invisible over whatever now scrolls underneath (e.g. the
+   * header photo), making the whole collapsed ribbon look transparent.
+   * Painting it here instead keeps the card — and everything inside it —
+   * opaque regardless of what's behind the sticky wrapper.
+   */
+  background: var(--bg);
   transition: border-color 220ms ease, background-color 220ms ease, padding 220ms ease;
 }
 /* Collapsed state keeps the same rounded-corner card border as the
@@ -845,14 +859,24 @@ header {
   flex: 1;
   min-width: 0;
 }
-.card .price {
+.card .price-col {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.card .price {
   font-size: 16px;
   font-weight: 800;
   color: var(--price-green);
   white-space: nowrap;
 }
 .card .price small { font-weight: 500; font-size: 12px; color: var(--price-green); opacity: 0.85; margin-left: 2px; }
+.card .price-col .meta-private-room {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 .card .meta {
   color: var(--muted);
   font-size: 12px;

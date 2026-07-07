@@ -1263,8 +1263,8 @@
 
   // Draggable pins get a bigger *invisible* touch/drag target than their visible glyph —
   // small glyphs (especially the standard teardrop, which tapers to a point) are hard to
-  // grab precisely with a fingertip.
-  const DRAGGABLE_PIN_TOUCH_AREA_SCALE = 2;
+  // grab precisely with a fingertip. Still felt too tight at 2x in practice, hence 4x.
+  const DRAGGABLE_PIN_TOUCH_AREA_SCALE = 4;
 
   /**
    * Builds an `iconShape` rectangle scaled up from the icon's own bounding box —
@@ -1492,8 +1492,40 @@
     }
   }
 
+  /**
+   * Recolors the native GeolocationControl button — solid black instead of Yandex's
+   * default white/off-white chrome, with the built-in two-tone arrow glyph swapped for a
+   * blue version of the exact same icon (same paths/size, only the two fill colors
+   * changed) rather than a different icon. The glyph is a `background-image` data URI
+   * baked into Yandex's own stylesheet (`-float-button-icon_icon_geolocation`), so it
+   * can't be recolored with `filter`/`currentColor` — it has to be replaced outright with
+   * a matching data URI. As with the dark tile filter above, the `ymaps-2-1-XX-` prefix is
+   * versioned, hence the wildcard attribute selectors instead of hardcoded class names.
+   * `-float-button` is only ever used by this app's GeolocationControl (the small
+   * ZoomControl this codebase also adds uses the unrelated `islands#zoomLayout` skin), so
+   * scoping by that prefix alone is safe without also matching on the icon suffix.
+   */
+  const GEOLOCATION_CONTROL_STYLE_ID = 'uydosh-geolocation-control-styles';
+
+  function ensureGeolocationControlStyles() {
+    if (document.getElementById(GEOLOCATION_CONTROL_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = GEOLOCATION_CONTROL_STYLE_ID;
+    style.textContent = `
+      [class*="ymaps-"][class*="-float-button"] {
+        background-color: #000 !important;
+        border-color: #000 !important;
+      }
+      [class*="ymaps-"][class*="-float-button-icon_icon_geolocation"] {
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBmaWxsPSIjNEM5QUZGIiBkPSJNMTIuMjMgMTMuMjdsLTguNDgtMS40MkwxOS4zIDYuMiIvPjxwYXRoIGZpbGw9IiMxQzY0RjIiIGQ9Ik0xMi4yMyAxMy4yN2wxLjQyIDguNDhMMTkuMyA2LjIiLz48L2c+PC9zdmc+) !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function attachUserLocationControl(ymaps, map, instance) {
     if (!ymaps.control?.GeolocationControl) return;
+    ensureGeolocationControlStyles();
     const control = new ymaps.control.GeolocationControl({
       options: { noPlacemark: true },
     });
