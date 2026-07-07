@@ -622,6 +622,23 @@ function ensureMiniAppSafeAreaStyles() {
          var(--bg)-based one used elsewhere. */
       box-shadow: 0 0 0 2px rgba(6, 21, 37, 0.55);
     }
+    /* Light-theme header (lighter skyline variant, see 'mini-app-header-light'
+       above) reads better with dark text/chrome than the white used over the
+       always-dark-blue-tinted default header. */
+    html.mini-app-header-light header .brand span {
+      color: rgba(0, 0, 0, 0.72);
+    }
+    html.mini-app-header-light header .brand .brand-dosh {
+      color: rgba(0, 0, 0, 0.92);
+    }
+    html.mini-app-header-light header .account-menu-avatar {
+      border-color: rgba(0, 0, 0, 0.45);
+    }
+    html.mini-app-header-light header .account-menu-chevron {
+      border-color: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.85);
+    }
     html.mini-app-desktop header {
       margin-top: var(--uydosh-tg-inset-top, 0px);
     }

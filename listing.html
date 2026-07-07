@@ -2447,12 +2447,12 @@
         }
 
         return `
-          <section class="map-section" data-map-section aria-expanded="false">
-            <button type="button" class="map-section-toggle" data-map-toggle aria-expanded="false">
+          <section class="map-section" data-map-section aria-expanded="true">
+            <button type="button" class="map-section-toggle" data-map-toggle aria-expanded="true">
               <div class="map-section-summary">${rows.join('')}</div>
               <span class="map-section-chevron" aria-hidden="true">▾</span>
             </button>
-          <div class="map-section-body" hidden>
+          <div class="map-section-body">
             <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
             <div class="map-section-approx-note" data-map-approx-note hidden>${UyDosh.iconLocateMe()}${UyDosh.escapeHtml(UyDosh.t('map.approximateLocation'))}</div>
           </div>
@@ -2596,13 +2596,13 @@
       }
 
       /**
-       * Opens the map accordion (matching the toggle's own transition
-       * timing) and awaits `mountListingMap()`, resolving immediately if
-       * it's already open/loaded — shared by the toggle button itself and
+       * Awaits `mountListingMap()`, resolving immediately once the map is
+       * already open/loaded (the normal case now that the section always
+       * renders expanded — see `bindMapSection`). Kept as a safety net for
        * every metro row's "draw route" button (see
-       * `bindMetroStationRouteButtons`), so clicking a route button while
-       * the map is still collapsed opens it and waits for the pin to exist
-       * before trying to draw a line to it.
+       * `bindMetroStationRouteButtons`) in case it's ever clicked before
+       * `bindMapSection`'s initial mount has finished, so it still waits for
+       * the pin to exist before trying to draw a line to it.
        */
       function expandMapSection() {
         const toggle = rootEl.querySelector('[data-map-toggle]');
@@ -2629,23 +2629,34 @@
         const body = rootEl.querySelector('.map-section-body');
         if (!toggle || !section || !body) return;
 
-        toggle.addEventListener('click', () => {
-          if (!state.mapExpanded) {
-            expandMapSection();
-            return;
-          }
-          state.mapExpanded = false;
-          section.setAttribute('aria-expanded', 'false');
-          toggle.setAttribute('aria-expanded', 'false');
-          body.hidden = true;
-          state.mapLoaded = false;
-          state.mapLoading = false;
-          UyDosh.loadYandexMapModule()
-            .then((mapModule) => mapModule.destroyMap(body.querySelector('#listing-map')))
-            .catch(() => { /* ignore */ });
-        });
+        // Always expanded (no collapse) — markup already renders it open (see
+        // buildMapSectionHtml). Mount immediately rather than routing through
+        // expandMapSection()'s 350ms delay (that exists to let a click-driven
+        // collapsed->expanded transition settle first; there's nothing to
+        // wait out here since the section is already open at first paint).
+        // `expandMapSection()` still short-circuits straight to
+        // `mountListingMap()` for the metro row "draw route" buttons below,
+        // since `state.mapExpanded` is already true by the time those fire.
+        state.mapExpanded = true;
+        mountListingMap();
 
         bindMetroStationRouteButtons();
+      }
+
+      /**
+       * Scrolls the map section into view when it isn't fully on screen —
+       * e.g. the metro row tapped (see `bindMetroStationRouteButtons` below)
+       * sits far enough from it that the just-drawn route would otherwise
+       * land off-screen. No-ops if the section is already fully visible.
+       */
+      function scrollMapIntoViewIfNeeded() {
+        const section = rootEl.querySelector('[data-map-section]');
+        if (!section) return;
+        const rect = section.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const fullyVisible = rect.top >= 0 && rect.bottom <= viewportHeight;
+        if (fullyVisible) return;
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
       /**
@@ -2654,9 +2665,10 @@
        * — attached to `.map-section-summary`, a descendant of (but distinct
        * element from) the outer `.map-section-toggle` `<button>`, so calling
        * `stopPropagation()` here keeps a route-button tap from also
-       * triggering — or, worse, collapsing — the accordion toggle. Ensures
-       * the map is open (`expandMapSection`) before asking it to draw a
-       * pedestrian route from the listing's pin to that station.
+       * triggering the (now always-expanded, see `bindMapSection`) accordion
+       * toggle. Ensures the map is mounted (`expandMapSection`) and scrolled
+       * into view before asking it to draw a pedestrian route from the
+       * listing's pin to that station.
        */
       function bindMetroStationRouteButtons() {
         const summary = rootEl.querySelector('.map-section-summary');
@@ -2668,6 +2680,7 @@
           if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
           const color = btn.dataset.color || undefined;
           try {
+            scrollMapIntoViewIfNeeded();
             await expandMapSection();
             const mapModule = await UyDosh.loadYandexMapModule();
             const mapContainer = rootEl.querySelector('#listing-map');
