@@ -1012,15 +1012,20 @@ async function updateAddressMapPreview() {
 }
 
 /**
- * Pedestrian-routed guide paths from the address-map-preview pin to every
- * metro station the author has tagged the listing with
- * (`selectedStationIds`) — see `setPinGuideLines` in yandex-map.js for how
- * these are built as one-shot `multiRouter.MultiRoute` walking routes (free
- * under Yandex's combined Geocoder+Router daily allowance, not a live-
- * tracked/re-routed navigation session). Colored per metro line, same
- * palette used for the line chips/icons elsewhere. Reads coordinates from
- * `state.stationCache`, which accumulates every station ever seen across
- * line switches and nearby-station suggestions (see `loadStationsForLine`/
+ * Pedestrian-routed guide path from the address-map-preview pin to the
+ * *closest* of the metro station(s) the author has tagged the listing with
+ * (`selectedStationIds`) — a listing can be tagged with several stations
+ * (`supportsMultiStation()`), but drawing a route for every single one
+ * turned the small preview into unreadable clutter (a route + distance
+ * pill per station). Just the nearest keeps the preview readable while
+ * still answering "how far is the metro from here?". See
+ * `setPinGuideLines` in yandex-map.js for how the route itself is built as
+ * a one-shot `multiRouter.MultiRoute` walking route (free under Yandex's
+ * combined Geocoder+Router daily allowance, not a live-tracked/re-routed
+ * navigation session). Colored per metro line, same palette used for the
+ * line chips/icons elsewhere. Reads coordinates from `state.stationCache`,
+ * which accumulates every station ever seen across line switches and
+ * nearby-station suggestions (see `loadStationsForLine`/
  * `findNearbyStations`), so a selection made from any line/suggestion list
  * resolves here regardless of which one is currently displayed. Safe to
  * call whenever the pin or the selection changes — it's a no-op if the map
@@ -1029,14 +1034,29 @@ async function updateAddressMapPreview() {
 function updateAddressMapGuideLines() {
   const container = stepPanelsEl.querySelector('#address-map-preview');
   if (!container) return;
-  const lines = state.form.selectedStationIds
+  const stations = state.form.selectedStationIds
     .map((id) => state.stationCache[Number(id)])
-    .filter((station) => station != null)
-    .map((station) => ({
-      latitude: station.latitude,
-      longitude: station.longitude,
-      color: UyDosh.metroLineColor?.(station.line) || undefined,
-    }));
+    .filter((station) => station?.latitude != null && station?.longitude != null);
+
+  const latitude = state.form.addressLatitude;
+  const longitude = state.form.addressLongitude;
+  let nearest = stations[0] || null;
+  if (stations.length > 1 && latitude != null && longitude != null) {
+    let nearestMeters = Infinity;
+    for (const station of stations) {
+      const meters = haversineMeters(latitude, longitude, Number(station.latitude), Number(station.longitude));
+      if (meters < nearestMeters) {
+        nearestMeters = meters;
+        nearest = station;
+      }
+    }
+  }
+
+  const lines = nearest ? [{
+    latitude: nearest.latitude,
+    longitude: nearest.longitude,
+    color: UyDosh.metroLineColor?.(nearest.line) || undefined,
+  }] : [];
   UyDosh.loadYandexMapModule()
     .then((mapModule) => mapModule.setPinGuideLines(container, lines))
     .catch(() => { /* map module not loaded — nothing to draw onto yet */ });
