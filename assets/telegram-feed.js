@@ -936,3 +936,19 @@ updateScrollTopButton();
 loadMore();
 // Best-effort "add your university" nudge — never blocks the feed itself.
 UyDosh.maybeShowProfileNudge?.();
+
+// Warm the Yandex Maps SDK in the background while the user is on the
+// default List tab, so tapping over to Карта/Map later renders close to
+// instantly instead of paying the full api-maps.yandex.ru script load then.
+// Runs once, right here at app start (the feed always lands on 'list' first,
+// see `state.view` above) — not on every tab switch. `loadYandexScript()` is
+// itself idempotent (caches its in-flight/resolved promise and short-circuits
+// once `window.ymaps` is ready), so this can't race or duplicate work if the
+// user reaches the Map tab before it finishes; `loadFeedMap()` just reuses
+// whatever this kicked off.
+UyDosh.loadYandexMapModule()
+  .then((mapModule) => mapModule.loadYandexScript(UyDosh.getLang()))
+  .catch(() => {
+    // Best-effort only — a real failure surfaces again (with its own retry
+    // UI) when the user actually opens the Map tab via loadFeedMap().
+  });
