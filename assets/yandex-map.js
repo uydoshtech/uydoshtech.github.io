@@ -1249,7 +1249,7 @@
     }
     return {
       ...interaction,
-      preset: 'islands#violetCircleIcon',
+      preset: 'islands#blueCircleIcon',
       zIndex: isGroupSelected(group, visualCtx) ? 1000 : 100,
     };
   }

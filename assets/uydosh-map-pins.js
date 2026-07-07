@@ -3,11 +3,14 @@
 // geolocation, and the phone/Telegram contact bar shown on listing details.
 // Depends on uydosh-icons.js (listing type colors/consts). Load after it.
 
-/** Match mobile app listing-type badge colors (dark theme). */
+/** Match mobile app listing-type badge colors (dark theme), except
+ *  `group_forming`: mobile uses its purple brand color there, but the web map
+ *  intentionally sticks to a blue/orange palette (no purple) across every pin
+ *  state — see MAP_PIN_FILL.selected below. */
 const LISTING_TYPE_COLORS = {
   1: '#64B5F6', // room_needed
   2: '#FF9800', // roommate_needed
-  3: '#9B6DFF', // group_forming
+  3: '#0288D1', // group_forming
 };
 
 /** Material-style SVG paths for listing-type map pin glyphs (viewBox 0 0 24 24). */
@@ -24,13 +27,17 @@ const MAP_PIN_ICON_SIZE = 24;
 const MAP_PIN_ICON_SIZE_SELECTED = 28;
 const mapPinIconCache = new Map();
 
-/** Match Flutter map pin fills (yandex_map_widget_icons.dart). */
+/** Loosely matches Flutter map pin fills (yandex_map_widget_icons.dart), except
+ *  `selected`: mobile highlights the active pin with its purple brand color
+ *  (AppColors.primary), but the web map avoids purple entirely and uses a
+ *  vivid blue instead — distinct enough from the pastel `room_needed` blue
+ *  and the deeper `group_forming` blue above to still read as "selected". */
 const MAP_PIN_FILL = {
   default: '#000000',
   dark: '#142A45',
   visited: '#9E9E9E',
   visitedDark: '#757575',
-  selected: '#673AB7',
+  selected: '#2962FF',
 };
 
 const VISITED_LISTINGS_STORAGE_KEY = 'uydosh_visited_listing_ids';
@@ -244,8 +251,9 @@ function drawRoundRect(ctx, x, y, width, height, radius) {
 }
 
 /**
- * Canvas bitmap for Yandex Maps placemarks (mobile parity):
- * black/blue/gray/purple fill + white listing-type glyph + white outline.
+ * Canvas bitmap for Yandex Maps placemarks (mobile parity, minus purple —
+ * see MAP_PIN_FILL above): black/blue/gray fill + white listing-type glyph +
+ * white outline.
  */
 function createMapPinIcon(pin, options = {}) {
   if (typeof document === 'undefined') return null;
