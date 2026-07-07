@@ -14,14 +14,15 @@ const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
+// Scrolling down this far auto-collapses the filters — and skips straight
+// to the folded, chevron-only state (see `.filters--folded`) instead of
+// pausing at the compact icon ribbon in between, so listings underneath
+// stop being covered as soon as possible. A *manual* collapse (chevron tap)
+// intentionally keeps the full compact ribbon instead — see the toggle
+// click handler below — since that's a deliberate choice to keep seeing
+// the filter icons, not scroll-driven decluttering.
 const FILTER_SCROLL_COLLAPSE_PX = 120;
 const FILTER_SCROLL_EXPAND_PX = 24;
-// Once already collapsed to the compact icon ribbon, scrolling further down
-// still leaves that full-width pill sitting over the listings underneath it.
-// Past this deeper threshold it folds away entirely except for the chevron
-// button (see `.filters--folded`); scrolling back up even a bit un-folds it.
-const FILTER_SCROLL_FOLD_PX = 160;
-const FILTER_SCROLL_UNFOLD_PX = 100;
 const SCROLL_TOP_HIDE_PX = 72;
 
 const gridEl = document.getElementById('grid');
@@ -74,6 +75,7 @@ function collapseFiltersFromScroll() {
   filtersCollapsedByScroll = true;
   persistFiltersCollapsed();
   setFiltersCollapsedVisual(true);
+  foldFiltersFromScroll();
 }
 
 function expandFiltersFromScroll() {
@@ -142,12 +144,6 @@ function handleFeedScrollForFilters() {
     }
     if (filtersCollapsedByScroll && delta <= FILTER_SCROLL_EXPAND_PX) {
       expandFiltersFromScroll();
-      return;
-    }
-    if (!filtersFolded && delta >= FILTER_SCROLL_FOLD_PX) {
-      foldFiltersFromScroll();
-    } else if (filtersFolded && delta <= FILTER_SCROLL_UNFOLD_PX) {
-      unfoldFilters();
     }
   });
 }
