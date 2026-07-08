@@ -1668,6 +1668,7 @@
           el.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
         }
         el.setAttribute('camera-controls', '');
+        el.setAttribute('camera-orbit', '0deg 75deg 70%');
         el.setAttribute('interaction-prompt', 'auto');
         el.setAttribute('interaction-prompt-threshold', '0');
         el.setAttribute('auto-rotate', '');
