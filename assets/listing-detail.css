@@ -391,7 +391,6 @@
          viewer once their linked Telegram identity matches the original
          poster (see `loadClaimBanner`). Uses the accent (green) color to read
          as a positive action, unlike the warning-colored complaints banner. */
-      .claim-banner { margin: 16px 0; }
       .claim-banner[hidden] { display: none !important; }
       .claim-banner-card {
         display: flex; align-items: center; gap: 12px;
@@ -420,7 +419,6 @@
          Shown whenever a listing has at least one complaint; the underlying
          data is public, but the button only renders in the Mini App (see
          `loadComplaintsWarning`) to match the reporting flow above. */
-      .complaints-warning { margin-top: 20px; }
       .complaints-warning[hidden] { display: none !important; }
       .complaints-warning-btn {
         width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -444,7 +442,7 @@
          mobile app's ListingDetailCompatibilitySection (scoring ported in
          assets/uydosh-profile-match.js). Only rendered in the Mini App, for a
          signed-in viewer who isn't the owner (see `loadCompatibilityTile`). */
-      .compat-section { margin: 16px 0; border: 1px solid var(--stroke); background: var(--card);
+      .compat-section { border: 1px solid var(--stroke); background: var(--card);
         border-radius: 14px; overflow: hidden; }
       .compat-section[hidden] { display: none !important; }
       .compat-toggle {
@@ -504,7 +502,7 @@
          lazy-loaded only when this tile is actually expanded — most
          listings don't have a scan, and even fewer viewers ever open it).
          See buildRoomScanSectionHtml()/bindRoomScanSection() below. */
-      .roomscan-section { margin: 16px 0; border: 1px solid var(--stroke); background: var(--card);
+      .roomscan-section { border: 1px solid var(--stroke); background: var(--card);
         border-radius: 14px; overflow: hidden; }
       .roomscan-toggle {
         appearance: none; width: 100%; border: 0; background: transparent; color: inherit;
@@ -769,7 +767,7 @@
         margin-top: 4px;
       }
 
-      .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+      .cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
       .btn {
         display: inline-flex; align-items: center; justify-content: center;
         padding: 11px 16px; border-radius: 12px;
