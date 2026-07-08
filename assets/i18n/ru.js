@@ -166,6 +166,7 @@ I18N.ru = {
     'create.nearbyStationsFallback': 'Ближайшая станция',
     'create.nearbyStationsEmpty': 'В радиусе {minutes} минут пешком станций метро нет',
     'create.nearbyStationAdd': 'Добавить',
+    'create.nearbyStationRemove': 'Убрать',
     'create.walkMinutes': '{count} мин пешком',
     'create.price': 'Цена',
     'create.priceRange': 'Бюджет',

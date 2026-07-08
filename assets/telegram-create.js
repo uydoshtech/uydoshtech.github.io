@@ -415,7 +415,7 @@ function hydrateFormFromListing(listing) {
       seedLon = district ? Number(district.longitude) : null;
     }
     if (Number.isFinite(seedLat) && Number.isFinite(seedLon)) {
-      applyNearbyStations(seedLat, seedLon, state.nearbyStationsRadiusMinutes);
+      applyNearbyStations(seedLat, seedLon, state.nearbyStationsRadiusMinutes, { preselect: false });
     }
   }
   // Deliberately leave `state.lastGeneratedTitle` at its initial '' value (not
@@ -823,6 +823,16 @@ function nearbyStationsHtml(lang) {
         <div class="nearby-stations-empty">${UyDosh.escapeHtml(emptyText)}</div>
       </div>`;
   }
+  // Each row gets its own "Добавить"/"Убрать" toggle (rather than a single
+  // add-only link tied to just the nearest station) so both adding and
+  // removing any given station is as explicit as a dedicated button — the
+  // chip itself stays clickable too (toggles the same selection), this is
+  // just a clearer visual affordance of what tapping it does either way.
+  const addToggleHtml = (pressed) => `
+    <span class="nearby-station-add-toggle" aria-hidden="true">
+      <span class="nearby-station-add-toggle-idle">${UyDosh.iconPlus()}<span>${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationAdd', lang))}</span></span>
+      <span class="nearby-station-add-toggle-active">${UyDosh.iconMinus()}<span>${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationRemove', lang))}</span></span>
+    </span>`;
   const chips = state.nearbyStations.map(({ station, minutes }) => {
     const id = Number(station.id);
     const lineId = Number(station.line) || state.form.subwayLineId;
@@ -831,23 +841,14 @@ function nearbyStationsHtml(lang) {
       .replace('{count}', String(Math.max(1, Math.round(minutes))));
     return `
       <button type="button" class="nearby-station-chip" data-nearby-station-id="${id}" data-nearby-station-line="${lineId}" data-haptic="selection" aria-pressed="${pressed ? 'true' : 'false'}">
-        ${UyDosh.iconMetro(lineId)}
-        <span class="nearby-station-name">${UyDosh.escapeHtml(UyDosh.localized(station, lang))}</span>
-        <span class="nearby-station-time">${UyDosh.iconClock()}${UyDosh.escapeHtml(minutesLabel)}</span>
+        <span class="nearby-station-info">
+          ${UyDosh.iconMetro(lineId)}
+          <span class="nearby-station-name">${UyDosh.escapeHtml(UyDosh.localized(station, lang))}</span>
+          <span class="nearby-station-time">${UyDosh.iconClock()}${UyDosh.escapeHtml(minutesLabel)}</span>
+        </span>
+        ${addToggleHtml(pressed)}
       </button>`;
   }).join('');
-  // "Добавить" link — sits in the same row as the chips above and, since
-  // `state.nearbyStations` is nearest-first, mirrors the nearest station
-  // chip's own `data-nearby-station-id`/`-line` so the generic handler in
-  // `bindNearbyMetroEvents` toggles that same station without extra wiring.
-  const nearest = state.nearbyStations[0];
-  const nearestId = Number(nearest.station.id);
-  const nearestLineId = Number(nearest.station.line) || state.form.subwayLineId;
-  const addButton = `
-    <button type="button" class="nearby-station-chip nearby-station-add" data-nearby-station-id="${nearestId}" data-nearby-station-line="${nearestLineId}" data-haptic="selection">
-      ${UyDosh.iconPlus()}
-      <span class="nearby-station-name">${UyDosh.escapeHtml(UyDosh.t('create.nearbyStationAdd', lang))}</span>
-    </button>`;
   // Fallback ("closest station overall" — see `findNearbyStations`) gets its
   // own label instead of "Stations near you", since it's explicitly outside
   // the radius the author picked.
@@ -858,7 +859,7 @@ function nearbyStationsHtml(lang) {
     <div class="nearby-stations">
       ${radiusChips}
       <div class="nearby-stations-label">${UyDosh.escapeHtml(UyDosh.t(labelKey, lang))}</div>
-      <div class="nearby-stations-list">${chips}${addButton}</div>
+      <div class="nearby-stations-list">${chips}</div>
     </div>`;
 }
 
@@ -2301,6 +2302,15 @@ const MAX_SUGGESTED_STATIONS = 12;
 // walk time".
 const NEARBY_STATION_FALLBACK_MAX_MINUTES = 60;
 
+// Auto-checked whenever the "stations near you" panel refreshes for a new
+// location/radius (see `preselectNearbyStations`), so authors see sensible
+// defaults instead of an all-unchecked chip row. Deliberately independent
+// of `NEARBY_STATION_RADIUS_OPTIONS` so switching the display radius chip
+// doesn't change which stations count as "close enough" to auto-select —
+// mirrors the mobile app's `_autoSelectStationWalkMinutes` in
+// CreateListingScreen.
+const AUTO_SELECT_STATION_WALK_MINUTES = 15;
+
 // `haversineMeters`/`estimatedWalkMinutes` (+ their constants) live in
 // uydosh-core.js, shared with listing.html — see the comment there.
 
@@ -2340,15 +2350,43 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
   return { stations: nearby, isFallback };
 }
 
+/**
+ * Auto-checks every station within `AUTO_SELECT_STATION_WALK_MINUTES` of
+ * `(latitude, longitude)` that isn't already selected — called by
+ * `applyNearbyStations` so authors see sensible defaults instead of an
+ * all-unchecked chip row. Queried separately from `findNearbyStations`'s
+ * own `maxMinutes` argument so the default selection doesn't depend on
+ * whichever display radius chip (10/20/30 min) happens to be active. Only
+ * ever adds — never removes a station the author deliberately unchecked —
+ * and re-filters out `findNearbyStations`'s single-closest-station
+ * fallback so we never force-select a station that isn't actually within
+ * range.
+ */
+function preselectNearbyStations(latitude, longitude) {
+  const { stations } = findNearbyStations(latitude, longitude, AUTO_SELECT_STATION_WALK_MINUTES);
+  const withinAutoSelectWalk = stations.filter((entry) => entry.minutes <= AUTO_SELECT_STATION_WALK_MINUTES);
+  for (const { station } of withinAutoSelectWalk) {
+    const id = Number(station.id);
+    if (!state.form.selectedStationIds.includes(id)) {
+      state.form.selectedStationIds = [...state.form.selectedStationIds, id];
+    }
+  }
+}
+
 /** Runs `findNearbyStations` and spreads its result across the three
  * `state.nearbyStations*` fields the panel reads from (see call sites in
- * `bindStepEvents`), then kicks off `refineNearbyStationWalkTimes` to
- * upgrade the straight-line estimate to real walking-nav minutes. */
-function applyNearbyStations(latitude, longitude, maxMinutes) {
+ * `bindStepEvents`), auto-selects nearby stations via
+ * `preselectNearbyStations` (skippable — see `hydrateFormFromListing`,
+ * which only wants the panel seeded for display, not to silently add
+ * stations to an existing listing on save), then kicks off
+ * `refineNearbyStationWalkTimes` to upgrade the straight-line estimate to
+ * real walking-nav minutes. */
+function applyNearbyStations(latitude, longitude, maxMinutes, { preselect = true } = {}) {
   const { stations, isFallback } = findNearbyStations(latitude, longitude, maxMinutes);
   state.nearbyStations = stations;
   state.nearbyStationsIsFallback = isFallback;
   state.nearbyStationsChecked = true;
+  if (preselect) preselectNearbyStations(latitude, longitude);
   refineNearbyStationWalkTimes(latitude, longitude, stations);
 }
 

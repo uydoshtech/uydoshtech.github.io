@@ -166,6 +166,7 @@ I18N.en = {
     'create.nearbyStationsFallback': 'Closest station',
     'create.nearbyStationsEmpty': 'No metro stations within a {minutes}-minute walk',
     'create.nearbyStationAdd': 'Add',
+    'create.nearbyStationRemove': 'Remove',
     'create.walkMinutes': '{count} min walk',
     'create.price': 'Price',
     'create.priceRange': 'Budget',

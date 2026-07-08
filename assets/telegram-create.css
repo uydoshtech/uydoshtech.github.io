@@ -1078,9 +1078,13 @@ input[readonly] {
 }
 .nearby-stations-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
+/* Each row is full-width now: station info on the left, its own
+   Добавить/Добавлено toggle pushed to the right (see nearbyStationsHtml in
+   telegram-create.js) — replaces the old single "nearest station only"
+   add link with one per row. */
 .nearby-station-chip {
   appearance: none;
   border: 1px solid var(--stroke);
@@ -1088,9 +1092,11 @@ input[readonly] {
   color: var(--fg);
   border-radius: 12px;
   padding: 7px 10px;
-  display: inline-flex;
+  width: 100%;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   font: inherit;
   cursor: pointer;
 }
@@ -1099,22 +1105,11 @@ input[readonly] {
   background: color-mix(in srgb, var(--brand2) 14%, transparent);
 }
 .nearby-station-chip:active { opacity: 0.75; }
-/* "Добавить" link button — same row as the chips, tapping it adds the
-   nearest station (see nearbyStationsHtml in telegram-create.js). Styled as
-   a plain link rather than a pill so it doesn't read as its own toggle. */
-.nearby-station-chip.nearby-station-add {
-  border-color: transparent;
-  background: transparent;
-  color: var(--brand2);
-  font-weight: 600;
-  padding: 7px 4px;
-}
-.nearby-station-chip.nearby-station-add .icon svg {
-  width: 14px;
-  height: 14px;
-}
-.nearby-station-chip.nearby-station-add .icon svg * {
-  stroke: var(--brand2);
+.nearby-station-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 .nearby-station-chip .icon svg {
   width: 15px;
@@ -1128,6 +1123,9 @@ input[readonly] {
 .nearby-station-name {
   font-size: 13px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .nearby-station-time {
   display: inline-flex;
@@ -1136,6 +1134,7 @@ input[readonly] {
   font-size: 11px;
   font-weight: 600;
   color: var(--muted);
+  flex-shrink: 0;
 }
 .nearby-station-time .icon svg {
   width: 12px;
@@ -1144,6 +1143,52 @@ input[readonly] {
 }
 .nearby-station-time .icon svg * {
   stroke: currentColor;
+  fill: none;
+}
+/* Per-row "Добавить"/"Убрать" toggle — idle/active states swap purely via
+   CSS keyed off the row's aria-pressed (same pattern as the checkbox pair
+   in telegram-shared.css), so `renderStep`/`updateStationSelectionUi`
+   don't need to special-case this markup. Active ("Убрать") uses the error
+   color instead of the brand accent so a selected row's action reads as a
+   removal, not just a second "add". */
+.nearby-station-add-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+.nearby-station-add-toggle-idle,
+.nearby-station-add-toggle-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.nearby-station-add-toggle-idle {
+  color: var(--brand2);
+}
+.nearby-station-add-toggle-idle .icon svg * {
+  stroke: var(--brand2);
+}
+.nearby-station-add-toggle-active {
+  display: none;
+  color: var(--error);
+}
+.nearby-station-add-toggle-active .icon svg * {
+  stroke: var(--error);
+}
+.nearby-station-chip[aria-pressed="true"] .nearby-station-add-toggle-idle {
+  display: none;
+}
+.nearby-station-chip[aria-pressed="true"] .nearby-station-add-toggle-active {
+  display: inline-flex;
+}
+.nearby-station-add-toggle .icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.nearby-station-add-toggle .icon svg * {
   fill: none;
 }
 .nearby-stations-empty {

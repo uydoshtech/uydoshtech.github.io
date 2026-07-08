@@ -517,6 +517,23 @@ function iconPlus() {
   `);
 }
 
+/** Plain checkmark, unused by the nearby-station add toggle itself (see
+ * iconMinus) but kept for other selected/done states. */
+function iconCheck() {
+  return iconSvg(null, `
+    <path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
+/** Plain "−" — the "Remove" state of a selected nearby station's add
+ * toggle (see nearbyStationsHtml in telegram-create.js), mirroring
+ * iconPlus's "+" for the unselected state. */
+function iconMinus() {
+  return iconSvg(null, `
+    <path d="M5 12h14" stroke-width="2" stroke-linecap="round"></path>
+  `);
+}
+
 function iconPhone() {
   return iconSvg(null, `
     <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3.6c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8Z" stroke-width="2" stroke-linejoin="round"></path>
@@ -732,6 +749,8 @@ Object.assign(window.UyDosh, {
   iconRoute,
   iconClock,
   iconPlus,
+  iconCheck,
+  iconMinus,
   iconPhone,
   iconEye,
   iconEyeOff,

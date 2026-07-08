@@ -167,6 +167,7 @@ I18N.uz = {
     'create.nearbyStationsFallback': 'Eng yaqin bekat',
     'create.nearbyStationsEmpty': '{minutes} daqiqalik piyoda masofada metro bekati topilmadi',
     'create.nearbyStationAdd': 'Qo‘shish',
+    'create.nearbyStationRemove': 'Olib tashlash',
     'create.walkMinutes': '{count} daq. piyoda',
     'create.price': 'Narx',
     'create.priceRange': 'Byudjet',
