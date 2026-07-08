@@ -253,11 +253,35 @@
         scroll-snap-align: start;
         aspect-ratio: 4 / 3;
         background: rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
       }
-      .gallery-slide img {
+      /* Blurred cover-fill backdrop behind the full (uncropped) photo — mirrors
+         the mobile app's detail gallery, which never crops a listing photo
+         (a hard crop can cut off the UyDosh watermark baked into the
+         bottom-right corner of every photo, especially on portrait shots). */
+      .gallery-slide-bg {
+        position: absolute;
+        inset: -12px;
+        width: calc(100% + 24px);
+        height: calc(100% + 24px);
+        object-fit: cover;
+        filter: blur(20px);
+        display: block;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      .gallery-slide-scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.12);
+      }
+      .gallery-slide-fg {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         display: block;
         user-select: none;
         -webkit-user-drag: none;

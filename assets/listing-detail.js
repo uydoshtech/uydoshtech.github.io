@@ -1062,6 +1062,16 @@
                 ${state.photos.map((p, i) => `
                   <div class="gallery-slide" data-gallery-slide="${i}" aria-roledescription="slide" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.gallery.photo'))} ${i + 1} / ${state.photos.length}">
                     <img
+                      class="gallery-slide-bg"
+                      aria-hidden="true"
+                      ${i === 0 ? '' : 'loading="lazy" '}
+                      src="${UyDosh.escapeHtml(UyDosh.photoUrl(p))}"
+                      alt=""
+                      draggable="false"
+                    />
+                    <div class="gallery-slide-scrim" aria-hidden="true"></div>
+                    <img
+                      class="gallery-slide-fg"
                       ${i === 0 ? '' : 'loading="lazy" '}
                       src="${UyDosh.escapeHtml(UyDosh.photoUrl(p))}"
                       alt="${UyDosh.escapeHtml(state.listing?.title || '')}"

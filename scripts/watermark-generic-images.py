@@ -37,6 +37,7 @@ TARGETS = [
 LOGO_OPACITY = 0.88
 LOGO_HEIGHT_RATIO = 0.16  # logo height as a fraction of the photo height
 MARGIN_RATIO = 0.035  # margin from the edges as a fraction of photo height
+EXTRA_LEFT_SHIFT_PX = 24  # additional horizontal-only nudge away from the right edge
 
 SHADOW_BLUR = 6
 SHADOW_ALPHA = 0.55
@@ -120,7 +121,7 @@ def stamp(image_path: Path, base_logo: Image.Image) -> None:
     watermark.putalpha(scaled_alpha)
 
     margin = int(photo.height * MARGIN_RATIO)
-    x = photo.width - watermark.width - margin
+    x = photo.width - watermark.width - margin - EXTRA_LEFT_SHIFT_PX
     y = photo.height - watermark.height - margin
 
     photo.alpha_composite(watermark, (x, y))
