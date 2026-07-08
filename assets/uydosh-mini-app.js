@@ -612,7 +612,7 @@ function ensureMiniAppSafeAreaStyles() {
       font-size: inherit;
     }
     html.mini-app header .brand .brand-uy {
-      color: var(--brand, #e11d2e);
+      color: var(--brand, #ff0000);
     }
     html.mini-app header .brand .brand-dosh {
       color: rgba(255, 255, 255, 0.95);

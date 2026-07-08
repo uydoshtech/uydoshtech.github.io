@@ -62,6 +62,7 @@ I18N.ru = {
     'detail.roomScanModeFullRoom': '3D-режим: вся комната. Нажмите, чтобы показать только стены.',
     'detail.roomScanModeWallsOnly': '3D-режим: только стены. Нажмите, чтобы показать пол и мебель.',
     'detail.roomScanModeFurnitureOnly': '3D-режим: пол и мебель. Нажмите, чтобы показать всю комнату.',
+    'detail.roomScanZoom': 'Масштаб',
     'detail.roomScanLoadError': 'Не удалось загрузить 3D-модель.',
     'detail.gallery.dots': 'Фото',
     'detail.gallery.photo': 'Фото',

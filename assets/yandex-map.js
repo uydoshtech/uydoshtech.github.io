@@ -1121,7 +1121,7 @@
 
   function pinColor(listingTypeId) {
     const colors = window.UyDosh?.listingTypeColor?.(listingTypeId);
-    return colors || '#e11d2e';
+    return colors || '#ff0000';
   }
 
   function pinVisualContext(overrides = {}) {

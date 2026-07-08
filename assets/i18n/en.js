@@ -62,6 +62,7 @@ I18N.en = {
     'detail.roomScanModeFullRoom': '3D view: full room. Tap to show walls only.',
     'detail.roomScanModeWallsOnly': '3D view: walls only. Tap to show floor & furniture.',
     'detail.roomScanModeFurnitureOnly': '3D view: floor & furniture. Tap to show full room.',
+    'detail.roomScanZoom': 'Zoom',
     'detail.roomScanLoadError': 'Could not load the 3D model.',
     'detail.gallery.dots': 'Photos',
     'detail.gallery.photo': 'Photo',

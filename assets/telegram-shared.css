@@ -12,7 +12,7 @@
   --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
   --card: var(--tg-card, rgba(255, 255, 255, 0.06));
   --stroke: rgba(255, 255, 255, 0.12);
-  --brand: #e11d2e;
+  --brand: #ff0000;
   --brand2: #60a5fa;
   --price-green: #35c26b;
   /*
@@ -409,6 +409,19 @@ a { color: inherit; text-decoration: none; }
   color: #1f2937;
 }
 .chip-district[aria-pressed="true"] .metro-m-badge {
+  color: var(--line-color);
+}
+/*
+ * Metro-line filter button (telegram-feed.js `metroLineChipHtml`) — the
+ * feed's single cycling equivalent of the fixed four-button ribbon built by
+ * `metroLineChipsHtml`. Reuses the same grey-until-selected treatment as
+ * `.chip-district` above since this one button also cycles through several
+ * values instead of representing one fixed, always-known line/color.
+ */
+.chip-metro-cycle .metro-m-badge {
+  color: #1f2937;
+}
+.chip-metro-cycle[aria-pressed="true"] .metro-m-badge {
   color: var(--line-color);
 }
 .district-pin-badge svg {

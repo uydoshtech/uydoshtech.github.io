@@ -1752,6 +1752,63 @@
         return btn;
       }
 
+      // --- 3D room scan zoom slider -----------------------------------------------------
+      // Mirrors the native app's zoom slider (see zoomSlider/applyZoomFraction in
+      // RoomUsdzViewerViewController.swift): a single 0…100 fraction (0 = zoomed out, 100 =
+      // zoomed in) mapped onto the camera's field of view — narrower FOV reads as "closer",
+      // exactly like the native app, rather than moving the camera itself (which would fight
+      // the model-viewer default scroll/pinch zoom's own distance changes).
+      const ROOM_SCAN_ZOOM_FOV_MIN_DEG = 28;
+      const ROOM_SCAN_ZOOM_FOV_MAX_DEG = 82;
+
+      function roomScanZoomIconHtml(kind) {
+        const glyph = kind === 'in'
+          ? '<path d="M8 11h6M11 8v6"></path>'
+          : '<path d="M8 11h6"></path>';
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          ${glyph}
+          <path d="M21 21l-4.3-4.3"></path>
+        </svg>`;
+      }
+
+      /** Creates the pill zoom slider and wires it to `viewerEl`'s field of view. */
+      function createRoomScanZoomSlider(viewerEl) {
+        const wrap = document.createElement('div');
+        wrap.className = 'roomscan-zoom-slider';
+
+        const outIcon = document.createElement('span');
+        outIcon.className = 'roomscan-zoom-icon';
+        outIcon.innerHTML = roomScanZoomIconHtml('out');
+
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.className = 'roomscan-zoom-range';
+        input.min = '0';
+        input.max = '100';
+        input.value = '50';
+        input.setAttribute('aria-label', UyDosh.t('detail.roomScanZoom'));
+
+        const inIcon = document.createElement('span');
+        inIcon.className = 'roomscan-zoom-icon';
+        inIcon.innerHTML = roomScanZoomIconHtml('in');
+
+        const applyZoom = () => {
+          const t = Number(input.value) / 100;
+          const fov = ROOM_SCAN_ZOOM_FOV_MAX_DEG - t * (ROOM_SCAN_ZOOM_FOV_MAX_DEG - ROOM_SCAN_ZOOM_FOV_MIN_DEG);
+          viewerEl.fieldOfView = `${fov.toFixed(2)}deg`;
+        };
+        input.addEventListener('input', applyZoom);
+
+        wrap.appendChild(outIcon);
+        wrap.appendChild(input);
+        wrap.appendChild(inIcon);
+        // Field of view only exists once the model has finished loading — apply the slider's
+        // starting value then, same as the mode button re-applying on `load`.
+        viewerEl.addEventListener('load', applyZoom);
+        return wrap;
+      }
+
       function roomScanMetaRowHtml(icon, text) {
         return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
       }
@@ -1814,6 +1871,10 @@
         }
         el.setAttribute('camera-controls', '');
         el.setAttribute('camera-orbit', '0deg 75deg 70%');
+        // Widened beyond the zoom slider's own 28–82° range (see createRoomScanZoomSlider)
+        // so the slider never gets clamped, and pinch/scroll zoom keeps working too.
+        el.setAttribute('min-field-of-view', '20deg');
+        el.setAttribute('max-field-of-view', '90deg');
         el.setAttribute('interaction-prompt', 'auto');
         el.setAttribute('interaction-prompt-threshold', '0');
         el.setAttribute('auto-rotate', '');
@@ -1842,14 +1903,20 @@
           viewer.addEventListener('error', () => showRoomScanLoadError(container), { once: true });
           container.innerHTML = '';
           container.appendChild(viewer);
+
           const fullscreenBtn = document.createElement('button');
           fullscreenBtn.type = 'button';
           fullscreenBtn.className = 'roomscan-fullscreen-btn';
           fullscreenBtn.setAttribute('aria-label', UyDosh.t('detail.roomScanFullscreen'));
           fullscreenBtn.innerHTML = roomScanFullscreenIconHtml();
           fullscreenBtn.addEventListener('click', () => openRoomScanFullscreen(glbUrl, usdzUrl));
-          container.appendChild(fullscreenBtn);
-          container.appendChild(createRoomScanModeButton(viewer));
+
+          const controlsBar = document.createElement('div');
+          controlsBar.className = 'roomscan-controls-bar';
+          controlsBar.appendChild(createRoomScanModeButton(viewer));
+          controlsBar.appendChild(createRoomScanZoomSlider(viewer));
+          controlsBar.appendChild(fullscreenBtn);
+          container.appendChild(controlsBar);
         } catch (err) {
           console.error('Failed to load 3D room scan viewer', err);
           showRoomScanLoadError(container);
@@ -1903,15 +1970,20 @@
         roomScanBackdropEl.setAttribute('aria-hidden', 'false');
         requestAnimationFrame(() => roomScanBackdropEl.classList.add('is-open'));
 
-        // Close button is created up front and stays put regardless of
-        // load outcome, so a failed/slow model never traps the viewer open.
+        // Close button (+ its bar) is created up front and stays put regardless of load
+        // outcome, so a failed/slow model never traps the viewer open. The mode button and
+        // zoom slider are inserted before it once the model is actually ready to control.
+        const controlsBar = document.createElement('div');
+        controlsBar.className = 'roomscan-controls-bar';
+        roomScanBackdropEl.appendChild(controlsBar);
+
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'roomscan-backdrop-close';
         closeBtn.setAttribute('aria-label', UyDosh.t('complaint.cancel'));
         closeBtn.textContent = '✕';
         closeBtn.addEventListener('click', closeRoomScanFullscreen);
-        roomScanBackdropEl.appendChild(closeBtn);
+        controlsBar.appendChild(closeBtn);
 
         const statusEl = document.createElement('div');
         statusEl.className = 'roomscan-status';
@@ -1927,8 +1999,9 @@
             viewer.remove();
           }, { once: true });
           statusEl.hidden = true;
-          roomScanBackdropEl.appendChild(viewer);
-          roomScanBackdropEl.appendChild(createRoomScanModeButton(viewer));
+          roomScanBackdropEl.insertBefore(viewer, controlsBar);
+          controlsBar.insertBefore(createRoomScanModeButton(viewer), closeBtn);
+          controlsBar.insertBefore(createRoomScanZoomSlider(viewer), closeBtn);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.textContent = UyDosh.t('detail.roomScanLoadError');

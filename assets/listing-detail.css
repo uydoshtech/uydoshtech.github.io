@@ -9,7 +9,7 @@
         --muted: rgba(255, 255, 255, 0.7);
         --card: rgba(255, 255, 255, 0.06);
         --stroke: rgba(255, 255, 255, 0.12);
-        --brand: #e11d2e;
+        --brand: #ff0000;
         --brand2: #60a5fa;
         --accent: #22c55e;
         --price-green: #35c26b;
@@ -404,7 +404,7 @@
       .complaint-actions { flex: 0 0 auto; padding-top: 4px; }
       .complaint-submit-btn {
         width: 100%; border: 0; border-radius: 14px; padding: 13px 16px;
-        background: linear-gradient(135deg, #e11d2e, #f97316);
+        background: linear-gradient(135deg, #ff0000, #f97316);
         color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
       }
       .complaint-submit-btn:disabled { opacity: 0.55; cursor: default; }
@@ -447,7 +447,7 @@
       .complaints-warning-btn {
         width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
         border: 0; border-radius: 14px; padding: 13px 16px;
-        background: linear-gradient(135deg, #e11d2e, #f97316);
+        background: linear-gradient(135deg, #ff0000, #f97316);
         color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
         animation: complaints-warning-pulse 1.6s ease-in-out infinite;
       }
@@ -553,32 +553,54 @@
         border: 1px solid var(--stroke); background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
       }
       .roomscan-viewer-wrap model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
-      .roomscan-fullscreen-btn {
-        position: absolute; bottom: 10px; right: 10px; z-index: 1;
-        appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
+      /* Bottom overlay row: mode-cycle button — zoom slider — fullscreen/close button, mirroring
+         the mobile app's native 3D viewer bottom toolbar (RoomUsdzViewerViewController.swift).
+         One flex row (rather than 2-3 independently-positioned absolute buttons) so the slider
+         can flexibly fill the space between the two icon buttons at either end. */
+      .roomscan-controls-bar {
+        position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 1;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .roomscan-backdrop .roomscan-controls-bar {
+        left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+      }
+      .roomscan-fullscreen-btn, .roomscan-mode-btn, .roomscan-backdrop-close {
+        flex-shrink: 0; appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
         width: 34px; height: 34px; border-radius: 50%;
         display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
       }
-      .roomscan-fullscreen-btn:active { opacity: 0.85; }
-      .roomscan-fullscreen-btn svg { width: 18px; height: 18px; display: block; }
-      .roomscan-fullscreen-btn svg * { stroke: currentColor; fill: none; }
-      /* Cycles full room → walls only → floor + furniture, mirroring the mobile app's native
-         3D viewer mode button (see RoomUsdzViewerViewController.swift). Mirrored to the opposite
-         (bottom-left) corner from the fullscreen/close button in both the inline preview and the
-         fullscreen backdrop, so the two never overlap. */
-      .roomscan-mode-btn {
-        position: absolute; bottom: 10px; left: 10px; z-index: 1;
-        appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
-        width: 34px; height: 34px; border-radius: 50%;
-        display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
-      }
-      .roomscan-mode-btn:active { opacity: 0.85; }
-      .roomscan-mode-btn svg { width: 18px; height: 18px; display: block; }
-      .roomscan-mode-btn svg * { stroke: currentColor; fill: none; }
-      .roomscan-backdrop .roomscan-mode-btn {
-        bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 14px;
+      .roomscan-backdrop .roomscan-fullscreen-btn, .roomscan-backdrop .roomscan-mode-btn,
+      .roomscan-backdrop .roomscan-backdrop-close {
         width: 36px; height: 36px; background: rgba(0, 0, 0, 0.55);
       }
+      .roomscan-fullscreen-btn:active, .roomscan-mode-btn:active, .roomscan-backdrop-close:active { opacity: 0.85; }
+      .roomscan-fullscreen-btn svg, .roomscan-mode-btn svg { width: 18px; height: 18px; display: block; }
+      .roomscan-fullscreen-btn svg *, .roomscan-mode-btn svg * { stroke: currentColor; fill: none; }
+      .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
+      /* Pill-shaped zoom slider — same look as the mobile app's zoom slider (a plain
+         UISlider inside a dark rounded track), with magnifier-out/in glyphs at each end. */
+      .roomscan-zoom-slider {
+        flex: 1 1 auto; min-width: 0; height: 34px; border-radius: 17px;
+        background: rgba(0, 0, 0, 0.5); color: #fff;
+        display: flex; align-items: center; gap: 6px; padding: 0 10px;
+      }
+      .roomscan-backdrop .roomscan-zoom-slider { height: 36px; border-radius: 18px; background: rgba(0, 0, 0, 0.55); }
+      .roomscan-zoom-icon { width: 16px; height: 16px; flex-shrink: 0; display: inline-flex; opacity: 0.9; }
+      .roomscan-zoom-icon svg { width: 16px; height: 16px; display: block; }
+      .roomscan-zoom-icon svg * { stroke: currentColor; fill: none; }
+      .roomscan-zoom-range {
+        flex: 1 1 auto; min-width: 0; -webkit-appearance: none; appearance: none;
+        height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); outline: none; cursor: pointer;
+      }
+      .roomscan-zoom-range::-webkit-slider-thumb {
+        -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
+        background: #fff; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      }
+      .roomscan-zoom-range::-moz-range-thumb {
+        width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      }
+      .roomscan-zoom-range::-moz-range-track { background: rgba(255, 255, 255, 0.3); height: 3px; border-radius: 2px; }
       .roomscan-status {
         position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
         padding: 12px; text-align: center; color: #f59e0b; font-weight: 700; font-size: 13px;
@@ -591,14 +613,6 @@
       .roomscan-backdrop[hidden] { display: none !important; }
       .roomscan-backdrop.is-open { opacity: 1; }
       .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
-      .roomscan-backdrop-close {
-        position: absolute; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: 14px; z-index: 1;
-        appearance: none; border: 0; background: rgba(0, 0, 0, 0.55); color: #fff;
-        width: 36px; height: 36px; border-radius: 50%;
-        display: inline-flex; align-items: center; justify-content: center;
-        cursor: pointer; font-size: 16px; line-height: 1;
-      }
-      .roomscan-backdrop-close:active { opacity: 0.85; }
 
       .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
       .complaints-group + .complaints-group {
@@ -717,7 +731,7 @@
         fill: none;
       }
       .badge.featured {
-        background: linear-gradient(135deg, #e11d2e, #f97316);
+        background: linear-gradient(135deg, #ff0000, #f97316);
         border-color: transparent; color: #fff;
       }
 

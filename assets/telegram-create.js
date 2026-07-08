@@ -2519,7 +2519,10 @@ function updateLocationSelectionUi() {
 /** Updates aria-pressed on the already-rendered metro line chips without
  * touching the rest of the DOM, so the `[aria-pressed]`-driven CSS
  * transition (name reveal, border/badge pop) animates instead of snapping —
- * mirrors `syncMetroLineChipPressedState` in telegram-feed.js. A full
+ * mirrors the analogous sync helper in telegram-feed.js (the feed filter
+ * ribbon now cycles through lines with a single button there — see
+ * `syncMetroLineCycleChipState` — but this wizard step still shows all four
+ * as separate buttons, so it keeps the plain aria-pressed-only version). A full
  * `renderStep()` would recreate the chip buttons from scratch already in
  * their final state, so the transition would never get a chance to play. */
 function syncSubwayLineChipPressedState() {
@@ -2688,7 +2691,7 @@ function bindStepEvents() {
       // Flip aria-pressed on the existing chip buttons (instead of letting a
       // full renderStep() replace them) so the CSS transition that expands
       // the tapped chip into its name actually gets to play, matching the
-      // feed filter ribbon (see syncMetroLineChipPressedState there).
+      // reveal animation the feed filter ribbon's cycling button uses too.
       syncSubwayLineChipPressedState();
       await selectSubwayLine(nextLineId);
     });

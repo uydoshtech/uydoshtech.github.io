@@ -497,20 +497,21 @@ function renderFilters() {
     ariaLabel: `${UyDosh.t('filter.period.aria', lang)}: ${currentPeriod.label}`,
   });
 
-  // Icon-only-until-selected metro ribbon shared with the compact row below
-  // and the create-listing wizard (see `metroLineChipsHtml` in
-  // uydosh-icons.js): bare "M" badges that reveal the selected line's name
-  // via a slide + fade animation (`.chip-label-collapse` in
-  // telegram-shared.css).
-  const lineChips = UyDosh.metroLineChipsHtml(state.filters.subwayLineId, lang);
+  // Single cycling metro-line button: bare grey "M" badge that steps to the
+  // next line (Chilanzar -> Uzbekistan -> ...) on each tap instead of a row
+  // of four separate line buttons, revealing the selected line's name via a
+  // slide + fade animation (`.chip-label-collapse` in telegram-shared.css) —
+  // see `metroLineChipHtml`/`nextMetroLineId` in uydosh-icons.js. The
+  // create-listing wizard still uses the four-button `metroLineChipsHtml`
+  // ribbon (there the line is a required field, not a togglable filter).
+  const lineChip = UyDosh.metroLineChipHtml(state.filters.subwayLineId, lang);
 
-  // Collapsed metro chips stay icon-only until tapped: selecting a line
-  // reveals its name inline (see `.chip-line-compact` in telegram-shared.css)
-  // instead of a plain always-on label, so the compact row can stay dense.
-  const lineChipsCompact = UyDosh.metroLineChipsHtml(state.filters.subwayLineId, lang, { compact: true });
+  // Collapsed row uses the same single cycling button, just denser (see
+  // `.chip-line-compact` in telegram-shared.css).
+  const lineChipCompact = UyDosh.metroLineChipHtml(state.filters.subwayLineId, lang, { compact: true });
 
   // District filter button: a single pin badge (sits right before the metro
-  // ribbon, mirroring its icon-reveals-name animation) that cycles through
+  // chip, mirroring its icon-reveals-name animation) that cycles through
   // districts alphabetically on each tap instead of picking from a row of
   // options — see `districtChipHtml`/`nextDistrictId` in uydosh-icons.js.
   const districtChip = UyDosh.districtChipHtml(state.filters.locationId, lang);
@@ -549,7 +550,7 @@ function renderFilters() {
             <div class="filter-row filter-row-metro">
               <div class="chips chips-metro" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.line.aria', lang))}">
                 ${districtChip}
-                ${lineChips}
+                ${lineChip}
               </div>
             </div>
           </div>
@@ -564,7 +565,7 @@ function renderFilters() {
                 ${genderChipsCompact}
                 ${photoChip}
                 ${districtChipCompact}
-                ${lineChipsCompact}
+                ${lineChipCompact}
               </div>
               ${filtersToggleHtml}
             </div>
@@ -609,18 +610,16 @@ function renderFilters() {
     });
   });
 
-  filtersEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
+  filtersEl.querySelectorAll('[data-subway-line-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const next = Number(btn.getAttribute('data-subway-line'));
-      const toggledOff = state.filters.subwayLineId === next;
-      state.filters.subwayLineId = toggledOff ? METRO_LINE_ANY : next;
+      state.filters.subwayLineId = UyDosh.nextMetroLineId(state.filters.subwayLineId);
       // Metro and district are mutually exclusive location filters: picking a
       // line clears any district selection so the two never combine.
-      if (!toggledOff) state.filters.locationId = DISTRICT_ANY;
-      // Flip aria-pressed on the existing buttons (instead of letting the
-      // upcoming full re-render replace them) so the CSS transition that
-      // expands the tapped chip into its name actually gets to play.
-      syncMetroLineChipPressedState();
+      if (state.filters.subwayLineId !== METRO_LINE_ANY) state.filters.locationId = DISTRICT_ANY;
+      // Update the button(s) in place (instead of a full re-render) so the
+      // icon-reveals-name transition gets to play on every tap, like the
+      // district chip's cycle does.
+      syncMetroLineCycleChipState();
       syncDistrictChipState();
       persistFilters();
       logSearchEvent();
@@ -636,9 +635,9 @@ function renderFilters() {
       // district clears any metro line selection so the two never combine.
       if (state.filters.locationId !== DISTRICT_ANY) state.filters.subwayLineId = METRO_LINE_ANY;
       // Update the button(s) in place (instead of a full re-render) so the same
-      // icon-reveals-name transition metro line chips use gets to play here too.
+      // icon-reveals-name transition the metro line chip uses gets to play here too.
       syncDistrictChipState();
-      syncMetroLineChipPressedState();
+      syncMetroLineCycleChipState();
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });
@@ -692,14 +691,27 @@ function renderFilters() {
   });
 }
 
-/** Updates aria-pressed on already-rendered metro chips (expanded + compact
- * rows) without touching the rest of the DOM, so `[aria-pressed]`-driven CSS
- * transitions (name reveal, border/badge pop) animate instead of snapping. */
-function syncMetroLineChipPressedState() {
+/** Updates the already-rendered metro-line cycle button(s) (expanded +
+ * compact rows) in place: like the district chip below, this single button's
+ * label/color changes on every tap (it cycles through lines), so this
+ * rewrites `.chip-label` text and `--line-color` too — not just
+ * `aria-pressed` — while still avoiding a full re-render, so the
+ * reveal/collapse transition plays each time. */
+function syncMetroLineCycleChipState() {
+  const lang = UyDosh.getLang();
   const selected = state.filters.subwayLineId;
-  filtersEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
-    const lineId = Number(btn.getAttribute('data-subway-line'));
-    btn.setAttribute('aria-pressed', lineId === selected ? 'true' : 'false');
+  const label = selected > 0 ? UyDosh.metroLineLabel(selected, lang) : '';
+  const ariaLabel = selected > 0 ? label : UyDosh.t('filter.line.aria', lang);
+  filtersEl.querySelectorAll('[data-subway-line-cycle]').forEach((btn) => {
+    btn.setAttribute('aria-pressed', selected > 0 ? 'true' : 'false');
+    btn.setAttribute('aria-label', ariaLabel);
+    if (selected > 0) {
+      btn.style.setProperty('--line-color', UyDosh.metroLineColor(selected));
+    } else {
+      btn.style.removeProperty('--line-color');
+    }
+    const labelEl = btn.querySelector('.chip-label');
+    if (labelEl) labelEl.textContent = label;
   });
 }
 

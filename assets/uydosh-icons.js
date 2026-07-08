@@ -338,12 +338,15 @@ function metroLineBadgeHtml(line) {
  * Metro-line selector ribbon: one `.chip-line` button per line, each an
  * icon-only "M" badge that reveals its line name (slide + fade, via the
  * shared `.chip-line` / `.chip-label-collapse` CSS in telegram-shared.css)
- * once selected. Shared by the feed filter bar (expanded + compact rows,
- * `compact: true`) and the create-listing wizard's metro-line picker so all
- * three stay byte-identical instead of drifting via copy-paste.
+ * once selected. Used by the create-listing wizard's metro-line picker,
+ * where the line is a required field the user must pick explicitly (seeing
+ * all four at once). The feed filter bar uses the single cycling
+ * `metroLineChipHtml` below instead, since there a line is just one of many
+ * optional filters and a four-button row would cost more ribbon space than
+ * it's worth.
  *
  * Callers are expected to wire up `[data-subway-line]` click handlers
- * themselves (see `syncMetroLineChipPressedState` in telegram-feed.js for
+ * themselves (see `syncSubwayLineChipPressedState` in telegram-create.js for
  * the aria-pressed-only update used to let the reveal animation play).
  */
 function metroLineChipsHtml(selectedId, lang = getLang(), { compact = false } = {}) {
@@ -364,6 +367,59 @@ function metroLineChipsHtml(selectedId, lang = getLang(), { compact = false } = 
     >${metroLineBadgeHtml(lineId)}<span class="chip-label-collapse"><span class="chip-label">${escapeHtml(label)}</span></span></button>
   `;
   }).join('');
+}
+
+/** Next id in the tap cycle: off -> line 1 -> line 2 -> ... -> last line -> off. */
+function nextMetroLineId(currentId) {
+  const current = Number(currentId) || 0;
+  if (!current) return METRO_LINE_IDS[0] ?? METRO_LINE_ANY;
+  const index = METRO_LINE_IDS.indexOf(current);
+  if (index === -1 || index === METRO_LINE_IDS.length - 1) return METRO_LINE_ANY;
+  return METRO_LINE_IDS[index + 1];
+}
+
+/**
+ * Single cycling metro-line-filter button — merges `metroLineChipsHtml`'s four
+ * separate "M" buttons into one, "just like" `districtChipHtml`'s pin button
+ * merges the district list into one: starts as a bare grey "M" badge and each
+ * tap steps to the next line in id order (Chilanzar -> Uzbekistan -> ... ->
+ * off), revealing the line's name with the same slide + fade animation
+ * (`.chip-line` / `.chip-label-collapse` in telegram-shared.css) until the
+ * cycle wraps back to the off state. Shared by the feed's expanded + compact
+ * filter rows (`compact: true`).
+ *
+ * Callers wire up the `[data-subway-line-cycle]` click handler themselves and
+ * use `nextMetroLineId` above to compute the next value — see
+ * `syncMetroLineCycleChipState` in telegram-feed.js for the in-place DOM
+ * update used to let the reveal animation play on every tap, not just the
+ * first.
+ */
+function metroLineChipHtml(selectedId, lang = getLang(), { compact = false } = {}) {
+  const selected = Number(selectedId) || 0;
+  const label = selected > 0 ? metroLineLabel(selected, lang) : '';
+  const ariaLabel = selected > 0 ? label : t('filter.line.aria', lang);
+  // Only set --line-color once a specific line is picked — this one button
+  // cycles through every line, so before a tap we don't yet know which color
+  // to show (stays neutral grey via the `.chip-metro-cycle` override in
+  // telegram-shared.css; see `syncMetroLineCycleChipState` for the in-place
+  // update on cycle).
+  const colorStyle = selected > 0 ? ` style="--line-color:${metroLineColor(selected)}"` : '';
+  // The badge itself deliberately never sets its own `--line-color` (unlike
+  // `metroLineBadgeHtml`'s standalone use above) — it inherits from the
+  // button so that `syncMetroLineCycleChipState`'s in-place update (which
+  // only touches the button's inline style, not this span's) keeps recoloring
+  // it correctly across repeated cycles instead of freezing on the color the
+  // chip happened to have at render time.
+  return `
+    <button
+      type="button"
+      class="chip chip-line chip-metro-cycle${compact ? ' chip-line-compact' : ''}"
+      data-subway-line-cycle
+      data-haptic="selection"
+      aria-pressed="${selected > 0 ? 'true' : 'false'}"
+      aria-label="${escapeHtml(ariaLabel)}"${colorStyle}
+    ><span class="metro-m-badge" aria-hidden="true">M</span><span class="chip-label-collapse"><span class="chip-label">${escapeHtml(label)}</span></span></button>
+  `;
 }
 
 /**
@@ -724,6 +780,8 @@ Object.assign(window.UyDosh, {
   metroLineLabel,
   metroLineBadgeHtml,
   metroLineChipsHtml,
+  nextMetroLineId,
+  metroLineChipHtml,
   chipButtonHtml,
   METRO_LINE_IDS,
   METRO_LINE_ANY,

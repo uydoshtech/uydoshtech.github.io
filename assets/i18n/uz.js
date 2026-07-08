@@ -63,6 +63,7 @@ I18N.uz = {
     'detail.roomScanModeFullRoom': '3D rejim: butun xona. Faqat devorlarni ko‘rsatish uchun bosing.',
     'detail.roomScanModeWallsOnly': '3D rejim: faqat devorlar. Pol va mebelni ko‘rsatish uchun bosing.',
     'detail.roomScanModeFurnitureOnly': '3D rejim: pol va mebel. Butun xonani ko‘rsatish uchun bosing.',
+    'detail.roomScanZoom': 'Masshtab',
     'detail.roomScanLoadError': '3D modelni yuklab bo‘lmadi.',
     'detail.gallery.dots': 'Rasmlar',
     'detail.gallery.photo': 'Rasm',
