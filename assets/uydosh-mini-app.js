@@ -1253,18 +1253,36 @@ function ensureMiniAppSessionRevokedStyles() {
       color: var(--muted, rgba(255, 255, 255, 0.7));
       margin: 0;
     }
+    .mini-app-session-revoked-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      width: 100%;
+    }
+    .mini-app-session-revoked-refresh,
     .mini-app-session-revoked-close {
       appearance: none;
       border: 0;
       border-radius: 999px;
       padding: 12px 28px;
-      margin-top: 6px;
-      background: var(--brand2, #60a5fa);
-      color: #06121f;
       font-weight: 700;
       font-size: 15px;
       cursor: pointer;
+      width: 100%;
+      max-width: 240px;
     }
+    .mini-app-session-revoked-refresh {
+      background: var(--brand2, #60a5fa);
+      color: #06121f;
+    }
+    .mini-app-session-revoked-close {
+      background: transparent;
+      border: 1px solid var(--muted, rgba(255, 255, 255, 0.35));
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+    }
+    .mini-app-session-revoked-refresh:active,
     .mini-app-session-revoked-close:active {
       opacity: 0.88;
     }
@@ -1273,8 +1291,10 @@ function ensureMiniAppSessionRevokedStyles() {
 }
 
 /**
- * Renders the full-screen blocking overlay and attempts `Telegram.WebApp.close()`
- * when the user taps its button — satisfies "show a blocking screen or call
+ * Renders the full-screen blocking overlay with two actions: "Refresh" (reloads
+ * the page, in case this instance is actually still the active one — a race
+ * between the heartbeat and the other tab closing) and "Close" (attempts
+ * `Telegram.WebApp.close()`) — satisfies "show a blocking screen or call
  * Telegram.WebApp.close()" without abruptly closing the app out from under the
  * user before they understand why.
  */
@@ -1291,10 +1311,20 @@ function showMiniAppSessionRevokedScreen() {
       <span class="mini-app-session-revoked-icon" aria-hidden="true"><img src="/images/uydosh-logo.svg" alt="" /></span>
       <h2 class="mini-app-session-revoked-title">${escapeHtml(t('session.revokedTitle', lang))}</h2>
       <p class="mini-app-session-revoked-message">${escapeHtml(t('session.revokedMessage', lang))}</p>
-      <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t('session.revokedClose', lang))}</button>
+      <div class="mini-app-session-revoked-actions">
+        <button type="button" class="mini-app-session-revoked-refresh" data-session-revoked-refresh>${escapeHtml(t('session.revokedRefresh', lang))}</button>
+        <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t('session.revokedClose', lang))}</button>
+      </div>
     </div>
   `;
   document.body.appendChild(overlay);
+  overlay.querySelector('[data-session-revoked-refresh]')?.addEventListener('click', () => {
+    // Covers the case where this instance was revoked stale (e.g. the other
+    // session already ended) — reloading re-runs `startTelegramMiniAppSession`
+    // and drops back into the normal app if this is once again the sole active
+    // instance, instead of forcing the user all the way out via `close()`.
+    window.location.reload();
+  });
   overlay.querySelector('[data-session-revoked-close]')?.addEventListener('click', () => {
     try {
       if (typeof window.Telegram?.WebApp?.close === 'function') {

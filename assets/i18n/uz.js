@@ -13,6 +13,7 @@ I18N.uz = {
     'nav.contact': 'Aloqa',
     'session.revokedTitle': 'Sessiya tugatildi',
     'session.revokedMessage': 'Ilova boshqa oynada yoki qurilmada ochildi. Davom etish uchun uni qayta oching.',
+    'session.revokedRefresh': 'Yangilash',
     'session.revokedClose': 'Yopish',
     'feed.title': 'Yangi e’lonlar',
     'feed.subtitle': 'Haqiqiy uy-joy va xonadoshlar — eng yangisi yuqorida.',

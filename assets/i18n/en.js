@@ -12,6 +12,7 @@ I18N.en = {
     'nav.contact': 'Contact',
     'session.revokedTitle': 'Session ended',
     'session.revokedMessage': 'This app was opened in another window or device. Reopen it to continue.',
+    'session.revokedRefresh': 'Refresh',
     'session.revokedClose': 'Close',
     'feed.title': 'Fresh listings',
     'feed.subtitle': 'Real rentals and roommates — newest first.',

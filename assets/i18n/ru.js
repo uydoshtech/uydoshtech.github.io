@@ -12,6 +12,7 @@ I18N.ru = {
     'nav.contact': 'Контакты',
     'session.revokedTitle': 'Сессия завершена',
     'session.revokedMessage': 'Приложение было открыто в другом окне или на другом устройстве. Откройте его заново, чтобы продолжить.',
+    'session.revokedRefresh': 'Обновить',
     'session.revokedClose': 'Закрыть',
     'feed.title': 'Свежие объявления',
     'feed.subtitle': 'Реальное жильё и соседи — самые новые сверху.',
