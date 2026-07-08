@@ -565,6 +565,7 @@
           listing_type_id: state.filters.listingTypeId,
           gender: state.filters.gender,
           with_photo: state.filters.withPhoto ? 'true' : 'false',
+          has_3d_tour: state.filters.has3dTour ? 'true' : 'false',
           subway_line_id: state.filters.subwayLineId,
         });
       } catch (err) {

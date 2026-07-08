@@ -417,6 +417,16 @@ header {
   flex-shrink: 0;
   margin-left: auto;
 }
+.chip-3d[aria-pressed="true"] {
+  color: var(--fg);
+}
+.chip-3d {
+  color: var(--fg);
+  min-width: 40px;
+  padding: 7px 10px;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
 /* Metro-line ribbon base styles (`.chip-line`, `.metro-m-badge`,
    `.chip-label-collapse` reveal animation, `.chip-line-compact`) live

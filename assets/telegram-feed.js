@@ -476,6 +476,18 @@ function renderFilters() {
     ariaLabel: UyDosh.t('filter.photo.aria', lang),
   });
 
+  // "3D View" mini filter — only surfaced in the full/expanded ribbon (not
+  // the collapsed compact row), matching the mobile app's 3D room-scan
+  // badge/icon (see Room3dIconBadge, Icons.view_in_ar).
+  const threeDPressed = state.filters.has3dTour;
+  const threeDChip = UyDosh.chipButtonHtml({
+    className: 'chip chip-3d',
+    attrs: { 'data-has-3d-tour': true },
+    pressed: threeDPressed,
+    icon: UyDosh.filterThreeDIcon(),
+    ariaLabel: UyDosh.t('filter.threeDTour.aria', lang),
+  });
+
   const currentPeriod = periodOptions.find((opt) => opt.value === state.filters.createdWithinDays) ?? periodOptions[0];
   const periodChip = UyDosh.chipButtonHtml({
     className: 'chip chip-period',
@@ -530,6 +542,7 @@ function renderFilters() {
               <div class="filter-controls">
                 ${genderSwitch}
                 ${photoChip}
+                ${threeDChip}
                 ${periodChip}
               </div>
             </div>
@@ -649,6 +662,16 @@ function renderFilters() {
     btn.addEventListener('click', () => {
       state.filters.withPhoto = !state.filters.withPhoto;
       state.withPhotoExplicit = true;
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+      if (state.view === 'map') feedMap.loadFeedMap();
+    });
+  });
+
+  filtersEl.querySelectorAll('[data-has-3d-tour]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.filters.has3dTour = !state.filters.has3dTour;
       persistFilters();
       logSearchEvent();
       resetAndLoad();
