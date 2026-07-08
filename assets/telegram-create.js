@@ -2350,6 +2350,17 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
   return { stations: nearby, isFallback };
 }
 
+/** Adds `station` to `state.form.selectedStationIds` if it isn't already
+ * there — the shared "only ever add, never remove" primitive behind both
+ * auto-select paths below. */
+function selectStationIfNotSelected(station) {
+  if (!station) return;
+  const id = Number(station.id);
+  if (!state.form.selectedStationIds.includes(id)) {
+    state.form.selectedStationIds = [...state.form.selectedStationIds, id];
+  }
+}
+
 /**
  * Auto-checks every station within `AUTO_SELECT_STATION_WALK_MINUTES` of
  * `(latitude, longitude)` that isn't already selected — called by
@@ -2360,33 +2371,45 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
  * ever adds — never removes a station the author deliberately unchecked —
  * and re-filters out `findNearbyStations`'s single-closest-station
  * fallback so we never force-select a station that isn't actually within
- * range.
+ * range (the fallback case is handled separately by `applyNearbyStations`
+ * itself, since it has no other option to pick from anyway).
  */
 function preselectNearbyStations(latitude, longitude) {
   const { stations } = findNearbyStations(latitude, longitude, AUTO_SELECT_STATION_WALK_MINUTES);
   const withinAutoSelectWalk = stations.filter((entry) => entry.minutes <= AUTO_SELECT_STATION_WALK_MINUTES);
   for (const { station } of withinAutoSelectWalk) {
-    const id = Number(station.id);
-    if (!state.form.selectedStationIds.includes(id)) {
-      state.form.selectedStationIds = [...state.form.selectedStationIds, id];
-    }
+    selectStationIfNotSelected(station);
   }
 }
 
 /** Runs `findNearbyStations` and spreads its result across the three
  * `state.nearbyStations*` fields the panel reads from (see call sites in
- * `bindStepEvents`), auto-selects nearby stations via
- * `preselectNearbyStations` (skippable — see `hydrateFormFromListing`,
- * which only wants the panel seeded for display, not to silently add
- * stations to an existing listing on save), then kicks off
- * `refineNearbyStationWalkTimes` to upgrade the straight-line estimate to
- * real walking-nav minutes. */
+ * `bindStepEvents`), auto-selects nearby stations (skippable — see
+ * `hydrateFormFromListing`, which only wants the panel seeded for display,
+ * not to silently add stations to an existing listing on save), then kicks
+ * off `refineNearbyStationWalkTimes` to upgrade the straight-line estimate
+ * to real walking-nav minutes.
+ *
+ * The fallback case (nothing within the selected radius, so
+ * `findNearbyStations` surfaces just the single closest station overall —
+ * see there) always auto-selects that one station regardless of
+ * `AUTO_SELECT_STATION_WALK_MINUTES`: it's the only option on screen, so
+ * leaving it unchecked would just force a redundant tap. That cutoff only
+ * matters for the ordinary case where several in-range stations are
+ * listed and only the closest ones should default to checked.
+ */
 function applyNearbyStations(latitude, longitude, maxMinutes, { preselect = true } = {}) {
   const { stations, isFallback } = findNearbyStations(latitude, longitude, maxMinutes);
   state.nearbyStations = stations;
   state.nearbyStationsIsFallback = isFallback;
   state.nearbyStationsChecked = true;
-  if (preselect) preselectNearbyStations(latitude, longitude);
+  if (preselect) {
+    if (isFallback) {
+      selectStationIfNotSelected(stations[0]?.station);
+    } else {
+      preselectNearbyStations(latitude, longitude);
+    }
+  }
   refineNearbyStationWalkTimes(latitude, longitude, stations);
 }
 
