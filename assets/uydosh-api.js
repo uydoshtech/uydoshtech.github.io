@@ -141,13 +141,15 @@ let _miniAppSessionRevoked = false;
  * Registers the callback invoked (at most once) when this instance's session
  * is revoked — either by an explicit `session_revoked` socket push or a 409
  * from the heartbeat. See `handleMiniAppSessionRevoked` in uydosh-mini-app.js
- * for the actual blocking-screen UI.
+ * for the actual blocking-screen UI. `details` (when known) describes the
+ * device/session that took over — see `describeTelegramMiniAppDevice`
+ * server-side — as `{ device?: string, startedAt?: string }`.
  */
 function onMiniAppSessionRevoked(handler) {
   _miniAppSessionRevokedHandler = typeof handler === 'function' ? handler : null;
 }
 
-function _triggerMiniAppSessionRevoked(reason) {
+function _triggerMiniAppSessionRevoked(reason, details = null) {
   if (_miniAppSessionRevoked) return;
   _miniAppSessionRevoked = true;
   stopMiniAppHeartbeatLoop();
@@ -155,7 +157,7 @@ function _triggerMiniAppSessionRevoked(reason) {
     try { _miniAppSocket.disconnect(); } catch { /* ignore */ }
     _miniAppSocket = null;
   }
-  _miniAppSessionRevokedHandler?.(reason);
+  _miniAppSessionRevokedHandler?.(reason, details || {});
 }
 
 /** True once this tab's Mini App instance has been superseded by another one. */
@@ -207,7 +209,8 @@ async function connectMiniAppSessionSocket(instanceId) {
       auth: { instanceId },
       reconnection: true,
     });
-    _miniAppSocket.on('session_revoked', () => _triggerMiniAppSessionRevoked('socket'));
+    _miniAppSocket.on('session_revoked', (payload) =>
+      _triggerMiniAppSessionRevoked('socket', payload));
   } catch (err) {
     console.warn('[UyDosh] Mini App realtime connect failed', err);
   }
@@ -247,7 +250,7 @@ async function sendTelegramMiniAppHeartbeat() {
       let payload = null;
       try { payload = await res.json(); } catch { /* ignore */ }
       if (payload?.code === 'SESSION_REVOKED') {
-        _triggerMiniAppSessionRevoked('heartbeat');
+        _triggerMiniAppSessionRevoked('heartbeat', payload);
       }
     }
   } catch (err) {
@@ -267,11 +270,16 @@ async function startTelegramMiniAppSession() {
   const initData = getTelegramInitData();
   if (!initData) return false;
   const instanceId = getOrCreateMiniAppInstanceId();
+  // Telegram's own `platform` (e.g. `ios`, `android`, `tdesktop`, `web`) is a
+  // much more reliable device signal than sniffing the User-Agent, which the
+  // backend also has as a fallback (see describeTelegramMiniAppDevice) — used
+  // to label this session for display if it ever supersedes another instance.
+  const platform = window.Telegram?.WebApp?.platform || undefined;
   try {
     const res = await fetch(`${API_BASE}/app/telegram-mini-app-session/start`, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ init_data: initData, instance_id: instanceId }),
+      body: JSON.stringify({ init_data: initData, instance_id: instanceId, platform }),
     });
     if (!res.ok) return false;
     connectMiniAppSessionSocket(instanceId);

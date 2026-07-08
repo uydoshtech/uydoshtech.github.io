@@ -1052,13 +1052,26 @@
         height: 28px;
         border-radius: 50%;
         background: rgba(127, 127, 127, 0.12);
-        color: var(--brand2);
+        /* Icon is always white — the surrounding circle carries the color
+           instead (grey when off, that station's own metro-line color once
+           toggled on, see `[aria-pressed="true"]` below) — so it stays
+           legible on the translucent grey "off" fill too. */
+        color: #fff;
         flex: 0 0 auto;
         align-self: center;
         margin-left: auto;
         cursor: pointer;
+        transition: background-color 0.15s ease;
       }
       .map-section-row-route-btn:active { opacity: 0.8; }
+      /* On/off toggle state — independent per station (see
+         `bindMetroStationRouteButtons`), not a radio, so any number of these
+         can be pressed at once. `--route-btn-active-color` is set inline per
+         button (from its own `data-color`) so each toggled-on route button
+         matches the color its route is actually drawn in on the map. */
+      .map-section-row-route-btn[aria-pressed="true"] {
+        background: var(--route-btn-active-color, var(--brand2));
+      }
       .map-section-row-route-btn .icon {
         width: 16px;
         height: 16px;

@@ -1287,6 +1287,65 @@
     };
   }
 
+  /**
+   * Tap feedback for a single listing/group pin: a quick "pop" scale bounce on the pin's
+   * own icon element, purely a CSS `transform` animation layered on top of it — never
+   * touches `iconImageSize`/`setObjectOptions`, so it can't race with (or get fought by)
+   * the real icon swap that follows almost immediately after a tap (selecting the pin
+   * resizes/recolors its icon via `refreshMapPinStates`, and some WebViews already need
+   * careful retry handling around that call — see `scheduleForceRefreshFeatureIcons` —
+   * so this deliberately avoids adding more `setObjectOptions` traffic). Safe because
+   * Yandex positions placemark overlays with `left`/`top`, never `transform` (see
+   * `startPinBounceAnimation` above), so a `transform: scale()` on the icon element
+   * itself only ever affects how it *looks*, not where it sits.
+   */
+  const PIN_TAP_BOUNCE_CLASS = 'uydosh-map-pin-tap-bounce';
+  const PIN_TAP_BOUNCE_STYLE_ID = 'uydosh-map-pin-tap-bounce-styles';
+  const PIN_TAP_BOUNCE_DURATION_MS = 380;
+
+  function ensurePinTapBounceStyles() {
+    if (document.getElementById(PIN_TAP_BOUNCE_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = PIN_TAP_BOUNCE_STYLE_ID;
+    style.textContent = `
+      @keyframes uydosh-map-pin-tap-bounce {
+        0% { transform: scale(1); }
+        30% { transform: scale(1.4); }
+        50% { transform: scale(0.86); }
+        70% { transform: scale(1.12); }
+        85% { transform: scale(0.97); }
+        100% { transform: scale(1); }
+      }
+      .${PIN_TAP_BOUNCE_CLASS} {
+        animation: uydosh-map-pin-tap-bounce ${PIN_TAP_BOUNCE_DURATION_MS}ms ease-in-out;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  /** Pulls the raw DOM element a Yandex click event actually landed on, if any. */
+  function domTargetFromMapEvent(event) {
+    try {
+      const target = event?.get?.('domEvent')?.get?.('target');
+      return target instanceof Element ? target : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Restarts cleanly even on rapid re-taps of the same pin (e.g. double-tap). */
+  function playPinTapBounce(event) {
+    const target = domTargetFromMapEvent(event);
+    if (!target) return;
+    ensurePinTapBounceStyles();
+    target.classList.remove(PIN_TAP_BOUNCE_CLASS);
+    void target.offsetWidth;
+    target.classList.add(PIN_TAP_BOUNCE_CLASS);
+    const clearBounceClass = () => target.classList.remove(PIN_TAP_BOUNCE_CLASS);
+    target.addEventListener('animationend', clearBounceClass, { once: true });
+    setTimeout(clearBounceClass, PIN_TAP_BOUNCE_DURATION_MS + 80);
+  }
+
   function createPlacemark(ymaps, pin, { onPinClick, draggable, onDragEnd, standardIcon = false, ...visualOverrides } = {}) {
     // `standardIcon` swaps the app's custom pin bitmap (see `placemarkIconOptions` /
     // `createMapPinIcon` in uydosh-map-pins.js) for Yandex's own default red teardrop
@@ -1317,6 +1376,7 @@
         event?.preventDefault?.();
         event?.stopPropagation?.();
         closeMapBalloon(event.get('target')?.getMap?.());
+        playPinTapBounce(event);
         onPinClick(pin);
       });
     }
@@ -1344,6 +1404,7 @@
         event?.preventDefault?.();
         event?.stopPropagation?.();
         closeMapBalloon(event.get('target')?.getMap?.());
+        playPinTapBounce(event);
         onPinClick(group.pins.length > 1 ? group.pins : group.pins[0]);
       });
     }
@@ -2338,6 +2399,7 @@
     if (group) {
       event?.preventDefault?.();
       event?.stopPropagation?.();
+      playPinTapBounce(event);
       onPinClick(group.pins);
       return;
     }
@@ -2346,6 +2408,7 @@
     if (!pin) return;
     event?.preventDefault?.();
     event?.stopPropagation?.();
+    playPinTapBounce(event);
     onPinClick(pin);
   }
 

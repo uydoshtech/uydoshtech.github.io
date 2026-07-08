@@ -1253,6 +1253,15 @@ function ensureMiniAppSessionRevokedStyles() {
       color: var(--muted, rgba(255, 255, 255, 0.7));
       margin: 0;
     }
+    .mini-app-session-revoked-device {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted, rgba(255, 255, 255, 0.6));
+      background: rgba(127, 127, 127, 0.14);
+      border-radius: 999px;
+      padding: 6px 14px;
+      margin: 0;
+    }
     .mini-app-session-revoked-actions {
       display: flex;
       flex-direction: column;
@@ -1290,6 +1299,15 @@ function ensureMiniAppSessionRevokedStyles() {
   document.head.appendChild(style);
 }
 
+/** Locale-aware "HH:MM" for the new session's start time, matching `formatPublicationDate`'s locale mapping. */
+function formatMiniAppSessionRevokedTime(startedAt, lang) {
+  if (!startedAt) return '';
+  const d = new Date(startedAt);
+  if (Number.isNaN(d.getTime())) return '';
+  const locale = lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-US' : 'uz-UZ';
+  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+}
+
 /**
  * Renders the full-screen blocking overlay with two actions: "Refresh" (reloads
  * the page, in case this instance is actually still the active one — a race
@@ -1297,11 +1315,22 @@ function ensureMiniAppSessionRevokedStyles() {
  * `Telegram.WebApp.close()`) — satisfies "show a blocking screen or call
  * Telegram.WebApp.close()" without abruptly closing the app out from under the
  * user before they understand why.
+ *
+ * `details` (from the `session_revoked` socket payload or the heartbeat's 409
+ * body — see TelegramMiniAppSessionService server-side) optionally carries
+ * `{ device, startedAt }` describing the *new* session that took over, shown
+ * as a small security-style hint (e.g. "New session: iPhone/iPad • 14:32").
  */
-function showMiniAppSessionRevokedScreen() {
+function showMiniAppSessionRevokedScreen(_reason, details = {}) {
   if (document.querySelector('.mini-app-session-revoked-overlay')) return;
   ensureMiniAppSessionRevokedStyles();
   const lang = getLang();
+  const device = typeof details?.device === 'string' ? details.device.trim() : '';
+  const time = formatMiniAppSessionRevokedTime(details?.startedAt, lang);
+  const info = [device, time].filter(Boolean).join(' • ');
+  const deviceLineHtml = info
+    ? `<p class="mini-app-session-revoked-device">${escapeHtml(t('session.revokedDeviceLine', lang).replace('{info}', info))}</p>`
+    : '';
   const overlay = document.createElement('div');
   overlay.className = 'mini-app-session-revoked-overlay';
   overlay.setAttribute('role', 'alertdialog');
@@ -1311,6 +1340,7 @@ function showMiniAppSessionRevokedScreen() {
       <span class="mini-app-session-revoked-icon" aria-hidden="true"><img src="/images/uydosh-logo.svg" alt="" /></span>
       <h2 class="mini-app-session-revoked-title">${escapeHtml(t('session.revokedTitle', lang))}</h2>
       <p class="mini-app-session-revoked-message">${escapeHtml(t('session.revokedMessage', lang))}</p>
+      ${deviceLineHtml}
       <div class="mini-app-session-revoked-actions">
         <button type="button" class="mini-app-session-revoked-refresh" data-session-revoked-refresh>${escapeHtml(t('session.revokedRefresh', lang))}</button>
         <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t('session.revokedClose', lang))}</button>

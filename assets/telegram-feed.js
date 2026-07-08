@@ -15,6 +15,18 @@ const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
+// Feed scroll restoration: the Mini App's Telegram header BackButton always
+// does a hard `location.href` navigation (no SPA history, no bfcache), so
+// returning from a listing's detail page would otherwise cold-start the feed
+// back at page 1 / scrollY 0 — see `saveFeedScrollState()` (set on card tap)
+// and `restoreFeedScrollOrLoad()` (consumed once on the next feed load).
+// Mirrors the equivalent fix in uydosh_client's ListingsBloc.
+const FEED_SCROLL_STATE_KEY = 'uydosh_tg_feed_scroll_state';
+const FEED_SCROLL_STATE_MAX_AGE_MS = 30 * 60 * 1000;
+// Sanity cap on how many pages a single restore will re-fetch, in case of a
+// pathologically long-lived session — 30 pages is far beyond any real scroll
+// depth and keeps a worst case from firing dozens of requests.
+const FEED_SCROLL_RESTORE_MAX_PAGES = 30;
 // Scrolling down this far auto-collapses the filters — and skips straight
 // to the folded, chevron-only state (see `.filters--folded`) instead of
 // pausing at the compact icon ribbon in between, so listings underneath
@@ -293,6 +305,53 @@ const state = {
 // stored filter from a previous session, and the choice is persisted going forward.
 if (urlListingTypeId != null) {
   persistFilters();
+}
+
+function feedFiltersSignature() {
+  return JSON.stringify(state.filters);
+}
+
+/** Called right before navigating to a listing's detail page (see the `gridEl` click handler below). */
+function saveFeedScrollState() {
+  try {
+    sessionStorage.setItem(
+      FEED_SCROLL_STATE_KEY,
+      JSON.stringify({
+        page: state.page,
+        scrollY: window.scrollY,
+        filters: feedFiltersSignature(),
+        ts: Date.now(),
+      }),
+    );
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+/** Consumes (clears) any saved scroll state — one-shot, so a later unrelated feed visit doesn't reapply a stale position. */
+function takeFeedScrollState() {
+  let saved = null;
+  try {
+    const raw = sessionStorage.getItem(FEED_SCROLL_STATE_KEY);
+    sessionStorage.removeItem(FEED_SCROLL_STATE_KEY);
+    if (raw) saved = JSON.parse(raw);
+  } catch {
+    saved = null;
+  }
+  if (!saved || typeof saved.page !== 'number' || saved.page < 1) return null;
+  if (Date.now() - Number(saved.ts) > FEED_SCROLL_STATE_MAX_AGE_MS) return null;
+  // Filters changed since the tap (e.g. via a stale/shared link) — the saved
+  // page depth no longer corresponds to what this filter set would return.
+  if (saved.filters !== feedFiltersSignature()) return null;
+  return saved;
+}
+
+function clearFeedScrollState() {
+  try {
+    sessionStorage.removeItem(FEED_SCROLL_STATE_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 /** Feedback for map interactions that aren't a plain DOM button/link tap (e.g. a native map-pin tap) — see `onHaptic` above. */
@@ -752,6 +811,7 @@ let loadGeneration = 0;
 
 function resetAndLoad({ skipFiltersRender = false } = {}) {
   loadGeneration += 1;
+  clearFeedScrollState();
   state.page = 0;
   state.totalPages = 1;
   state.items = [];
@@ -1045,6 +1105,44 @@ async function loadMore() {
   }
 }
 
+/**
+ * Re-fetches every page the user had already reached before tapping into a
+ * listing, then jumps back to their saved scroll offset — instead of the
+ * plain `loadMore()` cold start, which would only bring back page 1 and
+ * leave the grid too short for the old scroll offset to mean anything.
+ */
+async function restoreFeedScrollOrLoad() {
+  const saved = takeFeedScrollState();
+  if (!saved) {
+    loadMore();
+    return;
+  }
+  const targetPage = Math.min(saved.page, FEED_SCROLL_RESTORE_MAX_PAGES);
+  for (let i = 0; i < targetPage; i += 1) {
+    // Sequential and awaited: loadMore() reads/writes shared `state.page`,
+    // so pages must resolve and apply in order, one at a time.
+    // eslint-disable-next-line no-await-in-loop
+    await loadMore();
+    if (state.reachedEnd || state.errored) break;
+  }
+  const restoreY = Number(saved.scrollY);
+  if (!Number.isFinite(restoreY) || restoreY <= 0) return;
+  // Lazy-loaded photos can still shift layout after the first paint, so the
+  // jump is reasserted a couple of times rather than trusting a single shot.
+  const jump = () => {
+    window.scrollTo(0, restoreY);
+    // Keep the filter-collapse anchor and scroll-top button in sync with the
+    // jump instead of the stale scrollY=0 they were set up with at page load.
+    resetFiltersScrollAnchor(restoreY);
+    updateScrollTopButton();
+  };
+  requestAnimationFrame(() => {
+    jump();
+    requestAnimationFrame(jump);
+  });
+  setTimeout(jump, 350);
+}
+
 if ('IntersectionObserver' in window) {
   const scrollObserver = new IntersectionObserver(
     (entries) => {
@@ -1078,9 +1176,12 @@ document.addEventListener('uydosh:langchange', () => {
 });
 
 gridEl.addEventListener('click', (event) => {
-  if (!UyDosh.isMiniApp()) return;
   const card = event.target.closest('a.card');
   if (!card) return;
+  // Saved unconditionally (not just in the Mini App) so returning via the
+  // browser's own Back button benefits too, in case bfcache doesn't kick in.
+  saveFeedScrollState();
+  if (!UyDosh.isMiniApp()) return;
   const href = card.getAttribute('href') || '';
   const match = href.match(/[?&]id=(\d+)/);
   if (match) {
@@ -1106,7 +1207,7 @@ window.addEventListener('pageshow', () => {
 });
 requestAnimationFrame(() => resetFiltersScrollAnchor());
 updateScrollTopButton();
-loadMore();
+restoreFeedScrollOrLoad();
 // Best-effort "add your university" nudge — never blocks the feed itself.
 UyDosh.maybeShowProfileNudge?.();
 

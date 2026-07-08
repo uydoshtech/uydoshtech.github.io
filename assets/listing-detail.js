@@ -154,6 +154,11 @@
         // in-flight Router lookup from a previous mount can't clobber a
         // newer one — see there for why this only ever runs once per mount.
         metroWalkRefineToken: 0,
+        // Station ids whose "draw route" button (see
+        // `bindMetroStationRouteButtons`) is currently toggled on — each one
+        // gets its own route drawn simultaneously (see `setPinGuideLines`),
+        // unlike a radio group where picking one clears the rest.
+        activeMetroStationRouteIds: new Set(),
         // `render()` re-runs on language change, so this guards against
         // recording the same page visit as multiple views.
         viewRecorded: false,
@@ -1221,10 +1226,14 @@
           )}</span></span>` : '';
         const stationLat = Number(station.latitude);
         const stationLon = Number(station.longitude);
-        const routeBtn = Number.isFinite(stationLat) && Number.isFinite(stationLon)
-          ? `<span class="map-section-row-route-btn" data-station-route data-lat="${stationLat}" data-lon="${stationLon}" data-color="${UyDosh.escapeHtml(UyDosh.metroLineColor(line) || '')}" role="button" tabindex="0" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.showRouteToStation'))}">${UyDosh.iconRoute()}</span>`
-          : '';
         const stationId = Number(station.id);
+        // `data-station-id` is duplicated here (also on the row div below) so
+        // `bindMetroStationRouteButtons` can key its on/off toggle Set off the
+        // button itself without needing to walk up to the parent row.
+        const stationIdAttr = Number.isFinite(stationId) ? ` data-station-id="${stationId}"` : '';
+        const routeBtn = Number.isFinite(stationLat) && Number.isFinite(stationLon)
+          ? `<span class="map-section-row-route-btn" data-station-route${stationIdAttr} data-lat="${stationLat}" data-lon="${stationLon}" data-color="${UyDosh.escapeHtml(UyDosh.metroLineColor(line) || '')}" role="button" tabindex="0" aria-pressed="false" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.showRouteToStation'))}">${UyDosh.iconRoute()}</span>`
+          : '';
         const idAttr = Number.isFinite(stationId) ? ` data-station-id="${stationId}"` : '';
         return `<div class="map-section-row map-section-row-metro"${idAttr}>${UyDosh.iconMetro(line)}<span class="map-section-row-metro-text"><span class="map-section-row-label">${UyDosh.escapeHtml(name)}</span>${walkHtml}</span>${routeBtn}</div>`;
       }
@@ -1464,12 +1473,14 @@
       /**
        * Draws a pedestrian route from the listing's pin to its closest
        * tagged metro station (see `nearestMetroStation`) as soon as the map
-       * finishes mounting — same `setPinGuideLines` call as a per-station
-       * "draw route" button tap (see `bindMetroStationRouteButtons`), just
-       * fired automatically instead of waiting for one. No-ops when the
-       * listing has no station with usable coordinates. A later manual tap
-       * on a different station's route button still fully replaces this
-       * line (see `setPinGuideLines`'s docstring).
+       * finishes mounting — same `setPinGuideLines` call a per-station
+       * "draw route" button tap makes (see `bindMetroStationRouteButtons`),
+       * just fired automatically instead of waiting for one. No-ops when the
+       * listing has no station with usable coordinates. Toggling that
+       * station's own button off afterwards removes this line same as any
+       * other; toggling a *different* station's button on adds its route
+       * alongside this one instead of replacing it (see
+       * `activeMetroStationRouteIds`).
        */
       function drawNearestMetroStationRoute(mapModule, container, listing) {
         const station = nearestMetroStation(listing);
@@ -1477,6 +1488,14 @@
         const longitude = Number(station?.longitude);
         if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
         const line = Number(station.line) || UyDosh.resolveMetroLine(listing);
+        const stationId = Number(station.id);
+        if (Number.isFinite(stationId)) {
+          state.activeMetroStationRouteIds.add(stationId);
+          setMetroRouteButtonPressed(
+            rootEl.querySelector(`.map-section-row-route-btn[data-station-id="${stationId}"]`),
+            true,
+          );
+        }
         mapModule.setPinGuideLines(container, [
           { latitude, longitude, color: UyDosh.metroLineColor(line) || undefined },
         ]);
@@ -1547,31 +1566,104 @@
       }
 
       /**
+       * Flips a single "draw route" button's on/off visuals — `aria-pressed`
+       * (styled in listing-detail.css off `[aria-pressed="true"]`), its
+       * a11y label, and a `--route-btn-active-color` custom property so the
+       * filled "on" background matches that station's own metro-line color
+       * (see `data-color`, same color the route itself is drawn in) instead
+       * of one flat accent for every line. No-ops on a `null`/missing
+       * element so callers (e.g. `drawNearestMetroStationRoute`) can pass a
+       * `querySelector` result straight through.
+       */
+      function setMetroRouteButtonPressed(btn, pressed) {
+        if (!btn) return;
+        btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+        btn.setAttribute(
+          'aria-label',
+          UyDosh.t(pressed ? 'detail.hideRouteToStation' : 'detail.showRouteToStation'),
+        );
+        if (pressed && btn.dataset.color) {
+          btn.style.setProperty('--route-btn-active-color', btn.dataset.color);
+        } else {
+          btn.style.removeProperty('--route-btn-active-color');
+        }
+      }
+
+      /**
+       * Every currently-toggled-on station's route, read back off the
+       * buttons themselves (rather than kept as a separate lat/lon list) so
+       * `activeMetroStationRouteIds` only ever has to track ids — this stays
+       * the single source of truth for what `setPinGuideLines` should be
+       * showing right now, whether that's after a button tap or a fresh
+       * `bindMetroStationRouteButtons` call following a full re-render.
+       */
+      function activeMetroRouteLines() {
+        const summary = rootEl.querySelector('.map-section-summary');
+        if (!summary) return [];
+        const lines = [];
+        for (const btn of summary.querySelectorAll('[data-station-route]')) {
+          const stationId = Number(btn.dataset.stationId);
+          if (!Number.isFinite(stationId) || !state.activeMetroStationRouteIds.has(stationId)) continue;
+          const latitude = Number(btn.dataset.lat);
+          const longitude = Number(btn.dataset.lon);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+          lines.push({ latitude, longitude, color: btn.dataset.color || undefined });
+        }
+        return lines;
+      }
+
+      /**
        * Delegated click/keyboard handler for every metro row's
        * `[data-station-route]` pseudo-button (see `buildMetroStationRowHtml`)
        * — attached to `.map-section-summary`, a descendant of (but distinct
        * element from) the outer `.map-section-toggle` `<button>`, so calling
        * `stopPropagation()` here keeps a route-button tap from also
        * triggering the (now always-expanded, see `bindMapSection`) accordion
-       * toggle. Ensures the map is mounted (`expandMapSection`) and scrolled
-       * into view before asking it to draw a pedestrian route from the
-       * listing's pin to that station.
+       * toggle.
+       *
+       * Each button is an independent on/off toggle rather than a radio —
+       * tapping one adds/removes just its own station from
+       * `activeMetroStationRouteIds` and re-passes the *whole* resulting set
+       * to `setPinGuideLines`, which redraws every active route together and
+       * re-fits the camera around all of them plus the pin at once (see its
+       * docstring in yandex-map.js). Also (re-)syncs every button's pressed
+       * visual from that same set on (re-)bind, so a full re-render (e.g.
+       * language switch) doesn't leave a stale "off" look on a route that's
+       * actually still drawn.
        */
       function bindMetroStationRouteButtons() {
         const summary = rootEl.querySelector('.map-section-summary');
         if (!summary) return;
 
+        for (const btn of summary.querySelectorAll('[data-station-route]')) {
+          const stationId = Number(btn.dataset.stationId);
+          setMetroRouteButtonPressed(btn, Number.isFinite(stationId) && state.activeMetroStationRouteIds.has(stationId));
+        }
+
         const activate = async (btn) => {
           const latitude = Number(btn.dataset.lat);
           const longitude = Number(btn.dataset.lon);
           if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-          const color = btn.dataset.color || undefined;
+          const stationId = Number(btn.dataset.stationId);
+          const turningOn = !Number.isFinite(stationId) || !state.activeMetroStationRouteIds.has(stationId);
           try {
             scrollMapIntoViewIfNeeded();
             await expandMapSection();
             const mapModule = await UyDosh.loadYandexMapModule();
             const mapContainer = rootEl.querySelector('#listing-map');
-            mapModule.setPinGuideLines(mapContainer, [{ latitude, longitude, color }]);
+            if (Number.isFinite(stationId)) {
+              if (turningOn) state.activeMetroStationRouteIds.add(stationId);
+              else state.activeMetroStationRouteIds.delete(stationId);
+              setMetroRouteButtonPressed(btn, turningOn);
+              mapModule.setPinGuideLines(mapContainer, activeMetroRouteLines());
+            } else {
+              // No station id to toggle off of later — fall back to a single
+              // always-on route, same as before per-station toggling existed.
+              setMetroRouteButtonPressed(btn, true);
+              mapModule.setPinGuideLines(mapContainer, [
+                { latitude, longitude, color: btn.dataset.color || undefined },
+              ]);
+            }
           } catch (err) {
             console.error('Failed to draw route to metro station', err);
           }
