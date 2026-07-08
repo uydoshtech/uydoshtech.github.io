@@ -562,6 +562,23 @@
       .roomscan-fullscreen-btn:active { opacity: 0.85; }
       .roomscan-fullscreen-btn svg { width: 18px; height: 18px; display: block; }
       .roomscan-fullscreen-btn svg * { stroke: currentColor; fill: none; }
+      /* Cycles full room → walls only → floor + furniture, mirroring the mobile app's native
+         3D viewer mode button (see RoomUsdzViewerViewController.swift). Mirrored to the opposite
+         (bottom-left) corner from the fullscreen/close button in both the inline preview and the
+         fullscreen backdrop, so the two never overlap. */
+      .roomscan-mode-btn {
+        position: absolute; bottom: 10px; left: 10px; z-index: 1;
+        appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
+        width: 34px; height: 34px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      }
+      .roomscan-mode-btn:active { opacity: 0.85; }
+      .roomscan-mode-btn svg { width: 18px; height: 18px; display: block; }
+      .roomscan-mode-btn svg * { stroke: currentColor; fill: none; }
+      .roomscan-backdrop .roomscan-mode-btn {
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 14px;
+        width: 36px; height: 36px; background: rgba(0, 0, 0, 0.55);
+      }
       .roomscan-status {
         position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
         padding: 12px; text-align: center; color: #f59e0b; font-weight: 700; font-size: 13px;

@@ -1628,6 +1628,130 @@
         </svg>`;
       }
 
+      // --- 3D room scan display mode (full room / walls only / floor + furniture) --------
+      // Mirrors the native app's cycling mode button (see DisplayMode in
+      // RoomUsdzViewerViewController.swift): tapping this button advances
+      // full room → walls only → floor + furniture → full room, swapping its
+      // icon each time. Since <model-viewer> doesn't expose raw per-node
+      // visibility, meshes are "hidden" by driving their material to fully
+      // transparent via the Scene Graph API (https://modelviewer.dev/examples/scenegraph/)
+      // — classified the same way the backend names them when it converts a
+      // RoomPlan USDZ scan to GLB (see uydosh_backend's
+      // applyRoomScanStylizedMaterials.ts: `Wall0_color`, `Floor0_color`,
+      // `Chair0_color`, ...).
+      const ROOM_SCAN_MODE_SEQUENCE = ['fullRoom', 'wallsOnly', 'furnitureOnly'];
+
+      function nextRoomScanMode(mode) {
+        const idx = ROOM_SCAN_MODE_SEQUENCE.indexOf(mode);
+        return ROOM_SCAN_MODE_SEQUENCE[(idx + 1) % ROOM_SCAN_MODE_SEQUENCE.length];
+      }
+
+      function roomScanModeIconHtml(mode) {
+        if (mode === 'wallsOnly') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19V7l6-3v15"></path>
+            <path d="M10 4l10 3v12"></path>
+            <path d="M4 19h16"></path>
+          </svg>`;
+        }
+        if (mode === 'furnitureOnly') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 18v-4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"></path>
+            <path d="M4 18v2M20 18v2"></path>
+            <path d="M6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"></path>
+          </svg>`;
+        }
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 10.5 12 4l8 6.5"></path>
+          <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5"></path>
+        </svg>`;
+      }
+
+      function roomScanModeLabelKey(mode) {
+        if (mode === 'wallsOnly') return 'detail.roomScanModeWallsOnly';
+        if (mode === 'furnitureOnly') return 'detail.roomScanModeFurnitureOnly';
+        return 'detail.roomScanModeFullRoom';
+      }
+
+      /** Wall/ceiling/door/window/opening → 'wall' (hidden in furnitureOnly); floor → always
+       * shown; everything else (furniture) → hidden in wallsOnly. Mirrors
+       * shouldHideWallLikeSurface()/isOnFloorObject() on iOS. */
+      function classifyRoomScanMaterialName(name) {
+        const n = (name || '').toLowerCase();
+        if (!n) return 'other';
+        if (
+          n.startsWith('wall') || n.includes('ceiling') ||
+          n.includes('door') || n.includes('window') || n.includes('opening')
+        ) {
+          return 'wall';
+        }
+        if (n.startsWith('floor') || n.includes('ground')) return 'floor';
+        return 'furniture';
+      }
+
+      /** Fully hides/shows a Scene Graph material by driving its base color alpha to 0/1 —
+       * <model-viewer> has no direct per-mesh visibility toggle, so this is the standard
+       * workaround (https://modelviewer.dev/examples/scenegraph/). Caches the material's
+       * original alpha mode + color the first time it's hidden so showing it again restores
+       * exactly what it looked like (textured or flat-colored materials alike). */
+      function setRoomScanMaterialHidden(material, hidden) {
+        try {
+          const pbr = material.pbrMetallicRoughness;
+          if (!pbr) return;
+          if (hidden) {
+            if (!material.__uydoshOriginalColor) {
+              material.__uydoshOriginalColor = pbr.baseColorFactor.slice();
+              material.__uydoshOriginalAlphaMode = material.getAlphaMode();
+            }
+            const base = material.__uydoshOriginalColor;
+            material.setAlphaMode('BLEND');
+            pbr.setBaseColorFactor([base[0], base[1], base[2], 0]);
+          } else if (material.__uydoshOriginalColor) {
+            pbr.setBaseColorFactor(material.__uydoshOriginalColor);
+            material.setAlphaMode(material.__uydoshOriginalAlphaMode || 'OPAQUE');
+          }
+        } catch (err) {
+          // Scene Graph API unavailable/model not loaded yet — the mode button still
+          // works, it just won't visually apply until the next successful call.
+        }
+      }
+
+      /** Applies `mode` to every material on the already-loaded model. Safe to call before
+       * the model has finished loading (silently does nothing). */
+      function applyRoomScanDisplayMode(viewerEl, mode) {
+        const model = viewerEl && viewerEl.model;
+        if (!model || !Array.isArray(model.materials)) return;
+        model.materials.forEach((material) => {
+          const kind = classifyRoomScanMaterialName(material.name);
+          let hidden = false;
+          if (mode === 'wallsOnly') hidden = kind === 'furniture';
+          else if (mode === 'furnitureOnly') hidden = kind === 'wall';
+          setRoomScanMaterialHidden(material, hidden);
+        });
+      }
+
+      /** Creates the mode-cycling button and wires it to `viewerEl`. Re-applies the current
+       * mode once the model finishes loading, covering clicks that land before then. */
+      function createRoomScanModeButton(viewerEl) {
+        let mode = 'fullRoom';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roomscan-mode-btn';
+        const updateAppearance = () => {
+          btn.innerHTML = roomScanModeIconHtml(mode);
+          btn.setAttribute('aria-label', UyDosh.t(roomScanModeLabelKey(mode)));
+        };
+        updateAppearance();
+        btn.addEventListener('click', () => {
+          mode = nextRoomScanMode(mode);
+          updateAppearance();
+          UyDosh.haptic?.light?.();
+          applyRoomScanDisplayMode(viewerEl, mode);
+        });
+        viewerEl.addEventListener('load', () => applyRoomScanDisplayMode(viewerEl, mode));
+        return btn;
+      }
+
       function roomScanMetaRowHtml(icon, text) {
         return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
       }
@@ -1725,6 +1849,7 @@
           fullscreenBtn.innerHTML = roomScanFullscreenIconHtml();
           fullscreenBtn.addEventListener('click', () => openRoomScanFullscreen(glbUrl, usdzUrl));
           container.appendChild(fullscreenBtn);
+          container.appendChild(createRoomScanModeButton(viewer));
         } catch (err) {
           console.error('Failed to load 3D room scan viewer', err);
           showRoomScanLoadError(container);
@@ -1803,6 +1928,7 @@
           }, { once: true });
           statusEl.hidden = true;
           roomScanBackdropEl.appendChild(viewer);
+          roomScanBackdropEl.appendChild(createRoomScanModeButton(viewer));
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
