@@ -116,6 +116,22 @@ function listingTypeBadgeIcon(listing, { pressed = false } = {}) {
   return filterListingTypeIcon(listingTypeId, { pressed });
 }
 
+/** True when a listing has a room scan available in any form the client can
+ * render (Convert3D's GLB conversion, or the raw USDZ point cloud — mirrors
+ * the mobile tile's [Room3dIconBadge] visibility check). */
+function listingHas3dTour(listing) {
+  return Boolean(listing?.room_scan_glb_url) || Boolean(listing?.point_cloud_url);
+}
+
+/** Compact corner badge marking a listing with a 3D room scan on feed cards
+ * — reuses the isometric cube glyph shared with the detail page's room scan
+ * toggle (mirrors mobile's Room3dIconBadge / Icons.view_in_ar). */
+function threeDTourBadgeHtml(listing, lang = getLang()) {
+  if (!listingHas3dTour(listing)) return '';
+  const label = t('card.threeDTour.aria', lang);
+  return `<div class="threed-badge" role="img" aria-label="${escapeHtml(label)}">${iconCube()}</div>`;
+}
+
 function filterGenderIcon(gender, { pressed = false } = {}) {
   const value = Number(gender);
   if (!value) return '';
@@ -284,6 +300,8 @@ Object.assign(window.UyDosh, {
   listingTypeBadgeIcon,
   filterListingTypeIcon,
   filterGenderIcon,
+  listingHas3dTour,
+  threeDTourBadgeHtml,
   formatDate,
   getAmenityCode,
   sortAmenities,

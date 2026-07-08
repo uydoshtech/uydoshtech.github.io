@@ -675,6 +675,13 @@ function filterPhotoIcon({ pressed = false } = {}) {
   return iconCamera(color);
 }
 
+/** "3D View" filter chip icon — same isometric cube glyph used for the room
+ * scan toggle on the listing detail page, matching the mobile app's
+ * Icons.view_in_ar 3D badge (see Room3dIconBadge). */
+function filterThreeDIcon() {
+  return iconCube();
+}
+
 /** Checked/unchecked checkbox glyphs, matching mobile's
  * Icons.check_box / Icons.check_box_outline_blank used by
  * MultiStationPicker / MultiLocationPicker. */
@@ -762,6 +769,7 @@ Object.assign(window.UyDosh, {
   iconKebab,
   iconCamera,
   filterPhotoIcon,
+  filterThreeDIcon,
   iconCheckboxPair,
   iconArticle,
   iconSparkles,

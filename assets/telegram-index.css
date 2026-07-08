@@ -882,6 +882,34 @@ header {
 .featured-badge + .type-badge {
   top: 36px;
 }
+/* 3D room-scan badge — sits in the thumb's one unclaimed corner (top-left
+   is featured/type, bottom-center is the photo-count dots). Matches the
+   mobile app's Room3dIconBadge glyph (isometric cube). */
+.threed-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(8, 10, 14, 0.6);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.threed-badge svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+.threed-badge svg * {
+  stroke: currentColor;
+  fill: none;
+}
 .card .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 .card .title-row {
   display: flex;

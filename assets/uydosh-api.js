@@ -1072,11 +1072,12 @@ async function resizeImageFileForUpload(file, {
   return dataUrl;
 }
 
-function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, subwayLineId, locationId, createdWithinDays } = {}) {
+function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
+  if (has3dTour != null) params.has3dTour = String(has3dTour);
   if (subwayLineId) params.subwayLineId = subwayLineId;
   if (locationId) params.locationId = locationId;
   if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
@@ -1119,11 +1120,12 @@ function recordListingView(listingId) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/record-view`, { method: 'POST' });
 }
 
-function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, subwayLineId, locationId, createdWithinDays } = {}) {
+function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
+  if (has3dTour != null) params.has3dTour = String(has3dTour);
   if (subwayLineId) params.subwayLineId = subwayLineId;
   if (locationId) params.locationId = locationId;
   if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;

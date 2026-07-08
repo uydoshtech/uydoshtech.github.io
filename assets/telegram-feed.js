@@ -7,6 +7,7 @@ const PAGE_SIZE = 10;
 // <script> top-level `const` lives in a shared lexical scope and a second `const`
 // with the same name throws a SyntaxError that aborts this entire script.
 const DEFAULT_WITH_PHOTO = false;
+const DEFAULT_HAS_3D_TOUR = false;
 // Default period filter value; kept in sync with uydosh_client's
 // listingBrowseCreatedWithinDays so first-load behavior matches the app.
 const PERIOD_DEFAULT_DAYS = 30;
@@ -220,6 +221,7 @@ function readStoredFilters() {
           ? parsed.withPhoto === true
           : DEFAULT_WITH_PHOTO,
       withPhotoExplicit: parsed.withPhotoExplicit === true,
+      has3dTour: parsed.has3dTour === true,
       subwayLineId: Number(parsed.subwayLineId) || METRO_LINE_ANY,
       locationId: Number(parsed.locationId) || DISTRICT_ANY,
       createdWithinDays: PERIOD_OPTION_VALUES.includes(Number(parsed.createdWithinDays))
@@ -240,6 +242,7 @@ function persistFilters() {
         gender: state.filters.gender,
         withPhoto: state.filters.withPhoto,
         withPhotoExplicit: state.withPhotoExplicit,
+        has3dTour: state.filters.has3dTour,
         subwayLineId: state.filters.subwayLineId,
         locationId: state.filters.locationId,
         createdWithinDays: state.filters.createdWithinDays,
@@ -263,6 +266,7 @@ const state = {
     listingTypeId: urlListingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
     gender: storedFilters?.gender ?? GENDER_ANY,
     withPhoto: storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
+    has3dTour: storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
     subwayLineId: storedFilters?.subwayLineId ?? METRO_LINE_ANY,
     locationId: storedFilters?.locationId ?? DISTRICT_ANY,
     createdWithinDays: storedFilters?.createdWithinDays ?? PERIOD_DEFAULT_DAYS,
@@ -310,6 +314,10 @@ function withPhotoQueryParam() {
   return state.filters.withPhoto ? true : undefined;
 }
 
+function has3dTourQueryParam() {
+  return state.filters.has3dTour ? true : undefined;
+}
+
 function subwayLineQueryParam() {
   const id = state.filters.subwayLineId;
   return id > 0 ? id : undefined;
@@ -330,6 +338,7 @@ function logSearchEvent() {
     listing_type_id: state.filters.listingTypeId,
     gender: state.filters.gender,
     with_photo: state.filters.withPhoto ? 'true' : 'false',
+    has_3d_tour: state.filters.has3dTour ? 'true' : 'false',
     subway_line_id: state.filters.subwayLineId,
     location_id: state.filters.locationId,
     created_within_days: state.filters.createdWithinDays,
@@ -353,6 +362,7 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
     listingTypeId: listingTypeQueryParam(),
     gender: genderQueryParam(),
     withPhoto: withPhotoQueryParam(),
+    has3dTour: has3dTourQueryParam(),
     subwayLineId: subwayLineQueryParam(),
     locationId: locationQueryParam(),
     createdWithinDays: createdWithinDaysQueryParam(),
@@ -768,12 +778,15 @@ function listingCardHtml(listing) {
       </div></div>`
     : '';
   const photoDots = UyDosh.cardPhotoDotsHtml(listing);
+  // Top-right is the only unclaimed thumb corner: top-left already carries
+  // featured/type badges and bottom-center carries the photo-count dots.
+  const threeDBadge = UyDosh.threeDTourBadgeHtml(listing, lang);
   const placeholderSrc = !photoSrc ? UyDosh.noPhotoPlaceholderImageUrl(listing) : '';
   const thumb = photoSrc
-    ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${featured}${typeBadge}${photoDots}</div>`
+    ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${featured}${typeBadge}${threeDBadge}${photoDots}</div>`
     : placeholderSrc
-      ? `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="${title}" />${featured}${typeBadge}</div>`
-      : `<div class="thumb empty">${featured}${typeBadge}</div>`;
+      ? `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="${title}" />${featured}${typeBadge}${threeDBadge}</div>`
+      : `<div class="thumb empty">${featured}${typeBadge}${threeDBadge}</div>`;
 
   return `
     <a class="card" href="${UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id))}">
@@ -956,6 +969,7 @@ async function loadMore() {
       listingTypeId: listingTypeQueryParam(),
       gender: genderQueryParam(),
       withPhoto: withPhotoQueryParam(),
+      has3dTour: has3dTourQueryParam(),
       subwayLineId: subwayLineQueryParam(),
       locationId: locationQueryParam(),
       createdWithinDays: createdWithinDaysQueryParam(),
