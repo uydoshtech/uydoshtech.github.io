@@ -106,18 +106,29 @@
         return [greeting, factLines.join('\n'), `🔗 ${link}`].join('\n\n');
       }
 
+      // `?preview=map` swaps the shared link's Open Graph image for a static
+      // map of the listing's location instead of a photo — paired with the
+      // real photos already going out as attachments (see `shareListingLink`),
+      // so the link preview adds new information instead of repeating one.
+      function buildListingPhotoShareUrl(id) {
+        return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}?preview=map`;
+      }
+
       function bindShareButton(l) {
         const btn = rootEl.querySelector('[data-share-listing]');
         if (!btn) return;
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const lang = UyDosh.getLang();
           const url = buildListingShareUrl(l.id);
           const text = buildListingShareText(l, lang);
-          UyDosh.shareListingLink(url, text);
+          const photoUrls = sortedPhotos(l).map((p) => UyDosh.photoUrl(p)).filter(Boolean);
+          const photoShareUrl = buildListingPhotoShareUrl(l.id);
+          const method = await UyDosh.shareListingLink(url, text, photoUrls, photoShareUrl);
           if (UyDosh.isMiniApp()) {
             UyDosh.logMiniAppEvent('listing_share_tapped', {
               listing_id: Number(l.id),
               source: 'telegram_mini_app',
+              share_method: method || 'unknown',
             });
           }
         });

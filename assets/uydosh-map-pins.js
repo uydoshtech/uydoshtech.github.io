@@ -821,28 +821,112 @@ function iconFlag() {
 }
 
 /**
- * Open Telegram's native share/forward dialog for a URL + caption. Falls
+ * Fetches up to `limit` listing photo URLs as `File` blobs for `navigator.share`.
+ * Cross-origin fetch works because the API enables CORS globally. Each photo
+ * gets its own timeout so one slow/broken image can't hang the whole share
+ * flow — it's just dropped from the result instead of failing everything.
+ */
+async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 } = {}) {
+  const urls = Array.isArray(photoUrls) ? photoUrls.filter(Boolean).slice(0, limit) : [];
+  if (urls.length === 0) return [];
+
+  const files = await Promise.all(
+    urls.map(async (photoUrl, index) => {
+      const controller = typeof AbortController === 'function' ? new AbortController() : null;
+      const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+      try {
+        const response = await fetch(photoUrl, { signal: controller?.signal });
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        if (!blob || blob.size === 0) return null;
+        const type = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+        const ext = type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg';
+        return new File([blob], `uydosh-listing-photo-${index + 1}.${ext}`, { type });
+      } catch {
+        return null;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }),
+  );
+  return files.filter(Boolean);
+}
+
+/**
+ * Opens Telegram's native share/forward dialog for a URL + caption. Falls
  * back to the OS share sheet (regular browser visits to this page outside
  * the Mini App) or a plain window.open of the t.me share link.
+ *
+ * When `photoUrls` is given and we're inside the Mini App on a native
+ * Telegram client (iOS/Android/Desktop — not Telegram Web, which sandboxes
+ * the webview and blocks the Web Share API), this first tries
+ * `navigator.share` with the listing's real photos attached as files —
+ * Telegram then posts them as real photo attachments plus the caption/link
+ * as its own message, the same as sharing from any other native app. Any
+ * failure along that path (unsupported, fetch failed, permission denied)
+ * silently falls through to the plain link share below, so this is purely
+ * additive and a tap never comes up empty.
+ *
+ * `url` (used by every fallback path below) is deliberately left as-is —
+ * inside the Mini App that's a `t.me/<bot>?startapp=...` deep link, which
+ * Telegram always renders as its own generic "Open App" bot card, never a
+ * per-listing preview (t.me links aren't crawled for Open Graph tags). The
+ * photo-attach path needs an actual per-listing preview instead (the point
+ * of attaching photos is to *add* the map, not repeat the same generic
+ * card), so it takes a separate `photoShareUrl` — an `https://.../listing/id`
+ * link Telegram *will* unfurl via our Open Graph tags — and falls back to
+ * `url` only if that wasn't supplied.
+ *
+ * Returns a string describing what happened (`'photos'`, `'link'`,
+ * `'cancelled'`) or `false` if there was no URL to share, so callers can
+ * log which path was actually used.
  */
-function shareListingLink(url, text) {
+async function shareListingLink(url, text, photoUrls, photoShareUrl) {
   if (!url) return false;
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text || '')}`;
   const tg = window.Telegram?.WebApp;
+
+  const canAttemptPhotoShare =
+    isMiniApp() &&
+    Array.isArray(photoUrls) &&
+    photoUrls.length > 0 &&
+    typeof navigator.share === 'function' &&
+    typeof navigator.canShare === 'function';
+
+  if (canAttemptPhotoShare) {
+    try {
+      const files = await fetchListingPhotoFiles(photoUrls);
+      if (files.length > 0 && navigator.canShare({ files })) {
+        const linkForCaption = photoShareUrl || url;
+        const caption = text ? `${text}\n\n${linkForCaption}` : linkForCaption;
+        await navigator.share({ files, text: caption });
+        return 'photos';
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        // User dismissed the native photo-share sheet — don't also pop the
+        // Telegram link-share dialog right after; that would look broken.
+        return 'cancelled';
+      }
+      // Any other failure (unsupported file types, permission, network)
+      // falls through to the link-only share below.
+    }
+  }
+
   if (isMiniApp() && typeof tg?.openTelegramLink === 'function') {
     tg.openTelegramLink(shareUrl);
-    return true;
+    return 'link';
   }
   if (typeof navigator.share === 'function') {
     navigator.share({ title: text, text, url }).catch(() => { /* user cancelled */ });
-    return true;
+    return 'link';
   }
   if (typeof tg?.openLink === 'function') {
     tg.openLink(shareUrl);
-    return true;
+    return 'link';
   }
   window.open(shareUrl, '_blank', 'noopener,noreferrer');
-  return true;
+  return 'link';
 }
 
 /** Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct call. */
