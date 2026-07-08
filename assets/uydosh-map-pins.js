@@ -883,7 +883,15 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 }
  */
 async function shareListingLink(url, text, photoUrls, photoShareUrl) {
   if (!url) return false;
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text || '')}`;
+  // `url` is usually the bot's `t.me/<bot>?startapp=...` deep link, which
+  // Telegram never unfurls with custom OG tags (always shows the bot's own
+  // generic card) — see listing-detail.js `buildListingShareUrl`. Whenever we
+  // have the web `?preview=map` URL, prefer it here so the rich link preview
+  // (map or photo) actually shows up; the bot deep link is still embedded as
+  // plain text inside `text` (via `buildListingShareText`), so tapping it
+  // still launches the Mini App directly.
+  const linkToUnfurl = photoShareUrl || url;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(linkToUnfurl)}&text=${encodeURIComponent(text || '')}`;
   const tg = window.Telegram?.WebApp;
 
   const canAttemptPhotoShare =
@@ -897,8 +905,7 @@ async function shareListingLink(url, text, photoUrls, photoShareUrl) {
     try {
       const files = await fetchListingPhotoFiles(photoUrls);
       if (files.length > 0 && navigator.canShare({ files })) {
-        const linkForCaption = photoShareUrl || url;
-        const caption = text ? `${text}\n\n${linkForCaption}` : linkForCaption;
+        const caption = text ? `${text}\n\n${linkToUnfurl}` : linkToUnfurl;
         await navigator.share({ files, text: caption });
         return 'photos';
       }
