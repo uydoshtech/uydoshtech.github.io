@@ -647,8 +647,10 @@
       .badges-group { display: flex; flex-direction: column; gap: 8px; }
       .badges { display: flex; gap: 8px; flex-wrap: wrap; }
       /* Price reads as the headline number for the listing, so it's pinned
-         to the far end of row 1 instead of trailing right after gender. */
-      .badges .price { margin-left: auto; margin-right: 4px; }
+         to the far end of row 1 instead of trailing right after gender.
+         No extra right margin here: it must sit flush with the row's right
+         edge, mirroring the first badge's flush left edge. */
+      .badges .price { margin-left: auto; }
       .badge {
         display: inline-flex; align-items: center; gap: 5px;
         padding: 6px 11px; border-radius: 999px;
