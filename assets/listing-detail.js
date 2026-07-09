@@ -1858,6 +1858,9 @@
       // the model-viewer default scroll/pinch zoom's own distance changes).
       const ROOM_SCAN_ZOOM_FOV_MIN_DEG = 28;
       const ROOM_SCAN_ZOOM_FOV_MAX_DEG = 82;
+      // Default slider position (0-100). Raised above the neutral 50 midpoint so the model
+      // takes up more of the viewer by default instead of looking small against the backdrop.
+      const ROOM_SCAN_ZOOM_DEFAULT = 70;
 
       function roomScanZoomIconHtml(kind) {
         const glyph = kind === 'in'
@@ -1884,7 +1887,9 @@
         input.className = 'roomscan-zoom-range';
         input.min = '0';
         input.max = '100';
-        input.value = '50';
+        // Starts past the midpoint (rather than a neutral 50) so the model fills more of the
+        // viewer on first render instead of leaving a lot of empty backdrop around it.
+        input.value = String(ROOM_SCAN_ZOOM_DEFAULT);
         input.setAttribute('aria-label', UyDosh.t('detail.roomScanZoom'));
 
         const inIcon = document.createElement('span');
@@ -1961,8 +1966,8 @@
           metaHtml = roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`);
         }
         return `
-          <section class="roomscan-section" data-roomscan-section aria-expanded="false">
-            <button type="button" class="roomscan-toggle" data-roomscan-toggle aria-expanded="false">
+          <section class="roomscan-section" data-roomscan-section aria-expanded="true">
+            <button type="button" class="roomscan-toggle" data-roomscan-toggle aria-expanded="true">
               <span class="roomscan-toggle-icon" aria-hidden="true">${UyDosh.iconCube()}</span>
               <span class="roomscan-toggle-title">
                 <span class="roomscan-toggle-label">${UyDosh.escapeHtml(UyDosh.t('detail.roomScan'))}</span>
@@ -1970,7 +1975,7 @@
               </span>
               <span class="roomscan-chevron" aria-hidden="true">▾</span>
             </button>
-            <div class="roomscan-body" hidden>
+            <div class="roomscan-body">
               <div class="roomscan-viewer-wrap" data-roomscan-viewer-wrap></div>
             </div>
           </section>
@@ -2062,6 +2067,13 @@
         const l = state.listing;
         const glbUrl = UyDosh.photoUrl(l.room_scan_glb_url);
         const usdzUrl = l.point_cloud_url ? UyDosh.photoUrl(l.point_cloud_url) : '';
+
+        // Section renders expanded by default (see buildRoomScanSectionHtml)
+        // so the viewer needs mounting up front instead of waiting for a
+        // first toggle click.
+        if (section.getAttribute('aria-expanded') === 'true') {
+          mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl);
+        }
 
         toggle.addEventListener('click', () => {
           const next = section.getAttribute('aria-expanded') !== 'true';
@@ -2536,7 +2548,7 @@
           }
 
           if (percentEl) {
-            percentEl.textContent = UyDosh.t('compat.match').replace('{percent}', String(analysis.percent));
+            percentEl.textContent = `${analysis.percent}%`;
             percentEl.className = `compat-toggle-percent ${compatPercentClass(analysis.percent)}`;
           }
 

@@ -252,6 +252,12 @@ async function maybeShowProfileMenuBadge() {
 }
 
 const MINI_APP_SAFE_AREA_STYLE_ID = 'uydosh-mini-app-safe-area-v2';
+const MINI_APP_ZOOM_GUARD_STYLE_ID = 'uydosh-mini-app-zoom-guard';
+// Max gap (ms) between two touchend events for the second one to count as a
+// double-tap for `preventMiniAppDoubleTapZoom`'s purposes — long enough to
+// cover a deliberate-but-quick double-tap, short enough to never eat two
+// genuinely separate taps (e.g. tapping two different buttons in a hurry).
+const MINI_APP_DOUBLE_TAP_WINDOW_MS = 350;
 const TELEGRAM_MOBILE_PLATFORMS = new Set(['ios', 'android', 'android_x']);
 const TELEGRAM_DESKTOP_PLATFORMS = new Set(['tdesktop', 'macos', 'unigram', 'weba', 'webk']);
 /** Minimum space below Telegram mobile header chrome (Close + title bar). */
@@ -506,6 +512,57 @@ function syncMobileHeaderLayout() {
     const nav = header.querySelector('nav');
     (nav || header).appendChild(orphanMenu);
   }
+}
+
+/**
+ * Stops Telegram's in-app WebView from zooming in on a double-tap anywhere
+ * in the mini app (reported as happening when tapping outside a focused
+ * control) — called once from `initTelegramMiniApp`. Three layers, because
+ * no single one is reliable across every WebView Telegram embeds:
+ *
+ * 1. `touch-action: manipulation` on `html.mini-app`(+`body`) — the CSS-level
+ *    way to disable double-tap-to-zoom while still allowing normal
+ *    scrolling/panning.
+ * 2. A `gesturestart` listener — stops pinch-zoom specifically, which
+ *    `touch-action` doesn't cover on older WebKit.
+ * 3. A manual `touchend`-timestamp double-tap guard (the classic "FastClick"
+ *    technique) — the layer that actually matters: iOS Safari (and every
+ *    WKWebView built on it, including Telegram's) has ignored
+ *    `user-scalable=no`/`maximum-scale` viewport hints for accessibility
+ *    since iOS 10, and `touch-action` only covers whatever DOM the tap
+ *    directly lands on — not reliable everywhere, e.g. right after a
+ *    control loses focus. Suppressing the second tap's default action
+ *    directly, independent of viewport/touch-action support, is what
+ *    actually stops the zoom. Form controls are excluded so double-tapping
+ *    to place a caret or select text inside a field still works normally.
+ */
+function preventMiniAppDoubleTapZoom() {
+  let style = document.getElementById(MINI_APP_ZOOM_GUARD_STYLE_ID);
+  if (!style) {
+    style = document.createElement('style');
+    style.id = MINI_APP_ZOOM_GUARD_STYLE_ID;
+    style.textContent = `
+      html.mini-app, html.mini-app body {
+        touch-action: manipulation;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  if (window.__uydoshMiniAppZoomGuardBound) return;
+  window.__uydoshMiniAppZoomGuardBound = true;
+
+  document.addEventListener('gesturestart', (event) => event.preventDefault());
+
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (event) => {
+    const target = event.target;
+    const isFormControl = target?.closest?.('input, textarea, select, [contenteditable]');
+    const now = Date.now();
+    if (!isFormControl && now - lastTouchEnd <= MINI_APP_DOUBLE_TAP_WINDOW_MS) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
 }
 
 function ensureMiniAppSafeAreaStyles() {
@@ -1444,6 +1501,7 @@ function initTelegramMiniApp() {
   }
   if (!isMiniApp()) return false;
   document.documentElement.classList.add('mini-app');
+  preventMiniAppDoubleTapZoom();
   applyStoredManualTheme();
   applyHeaderBgTheme();
   ensureMiniAppSafeAreaStyles();
