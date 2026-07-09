@@ -67,23 +67,18 @@
 
       const APK_URL = 'https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk';
 
-      // Canonical cross-platform share link (matches the mobile app's
-      // DeepLinkService.buildListingDeepLink) — resolves to the native app
-      // via Universal/App Links, or the web listing page otherwise. Used
-      // when sharing from a regular browser visit (recipient may not be on
-      // Telegram at all).
+      // `https://api.uydosh.com/listing/id` is the mobile app's own share
+      // link (DeepLinkService.buildListingDeepLink) and is registered for
+      // Universal/App Links, so tapping it opens the native app. Sharing
+      // from the web (Mini App or the plain website) must always stay in
+      // the web experience instead, so it deliberately uses a different
+      // link — the bot's `t.me` Mini App deep link — for every share
+      // originating here, not just inside the Mini App itself.
       const SHARE_WEB_BASE = 'https://api.uydosh.com';
       const TELEGRAM_BOT_USERNAME = 'uydosh_bot';
 
       function buildListingShareUrl(id) {
-        // Shares that originate inside the Mini App stay inside Telegram:
-        // this direct link launches the bot's Mini App straight to the
-        // listing (via start_param) instead of racing the native app scheme,
-        // which the recipient — another Telegram user — likely doesn't have.
-        if (UyDosh.isMiniApp()) {
-          return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=listing_${encodeURIComponent(id)}`;
-        }
-        return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}`;
+        return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=listing_${encodeURIComponent(id)}`;
       }
 
       function buildListingShareText(l, lang) {
@@ -119,15 +114,14 @@
       // native share attachments (see `shareListingLink`'s `linkPreviewUrl`
       // param), so the message never goes out with no image at all.
       //
-      // Deliberately a distinct `?preview=photo` marker rather than the bare
-      // `/listing/id` URL (which `buildListingShareUrl` above already uses
-      // as its non-Mini-App tap target for recipients who may not have
-      // Telegram at all): the backend uses this marker to tell "share
-      // originated in the Mini App, recipient is guaranteed to be on
-      // Telegram" apart from that universal case, so it knows it's safe to
-      // hand off to the bot instead of the plain website — see the matching
-      // `?preview=map`/`?preview=photo` handling in the backend's
-      // `deepLinkRoutes.ts`.
+      // A plain `https://api.uydosh.com/...` URL (rather than `t.me`, which
+      // Telegram never crawls for Open Graph tags) is required here for the
+      // unfurl to work at all — but since this same link is also what ends
+      // up as the *visible* tappable text in the sent message (see
+      // `shareListingLink`'s `linkToUnfurl`), the `?preview=photo` marker
+      // tells the backend's `deepLinkRoutes.ts` that this tap, too,
+      // originated from a web share and should stay on the web (bot Mini
+      // App) instead of racing the native app scheme.
       function buildListingLinkPreviewUrl(id) {
         return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}?preview=photo`;
       }
