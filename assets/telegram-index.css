@@ -1055,13 +1055,24 @@ header {
   background: var(--card);
   border-radius: 16px;
   overflow: hidden;
+  /* Unlike `.card` (whose `.thumb` holds a real `<img>` with intrinsic pixel
+     dimensions, or at least alt text), every bit of a skeleton's own content
+     is either percentage-sized (`.line`) or aspect-ratio-only (`.thumb`) —
+     neither contributes anything to intrinsic/max-content width. If an
+     ancestor ever sizes itself by shrink-to-fit instead of stretching (seen
+     in production as a rare collapse to a ~20px sliver right after a feed
+     reload), a `.skeleton` with no width floor of its own collapses to
+     ~0 + its own border/padding while a real `.card` doesn't. Match the
+     grid's own `minmax(220px, …)` floor here so skeletons can never be
+     narrower than a real card would be, regardless of what the ancestor does. */
+  min-width: 220px;
 }
 .skeleton .thumb, .skeleton .line {
   background: linear-gradient(90deg, rgba(127,127,127,0.06), rgba(127,127,127,0.14), rgba(127,127,127,0.06));
   background-size: 200% 100%;
   animation: shimmer 1.2s linear infinite;
 }
-.skeleton .thumb { aspect-ratio: 4/3; }
+.skeleton .thumb { aspect-ratio: 4/3; width: 100%; }
 .skeleton .body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .skeleton .line { height: 10px; border-radius: 6px; }
 .skeleton .line.w60 { width: 60%; }
