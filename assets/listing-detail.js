@@ -1890,7 +1890,38 @@
           const fov = ROOM_SCAN_ZOOM_FOV_MAX_DEG - t * (ROOM_SCAN_ZOOM_FOV_MAX_DEG - ROOM_SCAN_ZOOM_FOV_MIN_DEG);
           viewerEl.fieldOfView = `${fov.toFixed(2)}deg`;
         };
-        input.addEventListener('input', applyZoom);
+        // Coalesce rapid `input` ticks onto one `fieldOfView` write per animation frame —
+        // model-viewer re-renders the whole scene on every write, and on a full-screen canvas
+        // (much larger than the 280px preview) doing that synchronously for every pointer-move
+        // tick is enough to make the drag itself feel laggy/"fuzzy".
+        let zoomRaf = 0;
+        const scheduleApplyZoom = () => {
+          if (zoomRaf) return;
+          zoomRaf = requestAnimationFrame(() => {
+            zoomRaf = 0;
+            applyZoom();
+          });
+        };
+        // Auto-rotate keeps re-rendering every frame regardless of the slider; pausing it while
+        // the user is actively dragging (same idea as the native app ending its intro spin as
+        // soon as the zoom slider is touched, see endIntroCinematic/zoomSliderChanged in
+        // RoomUsdzViewerViewController.swift) frees up the render loop for the drag itself.
+        let resumeAutoRotate = false;
+        const pauseAutoRotateForDrag = () => {
+          if (viewerEl.hasAttribute('auto-rotate')) {
+            resumeAutoRotate = true;
+            viewerEl.removeAttribute('auto-rotate');
+          }
+        };
+        const resumeAutoRotateAfterDrag = () => {
+          if (!resumeAutoRotate) return;
+          resumeAutoRotate = false;
+          viewerEl.setAttribute('auto-rotate', '');
+        };
+        input.addEventListener('pointerdown', pauseAutoRotateForDrag);
+        input.addEventListener('pointerup', resumeAutoRotateAfterDrag);
+        input.addEventListener('pointercancel', resumeAutoRotateAfterDrag);
+        input.addEventListener('input', scheduleApplyZoom);
 
         wrap.appendChild(outIcon);
         wrap.appendChild(input);

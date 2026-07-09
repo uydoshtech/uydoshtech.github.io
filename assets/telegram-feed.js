@@ -535,9 +535,10 @@ function renderFilters() {
     ariaLabel: UyDosh.t('filter.photo.aria', lang),
   });
 
-  // "3D View" mini filter — only surfaced in the full/expanded ribbon (not
-  // the collapsed compact row), matching the mobile app's 3D room-scan
-  // badge/icon (see Room3dIconBadge, Icons.view_in_ar).
+  // "3D View" mini filter — shown in both the expanded and collapsed
+  // (compact) ribbons, matching the mobile app's 3D room-scan badge/icon
+  // (see Room3dIconBadge, Icons.view_in_ar). In the compact row it trails
+  // the district/metro chips.
   const threeDPressed = state.filters.has3dTour;
   const threeDChip = UyDosh.chipButtonHtml({
     className: 'chip chip-3d',
@@ -625,6 +626,7 @@ function renderFilters() {
                 ${photoChip}
                 ${districtChipCompact}
                 ${lineChipCompact}
+                ${threeDChip}
               </div>
               ${filtersToggleHtml}
             </div>

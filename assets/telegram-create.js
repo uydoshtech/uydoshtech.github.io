@@ -184,6 +184,12 @@ const state = {
   /// `nearbyStationsRadiusMinutes` — the closest station overall, shown as a
   /// fallback so the panel isn't just empty (see `findNearbyStations`).
   nearbyStationsIsFallback: false,
+  /// True when the closest station overall is farther than the largest
+  /// `NEARBY_STATION_RADIUS_OPTIONS` entry — every radius chip would then
+  /// produce the exact same fallback result, so `nearbyStationsHtml` hides
+  /// the toggle instead of showing chips that visibly do nothing when
+  /// tapped (see `findNearbyStations`).
+  nearbyStationsBeyondMaxRadius: false,
   /// True once "Find nearby metro stations" has actually searched, so the
   /// metro panel can tell "never asked" apart from "asked, found nothing
   /// within range" (see renderStep0).
@@ -813,10 +819,20 @@ function nearbyRadiusChipsHtml(lang) {
  */
 function nearbyStationsHtml(lang) {
   if (!state.nearbyStationsChecked) return '';
-  const radiusChips = nearbyRadiusChipsHtml(lang);
+  // Hidden once the closest station overall is farther than every chip's
+  // radius — all three would filter to the identical fallback result, so
+  // showing them as if switching mattered would just be misleading (see
+  // `NEARBY_STATION_MAX_RADIUS_MINUTES` / `isBeyondMaxRadius`).
+  const radiusChips = state.nearbyStationsBeyondMaxRadius ? '' : nearbyRadiusChipsHtml(lang);
   if (state.nearbyStations.length === 0) {
+    // With the chips hidden there's no selected radius on screen to refer
+    // to, so fall back to the largest option (30 min) — the radius that's
+    // actually true in this state, since even it found nothing.
+    const emptyMinutes = state.nearbyStationsBeyondMaxRadius
+      ? NEARBY_STATION_MAX_RADIUS_MINUTES
+      : state.nearbyStationsRadiusMinutes;
     const emptyText = UyDosh.t('create.nearbyStationsEmpty', lang)
-      .replace('{minutes}', String(state.nearbyStationsRadiusMinutes));
+      .replace('{minutes}', String(emptyMinutes));
     return `
       <div class="nearby-stations">
         ${radiusChips}
@@ -1360,6 +1376,7 @@ function handleAddressInputChange(value) {
     state.nearbyStations = [];
     state.nearbyStationsChecked = false;
     state.nearbyStationsIsFallback = false;
+    state.nearbyStationsBeyondMaxRadius = false;
     renderNearbyMetroPanel();
     updateAddressMapPreview();
   }
@@ -2314,6 +2331,13 @@ const AUTO_SELECT_STATION_WALK_MINUTES = 15;
 // `haversineMeters`/`estimatedWalkMinutes` (+ their constants) live in
 // uydosh-core.js, shared with listing.html — see the comment there.
 
+// Largest selectable radius — once the closest station overall is farther
+// than this, every chip in `NEARBY_STATION_RADIUS_OPTIONS` produces the
+// exact same fallback result (see `isBeyondMaxRadius` below), so the toggle
+// stops being a meaningful control and `nearbyStationsHtml` hides it instead
+// of showing chips that visibly do nothing when tapped.
+const NEARBY_STATION_MAX_RADIUS_MINUTES = Math.max(...NEARBY_STATION_RADIUS_OPTIONS);
+
 /**
  * Stations within `maxMinutes` of `(latitude, longitude)`, nearest first,
  * capped to `MAX_SUGGESTED_STATIONS`. Also merges every candidate into
@@ -2347,7 +2371,11 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
   for (const { station } of nearby) {
     state.stationCache[Number(station.id)] = station;
   }
-  return { stations: nearby, isFallback };
+  // Independent of `maxMinutes` — reflects the true closest station overall,
+  // so it stays consistent no matter which radius chip is currently selected
+  // (see `NEARBY_STATION_MAX_RADIUS_MINUTES`).
+  const isBeyondMaxRadius = ranked.length === 0 || ranked[0].minutes > NEARBY_STATION_MAX_RADIUS_MINUTES;
+  return { stations: nearby, isFallback, isBeyondMaxRadius };
 }
 
 /** Adds `station` to `state.form.selectedStationIds` if it isn't already
@@ -2399,9 +2427,10 @@ function preselectNearbyStations(latitude, longitude) {
  * listed and only the closest ones should default to checked.
  */
 function applyNearbyStations(latitude, longitude, maxMinutes, { preselect = true } = {}) {
-  const { stations, isFallback } = findNearbyStations(latitude, longitude, maxMinutes);
+  const { stations, isFallback, isBeyondMaxRadius } = findNearbyStations(latitude, longitude, maxMinutes);
   state.nearbyStations = stations;
   state.nearbyStationsIsFallback = isFallback;
+  state.nearbyStationsBeyondMaxRadius = isBeyondMaxRadius;
   state.nearbyStationsChecked = true;
   if (preselect) {
     if (isFallback) {
