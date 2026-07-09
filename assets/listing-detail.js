@@ -1965,6 +1965,30 @@
         return wrap;
       }
 
+      // Guards against a double-tap on the 3D viewer triggering the browser's native
+      // double-tap-to-zoom instead of (or on top of) the custom zoom slider. That native
+      // gesture visibly grows the model itself, but not the slider pill — which is
+      // absolutely-positioned and so doesn't scale along with the rest of the page zoom —
+      // leaving the slider's thumb out of sync with how "zoomed in" the model now looks.
+      // `touch-action: manipulation` (set on .roomscan-viewer-wrap/.roomscan-backdrop in CSS)
+      // is the standards-based way to disable it, but iOS Safari (and every WKWebView built
+      // on it) has ignored that — and `user-scalable=no`/`maximum-scale` — for double-tap
+      // zoom specifically since iOS 10; see the identical issue/fix for the Telegram Mini
+      // App in preventMiniAppDoubleTapZoom (uydosh-mini-app.js). Suppressing the second tap's
+      // default action directly via a touchend timestamp check is what actually stops it.
+      const ROOM_SCAN_DOUBLE_TAP_WINDOW_MS = 350;
+      function preventRoomScanDoubleTapZoom(el) {
+        if (!el || el.dataset.roomscanZoomGuardBound) return;
+        el.dataset.roomscanZoomGuardBound = '1';
+        el.addEventListener('gesturestart', (event) => event.preventDefault());
+        let lastTouchEnd = 0;
+        el.addEventListener('touchend', (event) => {
+          const now = Date.now();
+          if (now - lastTouchEnd <= ROOM_SCAN_DOUBLE_TAP_WINDOW_MS) event.preventDefault();
+          lastTouchEnd = now;
+        }, { passive: false });
+      }
+
       function roomScanMetaRowHtml(icon, text) {
         return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
       }
@@ -2057,6 +2081,7 @@
       async function mountRoomScanViewer(container, glbUrl, usdzUrl, l) {
         if (!container || container.dataset.roomscanMounted) return;
         container.dataset.roomscanMounted = '1';
+        preventRoomScanDoubleTapZoom(container);
         container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</div>`;
         try {
           await loadModelViewerScript();
@@ -2147,6 +2172,7 @@
       async function openRoomScanFullscreen(glbUrl, usdzUrl, l) {
         if (!roomScanBackdropEl) return;
         UyDosh.haptic?.light?.();
+        preventRoomScanDoubleTapZoom(roomScanBackdropEl);
         roomScanBackdropEl.innerHTML = '';
         roomScanBackdropEl.hidden = false;
         roomScanBackdropEl.setAttribute('aria-hidden', 'false');

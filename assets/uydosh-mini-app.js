@@ -111,7 +111,11 @@ function ensureProfileNudgeStyles() {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 10px 0 4px;
+      /* Horizontal margin (not the padding-based .content-gutter helper) so this
+         card's own border/background sits at the same inset as sibling cards like
+         .filters — .content-gutter only nudges an element's *inner* content in,
+         which left this card's outer edge flush with .wrap's tighter padding. */
+      margin: 10px var(--content-gutter-offset, 6px) 4px;
       padding: 11px 12px;
       border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
       border-radius: 14px;
@@ -163,7 +167,7 @@ function ensureProfileNudgeStyles() {
 
 function profileNudgeHtml() {
   return `
-    <div class="profile-nudge content-gutter" data-profile-nudge>
+    <div class="profile-nudge" data-profile-nudge>
       <span class="profile-nudge-icon" aria-hidden="true">${UyDosh.iconChrome('graduationCap')}</span>
       <span class="profile-nudge-text" data-i18n="profile.nudgeText"></span>
       <a class="profile-nudge-cta" href="${MINI_APP_PROFILE_PATH}" data-i18n="profile.nudgeCta"></a>

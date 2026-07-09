@@ -557,6 +557,11 @@
       .roomscan-viewer-wrap {
         position: relative; height: 280px; border-radius: 12px; overflow: hidden;
         border: 1px solid var(--stroke); background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
+        /* Disables the browser's native double-tap-to-zoom gesture (layer 1 of 2 — see the
+           touchend guard in preventRoomScanDoubleTapZoom, listing-detail.js) so a double-tap
+           on the model can't silently grow the whole viewer out of sync with the zoom slider,
+           which doesn't scale along with page zoom. */
+        touch-action: manipulation;
       }
       .roomscan-viewer-wrap model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
       /* Bottom overlay row: mode-cycle button — zoom slider — fullscreen/close button, mirroring
@@ -568,21 +573,31 @@
         display: flex; align-items: center; gap: 8px;
       }
       .roomscan-backdrop .roomscan-controls-bar {
-        left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        /* Raised well above the bottom edge (vs. the 14px the inline preview uses) so the
+           bigger fullscreen buttons below have breathing room above the device home
+           indicator / gesture bar. */
+        left: 14px; right: 14px; bottom: calc(32px + env(safe-area-inset-bottom, 0px));
       }
       .roomscan-fullscreen-btn, .roomscan-mode-btn, .roomscan-backdrop-close {
         flex-shrink: 0; appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
         width: 34px; height: 34px; border-radius: 50%;
         display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
       }
+      /* Fullscreen viewer's left/right end buttons (mode-cycle + close) sized 20% bigger than
+         they used to be (36px * 1.2 = ~43px) — the zoom slider between them keeps its own
+         explicit height below and isn't affected by this. */
       .roomscan-backdrop .roomscan-fullscreen-btn, .roomscan-backdrop .roomscan-mode-btn,
       .roomscan-backdrop .roomscan-backdrop-close {
-        width: 36px; height: 36px; background: rgba(0, 0, 0, 0.55);
+        width: 43px; height: 43px; background: rgba(0, 0, 0, 0.55);
       }
       .roomscan-fullscreen-btn:active, .roomscan-mode-btn:active, .roomscan-backdrop-close:active { opacity: 0.85; }
       .roomscan-fullscreen-btn svg, .roomscan-mode-btn svg { width: 18px; height: 18px; display: block; }
+      .roomscan-backdrop .roomscan-fullscreen-btn svg, .roomscan-backdrop .roomscan-mode-btn svg {
+        width: 22px; height: 22px;
+      }
       .roomscan-fullscreen-btn svg *, .roomscan-mode-btn svg * { stroke: currentColor; fill: none; }
       .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
+      .roomscan-backdrop .roomscan-backdrop-close { font-size: 19px; }
       /* Pill-shaped zoom slider — same look as the mobile app's zoom slider (a plain
          UISlider inside a dark rounded track), with magnifier-out/in glyphs at each end. */
       .roomscan-zoom-slider {
@@ -615,6 +630,7 @@
       .roomscan-backdrop {
         position: fixed; inset: 0; z-index: 220; background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
         opacity: 0; transition: opacity 0.18s ease;
+        touch-action: manipulation;
       }
       .roomscan-backdrop[hidden] { display: none !important; }
       .roomscan-backdrop.is-open { opacity: 1; }

@@ -45,8 +45,8 @@
 }
 .status-cta:active { opacity: 0.9; }
 .loading-spinner {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
   background: url("../images/uydosh-logo.svg") center / contain no-repeat;
   animation: uydosh-spin 0.9s linear infinite;
 }
