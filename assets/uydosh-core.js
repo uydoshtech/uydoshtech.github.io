@@ -528,7 +528,7 @@ function groupPinsByCoordinate(pins) {
   return [...groupsByKey.values()];
 }
 
-function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClose = false } = {}) {
+function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClose = false, counterLabel = '' } = {}) {
   if (!pin) return '';
   const title = escapeHtml(pin.title || '');
   const price = formatMapPinPrice(pin, lang);
@@ -577,10 +577,18 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
   const closeBtn = showClose
     ? `<button type="button" class="map-pin-tooltip-close" data-map-tooltip-close aria-label="${escapeHtml(t('map.tooltip.close', lang))}">×</button>`
     : '';
+  // Sits just left of the close button (mirrors the mobile app's
+  // `_PinCarouselCounterBadge` pill, positioned the same way relative to
+  // its own close button's tap target) — kept as part of each card rather
+  // than a single shared element below the carousel, so it scrolls with
+  // its own slide and never needs a scroll-listener text update.
+  const counterBadge = counterLabel
+    ? `<span class="map-pin-tooltip-counter" aria-hidden="true">${escapeHtml(counterLabel)}</span>`
+    : '';
 
   return `
     <div class="map-pin-tooltip-card" aria-label="${title}">
-      ${closeBtn}
+      ${closeBtn}${counterBadge}
       <a class="map-pin-tooltip-link" href="${escapeHtml(listingUrl)}" data-map-tooltip-open data-listing-id="${Number(pin.id) || ''}">
         ${thumb}
         <div class="map-pin-tooltip-body">
@@ -611,13 +619,22 @@ function mapPinCarouselHtml(pins, { listingsById = null, lang = getLang(), activ
   const items = Array.isArray(pins) ? pins.filter(Boolean) : [];
   if (items.length === 0) return '';
   const listings = listingsById && typeof listingsById === 'object' ? listingsById : {};
+  const showDots = items.length > 1 && items.length <= MAP_CAROUSEL_DOT_LIMIT;
+  // Above the dot limit, each card gets its own "N / total" pill next to its
+  // close button (see `mapPinTooltipCardHtml`) instead of dots — already
+  // correct for whichever slide is scrolled into view, no scroll-listener
+  // text update needed.
+  const showCounter = items.length > 1 && !showDots;
   const slides = items.map((pin, index) => `
     <div class="map-pin-carousel-slide" data-carousel-index="${index}" aria-hidden="${index === activeIndex ? 'false' : 'true'}">
-      ${mapPinTooltipCardHtml(pin, { listing: listings[pin.id] ?? null, lang, showClose: true })}
+      ${mapPinTooltipCardHtml(pin, {
+        listing: listings[pin.id] ?? null,
+        lang,
+        showClose: true,
+        counterLabel: showCounter ? `${index + 1} / ${items.length}` : '',
+      })}
     </div>
   `).join('');
-  const showDots = items.length > 1 && items.length <= MAP_CAROUSEL_DOT_LIMIT;
-  const showCounter = items.length > 1 && !showDots;
   const dots = showDots
     ? `<div class="map-pin-carousel-dots" role="tablist" aria-label="${escapeHtml(t('map.carousel.dots', lang))}">
         ${items.map((_, index) => `
@@ -625,15 +642,12 @@ function mapPinCarouselHtml(pins, { listingsById = null, lang = getLang(), activ
         `).join('')}
       </div>`
     : '';
-  const counter = showCounter
-    ? `<div class="map-pin-carousel-counter" data-map-carousel-counter aria-live="polite" aria-label="${escapeHtml(t('map.carousel.dots', lang))}">${activeIndex + 1} / ${items.length}</div>`
-    : '';
   return `
     <div class="map-pin-carousel${items.length > 1 ? '' : ' map-pin-carousel--single'}" role="dialog">
       <div class="map-pin-carousel-track" data-map-carousel-track tabindex="0">
         ${slides}
       </div>
-      ${dots}${counter}
+      ${dots}
     </div>
   `;
 }

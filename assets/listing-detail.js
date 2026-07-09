@@ -16,6 +16,12 @@
         webApp?.BackButton?.show();
         webApp?.BackButton?.onClick(() => {
           UyDosh.haptic.light();
+          // The 3D room scan fullscreen overlay has its own close button but
+          // isn't wired into the Telegram header BackButton — without this
+          // check, tapping BackButton while it's open would skip past the
+          // listing detail screen straight to the feed instead of just
+          // closing the overlay.
+          if (closeRoomScanFullscreenIfOpen()) return;
           location.href = UyDosh.miniAppBackTargetFromUrl();
         });
       }
@@ -2074,6 +2080,18 @@
       }
 
       const roomScanBackdropEl = document.getElementById('roomscan-backdrop');
+
+      // Lets the Telegram header BackButton handler (bound up top, before this
+      // function exists) close the fullscreen 3D overlay instead of navigating
+      // away when it's open. Returns whether it actually closed something.
+      function closeRoomScanFullscreenIfOpen() {
+        // `hidden` flips synchronously on open (unlike the `is-open` class,
+        // which is added a frame later for the transition), so it's the
+        // reliable signal even right after the overlay opens.
+        if (!roomScanBackdropEl || roomScanBackdropEl.hidden) return false;
+        closeRoomScanFullscreen();
+        return true;
+      }
 
       function closeRoomScanFullscreen() {
         if (!roomScanBackdropEl) return;

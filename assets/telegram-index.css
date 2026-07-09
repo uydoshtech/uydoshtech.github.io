@@ -610,16 +610,6 @@ header {
 .map-pin-carousel-dot[aria-current="true"] {
   background: currentColor;
 }
-.map-pin-carousel-counter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 12px 2px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--fg);
-  opacity: 0.72;
-}
 .map-pin-tooltip-card {
   position: relative;
   border: 1px solid var(--stroke);
@@ -647,6 +637,32 @@ header {
   place-items: center;
 }
 .map-pin-tooltip-close:active { opacity: 0.75; }
+/* "N / total" pill for carousels above the dot limit (see
+   MAP_CAROUSEL_DOT_LIMIT) — sits just left of the close button, vertically
+   centered against its tap target, mirroring the mobile app's
+   `_PinCarouselCounterBadge`. Always the dark frosted treatment (not
+   theme-dependent) since it overlays the card's own photo/text content,
+   same reasoning as `.threed-badge`. */
+.map-pin-tooltip-counter {
+  position: absolute;
+  top: 6px;
+  right: 44px;
+  height: 32px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: rgba(8, 10, 14, 0.6);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+}
 .map-pin-tooltip-link {
   display: flex;
   gap: 12px;

@@ -2655,10 +2655,24 @@ function bindNearbyMetroEvents() {
 function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.form.listingTypeId = Number(btn.getAttribute('data-listing-type'));
+      const nextTypeId = Number(btn.getAttribute('data-listing-type'));
+      if (nextTypeId === state.form.listingTypeId) return;
+      state.form.listingTypeId = nextTypeId;
       if (!supportsMultiLocation()) {
         state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
       }
+      // Room-needed's metro step lets an author tag dozens of stations
+      // across every line, while roommate-needed's merged step only ever
+      // shows/preselects stations within walking distance of the typed
+      // address. Carrying the former's picks into the latter (or vice
+      // versa) silently attached every room-needed station to a
+      // roommate-needed listing — clear them so each type starts its own
+      // selection from scratch.
+      state.form.selectedStationIds = [];
+      state.nearbyStations = [];
+      state.nearbyStationsChecked = false;
+      state.nearbyStationsIsFallback = false;
+      state.nearbyStationsBeyondMaxRadius = false;
       // Roommate-needed only ever uses the merged address+nearby-metro step
       // (see roommateLocationSectionHtml) — switching into it from
       // room-needed's district tab must not carry district mode along.
@@ -2666,6 +2680,16 @@ function bindStepEvents() {
         state.form.locationMode = LOCATION_MODE_METRO;
       }
       updateDefaultTitle();
+      // Roommate-needed's nearby stations depend on the address already
+      // typed — recompute them fresh now that stale picks were cleared,
+      // instead of leaving the panel empty until the address is re-edited.
+      if (!isRoomNeeded() && state.form.addressLatitude != null && state.form.addressLongitude != null) {
+        applyNearbyStations(
+          state.form.addressLatitude,
+          state.form.addressLongitude,
+          state.nearbyStationsRadiusMinutes,
+        );
+      }
       renderStep();
     });
   });

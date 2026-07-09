@@ -285,8 +285,10 @@
         const dotIndex = Number(dot.getAttribute('data-carousel-dot'));
         dot.setAttribute('aria-current', dotIndex === index ? 'true' : 'false');
       }
-      const counterEl = feedMapTooltipEl.querySelector('[data-map-carousel-counter]');
-      if (counterEl) counterEl.textContent = `${index + 1} / ${slides.length}`;
+      // No counter text to patch here above the dot limit — each slide
+      // already carries its own correct "N / total" pill baked in at
+      // render time (see `mapPinCarouselHtml`), so it's already right by
+      // the time this slide scrolls into view.
       for (const [slideIndex, slide] of slides.entries()) {
         slide.setAttribute('aria-hidden', slideIndex === index ? 'false' : 'true');
       }
