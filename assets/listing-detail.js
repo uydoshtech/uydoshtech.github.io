@@ -112,11 +112,32 @@
         return [greeting, factLines.join('\n'), `🔗 ${link}`].join('\n\n');
       }
 
-      // `?preview=map` swaps the shared link's Open Graph image for a static
-      // map of the listing's location instead of a photo — paired with the
-      // real photos already going out as attachments (see `shareListingLink`),
-      // so the link preview adds new information instead of repeating one.
-      function buildListingPhotoShareUrl(id) {
+      // `https://api.uydosh.com/listing/id?preview=photo` link used purely
+      // for its server-rendered Open Graph tags — its `og:image` is the
+      // listing's own primary photo. Used to unfurl a real photo into the
+      // shared message whenever we *aren't* also attaching real photos as
+      // native share attachments (see `shareListingLink`'s `linkPreviewUrl`
+      // param), so the message never goes out with no image at all.
+      //
+      // Deliberately a distinct `?preview=photo` marker rather than the bare
+      // `/listing/id` URL (which `buildListingShareUrl` above already uses
+      // as its non-Mini-App tap target for recipients who may not have
+      // Telegram at all): the backend uses this marker to tell "share
+      // originated in the Mini App, recipient is guaranteed to be on
+      // Telegram" apart from that universal case, so it knows it's safe to
+      // hand off to the bot instead of the plain website — see the matching
+      // `?preview=map`/`?preview=photo` handling in the backend's
+      // `deepLinkRoutes.ts`.
+      function buildListingLinkPreviewUrl(id) {
+        return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}?preview=photo`;
+      }
+
+      // `?preview=map` swaps that same Open Graph image for a static map of
+      // the listing's location instead of a photo — paired with the real
+      // photos already going out as attachments (see `shareListingLink`'s
+      // `mapPreviewUrl` param), so the link preview adds new information
+      // instead of repeating one.
+      function buildListingMapPreviewUrl(id) {
         return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}?preview=map`;
       }
 
@@ -128,8 +149,9 @@
           const url = buildListingShareUrl(l.id);
           const text = buildListingShareText(l, lang);
           const photoUrls = sortedPhotos(l).map((p) => UyDosh.photoUrl(p)).filter(Boolean);
-          const photoShareUrl = buildListingPhotoShareUrl(l.id);
-          const method = await UyDosh.shareListingLink(url, text, photoUrls, photoShareUrl);
+          const mapPreviewUrl = buildListingMapPreviewUrl(l.id);
+          const linkPreviewUrl = buildListingLinkPreviewUrl(l.id);
+          const method = await UyDosh.shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreviewUrl);
           if (UyDosh.isMiniApp()) {
             UyDosh.logMiniAppEvent('listing_share_tapped', {
               listing_id: Number(l.id),

@@ -463,12 +463,15 @@ async function boot() {
     renderActiveTab();
   });
 
-  if (!UyDosh.getTelegramInitData()) {
-    state.authError = true;
-    loadingEl.hidden = true;
-    renderActiveTab();
-    return;
-  }
+  // Deliberately no separate `getTelegramInitData()` pre-check here — see
+  // the matching comment in telegram-profile.js's `boot()`. Gating both
+  // tabs on it up front would wrongly fail Favorites too: `loadFavorites`
+  // calls `ensureTelegramMiniAppSession()` itself, which tries a cached
+  // session token before falling back to initData, so a still-valid
+  // session survives even once initData itself has expired. (My Listings
+  // has no such fallback — `fetchMyTelegramMiniAppListings` always needs
+  // initData directly — so it still degrades to its own `myListingsError`
+  // state in that case, independent of Favorites.)
 
   await Promise.all([loadMyListings(), loadFavorites()]);
   loadingEl.hidden = true;

@@ -13,6 +13,8 @@ const DEFAULT_HAS_3D_TOUR = false;
 const PERIOD_DEFAULT_DAYS = 30;
 const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
+// localStorage (not sessionStorage): filters should still be there the next time the
+// user opens the Mini App, not just for the rest of the current Telegram WebView launch.
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
 const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
 // Feed scroll restoration: the Mini App's Telegram header BackButton always
@@ -163,7 +165,7 @@ function handleFeedScrollForFilters() {
 
 function readFiltersCollapsed() {
   try {
-    return sessionStorage.getItem(FILTER_COLLAPSED_KEY) === 'true';
+    return localStorage.getItem(FILTER_COLLAPSED_KEY) === 'true';
   } catch {
     return false;
   }
@@ -171,7 +173,7 @@ function readFiltersCollapsed() {
 
 function persistFiltersCollapsed() {
   try {
-    sessionStorage.setItem(FILTER_COLLAPSED_KEY, state.filtersCollapsed ? 'true' : 'false');
+    localStorage.setItem(FILTER_COLLAPSED_KEY, state.filtersCollapsed ? 'true' : 'false');
   } catch {
     // ignore quota / private mode
   }
@@ -222,7 +224,7 @@ function readUrlListingTypeId() {
 
 function readStoredFilters() {
   try {
-    const raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
+    const raw = localStorage.getItem(FILTER_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return {
@@ -247,7 +249,7 @@ function readStoredFilters() {
 
 function persistFilters() {
   try {
-    sessionStorage.setItem(
+    localStorage.setItem(
       FILTER_STORAGE_KEY,
       JSON.stringify({
         listingTypeId: state.filters.listingTypeId,

@@ -867,31 +867,29 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 }
  * silently falls through to the plain link share below, so this is purely
  * additive and a tap never comes up empty.
  *
- * `url` (used by every fallback path below) is deliberately left as-is —
- * inside the Mini App that's a `t.me/<bot>?startapp=...` deep link, which
- * Telegram always renders as its own generic "Open App" bot card, never a
- * per-listing preview (t.me links aren't crawled for Open Graph tags). The
- * photo-attach path needs an actual per-listing preview instead (the point
- * of attaching photos is to *add* the map, not repeat the same generic
- * card), so it takes a separate `photoShareUrl` — an `https://.../listing/id`
- * link Telegram *will* unfurl via our Open Graph tags — and falls back to
- * `url` only if that wasn't supplied.
+ * `url` (used by every fallback path below as the actual tap target) is
+ * deliberately left as-is — inside the Mini App that's a
+ * `t.me/<bot>?startapp=...` deep link, which Telegram always renders as its
+ * own generic "Open App" bot card, never a per-listing preview (t.me links
+ * aren't crawled for Open Graph tags). Whichever path runs instead unfurls
+ * one of two `https://.../listing/id` links that Telegram *will* crawl for
+ * real Open Graph tags:
+ *   - `mapPreviewUrl` (`?preview=map`) when real photos are also going out
+ *     as native attachments below — the map adds new information instead of
+ *     repeating a photo that's already in the message.
+ *   - `linkPreviewUrl` (`?preview=photo`, so `og:image` stays the listing's
+ *     own first photo) whenever the photo attachment path doesn't run —
+ *     Telegram Desktop and Telegram Web both lack the Web Share API for
+ *     files, and even where it exists it can silently fail — so the message
+ *     still carries at least one real image instead of none.
+ * Both fall back to `url` if not supplied.
  *
  * Returns a string describing what happened (`'photos'`, `'link'`,
  * `'cancelled'`) or `false` if there was no URL to share, so callers can
  * log which path was actually used.
  */
-async function shareListingLink(url, text, photoUrls, photoShareUrl) {
+async function shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreviewUrl) {
   if (!url) return false;
-  // `url` is usually the bot's `t.me/<bot>?startapp=...` deep link, which
-  // Telegram never unfurls with custom OG tags (always shows the bot's own
-  // generic card) — see listing-detail.js `buildListingShareUrl`. Whenever we
-  // have the web `?preview=map` URL, prefer it here so the rich link preview
-  // (map or photo) actually shows up; the bot deep link is still embedded as
-  // plain text inside `text` (via `buildListingShareText`), so tapping it
-  // still launches the Mini App directly.
-  const linkToUnfurl = photoShareUrl || url;
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(linkToUnfurl)}&text=${encodeURIComponent(text || '')}`;
   const tg = window.Telegram?.WebApp;
 
   const canAttemptPhotoShare =
@@ -905,6 +903,7 @@ async function shareListingLink(url, text, photoUrls, photoShareUrl) {
     try {
       const files = await fetchListingPhotoFiles(photoUrls);
       if (files.length > 0 && navigator.canShare({ files })) {
+        const linkToUnfurl = mapPreviewUrl || url;
         const caption = text ? `${text}\n\n${linkToUnfurl}` : linkToUnfurl;
         await navigator.share({ files, text: caption });
         return 'photos';
@@ -919,6 +918,12 @@ async function shareListingLink(url, text, photoUrls, photoShareUrl) {
       // falls through to the link-only share below.
     }
   }
+
+  // No real photo attachment went out (unsupported, skipped, or failed
+  // above) — unfurl the listing's own photo instead of the map so the
+  // message still shows an image.
+  const linkToUnfurl = linkPreviewUrl || url;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(linkToUnfurl)}&text=${encodeURIComponent(text || '')}`;
 
   if (isMiniApp() && typeof tg?.openTelegramLink === 'function') {
     tg.openTelegramLink(shareUrl);

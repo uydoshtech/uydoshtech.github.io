@@ -540,13 +540,15 @@ async function boot() {
     render();
   });
 
-  if (!UyDosh.getTelegramInitData()) {
-    state.authError = true;
-    loadingEl.classList.add('error');
-    loadingEl.textContent = UyDosh.t('profile.errorAuth');
-    return;
-  }
-
+  // Deliberately no separate `getTelegramInitData()` pre-check here —
+  // `ensureTelegramMiniAppSession()` already tries a cached session token
+  // first and only falls back to initData if there isn't one. Gating on
+  // initData up front would wrongly fail a still-valid cached session: the
+  // Mini App's own initData is only fresh on the entry page (Telegram
+  // passes it via the URL hash, which internal navigation to this page
+  // doesn't carry over) and the sessionStorage fallback copy of it expires
+  // after 24h — but a previously-issued session token has its own,
+  // separate backend expiry and can easily still be good past that point.
   const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
   if (!sessionReady) {
     state.authError = true;
