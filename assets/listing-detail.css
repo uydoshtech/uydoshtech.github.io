@@ -530,10 +530,16 @@
         border-radius: 14px; overflow: hidden; }
       .roomscan-toggle {
         appearance: none; width: 100%; border: 0; background: transparent; color: inherit;
-        cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left;
+        cursor: pointer; display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; text-align: left;
       }
       .roomscan-toggle:active { opacity: 0.9; }
-      .roomscan-toggle-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--brand2); }
+      /* Anchored to the title's own line height (not the taller title+meta column) so the
+         icon sits right beside "3D room scan", not centered mid-way down the dimensions rows. */
+      .roomscan-toggle-icon {
+        width: 22px; height: 22px; flex-shrink: 0; color: var(--brand2);
+        display: flex; align-items: center; justify-content: center;
+        margin-top: calc((1.3em - 22px) / 2);
+      }
       .roomscan-toggle-icon svg { width: 22px; height: 22px; display: block; }
       .roomscan-toggle-icon svg * { stroke: currentColor; fill: none; }
       .roomscan-toggle-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -613,6 +619,22 @@
       .roomscan-backdrop[hidden] { display: none !important; }
       .roomscan-backdrop.is-open { opacity: 1; }
       .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+      /* Dimensions overlay in the fullscreen viewer — mirrors the mobile app's native
+         SceneKit viewer's top-leading `hintContainer` (RoomUsdzViewerViewController.swift). */
+      .roomscan-backdrop-dimensions {
+        position: absolute; z-index: 1;
+        top: calc(14px + env(safe-area-inset-top, 0px));
+        left: 14px; max-width: calc(100% - 100px);
+        background: rgba(0, 0, 0, 0.52); color: #fff;
+        border-radius: 12px; padding: 8px 14px;
+        font-size: 13px; display: flex; flex-direction: column; gap: 4px;
+      }
+      .roomscan-backdrop-dimensions .roomscan-toggle-meta-row { display: flex; align-items: center; gap: 6px; }
+      .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon {
+        width: 14px; height: 14px; flex-shrink: 0; display: inline-flex; opacity: 0.9;
+      }
+      .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon svg { width: 14px; height: 14px; display: block; }
+      .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon svg * { stroke: currentColor; fill: none; }
 
       .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
       .complaints-group + .complaints-group {

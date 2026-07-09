@@ -857,15 +857,25 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 }
  * back to the OS share sheet (regular browser visits to this page outside
  * the Mini App) or a plain window.open of the t.me share link.
  *
- * When `photoUrls` is given and we're inside the Mini App on a native
- * Telegram client (iOS/Android/Desktop — not Telegram Web, which sandboxes
- * the webview and blocks the Web Share API), this first tries
- * `navigator.share` with the listing's real photos attached as files —
- * Telegram then posts them as real photo attachments plus the caption/link
- * as its own message, the same as sharing from any other native app. Any
- * failure along that path (unsupported, fetch failed, permission denied)
- * silently falls through to the plain link share below, so this is purely
- * additive and a tap never comes up empty.
+ * When `photoUrls` is given and we're inside the Mini App on Telegram
+ * mobile (iOS/Android — see `isTelegramDesktop` exclusion below), this
+ * first tries `navigator.share` with the listing's real photos attached as
+ * files — Telegram then posts them as real photo attachments plus the
+ * caption/link, the same as sharing from any other native app. Any failure
+ * along that path (unsupported, fetch failed, permission denied) silently
+ * falls through to the plain link share below, so this is purely additive
+ * and a tap never comes up empty.
+ *
+ * Deliberately skipped on Telegram Desktop (`tdesktop`/`macos`/etc.): its
+ * `navigator.share` with multiple files doesn't bundle them into one album
+ * (`sendMediaGroup`-style) the way Telegram mobile does — it posts each
+ * photo as its own separate message and drops the caption/link entirely
+ * onto a 3rd message, so the "real photos" path there is strictly worse
+ * than the single-message link+photo-preview fallback below. Skipping it
+ * up front (rather than letting it "succeed" and only fixing the result)
+ * also matters because `navigator.share` resolving is the *only* signal we
+ * get back — there's no way to detect this sequence-of-messages outcome
+ * after the fact and retry.
  *
  * `url` (used by every fallback path below as the actual tap target) is
  * deliberately left as-is — inside the Mini App that's a
@@ -878,10 +888,10 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 }
  *     as native attachments below — the map adds new information instead of
  *     repeating a photo that's already in the message.
  *   - `linkPreviewUrl` (`?preview=photo`, so `og:image` stays the listing's
- *     own first photo) whenever the photo attachment path doesn't run —
- *     Telegram Desktop and Telegram Web both lack the Web Share API for
- *     files, and even where it exists it can silently fail — so the message
- *     still carries at least one real image instead of none.
+ *     own first photo) whenever the photo attachment path doesn't run — on
+ *     Telegram Desktop that's every time (see above), and even on mobile it
+ *     can still fail (unsupported, fetch error, permission denied) — so the
+ *     message still carries at least one real image instead of none.
  * Both fall back to `url` if not supplied.
  *
  * Returns a string describing what happened (`'photos'`, `'link'`,
@@ -894,6 +904,7 @@ async function shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreview
 
   const canAttemptPhotoShare =
     isMiniApp() &&
+    !isTelegramDesktop() &&
     Array.isArray(photoUrls) &&
     photoUrls.length > 0 &&
     typeof navigator.share === 'function' &&

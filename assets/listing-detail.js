@@ -1969,24 +1969,31 @@
         return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
       }
 
-      /** Mirrors the mobile app's room-3D tile: dimensions + height + area, one row each (see room_3d_tile.dart). */
-      function buildRoomScanSectionHtml(l) {
-        const glbUrl = typeof l.room_scan_glb_url === 'string' ? l.room_scan_glb_url.trim() : '';
-        if (!glbUrl) return '';
+      /** Mirrors the mobile app's room-3D tile: dimensions + height + area, one row each (see room_3d_tile.dart).
+       * Shared by the inline toggle summary and the fullscreen viewer's dimensions overlay. */
+      function buildRoomScanDimensionsMetaHtml(l) {
         const floorLong = Number(l.room_scan_floor_long_m);
         const floorShort = Number(l.room_scan_floor_short_m);
         const heightM = Number(l.room_scan_height_m);
         const areaM2 = Number(l.room_scan_floor_area_m2);
         const isPositive = (n) => Number.isFinite(n) && n > 0;
-        let metaHtml = '';
         if (isPositive(floorLong) && isPositive(floorShort) && isPositive(heightM) && isPositive(areaM2)) {
-          metaHtml =
+          return (
             roomScanMetaRowHtml(UyDosh.iconRectangleOutline(), `${UyDosh.t('detail.roomScanDimensions')}: ${floorLong.toFixed(1)} × ${floorShort.toFixed(1)} m`) +
             roomScanMetaRowHtml(UyDosh.iconHeightArrows(), `${UyDosh.t('detail.roomScanHeight')}: ${heightM.toFixed(1)} m`) +
-            roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ~${areaM2.toFixed(1)} m²`);
-        } else if (isPositive(areaM2)) {
-          metaHtml = roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`);
+            roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ~${areaM2.toFixed(1)} m²`)
+          );
         }
+        if (isPositive(areaM2)) {
+          return roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`);
+        }
+        return '';
+      }
+
+      function buildRoomScanSectionHtml(l) {
+        const glbUrl = typeof l.room_scan_glb_url === 'string' ? l.room_scan_glb_url.trim() : '';
+        if (!glbUrl) return '';
+        const metaHtml = buildRoomScanDimensionsMetaHtml(l);
         return `
           <section class="roomscan-section" data-roomscan-section aria-expanded="true">
             <button type="button" class="roomscan-toggle" data-roomscan-toggle aria-expanded="true">
@@ -2047,7 +2054,7 @@
         container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
       }
 
-      async function mountRoomScanViewer(container, glbUrl, usdzUrl) {
+      async function mountRoomScanViewer(container, glbUrl, usdzUrl, l) {
         if (!container || container.dataset.roomscanMounted) return;
         container.dataset.roomscanMounted = '1';
         container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</div>`;
@@ -2065,7 +2072,7 @@
           fullscreenBtn.className = 'roomscan-fullscreen-btn';
           fullscreenBtn.setAttribute('aria-label', UyDosh.t('detail.roomScanFullscreen'));
           fullscreenBtn.innerHTML = roomScanFullscreenIconHtml();
-          fullscreenBtn.addEventListener('click', () => openRoomScanFullscreen(glbUrl, usdzUrl));
+          fullscreenBtn.addEventListener('click', () => openRoomScanFullscreen(glbUrl, usdzUrl, l));
 
           const controlsBar = document.createElement('div');
           controlsBar.className = 'roomscan-controls-bar';
@@ -2094,7 +2101,7 @@
         // so the viewer needs mounting up front instead of waiting for a
         // first toggle click.
         if (section.getAttribute('aria-expanded') === 'true') {
-          mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl);
+          mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl, l);
         }
 
         toggle.addEventListener('click', () => {
@@ -2103,7 +2110,7 @@
           toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
           body.hidden = !next;
           if (next) {
-            mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl);
+            mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl, l);
             // Bring the tile header as close to the top of the screen as the
             // page can scroll, so the newly expanded viewer has room to show.
             requestAnimationFrame(() => {
@@ -2137,13 +2144,24 @@
         }, 180);
       }
 
-      async function openRoomScanFullscreen(glbUrl, usdzUrl) {
+      async function openRoomScanFullscreen(glbUrl, usdzUrl, l) {
         if (!roomScanBackdropEl) return;
         UyDosh.haptic?.light?.();
         roomScanBackdropEl.innerHTML = '';
         roomScanBackdropEl.hidden = false;
         roomScanBackdropEl.setAttribute('aria-hidden', 'false');
         requestAnimationFrame(() => roomScanBackdropEl.classList.add('is-open'));
+
+        // Dimensions overlay (top-leading, like the mobile app's native SceneKit viewer —
+        // see RoomUsdzViewerViewController.swift's `hintContainer`). Built up front since it
+        // doesn't depend on the model finishing load.
+        const metaHtml = l ? buildRoomScanDimensionsMetaHtml(l) : '';
+        if (metaHtml) {
+          const dimensionsEl = document.createElement('div');
+          dimensionsEl.className = 'roomscan-backdrop-dimensions';
+          dimensionsEl.innerHTML = metaHtml;
+          roomScanBackdropEl.appendChild(dimensionsEl);
+        }
 
         // Close button (+ its bar) is created up front and stays put regardless of load
         // outcome, so a failed/slow model never traps the viewer open. The mode button and
