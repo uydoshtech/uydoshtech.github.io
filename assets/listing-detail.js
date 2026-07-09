@@ -1748,10 +1748,10 @@
         </svg>`;
       }
 
-      // --- 3D room scan display mode (full room / walls only / floor + furniture) --------
+      // --- 3D room scan display mode (full room / floor + furniture / floor only) --------
       // Mirrors the native app's cycling mode button (see DisplayMode in
       // RoomUsdzViewerViewController.swift): tapping this button advances
-      // full room → walls only → floor + furniture → full room, swapping its
+      // full room → floor + furniture → floor only → full room, swapping its
       // icon each time. Since <model-viewer> doesn't expose raw per-node
       // visibility, meshes are "hidden" by driving their material to fully
       // transparent via the Scene Graph API (https://modelviewer.dev/examples/scenegraph/)
@@ -1759,7 +1759,7 @@
       // RoomPlan USDZ scan to GLB (see uydosh_backend's
       // applyRoomScanStylizedMaterials.ts: `Wall0_color`, `Floor0_color`,
       // `Chair0_color`, ...).
-      const ROOM_SCAN_MODE_SEQUENCE = ['fullRoom', 'wallsOnly', 'furnitureOnly'];
+      const ROOM_SCAN_MODE_SEQUENCE = ['fullRoom', 'floorAndFurniture', 'floorOnly'];
 
       function nextRoomScanMode(mode) {
         const idx = ROOM_SCAN_MODE_SEQUENCE.indexOf(mode);
@@ -1767,18 +1767,16 @@
       }
 
       function roomScanModeIconHtml(mode) {
-        if (mode === 'wallsOnly') {
-          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 19V7l6-3v15"></path>
-            <path d="M10 4l10 3v12"></path>
-            <path d="M4 19h16"></path>
-          </svg>`;
-        }
-        if (mode === 'furnitureOnly') {
+        if (mode === 'floorAndFurniture') {
           return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 18v-4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"></path>
             <path d="M4 18v2M20 18v2"></path>
             <path d="M6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"></path>
+          </svg>`;
+        }
+        if (mode === 'floorOnly') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="6" width="18" height="12" rx="2"></rect>
           </svg>`;
         }
         return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1788,13 +1786,13 @@
       }
 
       function roomScanModeLabelKey(mode) {
-        if (mode === 'wallsOnly') return 'detail.roomScanModeWallsOnly';
-        if (mode === 'furnitureOnly') return 'detail.roomScanModeFurnitureOnly';
+        if (mode === 'floorAndFurniture') return 'detail.roomScanModeFloorAndFurniture';
+        if (mode === 'floorOnly') return 'detail.roomScanModeFloorOnly';
         return 'detail.roomScanModeFullRoom';
       }
 
-      /** Wall/ceiling/door/window/opening → 'wall' (hidden in furnitureOnly); floor → always
-       * shown; everything else (furniture) → hidden in wallsOnly. Mirrors
+      /** Wall/ceiling/door/window/opening → 'wall' (hidden in floorAndFurniture and floorOnly);
+       * floor → always shown; everything else (furniture) → also hidden in floorOnly. Mirrors
        * shouldHideWallLikeSurface()/isOnFloorObject() on iOS. */
       function classifyRoomScanMaterialName(name) {
         const n = (name || '').toLowerCase();
@@ -1844,8 +1842,8 @@
         model.materials.forEach((material) => {
           const kind = classifyRoomScanMaterialName(material.name);
           let hidden = false;
-          if (mode === 'wallsOnly') hidden = kind === 'furniture';
-          else if (mode === 'furnitureOnly') hidden = kind === 'wall';
+          if (mode === 'floorAndFurniture') hidden = kind === 'wall';
+          else if (mode === 'floorOnly') hidden = kind === 'wall' || kind === 'furniture';
           setRoomScanMaterialHidden(material, hidden);
         });
       }
