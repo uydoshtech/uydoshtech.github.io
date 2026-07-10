@@ -287,7 +287,12 @@ function districtPinBadgeHtml() {
  */
 function districtChipHtml(selectedId, lang = getLang(), { compact = false } = {}) {
   const selected = Number(selectedId) || 0;
-  const label = selected > 0 ? districtLabel(selected, lang) : '';
+  // The compact ribbon stays icon-only until picked (no room to spare); the full
+  // filter row shows a "Район"-style placeholder up front instead of a bare pin,
+  // so it reads as a filter control rather than a mystery icon — see the
+  // `.chip-district:not(.chip-line-compact)` override in telegram-shared.css that
+  // keeps this label always expanded (skipping the tap-to-reveal collapse) there.
+  const label = selected > 0 ? districtLabel(selected, lang) : (compact ? '' : t('filter.district.placeholder', lang));
   const ariaLabel = selected > 0 ? label : t('filter.district.aria', lang);
   // Only set --line-color once a specific district is selected — this one
   // button cycles through every district, so before a tap we don't yet know
@@ -396,7 +401,9 @@ function nextMetroLineId(currentId) {
  */
 function metroLineChipHtml(selectedId, lang = getLang(), { compact = false } = {}) {
   const selected = Number(selectedId) || 0;
-  const label = selected > 0 ? metroLineLabel(selected, lang) : '';
+  // See the matching comment in `districtChipHtml` above — same full-vs-compact
+  // placeholder treatment, just for the "Метро" cycling button.
+  const label = selected > 0 ? metroLineLabel(selected, lang) : (compact ? '' : t('filter.line.placeholder', lang));
   const ariaLabel = selected > 0 ? label : t('filter.line.aria', lang);
   // Only set --line-color once a specific line is picked — this one button
   // cycles through every line, so before a tap we don't yet know which color

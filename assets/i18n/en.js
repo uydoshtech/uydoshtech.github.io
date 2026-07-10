@@ -140,6 +140,8 @@ I18N.en = {
     'filter.threeDTour.aria': '3D room scan',
     'filter.line.aria': 'Metro line',
     'filter.district.aria': 'District filter',
+    'filter.line.placeholder': 'Metro',
+    'filter.district.placeholder': 'District',
     'filter.period.30': '30 days',
     'filter.period.90': '90 days',
     'filter.period.all': 'All time',

@@ -501,20 +501,7 @@
         state.mapPins = pins;
         state.mapResultTotal = Number.isFinite(total) ? total : pins.length;
         rebuildMapCarouselIndex();
-        if (pins.length === 0) {
-          // Bail out *before* touching the map — without this check, a slow "0 results"
-          // response for a since-superseded filter would destroy the map a faster, newer
-          // filter change already rendered. Since that newer render already set
-          // `state.mapLoaded`/`lastLoadedMapSignature`, `onEnterMapView()` would then think
-          // the (just-destroyed) map is still fine and never reload it, leaving the map
-          // permanently blank until a hard retry.
-          if (generation !== mapLoadGeneration) return;
-          await UyDosh.loadYandexMapModule().then((m) => m.destroyMap(feedMapEl)).catch(() => {});
-          if (generation !== mapLoadGeneration) return;
-          showFeedMapEmpty();
-          state.mapLoaded = false;
-          return;
-        }
+        if (generation !== mapLoadGeneration) return;
 
         await UyDosh.waitForElementLayout(feedMapEl);
         if (generation !== mapLoadGeneration) return;
@@ -527,6 +514,12 @@
         if (generation !== mapLoadGeneration) return;
         state.mapModule = mapModule;
 
+        // Cleared even for the empty-results case below (which then re-shows it via
+        // showFeedMapEmpty()) — `renderPinsMap` still builds a real, pannable map with
+        // zero pins/placemarks (Tashkent-centered by default) rather than tearing it
+        // down, so the "no results" message ends up as an overlay on top of a live map
+        // instead of replacing it — keeping the map always loaded and available across
+        // List <-> Map switches and filter changes, empty results included.
         setFeedMapStatus('', false);
         const map = await UyDosh.withTimeout(
           mapModule.renderPinsMap(feedMapEl, {
@@ -556,9 +549,13 @@
         );
         if (generation !== mapLoadGeneration) return;
         if (!map) {
+          // Listings came back but every single one failed coordinate validation — a
+          // real data problem (see renderPinsMap), unlike the plain "no results for
+          // these filters" case above, which always gets a real map back.
           throw new Error('No mappable pins after coordinate validation');
         }
 
+        if (pins.length === 0) showFeedMapEmpty();
         state.mapLoaded = true;
         lastLoadedMapSignature = signature;
         UyDosh.reflowActiveMaps();
@@ -597,6 +594,11 @@
         // a fresh loadVisitedListingIds() call, so this keeps that behavior.
         refreshFeedMapPinIcons();
         UyDosh.reflowActiveMaps();
+        // onLeaveMapView() unconditionally clears the status overlay, so the "no
+        // results" message needs re-showing here too — the underlying map itself
+        // stays live/rendered either way (see loadFeedMap), only this text overlay
+        // was hidden.
+        if ((state.mapPins || []).length === 0) showFeedMapEmpty();
         return;
       }
       loadFeedMap();

@@ -140,6 +140,8 @@ I18N.ru = {
     'filter.threeDTour.aria': '3D-скан комнаты',
     'filter.line.aria': 'Линия метро',
     'filter.district.aria': 'Фильтр по району',
+    'filter.line.placeholder': 'Метро',
+    'filter.district.placeholder': 'Район',
     'filter.period.30': '30 дней',
     'filter.period.90': '90 дней',
     'filter.period.all': 'Все',

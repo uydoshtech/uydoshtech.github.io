@@ -141,6 +141,8 @@ I18N.uz = {
     'filter.threeDTour.aria': '3D xona skani',
     'filter.line.aria': 'Metro liniyasi',
     'filter.district.aria': 'Tuman bo‘yicha filtr',
+    'filter.line.placeholder': 'Metro',
+    'filter.district.placeholder': 'Tuman',
     'filter.period.30': '30 kun',
     'filter.period.90': '90 kun',
     'filter.period.all': 'Hammasi',

@@ -2939,7 +2939,14 @@
       const lon = numberOrNull(pin.longitude);
       return lat !== null && lon !== null && isValidCoordinate(lat, lon);
     });
-    if (validPins.length === 0) {
+    // Only bail (signaling an error to the caller — see loadFeedMap's `!map` check) when
+    // listings actually came back but every single one failed coordinate validation — a
+    // real data problem worth surfacing. When `pins` was already empty (no listings match
+    // the active filters, the common case), fall through and build a real map anyway —
+    // `locationFromPins([])` below already has a sensible default center/zoom for this —
+    // so the map stays live and pannable (Tashkent-centered, no pins) instead of the panel
+    // going blank, and List <-> Map switching never leaves it torn down.
+    if (validPins.length === 0 && (pins || []).length > 0) {
       container.innerHTML = '';
       return null;
     }

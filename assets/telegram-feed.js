@@ -763,8 +763,12 @@ function renderFilters() {
 function syncMetroLineCycleChipState() {
   const lang = UyDosh.getLang();
   const selected = state.filters.subwayLineId;
-  const label = selected > 0 ? UyDosh.metroLineLabel(selected, lang) : '';
-  const ariaLabel = selected > 0 ? label : UyDosh.t('filter.line.aria', lang);
+  const selectedLabel = selected > 0 ? UyDosh.metroLineLabel(selected, lang) : '';
+  const ariaLabel = selected > 0 ? selectedLabel : UyDosh.t('filter.line.aria', lang);
+  // Full row falls back to the "Метро" placeholder once cycled back to off (see
+  // metroLineChipHtml's `compact` branch); the compact row stays icon-only, same as
+  // its own initial render.
+  const placeholderLabel = UyDosh.t('filter.line.placeholder', lang);
   filtersEl.querySelectorAll('[data-subway-line-cycle]').forEach((btn) => {
     btn.setAttribute('aria-pressed', selected > 0 ? 'true' : 'false');
     btn.setAttribute('aria-label', ariaLabel);
@@ -774,7 +778,10 @@ function syncMetroLineCycleChipState() {
       btn.style.removeProperty('--line-color');
     }
     const labelEl = btn.querySelector('.chip-label');
-    if (labelEl) labelEl.textContent = label;
+    if (labelEl) {
+      labelEl.textContent =
+        selectedLabel || (btn.classList.contains('chip-line-compact') ? '' : placeholderLabel);
+    }
   });
 }
 
@@ -786,8 +793,12 @@ function syncMetroLineCycleChipState() {
 function syncDistrictChipState() {
   const lang = UyDosh.getLang();
   const selected = state.filters.locationId;
-  const label = selected > 0 ? UyDosh.districtLabel(selected, lang) : '';
-  const ariaLabel = selected > 0 ? label : UyDosh.t('filter.district.aria', lang);
+  const selectedLabel = selected > 0 ? UyDosh.districtLabel(selected, lang) : '';
+  const ariaLabel = selected > 0 ? selectedLabel : UyDosh.t('filter.district.aria', lang);
+  // Full row falls back to the "Район" placeholder once cycled back to off (see
+  // districtChipHtml's `compact` branch); the compact row stays icon-only, same as
+  // its own initial render.
+  const placeholderLabel = UyDosh.t('filter.district.placeholder', lang);
   filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
     btn.setAttribute('aria-pressed', selected > 0 ? 'true' : 'false');
     btn.setAttribute('aria-label', ariaLabel);
@@ -800,7 +811,10 @@ function syncDistrictChipState() {
       btn.style.removeProperty('--line-color');
     }
     const labelEl = btn.querySelector('.chip-label');
-    if (labelEl) labelEl.textContent = label;
+    if (labelEl) {
+      labelEl.textContent =
+        selectedLabel || (btn.classList.contains('chip-line-compact') ? '' : placeholderLabel);
+    }
   });
 }
 

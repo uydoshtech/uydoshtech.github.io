@@ -1170,6 +1170,16 @@ function logMiniAppScreen(screenName, params) {
  * with `listing_123` passed through as `start_param` (mirrored in the
  * `tgWebAppStartParam` query param). Redirect straight to that listing
  * instead of flashing the feed first.
+ *
+ * Unlike a URL query param, `tg.initDataUnsafe.start_param` is scoped to the
+ * whole Mini App *launch session*, not the current page — Telegram keeps
+ * reporting the exact same value on every page of that session, including
+ * ones reached by later in-app navigation (e.g. tapping the header
+ * BackButton to go from the listing back to the feed). Without the
+ * `sessionStorage` guard below, that stale value would re-trigger this
+ * redirect back to the listing every time the feed page loads for the rest
+ * of the session, making it impossible to ever land on/stay on the feed
+ * after opening a shared listing link.
  */
 function redirectFromMiniAppStartParam() {
   if (/listing\.html/i.test(location.pathname)) return false;
@@ -1180,6 +1190,11 @@ function redirectFromMiniAppStartParam() {
     '';
   const match = /^listing_(\d+)$/.exec(String(startParam).trim());
   if (!match) return false;
+  const sessionKey = 'uydosh:consumedStartParam';
+  try {
+    if (sessionStorage.getItem(sessionKey) === startParam) return false;
+    sessionStorage.setItem(sessionKey, startParam);
+  } catch { /* ignore — worst case this redirect fires again */ }
   location.replace(listingPageUrl(match[1]));
   return true;
 }
