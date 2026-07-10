@@ -107,7 +107,7 @@ I18N.en = {
     'view.list': 'List',
     'view.map': 'Map',
     'map.loading': 'Loading map…',
-    'map.empty': 'No listings to show on the map for these filters.',
+    'map.empty': 'Not found',
     'map.error': 'Could not load the map.',
     'map.retry': 'Try again',
     'map.approximateLocation': 'Approximate location',

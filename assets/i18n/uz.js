@@ -108,7 +108,7 @@ I18N.uz = {
     'view.list': 'Ro‘yxat',
     'view.map': 'Xarita',
     'map.loading': 'Xarita yuklanmoqda…',
-    'map.empty': 'Tanlangan filtrlarda xaritada ko‘rsatish uchun e’lon yo‘q.',
+    'map.empty': 'Hech narsa topilmadi',
     'map.error': 'Xaritani yuklab bo‘lmadi.',
     'map.retry': 'Qayta urinish',
     'map.approximateLocation': 'Taxminiy joylashuv',

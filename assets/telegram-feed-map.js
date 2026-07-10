@@ -99,7 +99,7 @@
 
     function setFeedMapStatus(message, visible = true) {
       if (!feedMapStatusEl) return;
-      feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.classList.remove('interactive', 'map-empty');
       feedMapStatusEl.removeAttribute('aria-label');
       if (!visible || !message) {
         feedMapStatusEl.hidden = true;
@@ -117,15 +117,19 @@
     // as an on-brand UyDosh spinner rather than bare copy.
     function showFeedMapLoading() {
       if (!feedMapStatusEl) return;
-      feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.classList.remove('interactive', 'map-empty');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = `<span class="loading-spinner map-loading-spinner" aria-hidden="true"></span>`;
       feedMapStatusEl.setAttribute('aria-label', UyDosh.t('map.loading'));
     }
 
+    // Anchored near the top of the panel (via the `map-empty` class) rather than the
+    // dead-center default, since centering it puts the message/icon right on top of
+    // the map's own center pin/marker.
     function showFeedMapEmpty() {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.classList.add('map-empty');
       feedMapStatusEl.removeAttribute('aria-label');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = UyDosh.mapEmptyStateHtml();
@@ -134,6 +138,7 @@
     function showFeedMapError(onRetry) {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.add('interactive');
+      feedMapStatusEl.classList.remove('map-empty');
       feedMapStatusEl.removeAttribute('aria-label');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = `

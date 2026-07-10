@@ -490,9 +490,19 @@ header {
    (near-white in dark theme) — fine over the list's own dark background, but
    unreadable here over the map's light tiles/district overlay. Override to
    black just within this map overlay, without touching the shared class used
-   by the list's own empty state. */
-.feed-map-status .feed-empty-state-title {
+   by the list's own empty state. Same reasoning for the icon, which otherwise
+   inherits the muted/accent-tinted color meant for the list's dark background. */
+.feed-map-status .feed-empty-state-title,
+.feed-map-status .feed-empty-state-icon {
   color: #000;
+}
+/* Anchor the empty-state message near the top of the panel instead of the
+   `.feed-map-status` default dead-center placement (see `place-items: center`
+   above) — centered, it lands right on top of the map's own center pin/
+   marker instead of floating clear of it. */
+.feed-map-status.map-empty {
+  align-items: start;
+  padding-top: 15%;
 }
 /* Branded spinning "U" logo shown while the map loads — same `uydosh-spin`
    keyframes (telegram-shared.css) as the account/profile/create pages' own
@@ -804,7 +814,14 @@ header {
 .map-pin-tooltip-date {
   flex-basis: 100%;
 }
-.feed-list-panel.hidden { display: none; }
+/* `!important` is needed here: `.hidden` and `.is-empty` (below) get toggled
+   independently (view-switch vs. empty-results state) and both land on this
+   element at once whenever the Map tab is opened while the list has 0
+   results. Without this, `.is-empty`'s `display: flex` — same specificity,
+   declared later — wins the cascade tie and the (stale) list panel stays
+   visibly on screen instead of the map, even though the map itself is
+   rendering correctly underneath/behind it. */
+.feed-list-panel.hidden { display: none !important; }
 .feed-list-panel {
   /* Standard content gutter (see .content-gutter in telegram-shared.css) so
      list/grid content lines up with the filter ribbon and view tabs above it. */
