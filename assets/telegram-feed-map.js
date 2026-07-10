@@ -558,6 +558,13 @@
               hideMapPinTooltip();
             },
             onLocationUnavailable: showLocateBanner,
+            // The authoritative staleness check (see the matching `isStale` comment on
+            // `renderPinsMap` in yandex-map.js): an older call can still *arrive* at
+            // renderPinsMap after a newer one (e.g. this filter's own listings fetch just
+            // happened to take longer than a later click's), so relying only on internal
+            // call-arrival order there isn't enough — this ties it back to the true,
+            // click-order generation counter instead.
+            isStale: () => generation !== mapLoadGeneration,
           }),
           MAP_LOAD_TIMEOUT_MS,
           'Map render timed out',

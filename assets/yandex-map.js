@@ -26,7 +26,10 @@
   // blank with no way to recover short of a filter/tab change. Each call claims the next
   // number for its container up front and re-checks it's still the latest after every
   // `await` below, bailing out (without touching the DOM/state) the moment a newer call
-  // has taken over.
+  // has taken over. This only tracks arrival order at *this* function though — see the
+  // `isStale` param on `renderPinsMap` for the caller-driven check that catches the
+  // (separate) case where an older call arrives here *later* than a newer one because its
+  // own upstream fetch was slower.
   const renderGenerationByContainer = new WeakMap();
 
   /** Best-effort stringification for `reportYandexMapIssue`'s `details` field. */
@@ -2944,10 +2947,25 @@
     initialDistrictLayerVisible = false,
     onMetroLayerModeChange,
     onDistrictLayerVisibleChange,
+    // Caller-supplied "is this call still the latest user action" check (see
+    // `loadFeedMap` in telegram-feed-map.js, which passes its own generation
+    // counter here) — this is the *authoritative* staleness signal, since it's
+    // assigned in true call order at the top of `loadFeedMap`, before that
+    // call's own fetch/module-load steps that can resolve out of order. The
+    // internal `renderGenerationByContainer` counter below only tracks the
+    // order calls actually *arrive* at this function, which can differ from
+    // true call order when an earlier call is stuck on a slower fetch/await
+    // upstream — relying on it alone would let a since-superseded call "win"
+    // the container simply for having gotten here more recently, even though
+    // a newer (but faster-resolving) call already rendered its own — correct —
+    // result. Checking both together closes that gap while still catching
+    // plain concurrent-callers-without-`isStale` cases defensively.
+    isStale = null,
   }) {
     const myRenderGeneration = (renderGenerationByContainer.get(container) || 0) + 1;
     renderGenerationByContainer.set(container, myRenderGeneration);
-    const isRenderSuperseded = () => renderGenerationByContainer.get(container) !== myRenderGeneration;
+    const isRenderSuperseded = () =>
+      renderGenerationByContainer.get(container) !== myRenderGeneration || isStale?.() === true;
 
     await destroyMap(container);
     // A newer call already claimed this container while we were tearing down the old

@@ -485,6 +485,15 @@ header {
   align-items: center;
   gap: 10px;
 }
+/* The "no results" empty state (`UyDosh.mapEmptyStateHtml()`) reuses the list
+   view's `.feed-empty-state-title` styling, which defaults to `var(--fg)`
+   (near-white in dark theme) — fine over the list's own dark background, but
+   unreadable here over the map's light tiles/district overlay. Override to
+   black just within this map overlay, without touching the shared class used
+   by the list's own empty state. */
+.feed-map-status .feed-empty-state-title {
+  color: #000;
+}
 /* Branded spinning "U" logo shown while the map loads — same `uydosh-spin`
    keyframes (telegram-shared.css) as the account/profile/create pages' own
    full-panel `.loading-spinner`, just sized down to fit this smaller overlay.
