@@ -21,13 +21,17 @@ ESBUILD="$TOOLDIR/node_modules/.bin/esbuild"
 
 js_count=0
 while IFS= read -r -d '' f; do
-  "$ESBUILD" "$f" --minify --target=es2019 --outfile="$f" --allow-overwrite --log-level=warning
+  # --charset=utf8 matters here: without it esbuild defaults to ASCII output
+  # and escapes every non-ASCII character (e.g. the Cyrillic/Uzbek strings in
+  # assets/i18n/*.js) as \uXXXX, which can make a minified file *larger* than
+  # the source, even after gzip.
+  "$ESBUILD" "$f" --minify --target=es2019 --charset=utf8 --outfile="$f" --allow-overwrite --log-level=warning
   js_count=$((js_count + 1))
 done < <(find assets -type f -name '*.js' -print0)
 
 css_count=0
 while IFS= read -r -d '' f; do
-  "$ESBUILD" "$f" --minify --outfile="$f" --allow-overwrite --log-level=warning
+  "$ESBUILD" "$f" --minify --charset=utf8 --outfile="$f" --allow-overwrite --log-level=warning
   css_count=$((css_count + 1))
 done < <(find assets -type f -name '*.css' -print0)
 
