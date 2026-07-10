@@ -8,33 +8,16 @@
     <meta property="og:title" content="UyDosh — E’lon" id="og-title" />
     <meta property="og:description" content="Ijara e’loni tafsilotlari." id="og-desc" />
     <meta property="og:type" content="article" />
-    <meta property="og:image" content="images/uydosh-logo.svg" id="og-image" />
+    <meta property="og:image" content="https://uydoshtech.github.io/images/og-image.png" id="og-image" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <meta name="uydosh-yandex-maps-key" content="70aaf6ac-5a4b-4a69-a5a5-c16536483324" />
-    <script>
-      // Apply a saved manual UI theme (mini app header sun/moon toggle) before first paint to
-      // avoid a flash. This only affects the app's own interface colors — the map's light/dark
-      // rendering is independent and is never controlled by this toggle.
-      (function () {
-        try {
-          var uiTheme = localStorage.getItem('uydosh_manual_theme');
-          var vars = uiTheme === 'dark'
-            ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
-            : uiTheme === 'light'
-              ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
-              : null;
-          if (vars) {
-            var root = document.documentElement;
-            for (var prop in vars) root.style.setProperty(prop, vars[prop]);
-          }
-        } catch (e) { /* ignore */ }
-      })();
-    </script>
+    <script src="assets/theme-init.js?v=20260711-1"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="stylesheet" href="assets/listing-detail.css?v=20260711-1" />
+    <link rel="stylesheet" href="assets/listing-detail.css?v=20260711-2" />
   </head>
   <body>
     <div class="wrap">

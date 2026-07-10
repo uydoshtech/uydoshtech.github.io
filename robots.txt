@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /telegram/
+
+Sitemap: https://uydoshtech.github.io/sitemap.xml

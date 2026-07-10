@@ -6,25 +6,7 @@
     <title>UyDosh — Account</title>
     <meta name="description" content="Your own listings on UyDosh — Telegram Mini App." />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
-    <script>
-      // Apply a saved manual UI theme (mini app header sun/moon toggle) before first paint to
-      // avoid a flash. This only affects the app's own interface colors — the map's light/dark
-      // rendering is independent and is never controlled by this toggle.
-      (function () {
-        try {
-          var uiTheme = localStorage.getItem('uydosh_manual_theme');
-          var vars = uiTheme === 'dark'
-            ? { '--bg': '#061525', '--fg': 'rgba(255, 255, 255, 0.92)', '--muted': 'rgba(255, 255, 255, 0.7)', '--card': 'rgba(255, 255, 255, 0.06)', '--stroke': 'rgba(255, 255, 255, 0.12)' }
-            : uiTheme === 'light'
-              ? { '--bg': '#f6f7fb', '--fg': 'rgba(15, 23, 42, 0.92)', '--muted': 'rgba(15, 23, 42, 0.7)', '--card': 'rgba(15, 23, 42, 0.04)', '--stroke': 'rgba(15, 23, 42, 0.12)' }
-              : null;
-          if (vars) {
-            var root = document.documentElement;
-            for (var prop in vars) root.style.setProperty(prop, vars[prop]);
-          }
-        } catch (e) { /* ignore */ }
-      })();
-    </script>
+    <script src="../assets/theme-init.js?v=20260711-1"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

@@ -1946,8 +1946,9 @@
    * layer and cycle the metro-stations layer — mirrors the mobile app's map layer
    * buttons. Mini app only; rendered as a plain DOM overlay. Bottom-right keeps them
    * clear of the results-count tile (top-right) and the native geolocation control
-   * (top-left). Lifted well above the gutter so they don't sit on top of Yandex's
-   * own copyright/logo bar at the very bottom of the map.
+   * (top-left). Yandex's own copyright/logo bar is hidden entirely (see
+   * `ensureCopyrightControlStyles`), so these only need the same small gutter as the
+   * other floating map controls, not extra clearance above the bottom edge.
    */
   const LAYER_CONTROLS_CLASS = 'uydosh-map-layer-controls';
   const LAYER_CONTROL_BTN_CLASS = 'uydosh-map-layer-btn';
@@ -1955,7 +1956,7 @@
   const LAYER_CONTROL_BG_COLOR = '#000';
   const LAYER_CONTROL_MUTED_COLOR = '#94a3b8';
   const LAYER_CONTROL_ACTIVE_COLOR = '#60a5fa';
-  const LAYER_CONTROLS_BOTTOM_GUTTER = 34;
+  const LAYER_CONTROLS_BOTTOM_GUTTER = 10;
   // 20% larger than the shared `RESULTS_COUNT_CONTROL_SIZE`/icon size these
   // buttons used to just borrow — kept as their own constants (rather than
   // scaling that shared one) so the top-right results-count tile stays its

@@ -933,9 +933,12 @@
       /* Floating "back" button (see detail-back-fab in listing-detail.js) —
          bottom-right, clear of the sticky Telegram/phone contact bar. Sits
          low by default; when the contact bar is shown (has-detail-contact,
-         set alongside its `hidden` toggle) it lifts above the bar's own
-         reserved height — see `88px` in `.has-detail-contact .wrap` above —
-         instead of overlapping it. */
+         set alongside its `hidden` toggle) it lifts just above the bar
+         itself (bar height ≈ 10px pad + ~47px button + 10px pad = ~67px,
+         see `.detail-contact-bar`/`.detail-contact-btn` in
+         uydosh-mini-app.js) plus a small gap — not the taller `88px`
+         `.has-detail-contact .wrap` reserve above, which left it floating
+         too high, overlapping the footer text instead of the button. */
       .detail-back-fab {
         position: fixed;
         right: max(14px, env(safe-area-inset-right, 0px));
@@ -962,7 +965,7 @@
       .detail-back-fab:active { opacity: 0.88; }
       .detail-back-fab svg { width: 20px; height: 20px; display: block; }
       html.has-detail-contact .detail-back-fab {
-        bottom: calc(88px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)) + 10px);
+        bottom: calc(75px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
       }
 
       /* Listing details: a tight 20px horizontal margin everywhere, except
