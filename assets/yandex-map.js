@@ -1942,6 +1942,12 @@
   const LAYER_CONTROL_MUTED_COLOR = '#94a3b8';
   const LAYER_CONTROL_ACTIVE_COLOR = '#60a5fa';
   const LAYER_CONTROLS_BOTTOM_GUTTER = 34;
+  // 20% larger than the shared `RESULTS_COUNT_CONTROL_SIZE`/icon size these
+  // buttons used to just borrow — kept as their own constants (rather than
+  // scaling that shared one) so the top-right results-count tile stays its
+  // original size.
+  const LAYER_CONTROL_BTN_SIZE = Math.round(RESULTS_COUNT_CONTROL_SIZE * 1.2);
+  const LAYER_CONTROL_ICON_SIZE = Math.round(18 * 1.2);
 
   const METRO_LAYER_BUTTON_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none">
     <path d="M7 3h10a3 3 0 0 1 3 3v10a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
@@ -1974,8 +1980,8 @@
         appearance: none;
         border: none;
         border-radius: 50%;
-        width: ${RESULTS_COUNT_CONTROL_SIZE}px;
-        height: ${RESULTS_COUNT_CONTROL_SIZE}px;
+        width: ${LAYER_CONTROL_BTN_SIZE}px;
+        height: ${LAYER_CONTROL_BTN_SIZE}px;
         padding: 0;
         display: inline-flex;
         align-items: center;
@@ -1988,8 +1994,8 @@
         opacity: 0.85;
       }
       .${LAYER_CONTROL_BTN_CLASS} svg {
-        width: 18px;
-        height: 18px;
+        width: ${LAYER_CONTROL_ICON_SIZE}px;
+        height: ${LAYER_CONTROL_ICON_SIZE}px;
         display: block;
       }
       .uydosh-district-label {
