@@ -32,10 +32,11 @@ const FEED_SCROLL_RESTORE_MAX_PAGES = 30;
 // Scrolling down this far auto-collapses the filters — and skips straight
 // to the folded, chevron-only state (see `.filters--folded`) instead of
 // pausing at the compact icon ribbon in between, so listings underneath
-// stop being covered as soon as possible. A *manual* collapse (chevron tap)
-// intentionally keeps the full compact ribbon instead — see the toggle
-// click handler below — since that's a deliberate choice to keep seeing
-// the filter icons, not scroll-driven decluttering.
+// stop being covered as soon as possible. Once already collapsed — whether
+// that was scroll-driven or a manual chevron tap — scrolling down this same
+// distance folds the compact ribbon down to the bare chevron too; only a
+// scroll-driven collapse also re-expands back to the full ribbon on the way
+// back up (see `handleFeedScrollForFilters`/`expandFiltersFromScroll`).
 const FILTER_SCROLL_COLLAPSE_PX = 120;
 const FILTER_SCROLL_EXPAND_PX = 24;
 const SCROLL_TOP_HIDE_PX = 72;
@@ -157,8 +158,21 @@ function handleFeedScrollForFilters() {
       if (delta >= FILTER_SCROLL_COLLAPSE_PX) collapseFiltersFromScroll();
       return;
     }
-    if (filtersCollapsedByScroll && delta <= FILTER_SCROLL_EXPAND_PX) {
-      expandFiltersFromScroll();
+    // Already collapsed — whether that was scroll-driven or a manual chevron
+    // tap, scrolling further down still folds the compact ribbon down to the
+    // bare chevron (same threshold/hysteresis as the expanded->collapsed
+    // case above), and scrolling back up near the anchor un-folds it. Only
+    // a scroll-driven collapse also re-expands back to the full ribbon.
+    if (delta >= FILTER_SCROLL_COLLAPSE_PX) {
+      foldFiltersFromScroll();
+      return;
+    }
+    if (delta <= FILTER_SCROLL_EXPAND_PX) {
+      if (filtersFolded) {
+        unfoldFilters();
+      } else if (filtersCollapsedByScroll) {
+        expandFiltersFromScroll();
+      }
     }
   });
 }
@@ -648,9 +662,11 @@ function renderFilters() {
       state.filtersCollapsed = nextCollapsed;
       filtersCollapsedByScroll = false;
       unfoldFilters();
-      if (!nextCollapsed) {
-        resetFiltersScrollAnchor();
-      }
+      // Re-anchor scroll-driven fold/collapse tracking to "now" on every manual
+      // toggle (not just expand) so a manual collapse only folds to the bare
+      // chevron after the user scrolls another FILTER_SCROLL_COLLAPSE_PX from
+      // here, instead of inheriting a stale anchor from earlier in the page.
+      resetFiltersScrollAnchor();
       persistFiltersCollapsed();
       setFiltersCollapsedVisual(nextCollapsed);
       if (state.view === 'map') {
