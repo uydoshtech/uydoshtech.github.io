@@ -582,7 +582,17 @@
           throw new Error('No mappable pins after coordinate validation');
         }
 
-        if (pins.length === 0) showFeedMapEmpty();
+        if (pins.length === 0) {
+          showFeedMapEmpty();
+          // Shares `emptyResultHapticFired` with the list view (see `showEnd` in
+          // telegram-feed.js) so switching List <-> Map for the same empty filter
+          // set only buzzes once, not again every time the other view also
+          // discovers zero results.
+          if (!state.emptyResultHapticFired) {
+            state.emptyResultHapticFired = true;
+            UyDosh.haptic.notFound();
+          }
+        }
         state.mapLoaded = true;
         lastLoadedMapSignature = signature;
         UyDosh.reflowActiveMaps();

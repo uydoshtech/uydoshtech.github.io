@@ -726,6 +726,9 @@
       placemark.events.add('click', (event) => {
         event?.preventDefault?.();
         event?.stopPropagation?.();
+        // Not a real `<button>`/`role="button"` element, so it's invisible to
+        // `bindMiniAppHapticFeedback`'s delegated DOM listener — fire it manually.
+        window.UyDosh?.haptic?.selection?.();
         onClick(station);
       });
     }
@@ -1348,7 +1351,15 @@
     }
   }
 
-  /** Restarts cleanly even on rapid re-taps of the same pin (e.g. double-tap). */
+  /**
+   * Restarts cleanly even on rapid re-taps of the same pin (e.g. double-tap).
+   * Purely visual — pin-tap haptics are the caller's job (see `onHaptic`/
+   * `onPinClick` in `renderPinsMap`, fired from `showMapPinTooltip` in
+   * telegram-feed-map.js) since only the feed map's caller knows whether a
+   * pin tap should feel like a selection at all (e.g. the draggable
+   * address-confirmation pin in `renderSinglePinMap` has no `onPinClick`
+   * and intentionally never bounces or buzzes on tap).
+   */
   function playPinTapBounce(event) {
     const target = domTargetFromMapEvent(event);
     if (!target) return;
@@ -1656,6 +1667,9 @@
       options: { noPlacemark: true },
     });
     control.events.add('click', () => {
+      // Yandex's own control chrome, not a `<button>`/`role="button"` — outside
+      // `bindMiniAppHapticFeedback`'s delegated DOM listener, so fire it manually.
+      window.UyDosh?.haptic?.light?.();
       focusUserLocation(map, ymaps, instance);
     });
     control.events.add('locationchange', (event) => {
@@ -2402,6 +2416,7 @@
     const bounds = boundsFromGeoObjects(geoObjects);
     if (!bounds) return;
     event?.preventDefault?.();
+    window.UyDosh?.haptic?.selection?.();
     try {
       map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
     } catch { /* ignore */ }

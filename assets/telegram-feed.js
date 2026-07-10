@@ -297,6 +297,10 @@ const state = {
   loading: false,
   errored: false,
   reachedEnd: false,
+  // Guards the empty-result haptic burst (see `showEnd`) so it fires once per
+  // search/filter cycle instead of on every re-render of an already-empty state
+  // (e.g. a language switch while zero listings match the current filters).
+  emptyResultHapticFired: false,
   items: [],
   filters: {
     listingTypeId: urlListingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
@@ -994,6 +998,7 @@ function resetAndLoad({ skipFiltersRender = false } = {}) {
   state.totalPages = 1;
   state.items = [];
   state.reachedEnd = false;
+  state.emptyResultHapticFired = false;
   state.errored = false;
   state.loading = false;
   gridEl.innerHTML = '';
@@ -1188,6 +1193,13 @@ function showEnd() {
     feedListPanel?.classList.add('is-empty');
     statusEl.className = 'status is-empty-state';
     statusEl.innerHTML = UyDosh.feedEmptyStateHtml();
+    // Fires once per search/filter cycle (see `emptyResultHapticFired` reset in
+    // `resetAndLoad`) — `showEnd()` also re-runs on e.g. a language switch while
+    // already empty, which shouldn't buzz again.
+    if (!state.emptyResultHapticFired) {
+      state.emptyResultHapticFired = true;
+      UyDosh.haptic.notFound();
+    }
     return;
   }
   feedListPanel?.classList.remove('is-empty');

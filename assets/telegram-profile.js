@@ -185,6 +185,10 @@ const state = {
   isStudent: null,
   selectedUniversityId: null,
   searchQuery: '',
+  // Guards the empty-result haptic burst in `renderUniversityList` so it fires once per
+  // "typed into a no-match query" rather than again on every subsequent keystroke while
+  // the result set stays empty.
+  universitySearchEmptyHapticFired: false,
   // Keyed by LIFESTYLE_FIELDS[].key (snake_case, matching the API body directly).
   lifestyle: Object.fromEntries(LIFESTYLE_FIELDS.map((f) => [f.key, null])),
   saving: false,
@@ -236,8 +240,13 @@ function renderUniversityList() {
   const items = filteredUniversities(lang);
   if (items.length === 0) {
     universityListEl.innerHTML = `<div class="station-list-empty">${UyDosh.escapeHtml(UyDosh.t('profile.universityNotFound'))}</div>`;
+    if (!state.universitySearchEmptyHapticFired) {
+      state.universitySearchEmptyHapticFired = true;
+      UyDosh.haptic.notFound();
+    }
     return;
   }
+  state.universitySearchEmptyHapticFired = false;
   universityListEl.innerHTML = items.map((u) => {
     const id = Number(u.id);
     const pressed = Number(state.selectedUniversityId) === id;
@@ -251,6 +260,7 @@ function renderUniversityList() {
 function closeUniversitySuggestions() {
   universityListEl.hidden = true;
   universityListEl.innerHTML = '';
+  state.universitySearchEmptyHapticFired = false;
 }
 
 function scaleValueLabel(field, value) {

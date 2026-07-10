@@ -98,6 +98,24 @@ function hapticSelection() {
 }
 
 /**
+ * Short "nothing here" haptic burst — two quick, evenly-spaced light impacts, distinct
+ * from every other single-pulse profile above so an empty search/filter result reads as
+ * a deliberate signal rather than an ordinary tap. Telegram's `HapticFeedback` API has no
+ * concept of a custom vibration pattern (unlike the raw Web Vibration API), so this fakes
+ * one by firing `impactOccurred` twice a beat apart — 90ms mirrors the gap iOS's own
+ * "no match" haptic uses and is comfortably above the ~50ms floor some devices need
+ * between pulses to register each one separately instead of coalescing them into one.
+ * Callers are responsible for firing this at most once per empty result (e.g. when a
+ * search/filter freshly settles on zero matches), not on every re-render of an
+ * already-empty state — see call sites for the guard each one uses.
+ */
+const HAPTIC_NOT_FOUND_PULSE_GAP_MS = 90;
+function hapticNotFound() {
+  hapticImpact('light');
+  setTimeout(() => hapticImpact('light'), HAPTIC_NOT_FOUND_PULSE_GAP_MS);
+}
+
+/**
  * `UyDosh.haptic.<profile>()` for every Telegram haptic profile, plus the
  * raw `impact`/`notification` escape hatches for dynamic style/type values.
  * See `bindMiniAppHapticFeedback` (uydosh-mini-app.js) for the delegated
@@ -124,6 +142,7 @@ const hapticProfiles = {
   selection: hapticSelection,
   impact: hapticImpact,
   notification: hapticNotification,
+  notFound: hapticNotFound,
 };
 
 const LANGS = ['uz', 'ru', 'en'];
