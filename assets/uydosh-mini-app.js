@@ -222,6 +222,18 @@ function isProfileEmpty(profile) {
   return PROFILE_COMPLETENESS_FIELDS.every((key) => profile[key] == null);
 }
 
+/**
+ * True only when every field the profile page can edit has been filled in —
+ * used to decide whether to nudge a viewer to finish their profile even when
+ * they've already filled in some fields (e.g. the listing compatibility
+ * tile's "complete profile" CTA, shown for any gap, not just a fully empty
+ * profile).
+ */
+function isProfileFullyPopulated(profile) {
+  if (!profile) return false;
+  return PROFILE_COMPLETENESS_FIELDS.every((key) => profile[key] != null);
+}
+
 /** Hides the green "profile not populated" dot on every account menu on the page. */
 function hideProfileMenuBadge() {
   document.querySelectorAll('[data-profile-menu-badge]').forEach((el) => { el.hidden = true; });
@@ -1563,6 +1575,8 @@ Object.assign(window.UyDosh, {
   dismissProfileNudge,
   maybeShowProfileMenuBadge,
   hideProfileMenuBadge,
+  isProfileEmpty,
+  isProfileFullyPopulated,
   initMiniAppAnalytics,
   logMiniAppEvent,
   logMiniAppScreen,

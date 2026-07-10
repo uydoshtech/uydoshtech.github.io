@@ -514,6 +514,7 @@
       .compat-row-text b { font-weight: 700; }
       .compat-based-on { margin-top: 10px; font-size: 12px; color: var(--muted); }
       .compat-incomplete-text { font-size: 13px; color: var(--muted); margin: 4px 0 12px; line-height: 1.5; }
+      .compat-complete-cta { margin-top: 12px; }
       .compat-cta-btn {
         display: inline-flex; align-items: center; justify-content: center;
         padding: 9px 16px; border-radius: 10px; border: 1.5px solid var(--fg);
@@ -636,10 +637,14 @@
       .roomscan-backdrop.is-open { opacity: 1; }
       .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
       /* Dimensions overlay in the fullscreen viewer — mirrors the mobile app's native
-         SceneKit viewer's top-leading `hintContainer` (RoomUsdzViewerViewController.swift). */
+         SceneKit viewer's top-leading `hintContainer` (RoomUsdzViewerViewController.swift).
+         In the Mini App, `env(safe-area-inset-top)` alone under-reports the clear space:
+         Telegram draws its own native header (Back button + chevron/"..." menu) above the
+         backdrop, which `--uydosh-tg-inset-top` accounts for (see uydosh-mini-app.js) but the
+         device safe-area inset does not — without it, this card sat underneath that header. */
       .roomscan-backdrop-dimensions {
         position: absolute; z-index: 1;
-        top: calc(14px + env(safe-area-inset-top, 0px));
+        top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)));
         left: 14px; max-width: calc(100% - 100px);
         background: rgba(0, 0, 0, 0.52); color: #fff;
         border-radius: 12px; padding: 8px 14px;

@@ -2547,7 +2547,7 @@
         `;
       }
 
-      function renderCompatibilityResult(bodyEl, rows, analysis) {
+      function renderCompatibilityResult(bodyEl, rows, analysis, showCompleteProfileCta) {
         const groups = [
           compatGroupHtml('compat.dealbreakers', rows.dealbreakers, true),
           compatGroupHtml('compat.matches', rows.matches, false),
@@ -2556,7 +2556,13 @@
         const basedOn = UyDosh.t('compat.basedOn')
           .replace('{scored}', String(analysis.scoredFieldCount))
           .replace('{total}', String(analysis.totalFieldCount));
-        bodyEl.innerHTML = `${groups}<p class="compat-based-on">${UyDosh.escapeHtml(basedOn)}</p>`;
+        // Even with a computed score, a viewer whose own profile still has
+        // gaps gets a "complete profile" nudge below the breakdown — filling
+        // in the rest sharpens their match percentage across every listing.
+        const cta = showCompleteProfileCta
+          ? `<div class="compat-complete-cta"><a class="compat-cta-btn" href="${UyDosh.MINI_APP_PROFILE_PATH}">${UyDosh.escapeHtml(UyDosh.t('compat.completeCta'))}</a></div>`
+          : '';
+        bodyEl.innerHTML = `${groups}<p class="compat-based-on">${UyDosh.escapeHtml(basedOn)}</p>${cta}`;
       }
 
       async function loadCompatibilityTile(listing, isOwner) {
@@ -2611,7 +2617,8 @@
           }
 
           const rows = await buildCompatibilityBreakdown(currentProfile, ownerProfile, analysis, lang);
-          renderCompatibilityResult(bodyEl, rows, analysis);
+          const showCompleteProfileCta = !UyDosh.isProfileFullyPopulated(currentProfile);
+          renderCompatibilityResult(bodyEl, rows, analysis, showCompleteProfileCta);
         } catch (err) {
           console.error('Failed to load compatibility', err);
           sectionEl.hidden = true;
