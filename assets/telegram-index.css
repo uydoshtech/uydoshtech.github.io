@@ -415,7 +415,6 @@ header {
 .chip-period {
   color: var(--fg);
   flex-shrink: 0;
-  margin-left: auto;
 }
 .chip-3d[aria-pressed="true"] {
   color: var(--fg);
