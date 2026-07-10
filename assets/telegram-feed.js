@@ -534,6 +534,7 @@ function renderFilters() {
     attrs: { 'data-with-photo': true },
     pressed: photoPressed,
     icon: UyDosh.filterPhotoIcon({ pressed: false }),
+    label: UyDosh.t('filter.photo.chipLabel', lang),
     ariaLabel: UyDosh.t('filter.photo.aria', lang),
   });
 
@@ -547,6 +548,7 @@ function renderFilters() {
     attrs: { 'data-has-3d-tour': true },
     pressed: threeDPressed,
     icon: UyDosh.filterThreeDIcon(),
+    label: UyDosh.t('filter.threeDTour.chipLabel', lang),
     ariaLabel: UyDosh.t('filter.threeDTour.aria', lang),
   });
 
@@ -606,13 +608,13 @@ function renderFilters() {
                 ${genderSwitch}
                 ${photoChip}
                 ${threeDChip}
-                ${periodChip}
               </div>
             </div>
             <div class="filter-row filter-row-metro">
               <div class="chips chips-metro" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.line.aria', lang))}">
                 ${districtChip}
                 ${lineChip}
+                ${periodChip}
               </div>
             </div>
           </div>
