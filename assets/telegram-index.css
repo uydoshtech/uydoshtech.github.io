@@ -197,6 +197,55 @@ header {
 .filters-toggle-icon-filter {
   display: none;
 }
+/* "Reset filters" button — sits in the expanded ribbon's second row, pushed
+   to the same right edge as `.filters-toggle` above it (see
+   `filter-row-gender`/`margin-left: auto`) so it reads as living right under
+   the expand/collapse chevron. Disabled (not hidden, so the ribbon doesn't
+   reflow) once no filter differs from its default. */
+.filters-reset {
+  appearance: none;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.08);
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-left: auto;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, opacity 220ms ease;
+}
+.filters-reset .icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+.filters-reset .icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.filters-reset .icon svg * {
+  stroke: currentColor;
+  fill: none;
+}
+.filters-reset:not(:disabled):hover,
+.filters-reset:not(:disabled):focus-visible {
+  color: var(--error, #f87171);
+  border-color: color-mix(in srgb, var(--error, #f87171) 70%, transparent);
+}
+.filters-reset:not(:disabled):active {
+  opacity: 0.88;
+}
+.filters-reset:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
 /* Folded: reached by scrolling further down while already in the compact
    ribbon (see FILTER_SCROLL_FOLD_PX in telegram-feed.js). The card's own
    border/background go transparent and stop capturing taps so the
@@ -425,6 +474,19 @@ header {
   padding: 7px 10px;
   justify-content: center;
   flex-shrink: 0;
+}
+.chip-price-sort[aria-pressed="true"] {
+  color: var(--fg);
+}
+.chip-price-sort {
+  color: var(--fg);
+  flex-shrink: 0;
+}
+/* List view only — map pins aren't sorted (see updateViewTabs' toggle of
+   this class in telegram-feed.js). Never shown in the compact/collapsed
+   ribbon either way (it's simply not rendered there — see renderFilters). */
+.filters--map-view .chip-price-sort {
+  display: none;
 }
 
 /* Metro-line ribbon base styles (`.chip-line`, `.metro-m-badge`,

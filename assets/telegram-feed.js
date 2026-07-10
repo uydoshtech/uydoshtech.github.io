@@ -13,6 +13,10 @@ const DEFAULT_HAS_3D_TOUR = false;
 const PERIOD_DEFAULT_DAYS = 30;
 const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
+// "Sort by price" cycling chip (filter-row-metro, list view only — see
+// PRICE_SORT_ORDER_VALUES/`renderFilters`): null (default order) -> 'asc'
+// (cheapest first) -> 'desc' (priciest first) -> back to null.
+const PRICE_SORT_ORDER_VALUES = [null, 'asc', 'desc'];
 // localStorage (not sessionStorage): filters should still be there the next time the
 // user opens the Mini App, not just for the rest of the current Telegram WebView launch.
 const FILTER_STORAGE_KEY = 'uydosh_tg_feed_filters';
@@ -255,6 +259,9 @@ function readStoredFilters() {
       createdWithinDays: PERIOD_OPTION_VALUES.includes(Number(parsed.createdWithinDays))
         ? Number(parsed.createdWithinDays)
         : PERIOD_DEFAULT_DAYS,
+      priceSortOrder: PRICE_SORT_ORDER_VALUES.includes(parsed.priceSortOrder)
+        ? parsed.priceSortOrder
+        : null,
     };
   } catch {
     return null;
@@ -274,6 +281,7 @@ function persistFilters() {
         subwayLineId: state.filters.subwayLineId,
         locationId: state.filters.locationId,
         createdWithinDays: state.filters.createdWithinDays,
+        priceSortOrder: state.filters.priceSortOrder,
       }),
     );
   } catch {
@@ -298,6 +306,7 @@ const state = {
     subwayLineId: storedFilters?.subwayLineId ?? METRO_LINE_ANY,
     locationId: storedFilters?.locationId ?? DISTRICT_ANY,
     createdWithinDays: storedFilters?.createdWithinDays ?? PERIOD_DEFAULT_DAYS,
+    priceSortOrder: storedFilters?.priceSortOrder ?? null,
   },
   withPhotoExplicit: storedFilters?.withPhotoExplicit ?? false,
   filtersCollapsed: readFiltersCollapsed(),
@@ -325,6 +334,22 @@ if (urlListingTypeId != null) {
 
 function feedFiltersSignature() {
   return JSON.stringify(state.filters);
+}
+
+/** True once any filter has moved off its default value — drives whether the
+ * "reset filters" button (see renderFilters) is enabled. */
+function hasActiveFilters() {
+  const f = state.filters;
+  return (
+    f.listingTypeId !== LISTING_TYPE_ALL ||
+    f.gender !== GENDER_ANY ||
+    f.withPhoto !== DEFAULT_WITH_PHOTO ||
+    f.has3dTour !== DEFAULT_HAS_3D_TOUR ||
+    f.subwayLineId !== METRO_LINE_ANY ||
+    f.locationId !== DISTRICT_ANY ||
+    f.createdWithinDays !== PERIOD_DEFAULT_DAYS ||
+    f.priceSortOrder != null
+  );
 }
 
 /** Called right before navigating to a listing's detail page (see the `gridEl` click handler below). */
@@ -408,6 +433,16 @@ function createdWithinDaysQueryParam() {
   return days > 0 ? days : undefined;
 }
 
+/** Price-sort query params for `UyDosh.fetchListings` (list view only — the
+ * map view never sorts, see `filter-row-metro`'s `.filters--map-view` CSS). */
+function sortByQueryParam() {
+  return state.filters.priceSortOrder ? 'price' : undefined;
+}
+
+function sortOrderQueryParam() {
+  return state.filters.priceSortOrder || undefined;
+}
+
 function logSearchEvent() {
   UyDosh.logMiniAppEvent('search', {
     listing_type_id: state.filters.listingTypeId,
@@ -417,6 +452,7 @@ function logSearchEvent() {
     subway_line_id: state.filters.subwayLineId,
     location_id: state.filters.locationId,
     created_within_days: state.filters.createdWithinDays,
+    price_sort_order: state.filters.priceSortOrder || 'none',
   });
 }
 
@@ -453,6 +489,9 @@ function updateViewTabs() {
     tab.setAttribute('aria-selected', selected ? 'true' : 'false');
   }
   feedMap.applyViewLayout(state.view === 'map');
+  // Price sort only makes sense for the paginated list, not the map's pins —
+  // see `.filters--map-view .chip-price-sort` in telegram-index.css.
+  filtersEl.classList.toggle('filters--map-view', state.view === 'map');
 }
 
 function switchView(nextView) {
@@ -595,6 +634,24 @@ function renderFilters() {
     ariaLabel: `${UyDosh.t('filter.period.aria', lang)}: ${currentPeriod.label}`,
   });
 
+  // "Sort by price" cycling chip: same single-button cycle pattern as the
+  // period/district/metro-line chips above, but list-view only — hidden on
+  // the Map tab via `.filters--map-view` (see updateViewTabs) since map pins
+  // aren't sorted — and never shown in the collapsed/compact ribbon (no room,
+  // and it's reachable again by expanding).
+  const priceSortOrder = state.filters.priceSortOrder;
+  const priceSortAriaLabel = priceSortOrder
+    ? UyDosh.t(priceSortOrder === 'asc' ? 'filter.priceSort.asc' : 'filter.priceSort.desc', lang)
+    : UyDosh.t('filter.priceSort.aria', lang);
+  const priceSortChip = UyDosh.chipButtonHtml({
+    className: 'chip chip-price-sort',
+    attrs: { 'data-price-sort-cycle': true },
+    pressed: priceSortOrder != null,
+    icon: UyDosh.filterPriceSortIcon(priceSortOrder),
+    label: '$',
+    ariaLabel: priceSortAriaLabel,
+  });
+
   // Single cycling metro-line button: bare grey "M" badge that steps to the
   // next line (Chilanzar -> Uzbekistan -> ...) on each tap instead of a row
   // of four separate line buttons, revealing the selected line's name via a
@@ -626,6 +683,22 @@ function renderFilters() {
       >${filterChevronIcon()}${filterFunnelIcon()}</button>
   `;
 
+  // Sits right under the expand/collapse chevron above (same right-edge
+  // column, see `.filters-reset` margin-left: auto) — only in the expanded
+  // ribbon, since the compact/collapsed rows have no room for it and are
+  // reachable again by expanding first. Disabled (not omitted) once no
+  // filter differs from its default so the layout doesn't jump.
+  const filtersResetHtml = `
+      <button
+        type="button"
+        class="filters-reset"
+        data-filters-reset
+        data-haptic="warning"
+        aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.reset.aria', lang))}"
+        ${hasActiveFilters() ? '' : 'disabled'}
+      >${UyDosh.iconTrash()}</button>
+  `;
+
   filtersEl.innerHTML = `
     <div class="filters-main">
       <div class="filters-slide filters-slide-expanded">
@@ -643,12 +716,14 @@ function renderFilters() {
                 ${photoChip}
                 ${threeDChip}
               </div>
+              ${filtersResetHtml}
             </div>
             <div class="filter-row filter-row-metro">
               <div class="chips chips-metro" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.line.aria', lang))}">
                 ${districtChip}
                 ${lineChip}
                 ${periodChip}
+                ${priceSortChip}
               </div>
             </div>
           </div>
@@ -784,6 +859,36 @@ function renderFilters() {
       const currentIndex = PERIOD_OPTION_VALUES.indexOf(state.filters.createdWithinDays);
       const nextIndex = (currentIndex + 1) % PERIOD_OPTION_VALUES.length;
       state.filters.createdWithinDays = PERIOD_OPTION_VALUES[nextIndex];
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+      if (state.view === 'map') feedMap.loadFeedMap();
+    });
+  });
+
+  filtersEl.querySelectorAll('[data-price-sort-cycle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const currentIndex = PRICE_SORT_ORDER_VALUES.indexOf(state.filters.priceSortOrder);
+      const nextIndex = (currentIndex + 1) % PRICE_SORT_ORDER_VALUES.length;
+      state.filters.priceSortOrder = PRICE_SORT_ORDER_VALUES[nextIndex];
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+    });
+  });
+
+  filtersEl.querySelectorAll('[data-filters-reset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!hasActiveFilters()) return;
+      state.filters.listingTypeId = LISTING_TYPE_ALL;
+      state.filters.gender = GENDER_ANY;
+      state.filters.withPhoto = DEFAULT_WITH_PHOTO;
+      state.withPhotoExplicit = false;
+      state.filters.has3dTour = DEFAULT_HAS_3D_TOUR;
+      state.filters.subwayLineId = METRO_LINE_ANY;
+      state.filters.locationId = DISTRICT_ANY;
+      state.filters.createdWithinDays = PERIOD_DEFAULT_DAYS;
+      state.filters.priceSortOrder = null;
       persistFilters();
       logSearchEvent();
       resetAndLoad();
@@ -1124,6 +1229,8 @@ async function loadMore() {
       subwayLineId: subwayLineQueryParam(),
       locationId: locationQueryParam(),
       createdWithinDays: createdWithinDaysQueryParam(),
+      sortBy: sortByQueryParam(),
+      sortOrder: sortOrderQueryParam(),
     });
     // A newer filter/reset superseded this request while it was in flight —
     // drop the stale response instead of appending results for a filter

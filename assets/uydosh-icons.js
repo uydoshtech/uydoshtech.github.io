@@ -745,6 +745,29 @@ function filterThreeDIcon() {
   return iconCube();
 }
 
+/**
+ * "Sort by price" chip icon: a single up or down arrow once engaged, or a
+ * neutral up+down chevron pair before the feed has been explicitly sorted —
+ * see the price-sort cycling chip in telegram-feed.js's `renderFilters`
+ * (mirrors the district/metro-line cycling chips' single-button pattern).
+ * `order` is `'asc'`, `'desc'`, or omitted for the neutral/off state.
+ */
+function filterPriceSortIcon(order) {
+  if (order === 'asc') {
+    return iconSvg(null, `
+      <path d="M12 19V5M6 11l6-6 6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    `);
+  }
+  if (order === 'desc') {
+    return iconSvg(null, `
+      <path d="M12 5v14M6 13l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    `);
+  }
+  return iconSvg(null, `
+    <path d="M8 16l4 4 4-4M8 8l4-4 4 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  `);
+}
+
 /** Checked/unchecked checkbox glyphs, matching mobile's
  * Icons.check_box / Icons.check_box_outline_blank used by
  * MultiStationPicker / MultiLocationPicker. */
@@ -835,6 +858,7 @@ Object.assign(window.UyDosh, {
   iconCamera,
   filterPhotoIcon,
   filterThreeDIcon,
+  filterPriceSortIcon,
   iconCheckboxPair,
   iconArticle,
   iconSparkles,

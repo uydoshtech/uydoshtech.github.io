@@ -1080,7 +1080,7 @@ async function resizeImageFileForUpload(file, {
   return dataUrl;
 }
 
-function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
+function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays, sortBy, sortOrder } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
@@ -1089,6 +1089,11 @@ function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto,
   if (subwayLineId) params.subwayLineId = subwayLineId;
   if (locationId) params.locationId = locationId;
   if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
+  // Only 'price' is supported server-side today (see getAllListings in
+  // uydosh_backend's listingController.ts) — an unset sortBy leaves the feed
+  // on its default featured-then-recent order.
+  if (sortBy) params.sortBy = sortBy;
+  if (sortOrder) params.sortOrder = sortOrder;
   return fetchJson('/listings', params);
 }
 
