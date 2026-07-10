@@ -124,7 +124,7 @@ I18N.en = {
     'map.locate.cta': 'Show my location',
     'cta.openListings': 'Browse listings',
     'filter.type.all': 'All',
-    'filter.type.roomNeeded': 'Need room',
+    'filter.type.roomNeeded': 'Looking for housing',
     'filter.type.roommateNeeded': 'Need roommate',
     'filter.type.groupForming': 'Forming group',
     'filter.type.aria': 'Listing type',

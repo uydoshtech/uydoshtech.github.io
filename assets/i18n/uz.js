@@ -125,7 +125,7 @@ I18N.uz = {
     'map.locate.cta': 'Joylashuvimni ko‘rsatish',
     'cta.openListings': 'E’lonlarni ko‘rish',
     'filter.type.all': 'Hammasi',
-    'filter.type.roomNeeded': 'Xona qidiryapman',
+    'filter.type.roomNeeded': 'Uy qidiryapman',
     'filter.type.roommateNeeded': 'Xonadosh qidiramiz',
     'filter.type.groupForming': 'Guruh yigamiz',
     'filter.type.aria': 'E’lon turi',

@@ -124,7 +124,7 @@ I18N.ru = {
     'map.locate.cta': 'Показать моё местоположение',
     'cta.openListings': 'Смотреть объявления',
     'filter.type.all': 'Все',
-    'filter.type.roomNeeded': 'Ищу комнату',
+    'filter.type.roomNeeded': 'Ищу жильё',
     'filter.type.roommateNeeded': 'Ищем соседа',
     'filter.type.groupForming': 'Собираем группу',
     'filter.type.aria': 'Тип объявления',
