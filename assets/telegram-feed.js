@@ -552,6 +552,17 @@ function renderFilters() {
     ariaLabel: UyDosh.t('filter.photo.aria', lang),
   });
 
+  // Compact-row twin (icon only, matching typeChipsCompact/genderChipsCompact):
+  // the label stays in the DOM (via `.chip-icon-only .chip-label { display: none }`)
+  // for consistency, but read via `ariaLabel` for assistive tech.
+  const photoChipCompact = UyDosh.chipButtonHtml({
+    className: 'chip chip-icon-only chip-photo',
+    attrs: { 'data-with-photo': true },
+    pressed: photoPressed,
+    icon: UyDosh.filterPhotoIcon({ pressed: false }),
+    ariaLabel: UyDosh.t('filter.photo.aria', lang),
+  });
+
   // "3D View" mini filter — shown in both the expanded and collapsed
   // (compact) ribbons, matching the mobile app's 3D room-scan badge/icon
   // (see Room3dIconBadge, Icons.view_in_ar). In the compact row it trails
@@ -563,6 +574,15 @@ function renderFilters() {
     pressed: threeDPressed,
     icon: UyDosh.filterThreeDIcon(),
     label: UyDosh.t('filter.threeDTour.chipLabel', lang),
+    ariaLabel: UyDosh.t('filter.threeDTour.aria', lang),
+  });
+
+  // Compact-row twin — same reasoning as photoChipCompact above.
+  const threeDChipCompact = UyDosh.chipButtonHtml({
+    className: 'chip chip-icon-only chip-3d',
+    attrs: { 'data-has-3d-tour': true },
+    pressed: threeDPressed,
+    icon: UyDosh.filterThreeDIcon(),
     ariaLabel: UyDosh.t('filter.threeDTour.aria', lang),
   });
 
@@ -641,10 +661,10 @@ function renderFilters() {
               <div class="chips chips-compact" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.type.aria', lang))}">
                 ${typeChipsCompact}
                 ${genderChipsCompact}
-                ${photoChip}
+                ${photoChipCompact}
                 ${districtChipCompact}
                 ${lineChipCompact}
-                ${threeDChip}
+                ${threeDChipCompact}
               </div>
               ${filtersToggleHtml}
             </div>
