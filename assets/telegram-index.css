@@ -200,8 +200,8 @@ header {
 /* "Reset filters" button — sits in the expanded ribbon's second row, pushed
    to the same right edge as `.filters-toggle` above it (see
    `filter-row-gender`/`margin-left: auto`) so it reads as living right under
-   the expand/collapse chevron. Disabled (not hidden, so the ribbon doesn't
-   reflow) once no filter differs from its default. */
+   the expand/collapse chevron. Hidden entirely (not just disabled) once no
+   filter differs from its default. */
 .filters-reset {
   appearance: none;
   border: 1px solid var(--stroke);
@@ -242,9 +242,7 @@ header {
   opacity: 0.88;
 }
 .filters-reset:disabled {
-  opacity: 0.35;
-  cursor: default;
-  pointer-events: none;
+  display: none;
 }
 /* Folded: reached by scrolling further down while already in the compact
    ribbon (see FILTER_SCROLL_FOLD_PX in telegram-feed.js). The card's own

@@ -686,8 +686,9 @@ function renderFilters() {
   // Sits right under the expand/collapse chevron above (same right-edge
   // column, see `.filters-reset` margin-left: auto) — only in the expanded
   // ribbon, since the compact/collapsed rows have no room for it and are
-  // reachable again by expanding first. Disabled (not omitted) once no
-  // filter differs from its default so the layout doesn't jump.
+  // reachable again by expanding first. Disabled once no filter differs
+  // from its default, which also hides it (see `.filters-reset:disabled`
+  // in telegram-index.css).
   const filtersResetHtml = `
       <button
         type="button"
@@ -722,8 +723,8 @@ function renderFilters() {
               <div class="chips chips-metro" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.line.aria', lang))}">
                 ${districtChip}
                 ${lineChip}
-                ${periodChip}
                 ${priceSortChip}
+                ${periodChip}
               </div>
             </div>
           </div>
