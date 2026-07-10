@@ -207,6 +207,14 @@ const state = {
   /// autocomplete fetch — see `fetchAddressSuggestions` (step 0).
   addressSuggestions: [],
   addressSuggestLoading: false,
+  /// True once the *current* search has confirmed there are zero matches
+  /// (a real "nothing found" response, not just "haven't searched yet" or a
+  /// failed fetch) — see `renderAddressSuggestionsPanel`.
+  addressSuggestNoMatches: false,
+  /// Guards the empty-result haptic burst so it fires once per distinct
+  /// no-match query instead of again on every keystroke while it stays
+  /// empty — reset whenever a new debounced search starts.
+  addressSuggestNoMatchesHapticFired: false,
   /// True while `resolveAddressLocation` (roommate-needed's merged
   /// address+nearby-metro step) is forward-geocoding the typed/picked
   /// address into `{ latitude, longitude }` — lets the nearby-stations panel
@@ -1292,7 +1300,8 @@ function renderAddressSuggestionsPanel() {
   const hasFocus = document.activeElement === input;
   const suggestions = state.addressSuggestions;
   const loading = state.addressSuggestLoading;
-  const shouldShow = hasFocus && (loading || suggestions.length > 0);
+  const noMatches = !loading && suggestions.length === 0 && state.addressSuggestNoMatches;
+  const shouldShow = hasFocus && (loading || suggestions.length > 0 || noMatches);
 
   if (!shouldShow) {
     panel.hidden = true;
@@ -1303,6 +1312,17 @@ function renderAddressSuggestionsPanel() {
   panel.hidden = false;
   if (loading && suggestions.length === 0) {
     panel.innerHTML = '<div class="address-suggestions-loading"><span class="use-location-spinner" aria-hidden="true"></span></div>';
+    return;
+  }
+  if (noMatches) {
+    panel.innerHTML = `<div class="address-suggestions-empty">${UyDosh.escapeHtml(UyDosh.t('create.addressNoMatches'))}</div>`;
+    // Fires once per distinct no-match query (see the reset alongside
+    // `addressSuggestLoading` in `handleAddressInputChange`), not on every
+    // re-render of an already-confirmed-empty search.
+    if (!state.addressSuggestNoMatchesHapticFired) {
+      state.addressSuggestNoMatchesHapticFired = true;
+      UyDosh.haptic.notFound();
+    }
     return;
   }
   panel.innerHTML = suggestions.map((suggestion, index) => `
@@ -1325,10 +1345,15 @@ async function fetchAddressSuggestions(query) {
     });
     if (requestId !== addressSuggestRequestId) return;
     state.addressSuggestions = parseGeosuggestResults(data);
+    // Only a real zero-results response counts as "confirmed no matches" —
+    // a failed fetch (catch below) shouldn't claim that and trigger the
+    // "nothing found" haptic/message for what's actually a network error.
+    state.addressSuggestNoMatches = state.addressSuggestions.length === 0;
   } catch (err) {
     if (requestId !== addressSuggestRequestId) return;
     console.error('Address suggest failed', err);
     state.addressSuggestions = [];
+    state.addressSuggestNoMatches = false;
   } finally {
     if (requestId === addressSuggestRequestId) {
       state.addressSuggestLoading = false;
@@ -1385,11 +1410,16 @@ function handleAddressInputChange(value) {
     addressSuggestRequestId++;
     state.addressSuggestions = [];
     state.addressSuggestLoading = false;
+    state.addressSuggestNoMatches = false;
+    state.addressSuggestNoMatchesHapticFired = false;
     renderAddressSuggestionsPanel();
     return;
   }
 
   state.addressSuggestLoading = true;
+  // A fresh search starting — un-guard the "nothing found" haptic so a new
+  // query that also comes back empty gets its own buzz, not just the first one.
+  state.addressSuggestNoMatchesHapticFired = false;
   renderAddressSuggestionsPanel();
   addressSuggestDebounceTimer = setTimeout(
     () => fetchAddressSuggestions(query),
@@ -2516,6 +2546,8 @@ function clearCurrentLocationAddress() {
   state.form.addressLongitude = null;
   state.addressSuggestions = [];
   state.addressSuggestLoading = false;
+  state.addressSuggestNoMatches = false;
+  state.addressSuggestNoMatchesHapticFired = false;
 }
 
 /** Toggle pressed state without re-rendering scrollable station/location lists. */
@@ -2721,6 +2753,8 @@ function bindStepEvents() {
         // otherwise still show once the field regains focus.
         state.addressSuggestions = [];
         state.addressSuggestLoading = false;
+        state.addressSuggestNoMatches = false;
+        state.addressSuggestNoMatchesHapticFired = false;
       }
       applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
       showFormError('');

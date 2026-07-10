@@ -172,6 +172,7 @@ I18N.en = {
     'create.selectAllDistricts': 'All {count} districts',
     'create.address': 'Address',
     'create.addressPlaceholder': 'Street, building number',
+    'create.addressNoMatches': 'Nothing found',
     'create.useCurrentLocation': 'My location',
     'create.locatingAddress': 'Locating…',
     'create.addressMapDragHint': 'Drag the pin to fine-tune the exact spot',

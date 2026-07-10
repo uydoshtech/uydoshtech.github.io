@@ -172,6 +172,7 @@ I18N.ru = {
     'create.selectAllDistricts': 'Все {count} районов',
     'create.address': 'Адрес',
     'create.addressPlaceholder': 'Улица, дом',
+    'create.addressNoMatches': 'Ничего не найдено',
     'create.useCurrentLocation': 'Моя локация',
     'create.locatingAddress': 'Определяем…',
     'create.addressMapDragHint': 'Перетащите метку, чтобы уточнить точку',

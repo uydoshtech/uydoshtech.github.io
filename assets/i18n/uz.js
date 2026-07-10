@@ -173,6 +173,7 @@ I18N.uz = {
     'create.selectAllDistricts': 'Barcha {count} tuman',
     'create.address': 'Manzil',
     'create.addressPlaceholder': 'Ko‘cha, uy raqami',
+    'create.addressNoMatches': 'Hech narsa topilmadi',
     'create.useCurrentLocation': 'Mening joylashuvim',
     'create.locatingAddress': 'Aniqlanmoqda…',
     'create.addressMapDragHint': 'Aniq nuqtani ko‘rsatish uchun markerni suring',
