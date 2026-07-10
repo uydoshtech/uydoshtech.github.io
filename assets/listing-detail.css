@@ -930,6 +930,41 @@
       html.mini-app [data-hide-in-mini-app] { display: none !important; }
       html.mini-app footer { justify-content: center; }
 
+      /* Floating "back" button (see detail-back-fab in listing-detail.js) —
+         bottom-right, clear of the sticky Telegram/phone contact bar. Sits
+         low by default; when the contact bar is shown (has-detail-contact,
+         set alongside its `hidden` toggle) it lifts above the bar's own
+         reserved height — see `88px` in `.has-detail-contact .wrap` above —
+         instead of overlapping it. */
+      .detail-back-fab {
+        position: fixed;
+        right: max(14px, env(safe-area-inset-right, 0px));
+        bottom: calc(14px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+        z-index: 41;
+        appearance: none;
+        border: 1px solid var(--stroke);
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--card) 80%, var(--bg));
+        color: var(--fg);
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: bottom 0.2s ease, background 0.15s ease, opacity 0.15s ease;
+      }
+      .detail-back-fab[hidden] { display: none !important; }
+      .detail-back-fab:active { opacity: 0.88; }
+      .detail-back-fab svg { width: 20px; height: 20px; display: block; }
+      html.has-detail-contact .detail-back-fab {
+        bottom: calc(88px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)) + 10px);
+      }
+
       /* Listing details: a tight 20px horizontal margin everywhere, except
          the photo gallery which bleeds full-width edge to edge (but keeps
          rounded corners, so it reads as a floating card rather than a

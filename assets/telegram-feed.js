@@ -798,6 +798,7 @@ function renderFilters() {
       // district chip's cycle does.
       syncMetroLineCycleChipState();
       syncDistrictChipState();
+      syncFiltersResetButtonState();
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });
@@ -815,6 +816,7 @@ function renderFilters() {
       // icon-reveals-name transition the metro line chip uses gets to play here too.
       syncDistrictChipState();
       syncMetroLineCycleChipState();
+      syncFiltersResetButtonState();
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });
@@ -895,6 +897,20 @@ function renderFilters() {
       resetAndLoad();
       if (state.view === 'map') feedMap.loadFeedMap();
     });
+  });
+}
+
+/** Keeps the "reset filters" trash button's `disabled` state in sync with
+ * `hasActiveFilters()` for handlers that pass `skipFiltersRender: true` to
+ * `resetAndLoad()` (currently the district/metro-line cycle buttons — see
+ * below) so it doesn't skip the full `renderFilters()` that would otherwise
+ * update it. Without this, picking a district or metro line left the button
+ * stuck disabled (and thus hidden, per `.filters-reset:disabled`) even
+ * though a filter was now active. */
+function syncFiltersResetButtonState() {
+  const active = hasActiveFilters();
+  filtersEl.querySelectorAll('[data-filters-reset]').forEach((btn) => {
+    btn.disabled = !active;
   });
 }
 

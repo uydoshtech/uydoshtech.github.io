@@ -26,6 +26,21 @@
         });
       }
 
+      // Floating "back" button — an extra, always-visible way back alongside
+      // the Telegram header BackButton above (some clients make the header
+      // easy to miss once you've scrolled into a long description). Mirrors
+      // the header BackButton's own handler exactly, including the room-scan
+      // overlay guard. Kept clear of the sticky contact bar via
+      // html.has-detail-contact in listing-detail.css, not JS.
+      const detailBackFabEl = document.getElementById('detail-back-fab');
+      if (UyDosh.isMiniApp() && detailBackFabEl) {
+        detailBackFabEl.hidden = false;
+        detailBackFabEl.addEventListener('click', () => {
+          if (closeRoomScanFullscreenIfOpen()) return;
+          location.href = UyDosh.miniAppBackTargetFromUrl();
+        });
+      }
+
       // Owner-only "views" toolbar (see `ownerToolbarHtml`/`loadOwnerViewCount`) needs
       // the viewer's own app user id up front — resolved as a side effect of
       // establishing the Mini App session, which also lets the fetch below carry a

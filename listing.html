@@ -34,7 +34,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="stylesheet" href="assets/listing-detail.css?v=20260710-1" />
+    <link rel="stylesheet" href="assets/listing-detail.css?v=20260711-1" />
   </head>
   <body>
     <div class="wrap">
@@ -98,6 +98,20 @@
 
     <div id="detail-contact-bar" class="detail-contact-bar" hidden aria-hidden="true"></div>
 
+    <!-- Mini App only — extra always-visible way back to the feed alongside the
+         Telegram header BackButton, kept clear of the sticky contact bar above
+         (see .detail-back-fab / html.has-detail-contact in listing-detail.css). -->
+    <button
+      type="button"
+      id="detail-back-fab"
+      class="detail-back-fab"
+      hidden
+      data-icon="chevronLeft"
+      data-i18n="create.back"
+      data-i18n-attr="aria-label"
+      aria-label="Back"
+    ></button>
+
     <div id="complaint-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
     <div id="listing-complaints-backdrop" class="complaint-backdrop" hidden aria-hidden="true"></div>
     <div id="roomscan-backdrop" class="roomscan-backdrop" hidden aria-hidden="true"></div>
@@ -111,6 +125,6 @@
     <script src="assets/uydosh-badges.js?v=20260709-68" defer></script>
     <script src="assets/uydosh-profile-match.js?v=20260705-1" defer></script>
     <script src="assets/uydosh-mini-app.js?v=20260710-1" defer></script>
-    <script src="assets/listing-detail.js?v=20260710-2" defer></script>
+    <script src="assets/listing-detail.js?v=20260711-1" defer></script>
   </body>
 </html>
