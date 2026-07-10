@@ -826,7 +826,7 @@ function iconFlag() {
  * gets its own timeout so one slow/broken image can't hang the whole share
  * flow — it's just dropped from the result instead of failing everything.
  */
-async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 } = {}) {
+async function fetchListingPhotoFiles(photoUrls, { limit = 1, timeoutMs = 8000 } = {}) {
   const urls = Array.isArray(photoUrls) ? photoUrls.filter(Boolean).slice(0, limit) : [];
   if (urls.length === 0) return [];
 
@@ -859,23 +859,25 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 }
  *
  * When `photoUrls` is given and we're inside the Mini App on Telegram
  * mobile (iOS/Android — see `isTelegramDesktop` exclusion below), this
- * first tries `navigator.share` with the listing's real photos attached as
- * files — Telegram then posts them as real photo attachments plus the
- * caption/link, the same as sharing from any other native app. Any failure
- * along that path (unsupported, fetch failed, permission denied) silently
- * falls through to the plain link share below, so this is purely additive
- * and a tap never comes up empty.
+ * first tries `navigator.share` with just the listing's *first* photo
+ * attached as a file — Telegram then posts it as a real photo attachment
+ * plus the caption/link, the same as sharing from any other native app. Any
+ * failure along that path (unsupported, fetch failed, permission denied)
+ * silently falls through to the plain link share below, so this is purely
+ * additive and a tap never comes up empty.
  *
- * Deliberately skipped on Telegram Desktop (`tdesktop`/`macos`/etc.): its
- * `navigator.share` with multiple files doesn't bundle them into one album
- * (`sendMediaGroup`-style) the way Telegram mobile does — it posts each
- * photo as its own separate message and drops the caption/link entirely
- * onto a 3rd message, so the "real photos" path there is strictly worse
- * than the single-message link+photo-preview fallback below. Skipping it
- * up front (rather than letting it "succeed" and only fixing the result)
- * also matters because `navigator.share` resolving is the *only* signal we
- * get back — there's no way to detect this sequence-of-messages outcome
- * after the fact and retry.
+ * Deliberately only ever the first photo, never multiple: `navigator.share`
+ * with several files doesn't reliably bundle them into one Telegram album
+ * (`sendMediaGroup`-style) — on Telegram Desktop in particular it posts
+ * each photo as its own separate message and drops the caption/link
+ * entirely onto a 3rd message. A single file has no "album vs separate
+ * messages" ambiguity, so this sidesteps that failure mode entirely instead
+ * of trying to detect/undo it after the fact (`navigator.share` resolving
+ * is the *only* signal we get back — there's no way to detect a
+ * split-into-several-messages outcome and retry).
+ *
+ * Deliberately skipped on Telegram Desktop (`tdesktop`/`macos`/etc.)
+ * altogether regardless — see `isTelegramDesktop` exclusion below.
  *
  * `url` (used by every fallback path below as the actual tap target) is
  * deliberately left as-is — inside the Mini App that's a
@@ -884,9 +886,9 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 5, timeoutMs = 8000 }
  * aren't crawled for Open Graph tags). Whichever path runs instead unfurls
  * one of two `https://.../listing/id` links that Telegram *will* crawl for
  * real Open Graph tags:
- *   - `mapPreviewUrl` (`?preview=map`) when real photos are also going out
- *     as native attachments below — the map adds new information instead of
- *     repeating a photo that's already in the message.
+ *   - `mapPreviewUrl` (`?preview=map`) when the real photo is also going out
+ *     as a native attachment below — the map adds new information instead
+ *     of repeating a photo that's already in the message.
  *   - `linkPreviewUrl` (`?preview=photo`, so `og:image` stays the listing's
  *     own first photo) whenever the photo attachment path doesn't run — on
  *     Telegram Desktop that's every time (see above), and even on mobile it
