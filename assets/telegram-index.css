@@ -485,6 +485,15 @@ header {
   align-items: center;
   gap: 10px;
 }
+/* Branded spinning "U" logo shown while the map loads — same `uydosh-spin`
+   keyframes (telegram-shared.css) as the account/profile/create pages' own
+   full-panel `.loading-spinner`, just sized down to fit this smaller overlay. */
+.map-loading-spinner {
+  width: 44px;
+  height: 44px;
+  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  animation: uydosh-spin 0.9s linear infinite;
+}
 /*
  * Tap-driven fallback for the silent auto-locate attempt. Several Telegram clients
  * only reliably show the native location permission prompt (or recover from a prior

@@ -100,6 +100,7 @@
     function setFeedMapStatus(message, visible = true) {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.removeAttribute('aria-label');
       if (!visible || !message) {
         feedMapStatusEl.hidden = true;
         feedMapStatusEl.textContent = '';
@@ -110,9 +111,22 @@
       feedMapStatusEl.textContent = message;
     }
 
+    // Branded spinning "U" logo (same `.loading-spinner`/`uydosh-spin` used by the
+    // account/profile/create pages' own full-panel loaders — see telegram-shared.css)
+    // instead of a plain "Загрузка карты…" text line, so the map's loading state reads
+    // as an on-brand UyDosh spinner rather than bare copy.
+    function showFeedMapLoading() {
+      if (!feedMapStatusEl) return;
+      feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.hidden = false;
+      feedMapStatusEl.innerHTML = `<span class="loading-spinner map-loading-spinner" aria-hidden="true"></span>`;
+      feedMapStatusEl.setAttribute('aria-label', UyDosh.t('map.loading'));
+    }
+
     function showFeedMapEmpty() {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.removeAttribute('aria-label');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = UyDosh.mapEmptyStateHtml();
     }
@@ -120,6 +134,7 @@
     function showFeedMapError(onRetry) {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.add('interactive');
+      feedMapStatusEl.removeAttribute('aria-label');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = `
         <div class="feed-map-status-inner">
@@ -466,7 +481,7 @@
       state.mapLoading = true;
       hideMapPinTooltip();
       hideLocateBanner();
-      setFeedMapStatus(UyDosh.t('map.loading'), true);
+      showFeedMapLoading();
       const filterParams = getFilterParams();
       const signature = currentMapSignature(filterParams);
       // Fire-and-forget, in parallel with the pins fetch below — by the time the user taps a
