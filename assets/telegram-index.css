@@ -487,11 +487,14 @@ header {
 }
 /* Branded spinning "U" logo shown while the map loads — same `uydosh-spin`
    keyframes (telegram-shared.css) as the account/profile/create pages' own
-   full-panel `.loading-spinner`, just sized down to fit this smaller overlay. */
+   full-panel `.loading-spinner`, just sized down to fit this smaller overlay.
+   Uses the black-letter variant (`uydosh-logo-black-u.svg`) instead of the
+   regular white-letter mark — this spinner sits over the map's light tiles/
+   background, where the white "U" would otherwise blend in. */
 .map-loading-spinner {
   width: 44px;
   height: 44px;
-  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  background: url("../images/uydosh-logo-black-u.svg") center / contain no-repeat;
   animation: uydosh-spin 0.9s linear infinite;
 }
 /*

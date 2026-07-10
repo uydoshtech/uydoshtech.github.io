@@ -16,6 +16,18 @@
   let scriptPromise = null;
   const activeMaps = new WeakMap();
   const trackedContainers = new Set();
+  // Per-container render counter guarding `renderPinsMap` against overlapping calls on the
+  // same container (e.g. a user rapidly cycling the district/metro filter while on the Map
+  // tab fires one `renderPinsMap` call per tap — see `loadFeedMap` in telegram-feed-map.js,
+  // which has no queueing of its own). Without this, two in-flight calls could interleave:
+  // an older, since-superseded call resuming after `await`ing its own district-boundary/
+  // Yandex-script loads and constructing a *second* `ymaps.Map` on top of a newer call's
+  // already-rendered one, corrupting `activeMaps`/the container's DOM and leaving the map
+  // blank with no way to recover short of a filter/tab change. Each call claims the next
+  // number for its container up front and re-checks it's still the latest after every
+  // `await` below, bailing out (without touching the DOM/state) the moment a newer call
+  // has taken over.
+  const renderGenerationByContainer = new WeakMap();
 
   /** Best-effort stringification for `reportYandexMapIssue`'s `details` field. */
   function safeIssueDetails(value) {
@@ -2933,7 +2945,14 @@
     onMetroLayerModeChange,
     onDistrictLayerVisibleChange,
   }) {
+    const myRenderGeneration = (renderGenerationByContainer.get(container) || 0) + 1;
+    renderGenerationByContainer.set(container, myRenderGeneration);
+    const isRenderSuperseded = () => renderGenerationByContainer.get(container) !== myRenderGeneration;
+
     await destroyMap(container);
+    // A newer call already claimed this container while we were tearing down the old
+    // map — leave the DOM/state alone; that newer call is responsible for it now.
+    if (isRenderSuperseded()) return null;
     const validPins = (pins || []).filter((pin) => {
       const lat = numberOrNull(pin.latitude);
       const lon = numberOrNull(pin.longitude);
@@ -2966,9 +2985,14 @@
       } catch (err) {
         console.warn('[UyDoshMap] Failed to load highlighted district boundary', err);
       }
+      if (isRenderSuperseded()) return null;
     }
 
     const ymaps = await loadYandexScript(lang);
+    // Last checkpoint before the synchronous map-building below (no further `await`s
+    // until this function returns), so from here on this call always either fully wins
+    // the container or never touches it at all — never a partial/interleaved build.
+    if (isRenderSuperseded()) return null;
     const pinGroups = groupPinsByCoordinate(validPins);
     let location = locationFromPins(validPins);
     const highlightedDistrictBounds = highlightedDistrict ? boundsFromRing(highlightedDistrict.outerRing) : null;
