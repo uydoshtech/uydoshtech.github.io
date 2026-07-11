@@ -980,6 +980,15 @@ function fetchUniversitiesAll(lang = getLang()) {
   return fetchJson('/universities/all', { language: lang });
 }
 
+/**
+ * Full region list (for pickers) — public, localized by `lang`. Regions are
+ * a short static list (Uzbekistan's ~14 provinces/republic/capital), so one
+ * generously-sized page covers all of them; no need for a paginated UI.
+ */
+function fetchRegionsAll(lang = getLang()) {
+  return fetchJson('/regions', { language: lang, limit: 100 });
+}
+
 // Regions are static reference data (1h server cache) — memoize per id so the
 // 1-on-1 compatibility breakdown (see uydosh-profile-match.js) doesn't refetch
 // the same region twice when both profiles share it.
@@ -1244,6 +1253,7 @@ Object.assign(window.UyDosh, {
   fetchProfile,
   updateProfile,
   fetchUniversitiesAll,
+  fetchRegionsAll,
   fetchRegion,
   uploadListingPhoto,
   deleteListingPhoto,

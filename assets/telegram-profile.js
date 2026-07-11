@@ -29,6 +29,9 @@ const tabButtons = Array.from(document.querySelectorAll('[data-profile-tab]'));
 const tabBasicEl = document.getElementById('tab-basic');
 const tabLifestyleEl = document.getElementById('tab-lifestyle');
 
+const genderMaleBtn = document.getElementById('gender-male');
+const genderFemaleBtn = document.getElementById('gender-female');
+const regionListEl = document.getElementById('region-list');
 const studentYesBtn = document.getElementById('student-yes');
 const studentNoBtn = document.getElementById('student-no');
 const universityFieldEl = document.getElementById('university-field');
@@ -36,6 +39,7 @@ const universityPickedEl = document.getElementById('university-picked');
 const universityPickedNameEl = document.getElementById('university-picked-name');
 const universitySearchEl = document.getElementById('university-search');
 const universityListEl = document.getElementById('university-list');
+const aboutMeInputEl = document.getElementById('about-me-input');
 const lifestyleFieldsEl = document.getElementById('lifestyle-fields');
 
 const saveBtn = document.getElementById('save-btn');
@@ -182,6 +186,15 @@ const state = {
   // can't offer the form for those without a fresh login.
   noProfile: false,
   activeTab: TAB_BASIC,
+  // null = not answered yet; 1/2 once the user (or existing data) answers.
+  gender: null,
+  regions: [],
+  regionsError: false,
+  selectedRegionId: null,
+  // Not reflected in `render()` — the textarea's own value is the source of
+  // truth once the user starts typing (see `bindEvents`), so re-rendering it
+  // on every state change would reset the cursor position mid-edit.
+  aboutMe: '',
   universities: [],
   universitiesError: false,
   // null = not answered yet, true/false once the user (or existing data) answers.
@@ -232,6 +245,31 @@ function filteredUniversities(lang) {
 
 function universityById(id) {
   return state.universities.find((u) => Number(u.id) === Number(id)) || null;
+}
+
+// Regions are a short static list (Uzbekistan's ~14 provinces/republic/capital),
+// so — unlike the university field — they render as one always-visible chip
+// grid instead of a type-to-filter autosuggest.
+function sortedRegions(lang) {
+  return [...state.regions].sort((a, b) =>
+    UyDosh.localizedShort(a, lang).localeCompare(UyDosh.localizedShort(b, lang), lang));
+}
+
+function renderRegionList() {
+  if (state.regionsError) {
+    regionListEl.innerHTML = `<div class="station-list-empty">${UyDosh.escapeHtml(UyDosh.t('profile.errorLoad'))}</div>`;
+    return;
+  }
+  const lang = UyDosh.getLang();
+  regionListEl.innerHTML = sortedRegions(lang).map((r) => {
+    const id = Number(r.id);
+    return UyDosh.chipButtonHtml({
+      attrs: { 'data-region-id': id },
+      pressed: Number(state.selectedRegionId) === id,
+      label: UyDosh.titleCaseWords(UyDosh.localizedShort(r, lang)),
+      labelWrap: false,
+    });
+  }).join('');
 }
 
 function renderUniversityList() {
@@ -349,6 +387,11 @@ function setActiveTab(tab) {
 function render() {
   const lang = UyDosh.getLang();
 
+  genderMaleBtn.setAttribute('aria-pressed', state.gender === 1 ? 'true' : 'false');
+  genderFemaleBtn.setAttribute('aria-pressed', state.gender === 2 ? 'true' : 'false');
+
+  renderRegionList();
+
   studentYesBtn.setAttribute('aria-pressed', state.isStudent === true ? 'true' : 'false');
   studentNoBtn.setAttribute('aria-pressed', state.isStudent === false ? 'true' : 'false');
 
@@ -416,6 +459,38 @@ function bindEvents() {
     showFormError('');
   });
 
+  genderMaleBtn.addEventListener('click', () => {
+    if (state.gender === 1) return;
+    state.gender = 1;
+    showFormError('');
+    render();
+  });
+
+  genderFemaleBtn.addEventListener('click', () => {
+    if (state.gender === 2) return;
+    state.gender = 2;
+    showFormError('');
+    render();
+  });
+
+  regionListEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-region-id]');
+    if (!btn) return;
+    const id = Number(btn.getAttribute('data-region-id'));
+    if (state.selectedRegionId === id) return;
+    state.selectedRegionId = id;
+    showFormError('');
+    render();
+  });
+
+  // Free-text field — updates state directly on every keystroke instead of
+  // going through render(), which would reset the textarea's value/cursor
+  // position mid-edit (nothing else in the UI depends on `state.aboutMe`).
+  aboutMeInputEl.addEventListener('input', () => {
+    state.aboutMe = aboutMeInputEl.value;
+    showFormError('');
+  });
+
   studentYesBtn.addEventListener('click', () => {
     if (state.isStudent === true) return;
     state.isStudent = true;
@@ -480,6 +555,13 @@ async function onSave() {
       ? { university_id: state.selectedUniversityId }
       // `0` (not null/undefined) is what actually clears university_id server-side.
       : { university_id: 0 }),
+    // Gender/region are optional and have no "not specified" chip — only
+    // send them once the user (or existing data) has actually picked one,
+    // so an untouched field never overwrites a value set elsewhere (e.g.
+    // the Flutter app) with a clear.
+    ...(state.gender != null ? { gender: state.gender } : {}),
+    ...(state.selectedRegionId != null ? { region_id: state.selectedRegionId } : {}),
+    about_me: state.aboutMe.trim(),
     ...state.lifestyle,
   };
 
@@ -517,12 +599,25 @@ async function loadUniversities() {
   }
 }
 
+async function loadRegions() {
+  try {
+    const data = await UyDosh.fetchRegionsAll(UyDosh.getLang());
+    state.regions = Array.isArray(data?.regions) ? data.regions : [];
+  } catch (err) {
+    console.error('Failed to load regions', err);
+    state.regionsError = true;
+  }
+}
+
 async function loadProfile() {
   try {
     const profile = await UyDosh.fetchProfile(state.userId);
     const universityId = profile?.university_id != null ? Number(profile.university_id) : null;
     state.isStudent = universityId != null ? true : null;
     state.selectedUniversityId = universityId;
+    state.gender = profile?.gender === 1 || profile?.gender === 2 ? profile.gender : null;
+    state.selectedRegionId = profile?.region_id != null ? Number(profile.region_id) : null;
+    state.aboutMe = profile?.about_me ?? '';
     for (const field of LIFESTYLE_FIELDS) {
       const raw = profile?.[field.key];
       state.lifestyle[field.key] = raw === undefined ? null : raw;
@@ -578,7 +673,7 @@ async function boot() {
     return;
   }
 
-  await Promise.all([loadProfile(), loadUniversities()]);
+  await Promise.all([loadProfile(), loadUniversities(), loadRegions()]);
 
   if (state.noProfile) {
     renderNoProfileState();
@@ -590,6 +685,9 @@ async function boot() {
     loadingEl.textContent = UyDosh.t('profile.errorLoad');
     return;
   }
+
+  // Set once here rather than in `render()` — see `state.aboutMe` comment.
+  aboutMeInputEl.value = state.aboutMe;
 
   loadingEl.hidden = true;
   formRootEl.hidden = false;
