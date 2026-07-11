@@ -886,8 +886,14 @@ function ensureMiniAppSafeAreaStyles() {
       border: none;
       background: none;
       padding: 0;
-      width: 44px;
-      height: 44px;
+      /* Hugs the 24px icon exactly (unlike the old 44px box, which padded
+         the glyph 10px on every side — invisible space the .nav-menu
+         margins below couldn't reach since they only push on the *outside*
+         of this box). Tap target is restored via the ::before below instead
+         of by oversizing this box. */
+      width: 24px;
+      height: 24px;
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -897,6 +903,14 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app .nav-menu-trigger:active {
       opacity: 0.88;
+    }
+    /* Invisible hit-area expansion back to ~44px so the smaller visual box
+       above doesn't shrink the actual tap target — doesn't affect layout
+       since it's taken out of flow. */
+    html.mini-app .nav-menu-trigger::before {
+      content: '';
+      position: absolute;
+      inset: -10px;
     }
     html.mini-app .nav-menu-icon svg {
       width: 24px;
