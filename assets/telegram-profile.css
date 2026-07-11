@@ -170,23 +170,63 @@ textarea:focus {
 .lifestyle-slider-wrap {
   position: relative;
 }
+/* Fully custom thumb/track (rather than relying on `accent-color` alone) so
+   the thumb has a known, fixed width across every webview the mini app runs
+   in — the tick dots below are inset by exactly half that width (9px) to
+   land under the real stop positions. Left to browser defaults, thumb size
+   varies a lot per platform, which threw the dots off from the actual
+   1-5 stops (mirrors the range slider on the create-listing page). */
 .lifestyle-slider {
   width: 100%;
-  accent-color: var(--brand2);
-  display: block;
+  height: 18px;
   margin: 2px 0 6px;
   position: relative;
   z-index: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.lifestyle-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.22);
+}
+.lifestyle-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.22);
+}
+.lifestyle-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--brand2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.lifestyle-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 /* Small dots overlaid on top of the track marking each of the 1-5
    stops the slider can land on — purely decorative, so they ignore
    pointer events (to not block dragging) and sit above the input via
    z-index (the thumb itself still renders on top, being a child of
-   the browser's own track rendering, not affected by our z-index). */
+   the browser's own track rendering, not affected by our z-index).
+   Inset (9px) matches the thumb's radius above: the browser always
+   centers the thumb `thumbWidth/2` in from each edge at the min/max
+   values, so this is where the real stops land. */
 .lifestyle-slider-ticks {
   position: absolute;
-  left: 3px;
-  right: 3px;
+  left: 9px;
+  right: 9px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
