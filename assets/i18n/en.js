@@ -11,7 +11,6 @@ I18N.en = {
     'nav.delete': 'Delete account',
     'nav.contact': 'Contact',
     'nav.menuLabel': 'Menu',
-    'nav.close': 'Close',
     'nav.more': 'More',
     'session.revokedTitle': 'Session ended',
     'session.revokedMessage': 'This app was opened in another window or device. Reopen it to continue.',

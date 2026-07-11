@@ -534,13 +534,6 @@
         if (generation !== mapLoadGeneration) return;
         state.mapModule = mapModule;
 
-        // Cleared even for the empty-results case below (which then re-shows it via
-        // showFeedMapEmpty()) — `renderPinsMap` still builds a real, pannable map with
-        // zero pins/placemarks (Tashkent-centered by default) rather than tearing it
-        // down, so the "no results" message ends up as an overlay on top of a live map
-        // instead of replacing it — keeping the map always loaded and available across
-        // List <-> Map switches and filter changes, empty results included.
-        setFeedMapStatus('', false);
         const map = await UyDosh.withTimeout(
           mapModule.renderPinsMap(feedMapEl, {
             pins,
@@ -581,6 +574,19 @@
           // these filters" case above, which always gets a real map back.
           throw new Error('No mappable pins after coordinate validation');
         }
+
+        // Only clear the loading spinner overlay now that the new map instance is
+        // actually built — `renderPinsMap` tears down the previous Yandex map
+        // instance (blanking the container) before rebuilding a fresh one, so
+        // clearing the overlay any earlier (e.g. right before calling it, as this
+        // used to do) let that teardown/rebuild + tile-load window show through as
+        // a visible "blink" on every filter change. `renderPinsMap` still builds a
+        // real, pannable map with zero pins/placemarks (Tashkent-centered by
+        // default) for the empty-results case below rather than tearing it down, so
+        // clearing here — before the showFeedMapEmpty() re-show — still leaves the
+        // "no results" message as an overlay on top of a live map, not a
+        // replacement for one.
+        setFeedMapStatus('', false);
 
         if (pins.length === 0) {
           showFeedMapEmpty();

@@ -884,30 +884,27 @@
         color: white;
       }
 
-      /* Skeleton + status */
-      .skel {
-        border-radius: 10px;
-        background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-        background-size: 200% 100%;
-        animation: shimmer 1.2s linear infinite;
+      /* Loading + status. Branded spinning "U" logo — same `uydosh-spin`
+         keyframes/markup as the Mini App's account/profile/create pages and
+         the feed map's own loading overlay — shown both while the listing
+         first loads (see `#detail-loading-view` in listing.html) and while a
+         failed load is retried (see `renderError`'s retry handler), instead
+         of a low-contrast skeleton or a plain "Loading…" text line. */
+      .detail-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
       }
-      @media (prefers-color-scheme: light) {
-        .skel {
-          background: linear-gradient(90deg, rgba(15,23,42,0.05), rgba(15,23,42,0.12), rgba(15,23,42,0.05));
-          background-size: 200% 100%;
-        }
+      .loading-spinner {
+        width: 64px;
+        height: 64px;
+        background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+        animation: uydosh-spin 0.9s linear infinite;
       }
-      @keyframes shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+      @keyframes uydosh-spin {
+        to { transform: rotate(360deg); }
       }
-      .skel.gallery-skel { aspect-ratio: 4/3; width: 100%; }
-      .skel.gallery-skel-rounded { border-radius: 20px; }
-      .skel.line { height: 14px; }
-      .skel.line.w40 { width: 40%; }
-      .skel.line.w60 { width: 60%; }
-      .skel.line.w80 { width: 80%; }
-      .skel.line.short { height: 10px; }
 
       .status-page {
         text-align: center; padding: 60px 0; color: var(--muted);
@@ -985,8 +982,7 @@
         padding-top: calc(var(--uydosh-tg-inset-top, 72px) + 12px);
       }
       html.mini-app .gallery-col { margin-left: -20px; margin-right: -20px; }
-      html.mini-app .gallery-col .gallery,
-      html.mini-app .gallery-col .gallery-skel {
+      html.mini-app .gallery-col .gallery {
         border-radius: 20px;
         border-left: 0;
         border-right: 0;

@@ -394,13 +394,13 @@ function accountMenuDisplayName() {
  */
 function accountShortcutItemsHtml() {
   return `
+    <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
+    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
+    <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
     <a role="menuitem" href="${MINI_APP_PROFILE_PATH}" data-profile-menu-item>
       ${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span>
       <span class="account-menu-badge" data-profile-menu-badge hidden aria-hidden="true"></span>
     </a>
-    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
-    <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
-    <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
     <div class="account-menu-divider" role="separator"></div>
     <button type="button" class="account-menu-theme" role="menuitem" data-uydosh-theme-toggle>
       <span data-theme-toggle-icon aria-hidden="true"></span>
@@ -482,7 +482,6 @@ function navDrawerHtml() {
     <div class="nav-drawer-backdrop" data-nav-drawer-backdrop hidden aria-hidden="true">
       <div class="nav-drawer" role="dialog" aria-modal="true" data-i18n="nav.menuLabel" data-i18n-attr="aria-label">
         <div class="nav-drawer-header">
-          <button type="button" class="nav-drawer-close" data-nav-drawer-close data-i18n="nav.close" data-i18n-attr="aria-label">✕</button>
           <div class="nav-drawer-user">
             <span class="nav-drawer-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
             ${displayName ? `<strong class="nav-drawer-username">${escapeHtml(displayName)}</strong>` : ''}
@@ -581,10 +580,11 @@ function ensureNavDrawerMounted() {
   }
   if (backdrop.dataset.bound) return;
   backdrop.dataset.bound = '1';
+  // No dedicated close button — tapping the backdrop or Escape (below) are
+  // the only ways out, same as tapping outside the account-menu dropdown.
   backdrop.addEventListener('click', (e) => {
     if (e.target === backdrop) closeNavDrawer();
   });
-  backdrop.querySelector('[data-nav-drawer-close]')?.addEventListener('click', () => closeNavDrawer());
   // The "More" toggle expands/collapses its own panel in place — it must not
   // also close the whole drawer, unlike every other button below.
   backdrop.querySelector('[data-nav-drawer-more-toggle]')?.addEventListener('click', (e) => {
@@ -595,7 +595,7 @@ function ensureNavDrawerMounted() {
   // Nav items (`<a>`) close the drawer implicitly by navigating away; button
   // items (e.g. the theme toggle) don't navigate, so close explicitly.
   backdrop.querySelector('.nav-drawer')?.addEventListener('click', (e) => {
-    if (e.target.closest('button:not([data-nav-drawer-close]):not([data-nav-drawer-more-toggle])')) closeNavDrawer();
+    if (e.target.closest('button:not([data-nav-drawer-more-toggle])')) closeNavDrawer();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && backdrop.classList.contains('is-open')) closeNavDrawer();
@@ -676,7 +676,7 @@ function miniAppHeaderHtml(options = {}) {
   } = options;
   const brandContent =
     `<img src="${escapeHtml(iconSrc)}" width="44" height="44" alt="UyDosh" />` +
-    `<div><strong><span class="brand-uy">Uy</span><span class="brand-dosh">Dosh</span></strong><span data-i18n="${escapeHtml(subtitleKey)}"></span></div>`;
+    `<div><strong><span class="brand-uy">Uy</span><span class="brand-dosh">Dosh</span></strong><span class="brand-tagline" data-i18n="${escapeHtml(subtitleKey)}"></span></div>`;
   const brand = brandLink
     ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
     : `<div class="brand">${brandContent}</div>`;
@@ -895,11 +895,13 @@ function ensureMiniAppSafeAreaStyles() {
       color: rgba(255, 255, 255, 0.85);
     }
     /* Light-theme header (lighter skyline variant, see 'mini-app-header-light'
-       above) — the tagline stays white (same as default) since the header's
-       photo is still dark-blue-tinted overall, but "Dosh" and the avatar
-       chrome read better dark here. */
+       above) — "Dosh" and the tagline read better dark here, even though the
+       header's photo is still dark-blue-tinted overall. */
     html.mini-app-header-light header .brand .brand-dosh {
       color: rgba(0, 0, 0, 0.92);
+    }
+    html.mini-app-header-light header .brand .brand-tagline {
+      color: rgba(0, 0, 0, 0.72);
     }
     html.mini-app-header-light header .account-menu-avatar {
       border-color: rgba(0, 0, 0, 0.45);
@@ -1212,26 +1214,25 @@ function ensureMiniAppSafeAreaStyles() {
       transform: translateX(0);
     }
     html.mini-app .nav-drawer-header {
-      position: relative;
       margin-bottom: 18px;
       flex: 0 0 auto;
     }
     /* Own circular Telegram avatar + display name, replacing the brand logo
        that used to sit here — the drawer already opens from an identity
        -bearing avatar trigger in the header, so it reads better as "this is
-       your account" than as another UyDosh wordmark. */
+       your account" than as another UyDosh wordmark. Row layout (not
+       stacked) — no dedicated close button anymore, so there's no corner
+       element to keep clear of either; tap the backdrop or Escape to close. */
     html.mini-app .nav-drawer-user {
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
       min-width: 0;
-      /* Keeps the name from running under the close button in the corner. */
-      padding-right: 38px;
     }
     html.mini-app .nav-drawer-avatar {
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       box-sizing: border-box;
       border-radius: 50%;
       overflow: hidden;
@@ -1243,8 +1244,8 @@ function ensureMiniAppSafeAreaStyles() {
       color: var(--fg, rgba(255, 255, 255, 0.85));
     }
     html.mini-app .nav-drawer-avatar svg {
-      width: 26px;
-      height: 26px;
+      width: 22px;
+      height: 22px;
       display: block;
     }
     html.mini-app .nav-drawer-avatar.has-avatar {
@@ -1261,32 +1262,10 @@ function ensureMiniAppSafeAreaStyles() {
       font-weight: 700;
       letter-spacing: 0.1px;
       color: var(--fg, rgba(255, 255, 255, 0.92));
-      max-width: 100%;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-    html.mini-app .nav-drawer-close {
-      position: absolute;
-      top: 0;
-      right: 0;
-      appearance: none;
-      border: 0;
-      background: rgba(127, 127, 127, 0.12);
-      color: var(--fg, rgba(255, 255, 255, 0.92));
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 15px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    html.mini-app .nav-drawer-close:active {
-      opacity: 0.85;
     }
     html.mini-app .nav-drawer-body {
       display: flex;

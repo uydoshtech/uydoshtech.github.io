@@ -17,7 +17,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="stylesheet" href="assets/listing-detail.css?v=20260711-2" />
+    <link rel="stylesheet" href="assets/listing-detail.css?v=20260711-3" />
   </head>
   <body>
     <div class="wrap">
@@ -52,18 +52,11 @@
       </a>
 
       <main id="root">
-        <!-- Skeleton while loading -->
-        <div class="layout" id="skeleton-view">
-          <div class="gallery-col">
-            <div class="skel gallery-skel gallery-skel-rounded"></div>
-          </div>
-          <div class="details">
-            <div class="skel line w80"></div>
-            <div class="skel line w40"></div>
-            <div class="skel line w60 short"></div>
-            <div class="skel line w80 short"></div>
-            <div class="skel line w60 short"></div>
-          </div>
+        <!-- Branded UyDosh spinner while loading (same `.loading-spinner`/
+             `uydosh-spin` used by the Mini App's account/profile/create pages
+             and the feed map) instead of a plain skeleton/text placeholder. -->
+        <div class="detail-loading" id="detail-loading-view" aria-busy="true" aria-live="polite">
+          <span class="loading-spinner" aria-hidden="true"></span>
         </div>
       </main>
 
@@ -114,6 +107,6 @@
     <script src="assets/listing-detail-complaints.js?v=20260711-1" defer></script>
     <script src="assets/listing-detail-actions.js?v=20260711-1" defer></script>
     <script src="assets/listing-detail-compat.js?v=20260711-1" defer></script>
-    <script src="assets/listing-detail.js?v=20260711-2" defer></script>
+    <script src="assets/listing-detail.js?v=20260711-3" defer></script>
   </body>
 </html>

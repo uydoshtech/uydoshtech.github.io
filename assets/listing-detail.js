@@ -352,7 +352,12 @@
         } catch (err) {
           console.error('Failed to load listing', err);
           if (err?.status === 404) renderNotFound();
-          else renderError(() => { rootEl.innerHTML = '<div class="status-page" data-i18n="detail.loading">' + UyDosh.escapeHtml(UyDosh.t('detail.loading')) + '</div>'; load(); });
+          else renderError(() => {
+            // Branded spinner (same as the initial load) instead of a plain
+            // "Loading…" text line while the retry is in flight.
+            rootEl.innerHTML = '<div class="detail-loading" aria-busy="true" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span></div>';
+            load();
+          });
         }
       }
 
