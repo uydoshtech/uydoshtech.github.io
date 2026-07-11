@@ -349,7 +349,9 @@
           el.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
         }
         el.setAttribute('camera-controls', '');
-        el.setAttribute('camera-orbit', '0deg 75deg 70%');
+        // Polar angle lowered from the original 75deg to a steeper, more
+        // overhead isometric look so the room layout reads more clearly.
+        el.setAttribute('camera-orbit', '0deg 45deg 70%');
         // Widened beyond the zoom slider's own 28–82° range (see createRoomScanZoomSlider)
         // so the slider never gets clamped, and pinch/scroll zoom keeps working too.
         el.setAttribute('min-field-of-view', '20deg');
