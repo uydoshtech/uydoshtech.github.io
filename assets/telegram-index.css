@@ -490,7 +490,10 @@ header {
   min-width: 40px;
   justify-content: center;
 }
-.chip-price-sort-compact .chip-label {
+/* Beats `.chip.chip-icon-only .chip-label { display: none; }` above on
+   specificity (3 classes vs. 2) — without the extra `.chip` qualifier here,
+   that rule always won and the "$" glyph silently never rendered. */
+.chip.chip-icon-only.chip-price-sort-compact .chip-label {
   display: inline;
   font-size: 12px;
   font-weight: 700;

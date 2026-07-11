@@ -425,35 +425,131 @@ function accountMenuHtml() {
 }
 
 /**
- * Hamburger-triggered menu shown at the left of the Mini App header (before
- * the brand logo) — bare icon (no circular chrome), separate from the
- * avatar-triggered account menu on the right. Repeats the same account
- * shortcuts as accountMenuHtml() plus the app-level links that otherwise
- * have no entry point inside the Mini App (privacy, terms, delete account,
- * contact) — the public site exposes those via its own nav instead.
+ * Hamburger trigger shown at the left of the Mini App header (before the
+ * brand logo) — bare icon (no circular chrome), separate from the
+ * avatar-triggered account menu on the right. Opens the full-height nav
+ * drawer (see navDrawerHtml()) rather than a small dropdown, since it holds
+ * the same long item list as the account menu plus the app-level links.
  */
 function navMenuHtml() {
   return `
-    <div class="menu-dropdown nav-menu" role="group">
+    <div class="nav-menu">
       <button
         type="button"
-        class="menu-dropdown-trigger nav-menu-trigger"
-        aria-haspopup="true"
+        class="nav-menu-trigger"
+        aria-haspopup="dialog"
         aria-expanded="false"
+        data-nav-drawer-trigger
         data-i18n="nav.menuLabel"
         data-i18n-attr="aria-label"
       >
         <span class="nav-menu-icon" aria-hidden="true">${UyDosh.iconChrome('menu')}</span>
       </button>
-      <div class="menu-dropdown-list nav-menu-list" role="menu" hidden>
-        ${accountShortcutItemsHtml()}
-        <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
-        <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
-        <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
-        <div class="account-menu-divider" role="separator"></div>
-        <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome('trash')}<span data-i18n="nav.delete"></span></a>
+    </div>`;
+}
+
+/**
+ * Left slide-out drawer opened by the hamburger trigger above — mounted once
+ * on `document.body` (not inside the header) so it renders as a true
+ * full-viewport overlay regardless of the header's own position/overflow.
+ * Repeats the same account shortcuts as accountMenuHtml() plus the app-level
+ * links that otherwise have no entry point inside the Mini App (privacy,
+ * terms, delete account, contact) — the public site exposes those via its
+ * own nav instead.
+ */
+function navDrawerHtml() {
+  return `
+    <div class="nav-drawer-backdrop" data-nav-drawer-backdrop hidden aria-hidden="true">
+      <div class="nav-drawer" role="dialog" aria-modal="true" data-i18n="nav.menuLabel" data-i18n-attr="aria-label">
+        <div class="nav-drawer-header">
+          <div class="nav-drawer-brand">
+            <img src="/apple-touch-icon.png" width="32" height="32" alt="" />
+            <strong><span class="brand-uy">Uy</span><span class="brand-dosh">Dosh</span></strong>
+          </div>
+          <button type="button" class="nav-drawer-close" data-nav-drawer-close data-i18n="nav.close" data-i18n-attr="aria-label">✕</button>
+        </div>
+        <div class="nav-drawer-body" role="menu">
+          ${accountShortcutItemsHtml()}
+          <div class="account-menu-divider" role="separator"></div>
+          <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
+          <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
+          <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
+          <div class="account-menu-divider" role="separator"></div>
+          <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome('trash')}<span data-i18n="nav.delete"></span></a>
+        </div>
       </div>
     </div>`;
+}
+
+/** Mirrors the drawer's own transition duration below (used for the close fallback timer). */
+const NAV_DRAWER_TRANSITION_MS = 220;
+
+function openNavDrawer() {
+  const backdrop = document.querySelector('[data-nav-drawer-backdrop]');
+  if (!backdrop) return;
+  backdrop.hidden = false;
+  backdrop.setAttribute('aria-hidden', 'false');
+  // Force layout before adding the open class so the browser registers the
+  // collapsed starting state and animates towards it instead of snapping.
+  backdrop.getBoundingClientRect();
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => backdrop.classList.add('is-open'));
+  for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function closeNavDrawer() {
+  const backdrop = document.querySelector('[data-nav-drawer-backdrop]');
+  if (!backdrop || backdrop.hidden) return;
+  backdrop.classList.remove('is-open');
+  document.body.style.overflow = '';
+  // Keep the drawer rendered (but not interactive) until the closing
+  // transition finishes, then hide it — animating `display` directly isn't possible.
+  window.setTimeout(() => {
+    if (!backdrop.classList.contains('is-open')) {
+      backdrop.hidden = true;
+      backdrop.setAttribute('aria-hidden', 'true');
+    }
+  }, NAV_DRAWER_TRANSITION_MS);
+  for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+}
+
+/** Lazily creates (once per page) and wires up the nav drawer + its hamburger trigger(s). */
+function ensureNavDrawerMounted() {
+  let backdrop = document.querySelector('[data-nav-drawer-backdrop]');
+  if (!backdrop) {
+    const holder = document.createElement('div');
+    holder.innerHTML = navDrawerHtml();
+    backdrop = holder.firstElementChild;
+    document.body.appendChild(backdrop);
+    applyI18n(backdrop);
+    initThemeToggle();
+  }
+  for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
+    if (trigger.dataset.bound) continue;
+    trigger.dataset.bound = '1';
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openNavDrawer();
+    });
+  }
+  if (backdrop.dataset.bound) return;
+  backdrop.dataset.bound = '1';
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeNavDrawer();
+  });
+  backdrop.querySelector('[data-nav-drawer-close]')?.addEventListener('click', () => closeNavDrawer());
+  // Nav items (`<a>`) close the drawer implicitly by navigating away; button
+  // items (e.g. the theme toggle) don't navigate, so close explicitly.
+  backdrop.querySelector('.nav-drawer')?.addEventListener('click', (e) => {
+    if (e.target.closest('button:not([data-nav-drawer-close])')) closeNavDrawer();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && backdrop.classList.contains('is-open')) closeNavDrawer();
+  });
 }
 
 /** Mirrors the .menu-dropdown-list transition duration below (used for the close fallback timer). */
@@ -547,6 +643,7 @@ function mountMiniAppHeader(target, options = {}) {
   applyI18n(header);
   initThemeToggle();
   initMiniAppMenuDropdowns();
+  ensureNavDrawerMounted();
   syncMobileHeaderLayout();
   return header;
 }
@@ -835,8 +932,9 @@ function ensureMiniAppSafeAreaStyles() {
        otherwise shared by every header child, so this trims just this one
        item's flanks without touching the brand/account-menu spacing). */
     html.mini-app .nav-menu {
-      margin-left: -11px;
+      margin-left: -6px;
       margin-right: -6px;
+      flex-shrink: 0;
     }
     html.mini-app .account-menu-trigger {
       appearance: none;
@@ -940,10 +1038,6 @@ function ensureMiniAppSafeAreaStyles() {
       right: 0;
       transform-origin: top right;
     }
-    html.mini-app .nav-menu-list {
-      left: 0;
-      transform-origin: top left;
-    }
     html.mini-app .menu-dropdown-list[hidden] {
       display: none;
     }
@@ -1008,8 +1102,133 @@ function ensureMiniAppSafeAreaStyles() {
     /* Flags "Delete account" as a sensitive/destructive action, same red
        used by the standalone delete button on the account page
        (.account-delete-btn in telegram-account.css). */
-    html.mini-app .menu-dropdown-list a.account-menu-item-danger {
+    html.mini-app .menu-dropdown-list a.account-menu-item-danger,
+    html.mini-app .nav-drawer-body a.account-menu-item-danger {
       color: var(--error, #f87171);
+    }
+    /* Left slide-out drawer opened by the hamburger trigger — mounted on
+       document.body (see ensureNavDrawerMounted()), not inside the header,
+       so it renders as a true full-viewport overlay above everything else. */
+    html.mini-app .nav-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-start;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    html.mini-app .nav-drawer-backdrop[hidden] {
+      display: none !important;
+    }
+    html.mini-app .nav-drawer-backdrop.is-open {
+      opacity: 1;
+    }
+    html.mini-app .nav-drawer {
+      width: min(82vw, 300px);
+      max-width: 300px;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      /* Same solid tint as .menu-dropdown-list, so the account-menu-badge's
+         box-shadow ring (color-mix'd against that background) still matches. */
+      background: color-mix(in srgb, var(--bg), black 6%);
+      border-right: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
+      box-shadow: 18px 0 60px rgba(0, 0, 0, 0.45);
+      padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px))
+        max(16px, env(safe-area-inset-left, 0px));
+      transform: translateX(-100%);
+      transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+    }
+    html.mini-app .nav-drawer-backdrop.is-open .nav-drawer {
+      transform: translateX(0);
+    }
+    html.mini-app .nav-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex: 0 0 auto;
+    }
+    html.mini-app .nav-drawer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+    }
+    html.mini-app .nav-drawer-brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: block;
+      flex-shrink: 0;
+    }
+    html.mini-app .nav-drawer-brand strong {
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+    html.mini-app .nav-drawer-close {
+      appearance: none;
+      border: 0;
+      background: rgba(127, 127, 127, 0.12);
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    html.mini-app .nav-drawer-close:active {
+      opacity: 0.85;
+    }
+    html.mini-app .nav-drawer-body {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow-y: auto;
+      flex: 1 1 auto;
+    }
+    html.mini-app .nav-drawer-body a,
+    html.mini-app .nav-drawer-body button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 10px;
+      border-radius: 10px;
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      width: 100%;
+      border: none;
+      background: none;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    html.mini-app .nav-drawer-body a:active,
+    html.mini-app .nav-drawer-body button:active {
+      background: rgba(127, 127, 127, 0.16);
+    }
+    html.mini-app .nav-drawer-body a svg,
+    html.mini-app .nav-drawer-body button svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: block;
+      stroke: currentColor;
+      fill: none;
     }
     html.mini-app [data-hide-in-mini-app] {
       display: none !important;

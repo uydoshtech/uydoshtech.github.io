@@ -652,7 +652,7 @@ function renderFilters() {
     attrs: { 'data-price-sort-cycle': true },
     pressed: priceSortOrder != null,
     icon: UyDosh.filterPriceSortIcon(priceSortOrder),
-    label: `${UyDosh.t('filter.priceSort.chipLabel', lang)} $`,
+    label: UyDosh.t('filter.priceSort.chipLabel', lang),
     iconAfterLabel: true,
     ariaLabel: priceSortAriaLabel,
   });
@@ -661,7 +661,9 @@ function renderFilters() {
   // keeps a "$" glyph next to the arrow (via `.chip-price-sort-compact` in
   // telegram-index.css, which overrides the usual `.chip-icon-only .chip-label
   // { display: none }` rule) since a bare up/down chevron wouldn't read as
-  // "price" at a glance in the dense icon-only ribbon.
+  // "price" at a glance in the dense icon-only ribbon. Only the compact
+  // twin carries the "$" glyph now — the expanded chip's "Цена"/"Price"
+  // label already says what it sorts by, so it doesn't need one too.
   const priceSortChipCompact = UyDosh.chipButtonHtml({
     className: 'chip chip-icon-only chip-price-sort chip-price-sort-compact',
     attrs: { 'data-price-sort-cycle': true },

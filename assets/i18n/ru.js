@@ -11,6 +11,7 @@ I18N.ru = {
     'nav.delete': 'Удалить аккаунт',
     'nav.contact': 'Контакты',
     'nav.menuLabel': 'Меню',
+    'nav.close': 'Закрыть',
     'session.revokedTitle': 'Сессия завершена',
     'session.revokedMessage': 'Приложение было открыто в другом окне или на другом устройстве. Откройте его заново, чтобы продолжить.',
     'session.revokedDeviceLine': 'Новая сессия: {info}',
