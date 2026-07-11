@@ -482,10 +482,10 @@ function navDrawerHtml() {
     <div class="nav-drawer-backdrop" data-nav-drawer-backdrop hidden aria-hidden="true">
       <div class="nav-drawer" role="dialog" aria-modal="true" data-i18n="nav.menuLabel" data-i18n-attr="aria-label">
         <div class="nav-drawer-header">
-          <div class="nav-drawer-user">
+          <a class="nav-drawer-user" role="menuitem" href="${MINI_APP_PROFILE_PATH}">
             <span class="nav-drawer-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
             ${displayName ? `<strong class="nav-drawer-username">${escapeHtml(displayName)}</strong>` : ''}
-          </div>
+          </a>
         </div>
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
@@ -1222,13 +1222,24 @@ function ensureMiniAppSafeAreaStyles() {
        -bearing avatar trigger in the header, so it reads better as "this is
        your account" than as another UyDosh wordmark. Row layout (not
        stacked) — no dedicated close button anymore, so there's no corner
-       element to keep clear of either; tap the backdrop or Escape to close. */
+       element to keep clear of either; tap the backdrop or Escape to close.
+       Itself a link to the profile page (mirrors the "Profile" item further
+       down in .nav-drawer-body, but tapping the avatar/name directly is the
+       more natural gesture). */
     html.mini-app .nav-drawer-user {
       display: flex;
       flex-direction: row;
       align-items: center;
       gap: 12px;
       min-width: 0;
+      margin: -6px -8px;
+      padding: 6px 8px;
+      border-radius: 12px;
+      color: inherit;
+      text-decoration: none;
+    }
+    html.mini-app .nav-drawer-user:active {
+      background: rgba(127, 127, 127, 0.16);
     }
     html.mini-app .nav-drawer-avatar {
       width: 48px;
