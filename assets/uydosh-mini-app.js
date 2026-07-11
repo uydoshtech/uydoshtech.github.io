@@ -830,12 +830,12 @@ function ensureMiniAppSafeAreaStyles() {
       position: relative;
       flex-shrink: 0;
     }
-    /* Pulls the hamburger 6px closer to both the header's left edge and the
-       logo (header's own 14px padding + 12px inter-item gap are otherwise
-       shared by every header child, so this trims just this one item's
-       flanks without touching the brand/account-menu spacing). */
+    /* Pulls the hamburger closer to the header's left edge (3px) and the
+       logo (6px) — header's own 14px padding + 12px inter-item gap are
+       otherwise shared by every header child, so this trims just this one
+       item's flanks without touching the brand/account-menu spacing). */
     html.mini-app .nav-menu {
-      margin-left: -8px;
+      margin-left: -11px;
       margin-right: -6px;
     }
     html.mini-app .account-menu-trigger {
