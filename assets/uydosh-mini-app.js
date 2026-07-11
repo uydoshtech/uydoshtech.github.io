@@ -371,6 +371,19 @@ function accountMenuAvatarUrl() {
   }
 }
 
+/** Telegram display name ("First Last", falling back to "@username") of the current Mini App user, for the nav drawer's own profile header — empty outside Telegram. */
+function accountMenuDisplayName() {
+  try {
+    const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!user) return '';
+    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+    if (fullName) return fullName;
+    return user.username ? `@${user.username}` : '';
+  } catch {
+    return '';
+  }
+}
+
 /**
  * The user's own account shortcuts — profile, listings, favorites, create,
  * theme toggle — shared verbatim by both header dropdowns (see
@@ -460,15 +473,20 @@ function navMenuHtml() {
  * the drawer's default height stays short.
  */
 function navDrawerHtml() {
+  const avatarUrl = accountMenuAvatarUrl();
+  const avatarInner = avatarUrl
+    ? `<img class="nav-drawer-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('has-avatar');this.remove();" />`
+    : UyDosh.iconChrome('person');
+  const displayName = accountMenuDisplayName();
   return `
     <div class="nav-drawer-backdrop" data-nav-drawer-backdrop hidden aria-hidden="true">
       <div class="nav-drawer" role="dialog" aria-modal="true" data-i18n="nav.menuLabel" data-i18n-attr="aria-label">
         <div class="nav-drawer-header">
-          <div class="nav-drawer-brand">
-            <img src="/images/uydosh-logo.svg" width="32" height="32" alt="" />
-            <strong><span class="brand-uy">Uy</span><span class="brand-dosh">Dosh</span></strong>
-          </div>
           <button type="button" class="nav-drawer-close" data-nav-drawer-close data-i18n="nav.close" data-i18n-attr="aria-label">✕</button>
+          <div class="nav-drawer-user">
+            <span class="nav-drawer-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
+            ${displayName ? `<strong class="nav-drawer-username">${escapeHtml(displayName)}</strong>` : ''}
+          </div>
         </div>
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
@@ -964,6 +982,14 @@ function ensureMiniAppSafeAreaStyles() {
        otherwise shared by every header child, so this trims just this one
        item's flanks without touching the brand/account-menu spacing). */
     html.mini-app .nav-menu {
+      /* display:flex (not the default block) so this wrapper shrinks exactly
+         to the 24px button's height — left as block, the inline-flex button
+         gets baseline-aligned inside an invisible line box that pads the
+         wrapper a few px taller than its content, which then throws off the
+         header's own align-items: center centering against the 44px logo/
+         avatar by a visible ~1.5px. */
+      display: flex;
+      align-items: center;
       margin-left: -6px;
       margin-right: -6px;
       flex-shrink: 0;
@@ -1186,32 +1212,64 @@ function ensureMiniAppSafeAreaStyles() {
       transform: translateX(0);
     }
     html.mini-app .nav-drawer-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
+      position: relative;
+      margin-bottom: 18px;
       flex: 0 0 auto;
     }
-    html.mini-app .nav-drawer-brand {
+    /* Own circular Telegram avatar + display name, replacing the brand logo
+       that used to sit here — the drawer already opens from an identity
+       -bearing avatar trigger in the header, so it reads better as "this is
+       your account" than as another UyDosh wordmark. */
+    html.mini-app .nav-drawer-user {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 8px;
       min-width: 0;
-      color: var(--fg, rgba(255, 255, 255, 0.92));
+      /* Keeps the name from running under the close button in the corner. */
+      padding-right: 38px;
     }
-    html.mini-app .nav-drawer-brand img {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: block;
+    html.mini-app .nav-drawer-avatar {
+      width: 56px;
+      height: 56px;
+      box-sizing: border-box;
+      border-radius: 50%;
+      overflow: hidden;
       flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(127, 127, 127, 0.16);
+      color: var(--fg, rgba(255, 255, 255, 0.85));
     }
-    html.mini-app .nav-drawer-brand strong {
+    html.mini-app .nav-drawer-avatar svg {
+      width: 26px;
+      height: 26px;
+      display: block;
+    }
+    html.mini-app .nav-drawer-avatar.has-avatar {
+      background: transparent;
+    }
+    html.mini-app .nav-drawer-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    html.mini-app .nav-drawer-username {
       font-size: 15px;
-      letter-spacing: 0.2px;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+      color: var(--fg, rgba(255, 255, 255, 0.92));
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     html.mini-app .nav-drawer-close {
+      position: absolute;
+      top: 0;
+      right: 0;
       appearance: none;
       border: 0;
       background: rgba(127, 127, 127, 0.12);
@@ -1269,7 +1327,7 @@ function ensureMiniAppSafeAreaStyles() {
       fill: none;
     }
     /* Collapsed "More" disclosure (privacy/terms/contact/delete account) —
-       trailing chevron rotates open the same way as `.filters-toggle`'s
+       trailing chevron rotates open the same way as .filters-toggle's
        (telegram-index.css) and the listing-detail page's collapsible
        sections (.compat-chevron/.roomscan-chevron). */
     html.mini-app .nav-drawer-more-toggle {
