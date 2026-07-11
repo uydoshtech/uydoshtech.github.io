@@ -361,6 +361,11 @@ const MINI_APP_PRIVACY_PATH = '/privacy-policy.html';
 const MINI_APP_TERMS_PATH = '/terms-of-service.html';
 const MINI_APP_DELETE_ACCOUNT_PATH = '/delete-account.html';
 const MINI_APP_CONTACT_HREF = 'mailto:uydoshtech@gmail.com';
+// Native-app beta builds — same links as the public landing page's hero CTAs
+// (index.html), surfaced here too since Mini App users otherwise have no
+// way to find them without leaving Telegram to visit the website.
+const MINI_APP_TESTFLIGHT_HREF = 'https://testflight.apple.com/join/y2pFAA3k';
+const MINI_APP_ANDROID_APK_HREF = 'https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk';
 
 /** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
 function accountMenuAvatarUrl() {
@@ -501,6 +506,9 @@ function navDrawerHtml() {
             <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
           </button>
           <div class="nav-drawer-more-panel" id="nav-drawer-more-panel" data-nav-drawer-more-panel hidden>
+            <a role="menuitem" href="${MINI_APP_TESTFLIGHT_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-testflight>${UyDosh.iconChrome('apple')}<span data-i18n="nav.testflight"></span></a>
+            <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome('android')}<span data-i18n="nav.androidApk"></span></a>
+            <div class="account-menu-divider" role="separator"></div>
             <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
             <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
             <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
@@ -593,9 +601,19 @@ function ensureNavDrawerMounted() {
     setNavDrawerMoreExpanded(backdrop, !expanded);
   });
   // Nav items (`<a>`) close the drawer implicitly by navigating away; button
-  // items (e.g. the theme toggle) don't navigate, so close explicitly.
+  // items (e.g. the theme toggle) don't navigate, so close explicitly. The
+  // TestFlight/APK links are `<a>`s too, but `target="_blank"`/`download`
+  // means this page never navigates away, so they need the same explicit
+  // close as a button — plus a one-off analytics ping.
   backdrop.querySelector('.nav-drawer')?.addEventListener('click', (e) => {
-    if (e.target.closest('button:not([data-nav-drawer-more-toggle])')) closeNavDrawer();
+    if (e.target.closest('[data-get-app-testflight]')) {
+      logMiniAppEvent('get_app_tap', { platform: 'ios' });
+    } else if (e.target.closest('[data-get-app-android-apk]')) {
+      logMiniAppEvent('get_app_tap', { platform: 'android' });
+    }
+    if (e.target.closest('button:not([data-nav-drawer-more-toggle]), [data-get-app-testflight], [data-get-app-android-apk]')) {
+      closeNavDrawer();
+    }
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && backdrop.classList.contains('is-open')) closeNavDrawer();

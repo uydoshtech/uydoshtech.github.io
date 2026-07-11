@@ -639,6 +639,18 @@
         padding: 12px; text-align: center; color: #f59e0b; font-weight: 700; font-size: 13px;
       }
       .roomscan-status[hidden] { display: none; }
+      /* Branded spinning "U" logo shown while the 3D room scan viewer loads (see
+         roomScanLoadingStatusHtml, listing-detail-roomscan.js) — same `uydosh-spin`
+         keyframes as `.loading-spinner` above, but always using the black-letter mark
+         directly rather than the theme-flipping `--spinner-logo` var, since the
+         room-scan viewer's own backdrop (`.roomscan-viewer-wrap`/`.roomscan-backdrop`)
+         is always the light sky-blue gradient regardless of the page's dark/light theme. */
+      .roomscan-loading-spinner {
+        width: 44px; height: 44px;
+        background: url("../images/uydosh-logo-black-u.svg") center / contain no-repeat;
+        animation: uydosh-spin 0.9s linear infinite;
+      }
+      .roomscan-backdrop .roomscan-loading-spinner { width: 64px; height: 64px; }
       .roomscan-backdrop {
         position: fixed; inset: 0; z-index: 220; background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
         opacity: 0; transition: opacity 0.18s ease;

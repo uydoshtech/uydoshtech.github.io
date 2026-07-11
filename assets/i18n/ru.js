@@ -12,6 +12,8 @@ I18N.ru = {
     'nav.contact': 'Контакты',
     'nav.menuLabel': 'Меню',
     'nav.more': 'Ещё',
+    'nav.testflight': 'iOS бета (TestFlight)',
+    'nav.androidApk': 'Скачать APK для Android',
     'session.revokedTitle': 'Сессия завершена',
     'session.revokedMessage': 'Приложение было открыто в другом окне или на другом устройстве. Откройте его заново, чтобы продолжить.',
     'session.revokedDeviceLine': 'Новая сессия: {info}',

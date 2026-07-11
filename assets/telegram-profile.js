@@ -250,9 +250,18 @@ function universityById(id) {
 // Regions are a short static list (Uzbekistan's ~14 provinces/republic/capital),
 // so — unlike the university field — they render as one always-visible chip
 // grid instead of a type-to-filter autosuggest.
+//
+// Tashkent City (id 1) is pinned first as the capital, ahead of the
+// alphabetical ordering used for the rest.
+const CAPITAL_REGION_ID = 1;
+
 function sortedRegions(lang) {
-  return [...state.regions].sort((a, b) =>
-    UyDosh.localizedShort(a, lang).localeCompare(UyDosh.localizedShort(b, lang), lang));
+  return [...state.regions].sort((a, b) => {
+    const aIsCapital = Number(a.id) === CAPITAL_REGION_ID;
+    const bIsCapital = Number(b.id) === CAPITAL_REGION_ID;
+    if (aIsCapital !== bIsCapital) return aIsCapital ? -1 : 1;
+    return UyDosh.localizedShort(a, lang).localeCompare(UyDosh.localizedShort(b, lang), lang);
+  });
 }
 
 function renderRegionList() {

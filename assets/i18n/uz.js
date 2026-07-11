@@ -13,6 +13,8 @@ I18N.uz = {
     'nav.contact': 'Aloqa',
     'nav.menuLabel': 'Menyu',
     'nav.more': 'Yana',
+    'nav.testflight': 'iOS beta (TestFlight)',
+    'nav.androidApk': 'Android APK yuklab olish',
     'session.revokedTitle': 'Sessiya tugatildi',
     'session.revokedMessage': 'Ilova boshqa oynada yoki qurilmada ochildi. Davom etish uchun uni qayta oching.',
     'session.revokedDeviceLine': 'Yangi sessiya: {info}',

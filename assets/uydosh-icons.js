@@ -37,6 +37,14 @@ const CHROME_ICONS = {
   fileText: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M14 3v4h4"></path><path d="M9 12h6M9 16h6"></path></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"></path><path d="M10 11v6M14 11v6"></path></svg>',
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M4 7l8 6 8-6"></path></svg>',
+  // Nav drawer "More" panel's TestFlight/APK beta-download links — see
+  // MINI_APP_TESTFLIGHT_HREF/MINI_APP_ANDROID_APK_HREF in uydosh-mini-app.js.
+  // Drawn as open stroke outlines (not filled logos) since the drawer's own
+  // CSS forces `fill: none` on every icon inside it (see `.nav-drawer-body
+  // svg` in ensureMiniAppSafeAreaStyles) — a filled Apple/Android silhouette
+  // would render as invisible/broken there.
+  apple: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8c-2.5-2-6-1-6.8 2.5-1 4.5 1.5 10 4.3 10 1 0 1.5-.6 2.5-.6s1.5.6 2.5.6c2.8 0 5.3-5.5 4.3-10C18 7 14.5 6 12 8Z"></path><path d="M12.3 7c.2-1.5 1.3-2.6 2.8-2.8-.1 1.5-1.2 2.7-2.8 2.8Z"></path></svg>',
+  android: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5a7 7 0 0 1 14 0V16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-3.5Z"></path><path d="M8 6.5 6.3 4.7M16 6.5l1.7-1.8"></path><path d="M8.5 17v2.2M15.5 17v2.2"></path></svg>',
   // Nav drawer's collapsed "More" disclosure row (privacy/terms/contact/delete
   // account) — see the nav-drawer-more-toggle markup in navDrawerHtml(). Zero
   // -length round-capped strokes (not filled circles) so the generic `.nav-

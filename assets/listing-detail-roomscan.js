@@ -372,11 +372,19 @@
         container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.roomScanLoadError'))}</div>`;
       }
 
+      /** Branded spinning "U" logo (same `.loading-spinner`/`uydosh-spin` used by the feed
+       * map and account/profile/create pages — see telegram-index.css/telegram-shared.css)
+       * instead of a plain "Загрузка…" text line, so the 3D viewer's loading state reads as
+       * an on-brand UyDosh spinner rather than bare copy. */
+      function roomScanLoadingStatusHtml() {
+        return `<div class="roomscan-status" role="status" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}"><span class="loading-spinner roomscan-loading-spinner" aria-hidden="true"></span></div>`;
+      }
+
       async function mountRoomScanViewer(container, glbUrl, usdzUrl, l) {
         if (!container || container.dataset.roomscanMounted) return;
         container.dataset.roomscanMounted = '1';
         preventRoomScanDoubleTapZoom(container);
-        container.innerHTML = `<div class="roomscan-status">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</div>`;
+        container.innerHTML = roomScanLoadingStatusHtml();
         try {
           await loadModelViewerScript();
           const viewer = createModelViewerEl(glbUrl, usdzUrl);
@@ -500,13 +508,16 @@
 
         const statusEl = document.createElement('div');
         statusEl.className = 'roomscan-status';
-        statusEl.textContent = UyDosh.t('detail.loading');
+        statusEl.setAttribute('role', 'status');
+        statusEl.setAttribute('aria-label', UyDosh.t('detail.loading'));
+        statusEl.innerHTML = '<span class="loading-spinner roomscan-loading-spinner" aria-hidden="true"></span>';
         roomScanBackdropEl.appendChild(statusEl);
 
         try {
           await loadModelViewerScript();
           const viewer = createModelViewerEl(glbUrl, usdzUrl);
           viewer.addEventListener('error', () => {
+            statusEl.removeAttribute('aria-label');
             statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
             statusEl.hidden = false;
             viewer.remove();
@@ -517,6 +528,7 @@
           controlsBar.insertBefore(createRoomScanZoomSlider(viewer), closeBtn);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
+          statusEl.removeAttribute('aria-label');
           statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
         }
       }
