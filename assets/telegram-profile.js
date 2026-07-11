@@ -175,8 +175,11 @@ const state = {
   authError: false,
   loadError: false,
   // Distinct from loadError: the user is authenticated but has no
-  // `user_profiles` row yet (e.g. never posted a listing / used the app) —
-  // PUT /profiles/:userId can't create one, so we can't offer the form yet.
+  // `user_profiles` row yet. The backend now silently creates one on first
+  // Mini App login (see `ensureTelegramMiniAppSession`/`telegramWebAppAuth`),
+  // so this should only bite pre-existing sessions from before that change,
+  // or edge cases — PUT /profiles/:userId can't create one, so we still
+  // can't offer the form for those without a fresh login.
   noProfile: false,
   activeTab: TAB_BASIC,
   universities: [],

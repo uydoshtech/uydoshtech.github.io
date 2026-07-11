@@ -582,6 +582,17 @@ header {
   align-items: start;
   padding-top: 15%;
 }
+/* Opaque backdrop while the map (re)loads — `renderPinsMap` (yandex-map.js)
+   tears down and rebuilds the whole Yandex map instance on every load
+   (filter change, tab switch, language change, retry), which otherwise
+   flashes the plain `.feed-map-panel` background through around the small
+   spinner icon below. A full, light cover (the map itself always renders in
+   its light appearance regardless of app theme — see prefersDarkMapPins() in
+   uydosh-map-pins.js) turns that flash into a deliberate loading screen
+   instead of a "blink". */
+.feed-map-status.map-loading {
+  background: #eef1f6;
+}
 /* Branded spinning "U" logo shown while the map loads — same `uydosh-spin`
    keyframes (telegram-shared.css) as the account/profile/create pages' own
    full-panel `.loading-spinner`, just sized down to fit this smaller overlay.

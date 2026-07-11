@@ -14,6 +14,16 @@
         --accent: #22c55e;
         --price-green: #35c26b;
         --shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+        /* Branded "U" spinner artwork — see `.loading-spinner` below; swapped
+           to the black-U variant under light theme so it stays visible
+           against the light `--bg` instead of blending into it. Path is
+           relative to this file (assets/listing-detail.css), not to
+           listing.html — unlike the plain `url(...)` spinners below that
+           this replaced, which had inherited an unresolved "images/..." path
+           left over from before this CSS was split out of listing.html's own
+           inline <style> block (where that same relative path used to be
+           correct, resolved against the HTML file's own location instead). */
+        --spinner-logo: url("../images/uydosh-logo.svg");
       }
       @media (prefers-color-scheme: light) {
         :root {
@@ -23,6 +33,7 @@
           --card: rgba(15, 23, 42, 0.04);
           --stroke: rgba(15, 23, 42, 0.12);
           --shadow: 0 18px 70px rgba(2, 6, 23, 0.14);
+          --spinner-logo: url("../images/uydosh-logo-black-u.svg");
         }
       }
       * { box-sizing: border-box; }
@@ -198,7 +209,7 @@
       .owner-toolbar-spinner {
         width: 14px;
         height: 14px;
-        background: url("images/uydosh-logo.svg") center / contain no-repeat;
+        background: var(--spinner-logo) center / contain no-repeat;
         animation: owner-toolbar-spin 0.9s linear infinite;
       }
       @keyframes owner-toolbar-spin {
@@ -493,7 +504,7 @@
       .compat-toggle-percent.is-bad { color: #ef4444; }
       .compat-spinner {
         display: inline-block; width: 14px; height: 14px;
-        background: url("images/uydosh-logo.svg") center / contain no-repeat;
+        background: var(--spinner-logo) center / contain no-repeat;
         animation: owner-toolbar-spin 0.9s linear infinite; vertical-align: middle;
       }
       .compat-chevron { color: var(--muted); font-size: 18px; line-height: 1; flex-shrink: 0;
@@ -899,7 +910,7 @@
       .loading-spinner {
         width: 64px;
         height: 64px;
-        background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+        background: var(--spinner-logo) center / contain no-repeat;
         animation: uydosh-spin 0.9s linear infinite;
       }
       @keyframes uydosh-spin {

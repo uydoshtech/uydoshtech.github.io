@@ -16,6 +16,14 @@
   --brand2: #60a5fa;
   --price-green: #35c26b;
   /*
+   * Branded "U" spinner artwork (see `.loading-spinner`/`uydosh-spin` below).
+   * White U + chimney by default; swapped to the black-U variant under light
+   * theme so the mark stays visible against the light `--bg` instead of
+   * blending into it — mirrors the map's own black-U overlay spinner
+   * (`.map-loading-spinner` in telegram-index.css).
+   */
+  --spinner-logo: url("../images/uydosh-logo.svg");
+  /*
    * `--feed-content-gutter` is the standard horizontal inset (from the
    * viewport edge) for the mini-app header, filter ribbon, and view-tabs —
    * shared by every page so they all line up. Originally the feed
@@ -42,6 +50,7 @@
     --muted: rgba(15, 23, 42, 0.7);
     --card: rgba(15, 23, 42, 0.04);
     --stroke: rgba(15, 23, 42, 0.12);
+    --spinner-logo: url("../images/uydosh-logo-black-u.svg");
   }
 }
 * { box-sizing: border-box; }

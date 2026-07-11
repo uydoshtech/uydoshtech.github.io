@@ -99,7 +99,7 @@
 
     function setFeedMapStatus(message, visible = true) {
       if (!feedMapStatusEl) return;
-      feedMapStatusEl.classList.remove('interactive', 'map-empty');
+      feedMapStatusEl.classList.remove('interactive', 'map-empty', 'map-loading');
       feedMapStatusEl.removeAttribute('aria-label');
       if (!visible || !message) {
         feedMapStatusEl.hidden = true;
@@ -114,10 +114,16 @@
     // Branded spinning "U" logo (same `.loading-spinner`/`uydosh-spin` used by the
     // account/profile/create pages' own full-panel loaders — see telegram-shared.css)
     // instead of a plain "Загрузка карты…" text line, so the map's loading state reads
-    // as an on-brand UyDosh spinner rather than bare copy.
+    // as an on-brand UyDosh spinner rather than bare copy. The `map-loading` class
+    // (see telegram-index.css) also gives this overlay an opaque backdrop — without
+    // it, the icon just floated over whatever `renderPinsMap` leaves showing while it
+    // tears down and rebuilds the whole Yandex map instance (a blank/grey flash of
+    // the panel's own background), which read as a "blink" rather than a loading
+    // state even with the spinner technically present.
     function showFeedMapLoading() {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.remove('interactive', 'map-empty');
+      feedMapStatusEl.classList.add('map-loading');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = `<span class="loading-spinner map-loading-spinner" aria-hidden="true"></span>`;
       feedMapStatusEl.setAttribute('aria-label', UyDosh.t('map.loading'));
@@ -128,7 +134,7 @@
     // the map's own center pin/marker.
     function showFeedMapEmpty() {
       if (!feedMapStatusEl) return;
-      feedMapStatusEl.classList.remove('interactive');
+      feedMapStatusEl.classList.remove('interactive', 'map-loading');
       feedMapStatusEl.classList.add('map-empty');
       feedMapStatusEl.removeAttribute('aria-label');
       feedMapStatusEl.hidden = false;
@@ -138,7 +144,7 @@
     function showFeedMapError(onRetry) {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.add('interactive');
-      feedMapStatusEl.classList.remove('map-empty');
+      feedMapStatusEl.classList.remove('map-empty', 'map-loading');
       feedMapStatusEl.removeAttribute('aria-label');
       feedMapStatusEl.hidden = false;
       feedMapStatusEl.innerHTML = `

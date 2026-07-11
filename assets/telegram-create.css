@@ -478,7 +478,7 @@ input[type="range"]::-moz-range-thumb {
 .station-list-spinner {
   width: 28px;
   height: 28px;
-  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  background: var(--spinner-logo) center / contain no-repeat;
   animation: uydosh-spin 0.9s linear infinite;
 }
 /* Base `.station-item` (+ icon/checkbox/transfer/select-all) styles
@@ -837,7 +837,7 @@ input[readonly] {
 .loading-spinner {
   width: 64px;
   height: 64px;
-  background: url("../images/uydosh-logo.svg") center / contain no-repeat;
+  background: var(--spinner-logo) center / contain no-repeat;
   animation: uydosh-spin 0.9s linear infinite;
 }
 .success-panel {
