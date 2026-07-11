@@ -13,6 +13,7 @@ I18N.uz = {
     'nav.contact': 'Aloqa',
     'nav.menuLabel': 'Menyu',
     'nav.close': 'Yopish',
+    'nav.more': 'Yana',
     'session.revokedTitle': 'Sessiya tugatildi',
     'session.revokedMessage': 'Ilova boshqa oynada yoki qurilmada ochildi. Davom etish uchun uni qayta oching.',
     'session.revokedDeviceLine': 'Yangi sessiya: {info}',

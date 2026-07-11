@@ -452,10 +452,12 @@ function navMenuHtml() {
  * Left slide-out drawer opened by the hamburger trigger above — mounted once
  * on `document.body` (not inside the header) so it renders as a true
  * full-viewport overlay regardless of the header's own position/overflow.
- * Repeats the same account shortcuts as accountMenuHtml() plus the app-level
- * links that otherwise have no entry point inside the Mini App (privacy,
- * terms, delete account, contact) — the public site exposes those via its
- * own nav instead.
+ * Repeats the same account shortcuts as accountMenuHtml(), followed by a
+ * collapsed "More" disclosure (see setNavDrawerMoreExpanded()) holding the
+ * app-level links that otherwise have no entry point inside the Mini App
+ * (privacy, terms, delete account, contact) — the public site exposes those
+ * via its own nav instead. Tucked behind a toggle rather than listed flat so
+ * the drawer's default height stays short.
  */
 function navDrawerHtml() {
   return `
@@ -463,7 +465,7 @@ function navDrawerHtml() {
       <div class="nav-drawer" role="dialog" aria-modal="true" data-i18n="nav.menuLabel" data-i18n-attr="aria-label">
         <div class="nav-drawer-header">
           <div class="nav-drawer-brand">
-            <img src="/apple-touch-icon.png" width="32" height="32" alt="" />
+            <img src="/images/uydosh-logo.svg" width="32" height="32" alt="" />
             <strong><span class="brand-uy">Uy</span><span class="brand-dosh">Dosh</span></strong>
           </div>
           <button type="button" class="nav-drawer-close" data-nav-drawer-close data-i18n="nav.close" data-i18n-attr="aria-label">✕</button>
@@ -471,11 +473,23 @@ function navDrawerHtml() {
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
           <div class="account-menu-divider" role="separator"></div>
-          <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
-          <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
-          <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
-          <div class="account-menu-divider" role="separator"></div>
-          <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome('trash')}<span data-i18n="nav.delete"></span></a>
+          <button
+            type="button"
+            class="nav-drawer-more-toggle"
+            data-nav-drawer-more-toggle
+            aria-expanded="false"
+            aria-controls="nav-drawer-more-panel"
+          >
+            ${UyDosh.iconChrome('moreHorizontal')}<span data-i18n="nav.more"></span>
+            <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
+          </button>
+          <div class="nav-drawer-more-panel" id="nav-drawer-more-panel" data-nav-drawer-more-panel hidden>
+            <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
+            <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
+            <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
+            <div class="account-menu-divider" role="separator"></div>
+            <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome('trash')}<span data-i18n="nav.delete"></span></a>
+          </div>
         </div>
       </div>
     </div>`;
@@ -510,11 +524,22 @@ function closeNavDrawer() {
     if (!backdrop.classList.contains('is-open')) {
       backdrop.hidden = true;
       backdrop.setAttribute('aria-hidden', 'true');
+      // Reset the "More" disclosure so the drawer always reopens collapsed.
+      setNavDrawerMoreExpanded(backdrop, false);
     }
   }, NAV_DRAWER_TRANSITION_MS);
   for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
     trigger.setAttribute('aria-expanded', 'false');
   }
+}
+
+/** Toggles the "More" (privacy/terms/contact/delete account) disclosure inside the drawer. */
+function setNavDrawerMoreExpanded(backdrop, expanded) {
+  const toggle = backdrop.querySelector('[data-nav-drawer-more-toggle]');
+  const panel = backdrop.querySelector('[data-nav-drawer-more-panel]');
+  if (!toggle || !panel) return;
+  toggle.setAttribute('aria-expanded', String(expanded));
+  panel.hidden = !expanded;
 }
 
 /** Lazily creates (once per page) and wires up the nav drawer + its hamburger trigger(s). */
@@ -542,10 +567,17 @@ function ensureNavDrawerMounted() {
     if (e.target === backdrop) closeNavDrawer();
   });
   backdrop.querySelector('[data-nav-drawer-close]')?.addEventListener('click', () => closeNavDrawer());
+  // The "More" toggle expands/collapses its own panel in place — it must not
+  // also close the whole drawer, unlike every other button below.
+  backdrop.querySelector('[data-nav-drawer-more-toggle]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const expanded = e.currentTarget.getAttribute('aria-expanded') === 'true';
+    setNavDrawerMoreExpanded(backdrop, !expanded);
+  });
   // Nav items (`<a>`) close the drawer implicitly by navigating away; button
   // items (e.g. the theme toggle) don't navigate, so close explicitly.
   backdrop.querySelector('.nav-drawer')?.addEventListener('click', (e) => {
-    if (e.target.closest('button:not([data-nav-drawer-close])')) closeNavDrawer();
+    if (e.target.closest('button:not([data-nav-drawer-close]):not([data-nav-drawer-more-toggle])')) closeNavDrawer();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && backdrop.classList.contains('is-open')) closeNavDrawer();
@@ -622,7 +654,7 @@ function miniAppHeaderHtml(options = {}) {
   const {
     subtitleKey = 'brand.tagline',
     brandLink = true,
-    iconSrc = '/apple-touch-icon.png',
+    iconSrc = '/images/uydosh-logo.svg',
   } = options;
   const brandContent =
     `<img src="${escapeHtml(iconSrc)}" width="44" height="44" alt="UyDosh" />` +
@@ -1138,8 +1170,14 @@ function ensureMiniAppSafeAreaStyles() {
       background: color-mix(in srgb, var(--bg), black 6%);
       border-right: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
       box-shadow: 18px 0 60px rgba(0, 0, 0, 0.45);
-      padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px))
-        max(16px, env(safe-area-inset-left, 0px));
+      /* Top padding adds a flat 16px on top of --uydosh-tg-inset-top (not just
+         max()'d against it, like the other three sides) — that variable is
+         Telegram's own reserved header-chrome height (its native title bar/
+         close button sit *inside* the WebView's top edge on some clients, see
+         its definition above), so max() alone would leave the logo row and
+         "Профиль" flush against that chrome with zero breathing room. */
+      padding: calc(var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)) + 16px) 16px
+        max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
       transform: translateX(-100%);
       transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
       overflow-y: auto;
@@ -1229,6 +1267,34 @@ function ensureMiniAppSafeAreaStyles() {
       display: block;
       stroke: currentColor;
       fill: none;
+    }
+    /* Collapsed "More" disclosure (privacy/terms/contact/delete account) —
+       trailing chevron rotates open the same way as `.filters-toggle`'s
+       (telegram-index.css) and the listing-detail page's collapsible
+       sections (.compat-chevron/.roomscan-chevron). */
+    html.mini-app .nav-drawer-more-toggle {
+      color: var(--muted, rgba(255, 255, 255, 0.65));
+    }
+    html.mini-app .nav-drawer-more-chevron svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      transition: transform 180ms ease;
+    }
+    html.mini-app .nav-drawer-more-toggle[aria-expanded="true"] .nav-drawer-more-chevron svg {
+      transform: rotate(180deg);
+    }
+    html.mini-app .nav-drawer-more-toggle .nav-drawer-more-chevron {
+      margin-left: auto;
+    }
+    html.mini-app .nav-drawer-more-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-left: 8px;
+    }
+    html.mini-app .nav-drawer-more-panel[hidden] {
+      display: none;
     }
     html.mini-app [data-hide-in-mini-app] {
       display: none !important;
