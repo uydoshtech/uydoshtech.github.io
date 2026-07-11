@@ -480,9 +480,25 @@ header {
   color: var(--fg);
   flex-shrink: 0;
 }
+/* Compact-row twin (see `priceSortChipCompact` in telegram-feed.js) — keeps
+   a "$" label glyph visible next to the arrow, unlike the other icon-only
+   compact chips which hide their label entirely (`.chip-icon-only
+   .chip-label { display: none; }` above). */
+.chip-price-sort-compact {
+  gap: 3px;
+  padding: 7px 9px;
+  min-width: 40px;
+  justify-content: center;
+}
+.chip-price-sort-compact .chip-label {
+  display: inline;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
 /* List view only — map pins aren't sorted (see updateViewTabs' toggle of
-   this class in telegram-feed.js). Never shown in the compact/collapsed
-   ribbon either way (it's simply not rendered there — see renderFilters). */
+   this class in telegram-feed.js). Applies to both the expanded and
+   compact twins since they share this class. */
 .filters--map-view .chip-price-sort {
   display: none;
 }

@@ -12,7 +12,7 @@ const DEFAULT_HAS_3D_TOUR = false;
 // listingBrowseCreatedWithinDays so first-load behavior matches the app.
 const PERIOD_DEFAULT_DAYS = 30;
 const PERIOD_ALL_TIME = 0;
-const PERIOD_OPTION_VALUES = [30, 90, PERIOD_ALL_TIME];
+const PERIOD_OPTION_VALUES = [30, 60, 90, PERIOD_ALL_TIME];
 // "Sort by price" cycling chip (filter-row-metro, list view only — see
 // PRICE_SORT_ORDER_VALUES/`renderFilters`): null (default order) -> 'asc'
 // (cheapest first) -> 'desc' (priciest first) -> back to null.
@@ -533,6 +533,7 @@ function renderFilters() {
   ];
   const periodOptions = [
     { value: 30, label: UyDosh.t('filter.period.30', lang) },
+    { value: 60, label: UyDosh.t('filter.period.60', lang) },
     { value: 90, label: UyDosh.t('filter.period.90', lang) },
     { value: PERIOD_ALL_TIME, label: UyDosh.t('filter.period.all', lang) },
   ];
@@ -641,8 +642,7 @@ function renderFilters() {
   // "Sort by price" cycling chip: same single-button cycle pattern as the
   // period/district/metro-line chips above, but list-view only — hidden on
   // the Map tab via `.filters--map-view` (see updateViewTabs) since map pins
-  // aren't sorted — and never shown in the collapsed/compact ribbon (no room,
-  // and it's reachable again by expanding).
+  // aren't sorted.
   const priceSortOrder = state.filters.priceSortOrder;
   const priceSortAriaLabel = priceSortOrder
     ? UyDosh.t(priceSortOrder === 'asc' ? 'filter.priceSort.asc' : 'filter.priceSort.desc', lang)
@@ -653,6 +653,21 @@ function renderFilters() {
     pressed: priceSortOrder != null,
     icon: UyDosh.filterPriceSortIcon(priceSortOrder),
     label: `${UyDosh.t('filter.priceSort.chipLabel', lang)} $`,
+    iconAfterLabel: true,
+    ariaLabel: priceSortAriaLabel,
+  });
+
+  // Compact-row twin — unlike the other icon-only compact chips, this one
+  // keeps a "$" glyph next to the arrow (via `.chip-price-sort-compact` in
+  // telegram-index.css, which overrides the usual `.chip-icon-only .chip-label
+  // { display: none }` rule) since a bare up/down chevron wouldn't read as
+  // "price" at a glance in the dense icon-only ribbon.
+  const priceSortChipCompact = UyDosh.chipButtonHtml({
+    className: 'chip chip-icon-only chip-price-sort chip-price-sort-compact',
+    attrs: { 'data-price-sort-cycle': true },
+    pressed: priceSortOrder != null,
+    icon: UyDosh.filterPriceSortIcon(priceSortOrder),
+    label: '$',
     iconAfterLabel: true,
     ariaLabel: priceSortAriaLabel,
   });
@@ -746,6 +761,7 @@ function renderFilters() {
                 ${districtChipCompact}
                 ${lineChipCompact}
                 ${threeDChipCompact}
+                ${priceSortChipCompact}
               </div>
               ${filtersToggleHtml}
             </div>
