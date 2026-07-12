@@ -1453,6 +1453,41 @@ function logMiniAppScreen(screenName, params) {
   });
 }
 
+// Firebase Crashlytics has no web/JS SDK (mobile/desktop only), so uncaught
+// JS errors here previously only showed up in a device's own devtools
+// console — e.g. the `haptic is not defined` ReferenceError that silently
+// killed the admin-edit button's click handler. Report them as GA4
+// `exception` events on the same Firebase project instead, via the
+// Mini-App-only analytics pipeline above.
+const _reportedJsErrorKeys = new Set();
+function _logJsException(description, extra) {
+  const key = _clip(description, 100);
+  if (!key || _reportedJsErrorKeys.has(key)) return; // de-dupe repeats within this page load
+  _reportedJsErrorKeys.add(key);
+  logMiniAppEvent('exception', {
+    description: key,
+    fatal: false,
+    page_path: _clip(location.pathname, 100),
+    ...extra,
+  });
+}
+
+window.addEventListener('error', (event) => {
+  // Plain resource-load Events (img/script 404s) aren't real ErrorEvents.
+  if (!(event instanceof ErrorEvent)) return;
+  _logJsException(`${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`, {
+    error_stack: _clip(event.error?.stack, 100),
+  });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason;
+  const message = reason instanceof Error ? reason.message : String(reason);
+  _logJsException(`unhandled rejection: ${message}`, {
+    error_stack: _clip(reason instanceof Error ? reason.stack : '', 100),
+  });
+});
+
 /**
  * `t.me/<bot>?startapp=listing_123` direct links (used by the in-app Share
  * button) launch the Mini App at its configured menu-button URL — the feed —
