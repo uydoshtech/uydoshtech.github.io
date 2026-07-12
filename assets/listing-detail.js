@@ -68,8 +68,18 @@
       }
 
       const detailContactBarEl = document.getElementById('detail-contact-bar');
+      // Admin-only "Edit (admin)" FAB — icon-only, stacked above detail-back-fab
+      // (see .detail-admin-edit-fab in listing-detail.css). Independent of the
+      // contact bar below: shown whenever the viewer is an admin who isn't the
+      // owner, regardless of whether the listing has contact info to show there.
+      const detailAdminEditFabEl = document.getElementById('detail-admin-edit-fab');
+      let adminEditFabBound = false;
 
       function hideDetailContactBar() {
+        // Also hides the admin-only edit FAB — both need a currently-loaded
+        // listing, so every caller here (not-found/error pages, pre-fetch reset)
+        // wants both gone together.
+        if (detailAdminEditFabEl) detailAdminEditFabEl.hidden = true;
         if (!detailContactBarEl) return;
         detailContactBarEl.hidden = true;
         detailContactBarEl.setAttribute('aria-hidden', 'true');
@@ -77,26 +87,38 @@
         document.documentElement.classList.remove('has-detail-contact');
       }
 
-      function updateDetailContactBar(listing, { isAdminViewer = false } = {}) {
+      function updateDetailContactBar(listing) {
         if (!detailContactBarEl || !UyDosh.isMiniApp()) {
           hideDetailContactBar();
           return;
         }
         const handle = UyDosh.listingContactTelegram(listing);
         const phone = UyDosh.listingContactPhone(listing);
-        // Admins still get the bar (just the "Edit (admin)" button, no contact chips)
-        // even when the listing has neither a Telegram handle nor a phone number.
-        if (!handle && !phone && !isAdminViewer) {
+        if (!handle && !phone) {
           hideDetailContactBar();
           return;
         }
-        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle, phone, isAdminViewer ? listing?.id : null);
+        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle, phone);
         detailContactBarEl.hidden = false;
         detailContactBarEl.setAttribute('aria-hidden', 'false');
         document.documentElement.classList.add('has-detail-contact');
         const prefillText = handle ? buildListingContactMessage(listing, UyDosh.getLang()) : '';
         UyDosh.bindDetailContactBar(detailContactBarEl, { listingId: listing?.id, prefillText });
         UyDosh.applyI18n(detailContactBarEl);
+      }
+
+      function updateDetailAdminEditFab(listing, { isAdminViewer = false } = {}) {
+        if (!detailAdminEditFabEl) return;
+        if (!isAdminViewer) {
+          detailAdminEditFabEl.hidden = true;
+          return;
+        }
+        detailAdminEditFabEl.setAttribute('data-listing-id', String(listing?.id ?? ''));
+        detailAdminEditFabEl.hidden = false;
+        if (!adminEditFabBound) {
+          adminEditFabBound = true;
+          UyDosh.bindDetailAdminEditFab(detailAdminEditFabEl, listing?.id);
+        }
       }
 
 
@@ -283,7 +305,7 @@
         const viewerId = isMiniApp ? UyDosh.getSessionUserId() : null;
         const ownerId = Number(l.user_id ?? l.user?.id);
         const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
-        // Admins get their own bottom "Edit (admin)" CTA (see `updateDetailContactBar` below)
+        // Admins get their own floating "Edit (admin)" FAB (see `updateDetailAdminEditFab` below)
         // only when they're not already the owner — owners already have an edit link via
         // `ownerToolbarHtml`'s "..." menu, so this avoids showing two edit entry points.
         const isAdminViewer = isMiniApp && !isOwner && Boolean(UyDosh.isAdmin?.());
@@ -325,7 +347,8 @@
         bindShareButton(l);
         bindFavoriteButton(l);
         bindReportButton(l);
-        updateDetailContactBar(l, { isAdminViewer });
+        updateDetailContactBar(l);
+        updateDetailAdminEditFab(l, { isAdminViewer });
         if (isOwner) {
           loadOwnerViewCount(l.id);
           bindOwnerMenu(l.id);

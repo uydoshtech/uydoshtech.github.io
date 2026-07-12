@@ -1302,19 +1302,6 @@ function ensureMiniAppSafeAreaStyles() {
       background: linear-gradient(135deg, #25C06D, #1FAE60);
       box-shadow: 0 10px 28px rgba(37, 192, 109, 0.35);
     }
-    /* Admin-only "Edit (admin)" CTA (see detailContactBarHtml in uydosh-map-pins.js) —
-       amber rather than Telegram-blue/call-green so it reads as a distinct, staff-only
-       action alongside the regular contact buttons it can sit next to. iconPencil()'s
-       svg has no baked-in stroke color (unlike iconTelegram/iconPhone above), so it
-       needs its own currentColor rule to pick up this button's white text color. */
-    .detail-contact-btn-admin-edit {
-      background: linear-gradient(135deg, #F59E0B, #D97706);
-      box-shadow: 0 10px 28px rgba(217, 119, 6, 0.35);
-    }
-    .detail-contact-btn-admin-edit .icon svg * {
-      stroke: currentColor;
-      fill: none;
-    }
   `;
 }
 

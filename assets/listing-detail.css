@@ -1081,6 +1081,39 @@
         bottom: calc(75px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
       }
 
+      /* Admin-only "Edit (admin)" FAB (see detail-admin-edit-fab in
+         listing-detail.js) — icon-only, stacked directly above
+         .detail-back-fab (its own 44px height + a 10px gap = 54px) so both
+         stay reachable with a thumb without overlapping. Amber to match the
+         admin-only styling used elsewhere (e.g. admin-owner-panel in
+         telegram-create.css) instead of the back button's neutral glass. */
+      .detail-admin-edit-fab {
+        position: fixed;
+        right: max(14px, env(safe-area-inset-right, 0px));
+        bottom: calc(14px + 54px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+        z-index: 41;
+        appearance: none;
+        border: 0;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+        box-shadow: 0 10px 24px rgba(217, 119, 6, 0.4);
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: bottom 0.2s ease, opacity 0.15s ease;
+      }
+      .detail-admin-edit-fab[hidden] { display: none !important; }
+      .detail-admin-edit-fab:active { opacity: 0.88; }
+      .detail-admin-edit-fab svg { width: 20px; height: 20px; display: block; }
+      html.has-detail-contact .detail-admin-edit-fab {
+        bottom: calc(75px + 54px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+      }
+
       /* Listing details: a tight 20px horizontal margin everywhere, except
          the photo gallery which bleeds full-width edge to edge (but keeps
          rounded corners, so it reads as a floating card rather than a

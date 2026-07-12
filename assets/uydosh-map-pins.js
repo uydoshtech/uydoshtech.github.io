@@ -956,16 +956,13 @@ async function shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreview
 
 /**
  * Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct
- * call, plus (admin viewers only, via `adminEditListingId`) an "Edit (admin)" button —
- * shown even when the listing has no contact info at all, since an admin still needs a
- * way in to fix/reassign it. See `updateDetailContactBar`/`bindDetailContactBar` in
- * listing-detail.js for who sets `adminEditListingId` and where the click navigates.
+ * call. See `bindDetailAdminEditFab` below for the separate admin-only "Edit (admin)"
+ * floating button, which lives above the sticky back button instead of in this bar.
  */
-function detailContactBarHtml(username, phone, adminEditListingId) {
+function detailContactBarHtml(username, phone) {
   const cleanHandle = normalizeTelegramUsername(username);
   const cleanPhone = normalizePhoneNumber(phone);
-  const hasAdminEdit = adminEditListingId != null;
-  if (!cleanHandle && !cleanPhone && !hasAdminEdit) return '';
+  if (!cleanHandle && !cleanPhone) return '';
 
   const telegramBtn = cleanHandle
     ? `
@@ -983,21 +980,12 @@ function detailContactBarHtml(username, phone, adminEditListingId) {
       </button>
     `
     : '';
-  const adminEditBtn = hasAdminEdit
-    ? `
-      <button type="button" class="detail-contact-btn detail-contact-btn-admin-edit" data-detail-admin-edit data-listing-id="${escapeHtml(String(adminEditListingId))}">
-        ${iconPencil()}
-        <span data-i18n="detail.adminEdit">${escapeHtml(t('detail.adminEdit'))}</span>
-      </button>
-    `
-    : '';
 
-  const rowClass = [cleanHandle, cleanPhone, adminEditBtn].filter(Boolean).length > 1 ? ' detail-contact-bar-inner-row' : '';
+  const rowClass = [cleanHandle, cleanPhone].filter(Boolean).length > 1 ? ' detail-contact-bar-inner-row' : '';
   return `
     <div class="detail-contact-bar-inner${rowClass}">
       ${telegramBtn}
       ${phoneBtn}
-      ${adminEditBtn}
     </div>
   `;
 }
@@ -1028,11 +1016,19 @@ function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCal
       });
     }
   });
+}
 
-  const adminEditBtn = container?.querySelector('[data-detail-admin-edit]');
-  adminEditBtn?.addEventListener('click', () => {
+/**
+ * Admin-only "Edit (admin)" floating button (icon-only, see .detail-admin-edit-fab
+ * in listing-detail.css) — lets an admin viewing someone else's listing jump straight
+ * into editing it, independent of whether the listing has any contact info to show
+ * in `detailContactBarHtml` above. See `updateDetailAdminEditFab` in listing-detail.js
+ * for who shows/hides this button.
+ */
+function bindDetailAdminEditFab(fabEl, listingId) {
+  fabEl?.addEventListener('click', () => {
     window.UyDosh?.haptic?.light?.();
-    const id = adminEditBtn.getAttribute('data-listing-id') || listingId;
+    const id = fabEl.getAttribute('data-listing-id') || listingId;
     if (id == null) return;
     logMiniAppEvent('admin_edit_listing_tapped', {
       listing_id: Number(id),
@@ -1099,6 +1095,7 @@ Object.assign(window.UyDosh, {
   shareListingLink,
   detailContactBarHtml,
   bindDetailContactBar,
+  bindDetailAdminEditFab,
   warmMapPinIconCache,
   loadVisitedListingIds,
   markListingVisited,
