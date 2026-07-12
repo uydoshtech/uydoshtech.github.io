@@ -471,12 +471,14 @@ function navMenuHtml() {
  * Left slide-out drawer opened by the hamburger trigger above — mounted once
  * on `document.body` (not inside the header) so it renders as a true
  * full-viewport overlay regardless of the header's own position/overflow.
- * Repeats the same account shortcuts as accountMenuHtml(), followed by a
- * collapsed "More" disclosure (see setNavDrawerMoreExpanded()) holding the
- * app-level links that otherwise have no entry point inside the Mini App
- * (privacy, terms, delete account, contact) — the public site exposes those
- * via its own nav instead. Tucked behind a toggle rather than listed flat so
- * the drawer's default height stays short.
+ * Holds the account shortcuts (see accountShortcutItemsHtml()), the native
+ * app beta-download links (TestFlight/Android APK — kept flat/always visible
+ * since they're a promo, not app-level plumbing), then a collapsed "More"
+ * disclosure (see setNavDrawerMoreExpanded()) holding the app-level links
+ * that otherwise have no entry point inside the Mini App (privacy, terms,
+ * delete account, contact) — the public site exposes those via its own nav
+ * instead. Only that last group is tucked behind a toggle, so the drawer's
+ * default height stays short.
  */
 function navDrawerHtml() {
   const avatarUrl = accountMenuAvatarUrl();
@@ -496,6 +498,9 @@ function navDrawerHtml() {
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
           <div class="account-menu-divider" role="separator"></div>
+          <a role="menuitem" href="${MINI_APP_TESTFLIGHT_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-testflight>${UyDosh.iconChrome('apple')}<span data-i18n="nav.testflight"></span></a>
+          <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome('android')}<span data-i18n="nav.androidApk"></span></a>
+          <div class="account-menu-divider" role="separator"></div>
           <button
             type="button"
             class="nav-drawer-more-toggle"
@@ -507,9 +512,6 @@ function navDrawerHtml() {
             <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
           </button>
           <div class="nav-drawer-more-panel" id="nav-drawer-more-panel" data-nav-drawer-more-panel hidden>
-            <a role="menuitem" href="${MINI_APP_TESTFLIGHT_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-testflight>${UyDosh.iconChrome('apple')}<span data-i18n="nav.testflight"></span></a>
-            <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome('android')}<span data-i18n="nav.androidApk"></span></a>
-            <div class="account-menu-divider" role="separator"></div>
             <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
             <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
             <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
