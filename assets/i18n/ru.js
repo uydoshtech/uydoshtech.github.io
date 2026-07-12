@@ -73,6 +73,8 @@ I18N.ru = {
     'detail.roomScanWallTexturePlaster': '3D-вид: стены со штукатуркой. Нажмите, чтобы вернуть кирпич.',
     'detail.roomScanFloorTextureWood': '3D-вид: деревянный пол. Нажмите, чтобы попробовать плитку.',
     'detail.roomScanFloorTextureTile': '3D-вид: пол из плитки. Нажмите, чтобы вернуть дерево.',
+    'detail.roomScanRotatePlay': '3D-вид: вращение на паузе. Нажмите, чтобы продолжить.',
+    'detail.roomScanRotatePause': '3D-вид: автовращение. Нажмите, чтобы поставить на паузу.',
     'detail.roomScanZoom': 'Масштаб',
     'detail.roomScanLoadError': 'Не удалось загрузить 3D-модель.',
     'detail.roomScanShare': 'Поделиться 3D-видом',

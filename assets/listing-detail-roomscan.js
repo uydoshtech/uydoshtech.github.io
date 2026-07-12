@@ -443,6 +443,52 @@
         return btn;
       }
 
+      // --- 3D room scan auto-rotate play/pause --------------------------------------------
+      // Occupies the bottom control bar's leading slot the mode-cycling button used to sit
+      // in before it moved into the top-right button group alongside the wall/floor texture
+      // toggles (see createRoomScanModeButton and its mount sites below). Reflects
+      // `<model-viewer>`'s own `auto-rotate` attribute directly rather than separate state,
+      // so it stays correct even though createRoomScanZoomSlider's
+      // pauseAutoRotateForDrag/resumeAutoRotateAfterDrag also toggles that same attribute
+      // (transiently, for the duration of a slider drag) — if the user paused rotation with
+      // this button, a slider drag reads `auto-rotate` as already absent and won't
+      // resurrect it afterward.
+      function roomScanRotateIconHtml(isRotating) {
+        if (isRotating) {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+            <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+          </svg>`;
+        }
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 4.5v15l13-7.5-13-7.5Z"></path>
+        </svg>`;
+      }
+
+      function roomScanRotateLabelKey(isRotating) {
+        return isRotating ? 'detail.roomScanRotatePause' : 'detail.roomScanRotatePlay';
+      }
+
+      /** Creates the auto-rotate play/pause button and wires it to `viewerEl`. */
+      function createRoomScanRotateButton(viewerEl) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roomscan-rotate-btn';
+        const updateAppearance = () => {
+          const isRotating = viewerEl.hasAttribute('auto-rotate');
+          btn.innerHTML = roomScanRotateIconHtml(isRotating);
+          btn.setAttribute('aria-label', UyDosh.t(roomScanRotateLabelKey(isRotating)));
+        };
+        updateAppearance();
+        btn.addEventListener('click', () => {
+          UyDosh.haptic?.light?.();
+          if (viewerEl.hasAttribute('auto-rotate')) viewerEl.removeAttribute('auto-rotate');
+          else viewerEl.setAttribute('auto-rotate', '');
+          updateAppearance();
+        });
+        return btn;
+      }
+
       // --- 3D room scan zoom slider -----------------------------------------------------
       // Mirrors the native app's zoom slider (see zoomSlider/applyZoomFraction in
       // RoomUsdzViewerViewController.swift): a single 0…100 fraction (0 = zoomed out, 100 =
@@ -717,12 +763,14 @@
 
           const controlsBar = document.createElement('div');
           controlsBar.className = 'roomscan-controls-bar';
-          controlsBar.appendChild(createRoomScanModeButton(viewer));
+          controlsBar.appendChild(createRoomScanRotateButton(viewer));
           controlsBar.appendChild(createRoomScanZoomSlider(viewer));
           controlsBar.appendChild(fullscreenBtn);
           container.appendChild(controlsBar);
-          // Floating top-right corner, deliberately outside the bottom controls-bar (see
+          // Floating top-right corner, deliberately outside the bottom controls-bar — stacked
+          // mode / wall-texture / floor-texture toggles (see .roomscan-mode-btn/
           // .roomscan-texture-btn/.roomscan-floor-texture-btn in listing-detail.css).
+          container.appendChild(createRoomScanModeButton(viewer));
           container.appendChild(createRoomScanWallTextureButton(viewer));
           container.appendChild(createRoomScanFloorTextureButton(viewer));
         } catch (err) {
@@ -844,13 +892,15 @@
           }, { once: true });
           statusEl.hidden = true;
           roomScanBackdropEl.insertBefore(viewer, controlsBar);
-          controlsBar.insertBefore(createRoomScanModeButton(viewer), closeBtn);
+          controlsBar.insertBefore(createRoomScanRotateButton(viewer), closeBtn);
           controlsBar.insertBefore(createRoomScanZoomSlider(viewer), closeBtn);
-          // Floating top-right corner, deliberately outside the bottom controls-bar (see
+          // Floating top-right corner, deliberately outside the bottom controls-bar — stacked
+          // mode / wall-texture / floor-texture toggles (see .roomscan-mode-btn/
           // .roomscan-texture-btn/.roomscan-floor-texture-btn in listing-detail.css) —
           // inserted before controlsBar so they stack under the dimensions overlay in DOM
           // order, not that it matters visually since both are absolutely positioned in
           // opposite corners.
+          roomScanBackdropEl.insertBefore(createRoomScanModeButton(viewer), controlsBar);
           roomScanBackdropEl.insertBefore(createRoomScanWallTextureButton(viewer), controlsBar);
           roomScanBackdropEl.insertBefore(createRoomScanFloorTextureButton(viewer), controlsBar);
         } catch (err) {
@@ -859,11 +909,12 @@
           statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
         }
 
-        // Added last (regardless of load success above) so it always sits directly
-        // left of close — [mode, zoom, share, close] on success, [share, close] if
-        // the model failed to load — a share link doesn't depend on the model itself.
+        // Added last (regardless of load success above) — floats directly above the close
+        // button (see .roomscan-share-btn in listing-detail.css) rather than sitting inline
+        // in the bottom bar, so it stays reachable even if the model failed to load — a
+        // share link doesn't depend on the model itself.
         if (l) {
-          controlsBar.insertBefore(createRoomScanShareButton(l), closeBtn);
+          roomScanBackdropEl.insertBefore(createRoomScanShareButton(l), controlsBar);
         }
       }
 
