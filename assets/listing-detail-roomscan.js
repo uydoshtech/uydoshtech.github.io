@@ -673,12 +673,14 @@
       // plain inline glyph.
       const ROOM_SCAN_META_SEP_HTML = '<span class="roomscan-toggle-meta-sep" aria-hidden="true">&#9679;</span>';
 
-      /** Mirrors the mobile app's room-3D tile stats (see room_3d_tile.dart), grouped into two
-       * lines instead of one row each: dimensions + area share a line (separated by a dot,
-       * evoking a stats strip like "3 bed • 2 bath"), height gets its own line below. Shared by
-       * the inline toggle's under-viewer summary and the fullscreen viewer's dimensions
-       * overlay — both just stack whatever lines this returns in a flex column. */
-      function buildRoomScanDimensionsMetaHtml(l) {
+      /** Mirrors the mobile app's room-3D tile stats (see room_3d_tile.dart). Two layouts:
+       * the inline toggle's under-viewer summary groups dimensions + area onto one line
+       * (separated by a dot, evoking a stats strip like "3 bed • 2 bath") with height on a
+       * line below, to stay compact under the small mini-view; the fullscreen viewer's
+       * dimensions overlay instead gives each stat its own row (`oneRowPerStat: true`), same
+       * as it originally had room for. Both just stack whatever lines this returns in a flex
+       * column. */
+      function buildRoomScanDimensionsMetaHtml(l, { oneRowPerStat = false } = {}) {
         const floorLong = Number(l.room_scan_floor_long_m);
         const floorShort = Number(l.room_scan_floor_short_m);
         const heightM = Number(l.room_scan_height_m);
@@ -688,6 +690,13 @@
           const dimsRow = roomScanMetaRowHtml(UyDosh.iconRectangleOutline(), `${UyDosh.t('detail.roomScanDimensions')}: ${floorLong.toFixed(1)} × ${floorShort.toFixed(1)} m`);
           const areaRow = roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ~${areaM2.toFixed(1)} m²`);
           const heightRow = roomScanMetaRowHtml(UyDosh.iconHeightArrows(), `${UyDosh.t('detail.roomScanHeight')}: ${heightM.toFixed(1)} m`);
+          if (oneRowPerStat) {
+            return (
+              `<span class="roomscan-toggle-meta-line">${dimsRow}</span>` +
+              `<span class="roomscan-toggle-meta-line">${areaRow}</span>` +
+              `<span class="roomscan-toggle-meta-line">${heightRow}</span>`
+            );
+          }
           return (
             `<span class="roomscan-toggle-meta-line">${dimsRow}${ROOM_SCAN_META_SEP_HTML}${areaRow}</span>` +
             `<span class="roomscan-toggle-meta-line">${heightRow}</span>`
@@ -887,7 +896,7 @@
         // Dimensions overlay (top-leading, like the mobile app's native SceneKit viewer —
         // see RoomUsdzViewerViewController.swift's `hintContainer`). Built up front since it
         // doesn't depend on the model finishing load.
-        const metaHtml = l ? buildRoomScanDimensionsMetaHtml(l) : '';
+        const metaHtml = l ? buildRoomScanDimensionsMetaHtml(l, { oneRowPerStat: true }) : '';
         if (metaHtml) {
           const dimensionsEl = document.createElement('div');
           dimensionsEl.className = 'roomscan-backdrop-dimensions';
