@@ -655,11 +655,12 @@
         width: 43px; height: 43px; background: rgba(0, 0, 0, 0.55);
       }
       .roomscan-backdrop .roomscan-texture-btn {
-        /* Previous button's top offset + 43px button + 10px gap. */
-        top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)) + 53px);
+        /* Previous button's top offset + 36px label-pill height (see --label below,
+           which is the only variant actually mounted in the backdrop) + 10px gap. */
+        top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)) + 46px);
       }
       .roomscan-backdrop .roomscan-floor-texture-btn {
-        top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)) + 106px);
+        top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)) + 92px);
       }
       .roomscan-mode-btn:active, .roomscan-texture-btn:active, .roomscan-floor-texture-btn:active { opacity: 0.85; }
       .roomscan-mode-btn svg, .roomscan-texture-btn svg, .roomscan-floor-texture-btn svg {
@@ -667,22 +668,25 @@
       }
       .roomscan-backdrop .roomscan-mode-btn svg, .roomscan-backdrop .roomscan-texture-btn svg,
       .roomscan-backdrop .roomscan-floor-texture-btn svg {
-        width: 22px; height: 22px;
+        width: 20px; height: 20px;
       }
       .roomscan-mode-btn svg *, .roomscan-texture-btn svg *, .roomscan-floor-texture-btn svg * {
         stroke: currentColor; fill: none;
       }
-      /* Fullscreen-only variant (see `showLabel` on createRoomScanModeButton &co.) showing the
-         current state as short text (e.g. "Стены"/"Кирпич"/"Ламинат") instead of an icon —
-         the inline mini view keeps the plain icon buttons above, since it's tighter on space.
-         All three share one fixed width (sized to fit the longest label, "Штукатурка") rather
-         than each hugging its own text, so the row of pills lines up cleanly instead of
-         jogging left/right as their labels change length on click. */
+      /* Fullscreen-only variant (see `showLabel` on createRoomScanModeButton &co.) showing an
+         icon plus the current state as short text (e.g. "Стены"/"Кирпич"/"Ламинат") — the
+         icon swaps alongside the label on every tap (see roomScanModeIconHtml/
+         roomScanWallTextureIconHtml/roomScanFloorTextureIconHtml), same per-state swap the
+         inline mini view's icon-only buttons already do. All three share one fixed width
+         (sized to fit an icon plus the longest label, "Штукатурка") rather than each hugging
+         its own content, so the row of pills lines up cleanly instead of jogging left/right
+         as their labels change length on click. */
       .roomscan-backdrop .roomscan-mode-btn--label, .roomscan-backdrop .roomscan-texture-btn--label,
       .roomscan-backdrop .roomscan-floor-texture-btn--label {
-        width: 120px; border-radius: 21.5px; padding: 0 12px;
-        font-family: inherit; font-weight: 700; font-size: 14px; white-space: nowrap;
+        width: 144px; height: 36px; border-radius: 18px; padding: 0 12px; gap: 6px;
+        font-family: inherit; font-weight: 700; font-size: 13px; white-space: nowrap;
       }
+      .roomscan-btn-label-text { display: inline-block; }
       .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
       .roomscan-backdrop .roomscan-backdrop-close { font-size: 19px; }
       /* Pill-shaped zoom slider — same look as the mobile app's zoom slider (a plain

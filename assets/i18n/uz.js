@@ -199,6 +199,7 @@ I18N.uz = {
     'create.locatingAddress': 'Aniqlanmoqda…',
     'create.addressMapDragHint': 'Aniq nuqtani ko‘rsatish uchun markerni suring',
     'create.errorLocationFailed': 'Joylashuvni aniqlab bo‘lmadi. Manzilni qo‘lda kiriting.',
+    'create.errorAddressFromLocationFailed': 'Joriy joylashuv bo‘yicha manzilni aniqlab bo‘lmadi. Manzilni qo‘lda kiriting.',
     'create.nearbyStationsHint': 'Eng yaqin metro bekatlarini ko‘rish uchun manzilni kiriting yoki joylashuvingizdan foydalaning',
     'create.walkRadiusOption': '{count} daq.',
     'create.walkRadiusOptionSelected': '{count} daqiqa piyoda metrogacha',

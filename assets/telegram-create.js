@@ -2844,6 +2844,7 @@ function bindStepEvents() {
       state.form.addressLatitude = latitude;
       state.form.addressLongitude = longitude;
       const result = await UyDosh.fetchReverseGeocodeAddress(latitude, longitude, UyDosh.getLang());
+      applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
       if (result?.addressText) {
         state.form.addressText = result.addressText;
         state.addressGeocodedText = result.addressText.trim();
@@ -2855,9 +2856,21 @@ function bindStepEvents() {
         state.addressSuggestLoading = false;
         state.addressSuggestNoMatches = false;
         state.addressSuggestNoMatchesHapticFired = false;
+        showFormError('');
+      } else {
+        // Yandex resolved the coordinates but had no address to hand back —
+        // e.g. the author is outside Tashkent (also why `applyNearbyStations`
+        // just above found no nearby metro). Silently leaving the address
+        // field empty here left the author stuck: nothing on screen said why,
+        // and the *next* tap of "Next" surfaced the generic "enter an
+        // address" validation error, which — right under the "no metro
+        // nearby" empty state above — read as if a metro station were being
+        // required. Mirrors the Flutter app's equivalent handler (see
+        // `current_location_address_failed` in create_listing_screen.dart),
+        // which already surfaces this instead of leaving the field empty.
+        haptic('heavy');
+        showFormError(UyDosh.t('create.errorAddressFromLocationFailed', UyDosh.getLang()), 'location');
       }
-      applyNearbyStations(latitude, longitude, state.nearbyStationsRadiusMinutes);
-      showFormError('');
     } catch (err) {
       console.error('Use current location failed', err);
       haptic('heavy');

@@ -198,6 +198,7 @@ I18N.ru = {
     'create.locatingAddress': 'Определяем…',
     'create.addressMapDragHint': 'Перетащите метку, чтобы уточнить точку',
     'create.errorLocationFailed': 'Не удалось определить местоположение. Введите адрес вручную.',
+    'create.errorAddressFromLocationFailed': 'Не удалось определить адрес по текущему местоположению. Введите адрес вручную.',
     'create.nearbyStationsHint': 'Введите адрес или используйте свою локацию, чтобы увидеть ближайшие станции метро',
     'create.walkRadiusOption': '{count} мин',
     'create.walkRadiusOptionSelected': '{count} минут пешком до метро',

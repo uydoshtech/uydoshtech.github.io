@@ -177,8 +177,12 @@
         btn.type = 'button';
         btn.className = showLabel ? 'roomscan-mode-btn roomscan-mode-btn--label' : 'roomscan-mode-btn';
         const updateAppearance = () => {
-          if (showLabel) btn.textContent = UyDosh.t(roomScanModeShortLabelKey(mode));
-          else btn.innerHTML = roomScanModeIconHtml(mode);
+          if (showLabel) {
+            btn.innerHTML = roomScanModeIconHtml(mode) +
+              `<span class="roomscan-btn-label-text">${UyDosh.escapeHtml(UyDosh.t(roomScanModeShortLabelKey(mode)))}</span>`;
+          } else {
+            btn.innerHTML = roomScanModeIconHtml(mode);
+          }
           btn.setAttribute('aria-label', UyDosh.t(roomScanModeLabelKey(mode)));
         };
         updateAppearance();
@@ -247,14 +251,22 @@
         return texture === 'plaster' ? 'detail.roomScanWallTexturePlasterShort' : 'detail.roomScanWallTextureBrickShort';
       }
 
-      // Static "paint roller" glyph — unlike the mode button, this is a plain two-way
-      // toggle communicated via the aria-label/value, not a per-state icon swap.
-      function roomScanWallTextureIconHtml() {
+      // Per-state glyph, mirroring roomScanModeIconHtml — a staggered brick pattern for
+      // 'brick', a paint roller for 'plaster' — so the icon itself (not just the
+      // aria-label/short label) reflects which texture is currently applied.
+      function roomScanWallTextureIconHtml(texture) {
+        if (texture === 'plaster') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="2" width="16" height="6" rx="2"></rect>
+            <path d="M10 16v-2a2 2 0 0 1 2-2h8"></path>
+            <path d="M18 12h2a2 2 0 0 1 2 2v2"></path>
+            <rect x="8" y="16" width="4" height="6" rx="1"></rect>
+          </svg>`;
+        }
         return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="2" y="2" width="16" height="6" rx="2"></rect>
-          <path d="M10 16v-2a2 2 0 0 1 2-2h8"></path>
-          <path d="M18 12h2a2 2 0 0 1 2 2v2"></path>
-          <rect x="8" y="16" width="4" height="6" rx="1"></rect>
+          <rect x="2" y="4" width="20" height="16" rx="1"></rect>
+          <path d="M2 9h20M2 15h20"></path>
+          <path d="M8 4v5M16 9v6M8 15v5"></path>
         </svg>`;
       }
 
@@ -350,15 +362,19 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = showLabel ? 'roomscan-texture-btn roomscan-texture-btn--label' : 'roomscan-texture-btn';
-        if (!showLabel) btn.innerHTML = roomScanWallTextureIconHtml();
-        const updateLabel = () => {
-          if (showLabel) btn.textContent = UyDosh.t(roomScanWallTextureShortLabelKey(texture));
+        const updateAppearance = () => {
+          if (showLabel) {
+            btn.innerHTML = roomScanWallTextureIconHtml(texture) +
+              `<span class="roomscan-btn-label-text">${UyDosh.escapeHtml(UyDosh.t(roomScanWallTextureShortLabelKey(texture)))}</span>`;
+          } else {
+            btn.innerHTML = roomScanWallTextureIconHtml(texture);
+          }
           btn.setAttribute('aria-label', UyDosh.t(roomScanWallTextureLabelKey(texture)));
         };
-        updateLabel();
+        updateAppearance();
         btn.addEventListener('click', () => {
           texture = nextRoomScanWallTexture(texture);
-          updateLabel();
+          updateAppearance();
           UyDosh.haptic?.light?.();
           applyRoomScanWallTexture(viewerEl, texture);
         });
@@ -385,12 +401,20 @@
         return texture === 'tile' ? 'detail.roomScanFloorTextureTileShort' : 'detail.roomScanFloorTextureWoodShort';
       }
 
-      // Static 2x2 grid glyph, evoking floor tiles.
-      function roomScanFloorTextureIconHtml() {
+      // Per-state glyph, mirroring roomScanWallTextureIconHtml — parallel planks for
+      // 'wood', a 2x2 tile grid for 'tile' — so the icon itself reflects the applied floor
+      // texture instead of staying static across both states.
+      function roomScanFloorTextureIconHtml(texture) {
+        if (texture === 'tile') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <path d="M3 12h18"></path>
+            <path d="M12 3v18"></path>
+          </svg>`;
+        }
         return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-          <path d="M3 12h18"></path>
-          <path d="M12 3v18"></path>
+          <rect x="3" y="3" width="18" height="18" rx="1"></rect>
+          <path d="M3 8.5h18M3 13h18M3 17.5h18"></path>
         </svg>`;
       }
 
@@ -475,15 +499,19 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = showLabel ? 'roomscan-floor-texture-btn roomscan-floor-texture-btn--label' : 'roomscan-floor-texture-btn';
-        if (!showLabel) btn.innerHTML = roomScanFloorTextureIconHtml();
-        const updateLabel = () => {
-          if (showLabel) btn.textContent = UyDosh.t(roomScanFloorTextureShortLabelKey(texture));
+        const updateAppearance = () => {
+          if (showLabel) {
+            btn.innerHTML = roomScanFloorTextureIconHtml(texture) +
+              `<span class="roomscan-btn-label-text">${UyDosh.escapeHtml(UyDosh.t(roomScanFloorTextureShortLabelKey(texture)))}</span>`;
+          } else {
+            btn.innerHTML = roomScanFloorTextureIconHtml(texture);
+          }
           btn.setAttribute('aria-label', UyDosh.t(roomScanFloorTextureLabelKey(texture)));
         };
-        updateLabel();
+        updateAppearance();
         btn.addEventListener('click', () => {
           texture = nextRoomScanFloorTexture(texture);
-          updateLabel();
+          updateAppearance();
           UyDosh.haptic?.light?.();
           applyRoomScanFloorTexture(viewerEl, texture);
         });

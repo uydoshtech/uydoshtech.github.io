@@ -198,6 +198,7 @@ I18N.en = {
     'create.locatingAddress': 'Locating…',
     'create.addressMapDragHint': 'Drag the pin to fine-tune the exact spot',
     'create.errorLocationFailed': 'Could not determine your location. Enter the address manually.',
+    'create.errorAddressFromLocationFailed': 'Could not determine the address from your current location. Enter it manually.',
     'create.nearbyStationsHint': 'Enter an address or use your location to see the nearest metro stations',
     'create.walkRadiusOption': '{count} min',
     'create.walkRadiusOptionSelected': '{count}-minute walk to the metro',
