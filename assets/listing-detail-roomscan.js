@@ -60,29 +60,20 @@
         return ROOM_SCAN_MODE_SEQUENCE[(idx + 1) % ROOM_SCAN_MODE_SEQUENCE.length];
       }
 
-      function roomScanModeIconHtml(mode) {
-        if (mode === 'floorAndFurniture') {
-          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 18v-4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"></path>
-            <path d="M4 18v2M20 18v2"></path>
-            <path d="M6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"></path>
-          </svg>`;
-        }
-        if (mode === 'floorOnly') {
-          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="6" width="18" height="12" rx="2"></rect>
-          </svg>`;
-        }
-        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 10.5 12 4l8 6.5"></path>
-          <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5"></path>
-        </svg>`;
-      }
-
       function roomScanModeLabelKey(mode) {
         if (mode === 'floorAndFurniture') return 'detail.roomScanModeFloorAndFurniture';
         if (mode === 'floorOnly') return 'detail.roomScanModeFloorOnly';
         return 'detail.roomScanModeFullRoom';
+      }
+
+      // Short one-word label actually shown on the button face (the aria-label above stays
+      // the longer descriptive "tap to..." string for accessibility) — walls/furniture/floor
+      // name what's newly revealed at each step of the cycle, not literally what's on screen
+      // (e.g. floorOnly's floor is also visible in fullRoom).
+      function roomScanModeShortLabelKey(mode) {
+        if (mode === 'floorAndFurniture') return 'detail.roomScanModeFloorAndFurnitureShort';
+        if (mode === 'floorOnly') return 'detail.roomScanModeFloorOnlyShort';
+        return 'detail.roomScanModeFullRoomShort';
       }
 
       /** Wall/ceiling/door/window/opening → 'wall' (hidden in floorAndFurniture and floorOnly);
@@ -150,7 +141,7 @@
         btn.type = 'button';
         btn.className = 'roomscan-mode-btn';
         const updateAppearance = () => {
-          btn.innerHTML = roomScanModeIconHtml(mode);
+          btn.textContent = UyDosh.t(roomScanModeShortLabelKey(mode));
           btn.setAttribute('aria-label', UyDosh.t(roomScanModeLabelKey(mode)));
         };
         updateAppearance();
@@ -183,15 +174,9 @@
         return texture === 'plaster' ? 'detail.roomScanWallTexturePlaster' : 'detail.roomScanWallTextureBrick';
       }
 
-      // Static "paint roller" glyph — unlike the mode button, this is a plain two-way
-      // toggle communicated via the aria-label/value, not a per-state icon swap.
-      function roomScanWallTextureIconHtml() {
-        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="2" y="2" width="16" height="6" rx="2"></rect>
-          <path d="M10 16v-2a2 2 0 0 1 2-2h8"></path>
-          <path d="M18 12h2a2 2 0 0 1 2 2v2"></path>
-          <rect x="8" y="16" width="4" height="6" rx="1"></rect>
-        </svg>`;
+      // Short label actually shown on the button face — mirrors roomScanModeShortLabelKey.
+      function roomScanWallTextureShortLabelKey(texture) {
+        return texture === 'plaster' ? 'detail.roomScanWallTexturePlasterShort' : 'detail.roomScanWallTextureBrickShort';
       }
 
       // Stricter than classifyRoomScanMaterialName's grouped 'wall' (which also folds in
@@ -201,19 +186,6 @@
       // windows/openings/ceiling on their originally captured materials).
       function isRoomScanWallMaterialName(name) {
         return (name || '').toLowerCase().startsWith('wall');
-      }
-
-      // Backend tags each wall material name with an `_exterior`/`_interior` suffix at GLB
-      // bake time (a rough bounding-box heuristic — see tagWallMaterialsWithExteriorInterior
-      // in uydosh_backend's applyRoomScanStylizedMaterials.ts) so the toggle below can leave
-      // exterior walls on brick and only re-texture interior/partition ones.
-      function isRoomScanExteriorWallMaterialName(name) {
-        const n = (name || '').toLowerCase();
-        return isRoomScanWallMaterialName(n) && n.includes('exterior');
-      }
-      function isRoomScanInteriorWallMaterialName(name) {
-        const n = (name || '').toLowerCase();
-        return isRoomScanWallMaterialName(n) && n.includes('interior');
       }
 
       let roomScanPlasterTextureDataUrl = null;
@@ -267,25 +239,16 @@
         return texture;
       }
 
-      /** Swaps interior wall materials' base color texture between the GLB's baked-in brick
+      /** Swaps every wall material's base color texture between the GLB's baked-in brick
        * (cached the first time we switch away from it, same pattern as
        * setRoomScanMaterialHidden's __uydoshOriginalColor caching) and the plaster texture
-       * above — exterior walls are left untouched so they always stay brick. Older GLBs
-       * baked before the backend added the exterior/interior split (see
-       * tagWallMaterialsWithExteriorInterior) have no `_exterior`/`_interior` suffix on any
-       * wall material at all; rather than silently doing nothing on those until they're
-       * reprocessed, this falls back to toggling every wall, matching the toggle's original
-       * behavior. */
+       * above. */
       async function applyRoomScanWallTexture(viewerEl, texture) {
         const model = viewerEl && viewerEl.model;
         if (!model || !Array.isArray(model.materials)) return;
-        const hasExteriorInteriorSplit = model.materials.some(
-          (m) => isRoomScanExteriorWallMaterialName(m.name) || isRoomScanInteriorWallMaterialName(m.name),
-        );
         const plasterTexture = texture === 'plaster' ? await getRoomScanPlasterTexture(viewerEl) : null;
         model.materials.forEach((material) => {
           if (!isRoomScanWallMaterialName(material.name)) return;
-          if (hasExteriorInteriorSplit && isRoomScanExteriorWallMaterialName(material.name)) return;
           try {
             const pbr = material.pbrMetallicRoughness;
             if (!pbr || !pbr.baseColorTexture) return;
@@ -308,8 +271,8 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'roomscan-texture-btn';
-        btn.innerHTML = roomScanWallTextureIconHtml();
         const updateLabel = () => {
+          btn.textContent = UyDosh.t(roomScanWallTextureShortLabelKey(texture));
           btn.setAttribute('aria-label', UyDosh.t(roomScanWallTextureLabelKey(texture)));
         };
         updateLabel();
@@ -336,18 +299,12 @@
         return texture === 'tile' ? 'detail.roomScanFloorTextureTile' : 'detail.roomScanFloorTextureWood';
       }
 
-      // Static 2x2 grid glyph, evoking floor tiles.
-      function roomScanFloorTextureIconHtml() {
-        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-          <path d="M3 12h18"></path>
-          <path d="M12 3v18"></path>
-        </svg>`;
+      // Short label actually shown on the button face — mirrors roomScanModeShortLabelKey.
+      function roomScanFloorTextureShortLabelKey(texture) {
+        return texture === 'tile' ? 'detail.roomScanFloorTextureTileShort' : 'detail.roomScanFloorTextureWoodShort';
       }
 
-      // Mirrors classifySurface's floor check in applyRoomScanStylizedMaterials.ts —
-      // floors have no exterior/interior split, so unlike walls every floor material is
-      // always toggleable.
+      // Mirrors classifySurface's floor check in applyRoomScanStylizedMaterials.ts.
       function isRoomScanFloorMaterialName(name) {
         const n = (name || '').toLowerCase();
         return n.startsWith('floor') || n.includes('ground');
@@ -399,8 +356,7 @@
       }
 
       /** Swaps every floor material's base color texture between the GLB's baked-in dark
-       * wood and the tile texture above — mirrors applyRoomScanWallTexture above, minus the
-       * exterior/interior split (floors don't have one). */
+       * wood and the tile texture above — mirrors applyRoomScanWallTexture above. */
       async function applyRoomScanFloorTexture(viewerEl, texture) {
         const model = viewerEl && viewerEl.model;
         if (!model || !Array.isArray(model.materials)) return;
@@ -429,8 +385,8 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'roomscan-floor-texture-btn';
-        btn.innerHTML = roomScanFloorTextureIconHtml();
         const updateLabel = () => {
+          btn.textContent = UyDosh.t(roomScanFloorTextureShortLabelKey(texture));
           btn.setAttribute('aria-label', UyDosh.t(roomScanFloorTextureLabelKey(texture)));
         };
         updateLabel();
@@ -645,8 +601,16 @@
         return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
       }
 
-      /** Mirrors the mobile app's room-3D tile: dimensions + height + area, one row each (see room_3d_tile.dart).
-       * Shared by the inline toggle summary and the fullscreen viewer's dimensions overlay. */
+      // Small filled-dot separator between two meta rows sharing one line (dimensions • area)
+      // — CSS-styled (.roomscan-toggle-meta-sep) rather than a full icon, since it's just a
+      // plain inline glyph.
+      const ROOM_SCAN_META_SEP_HTML = '<span class="roomscan-toggle-meta-sep" aria-hidden="true">&#9679;</span>';
+
+      /** Mirrors the mobile app's room-3D tile stats (see room_3d_tile.dart), grouped into two
+       * lines instead of one row each: dimensions + area share a line (separated by a dot,
+       * evoking a stats strip like "3 bed • 2 bath"), height gets its own line below. Shared by
+       * the inline toggle's under-viewer summary and the fullscreen viewer's dimensions
+       * overlay — both just stack whatever lines this returns in a flex column. */
       function buildRoomScanDimensionsMetaHtml(l) {
         const floorLong = Number(l.room_scan_floor_long_m);
         const floorShort = Number(l.room_scan_floor_short_m);
@@ -654,14 +618,16 @@
         const areaM2 = Number(l.room_scan_floor_area_m2);
         const isPositive = (n) => Number.isFinite(n) && n > 0;
         if (isPositive(floorLong) && isPositive(floorShort) && isPositive(heightM) && isPositive(areaM2)) {
+          const dimsRow = roomScanMetaRowHtml(UyDosh.iconRectangleOutline(), `${UyDosh.t('detail.roomScanDimensions')}: ${floorLong.toFixed(1)} × ${floorShort.toFixed(1)} m`);
+          const areaRow = roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ~${areaM2.toFixed(1)} m²`);
+          const heightRow = roomScanMetaRowHtml(UyDosh.iconHeightArrows(), `${UyDosh.t('detail.roomScanHeight')}: ${heightM.toFixed(1)} m`);
           return (
-            roomScanMetaRowHtml(UyDosh.iconRectangleOutline(), `${UyDosh.t('detail.roomScanDimensions')}: ${floorLong.toFixed(1)} × ${floorShort.toFixed(1)} m`) +
-            roomScanMetaRowHtml(UyDosh.iconHeightArrows(), `${UyDosh.t('detail.roomScanHeight')}: ${heightM.toFixed(1)} m`) +
-            roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ~${areaM2.toFixed(1)} m²`)
+            `<span class="roomscan-toggle-meta-line">${dimsRow}${ROOM_SCAN_META_SEP_HTML}${areaRow}</span>` +
+            `<span class="roomscan-toggle-meta-line">${heightRow}</span>`
           );
         }
         if (isPositive(areaM2)) {
-          return roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`);
+          return `<span class="roomscan-toggle-meta-line">${roomScanMetaRowHtml(UyDosh.iconOverlapRects(), `${UyDosh.t('detail.roomScanArea')}: ${Math.round(areaM2)} m²`)}</span>`;
         }
         return '';
       }
@@ -676,12 +642,12 @@
               <span class="roomscan-toggle-icon" aria-hidden="true">${UyDosh.iconCube()}</span>
               <span class="roomscan-toggle-title">
                 <span class="roomscan-toggle-label">${UyDosh.escapeHtml(UyDosh.t('detail.roomScan'))}</span>
-                ${metaHtml ? `<span class="roomscan-toggle-meta">${metaHtml}</span>` : ''}
               </span>
               <span class="roomscan-chevron" aria-hidden="true">▾</span>
             </button>
             <div class="roomscan-body">
               <div class="roomscan-viewer-wrap" data-roomscan-viewer-wrap></div>
+              ${metaHtml ? `<div class="roomscan-meta">${metaHtml}</div>` : ''}
             </div>
           </section>
         `;
