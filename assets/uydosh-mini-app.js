@@ -419,10 +419,13 @@ function accountShortcutItemsHtml() {
 }
 
 /**
- * Avatar-triggered account menu shown at the right of the Mini App header —
- * replaces the public site's language switcher here since the bot already
- * sets the Mini App's language via `?lang=` (see initTelegramMiniApp). Links
- * to the user's own listings, favorites, and the create-listing flow.
+ * Avatar shown at the right of the Mini App header — replaces the public
+ * site's language switcher here since the bot already sets the Mini App's
+ * language via `?lang=` (see initTelegramMiniApp). Links straight to the
+ * user's own profile page (the same shortcuts it used to open in a dropdown —
+ * Post/My listings/Favorites/Profile/theme — already live one tap away in
+ * the hamburger nav drawer, see navDrawerHtml(), so this avatar no longer
+ * needs to duplicate them behind its own dropdown).
  */
 function accountMenuHtml() {
   const avatarUrl = accountMenuAvatarUrl();
@@ -430,29 +433,22 @@ function accountMenuHtml() {
     ? `<img class="account-menu-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('has-avatar');this.remove();" />`
     : UyDosh.iconChrome('person');
   return `
-    <div class="menu-dropdown account-menu" role="group">
-      <button
-        type="button"
-        class="menu-dropdown-trigger account-menu-trigger"
-        aria-haspopup="true"
-        aria-expanded="false"
-        data-i18n="account.menuLabel"
-        data-i18n-attr="aria-label"
-      >
-        <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
-      </button>
-      <div class="menu-dropdown-list account-menu-list" role="menu" hidden>
-        ${accountShortcutItemsHtml()}
-      </div>
-    </div>`;
+    <a
+      class="account-menu-trigger"
+      href="${MINI_APP_PROFILE_PATH}"
+      data-i18n="profile.menuLabel"
+      data-i18n-attr="aria-label"
+    >
+      <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
+    </a>`;
 }
 
 /**
  * Hamburger trigger shown at the left of the Mini App header (before the
- * brand logo) — bare icon (no circular chrome), separate from the
- * avatar-triggered account menu on the right. Opens the full-height nav
- * drawer (see navDrawerHtml()) rather than a small dropdown, since it holds
- * the same long item list as the account menu plus the app-level links.
+ * brand logo) — bare icon (no circular chrome), separate from the avatar
+ * link on the right (see accountMenuHtml(), which just navigates straight to
+ * the profile page). Opens the full-height nav drawer (see navDrawerHtml()),
+ * which holds the account shortcuts plus the app-level links.
  */
 function navMenuHtml() {
   return `
@@ -625,71 +621,6 @@ function ensureNavDrawerMounted() {
   });
 }
 
-/** Mirrors the .menu-dropdown-list transition duration below (used for the close fallback timer). */
-const MENU_DROPDOWN_TRANSITION_MS = 180;
-
-function closeMenuDropdown(menu) {
-  const list = menu.querySelector('.menu-dropdown-list');
-  const trigger = menu.querySelector('.menu-dropdown-trigger');
-  if (!list || !trigger || list.hidden) return;
-  trigger.setAttribute('aria-expanded', 'false');
-  menu.classList.remove('menu-dropdown-open');
-  // Keep the list rendered (but not interactive) until the closing transition
-  // finishes, then hide it — animating `display` directly isn't possible.
-  const hideWhenClosed = () => {
-    if (!menu.classList.contains('menu-dropdown-open')) list.hidden = true;
-  };
-  window.setTimeout(hideWhenClosed, MENU_DROPDOWN_TRANSITION_MS);
-}
-
-function bindMenuDropdown(menu) {
-  const trigger = menu.querySelector('.menu-dropdown-trigger');
-  const list = menu.querySelector('.menu-dropdown-list');
-  if (!trigger || !list || trigger.dataset.bound) return;
-  trigger.dataset.bound = '1';
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = menu.classList.contains('menu-dropdown-open');
-    // Only one header dropdown (account menu or nav menu) open at a time.
-    for (const other of document.querySelectorAll('.menu-dropdown.menu-dropdown-open')) {
-      closeMenuDropdown(other);
-    }
-    if (!open) {
-      list.hidden = false;
-      // Force layout before adding the open class so the browser registers the
-      // collapsed starting state and animates towards it instead of snapping.
-      list.getBoundingClientRect();
-      trigger.setAttribute('aria-expanded', 'true');
-      menu.classList.add('menu-dropdown-open');
-    }
-  });
-  // Nav items (`<a>`) close the menu implicitly by navigating away; button
-  // items (e.g. the theme toggle) don't navigate, so close explicitly.
-  list.addEventListener('click', (e) => {
-    if (e.target.closest('button')) closeMenuDropdown(menu);
-  });
-}
-
-/** Wire up open/close + outside-click/Escape handling for every header dropdown on the page. */
-function initMiniAppMenuDropdowns() {
-  for (const menu of document.querySelectorAll('.menu-dropdown')) {
-    bindMenuDropdown(menu);
-  }
-  if (document.documentElement.dataset.uydoshMenuDropdownBound) return;
-  document.documentElement.dataset.uydoshMenuDropdownBound = '1';
-  document.addEventListener('click', (e) => {
-    for (const menu of document.querySelectorAll('.menu-dropdown.menu-dropdown-open')) {
-      if (!menu.contains(e.target)) closeMenuDropdown(menu);
-    }
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    for (const menu of document.querySelectorAll('.menu-dropdown.menu-dropdown-open')) {
-      closeMenuDropdown(menu);
-    }
-  });
-}
-
 /** Shared Telegram mini-app header markup (nav menu + brand + account menu slots). */
 function miniAppHeaderHtml(options = {}) {
   const {
@@ -715,7 +646,6 @@ function mountMiniAppHeader(target, options = {}) {
   header.dataset.uydoshHeaderMounted = '1';
   applyI18n(header);
   initThemeToggle();
-  initMiniAppMenuDropdowns();
   ensureNavDrawerMounted();
   syncMobileHeaderLayout();
   return header;
@@ -998,10 +928,6 @@ function ensureMiniAppSafeAreaStyles() {
       margin-left: auto;
       flex-shrink: 0;
     }
-    html.mini-app .menu-dropdown {
-      position: relative;
-      flex-shrink: 0;
-    }
     /* Pulls the hamburger closer to the header's left edge (3px) and the
        logo (6px) — header's own 14px padding + 12px inter-item gap are
        otherwise shared by every header child, so this trims just this one
@@ -1098,62 +1024,6 @@ function ensureMiniAppSafeAreaStyles() {
       height: 24px;
       display: block;
     }
-    html.mini-app .menu-dropdown-list {
-      position: absolute;
-      top: calc(100% + 3px);
-      min-width: 220px;
-      padding: 6px;
-      border-radius: 14px;
-      border: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
-      /* Solid, never see-through — this floats over feed content below it. */
-      background: color-mix(in srgb, var(--bg), black 6%);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      opacity: 0;
-      transform: translateY(-6px) scale(0.96);
-      pointer-events: none;
-      transition: opacity 0.16s ease, transform 0.16s ease;
-    }
-    html.mini-app .account-menu-list {
-      right: 0;
-      transform-origin: top right;
-    }
-    html.mini-app .menu-dropdown-list[hidden] {
-      display: none;
-    }
-    html.mini-app .menu-dropdown.menu-dropdown-open .menu-dropdown-list {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: auto;
-    }
-    html.mini-app .menu-dropdown-list a,
-    html.mini-app .menu-dropdown-list button {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      color: var(--fg, rgba(255, 255, 255, 0.92));
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    html.mini-app .menu-dropdown-list a:active,
-    html.mini-app .menu-dropdown-list button:active {
-      background: rgba(127, 127, 127, 0.16);
-    }
-    html.mini-app .menu-dropdown-list a svg,
-    html.mini-app .menu-dropdown-list button svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      display: block;
-      stroke: currentColor;
-      fill: none;
-    }
     html.mini-app .account-menu-badge {
       display: inline-block;
       flex-shrink: 0;
@@ -1185,7 +1055,6 @@ function ensureMiniAppSafeAreaStyles() {
     /* Flags "Delete account" as a sensitive/destructive action, same red
        used by the standalone delete button on the account page
        (.account-delete-btn in telegram-account.css). */
-    html.mini-app .menu-dropdown-list a.account-menu-item-danger,
     html.mini-app .nav-drawer-body a.account-menu-item-danger {
       color: var(--error, #f87171);
     }
@@ -1216,7 +1085,7 @@ function ensureMiniAppSafeAreaStyles() {
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      /* Same solid tint as .menu-dropdown-list, so the account-menu-badge's
+      /* Same solid tint used elsewhere behind the account-menu-badge, so its
          box-shadow ring (color-mix'd against that background) still matches. */
       background: color-mix(in srgb, var(--bg), black 6%);
       border-right: 1px solid var(--stroke, rgba(127, 127, 127, 0.35));
@@ -2004,7 +1873,6 @@ Object.assign(window.UyDosh, {
   mountMiniAppHeader,
   mountAllMiniAppHeaders,
   miniAppHeaderHtml,
-  initMiniAppMenuDropdowns,
   MINI_APP_ACCOUNT_PATH,
   MINI_APP_FAVORITES_PATH,
   MINI_APP_CREATE_PATH,

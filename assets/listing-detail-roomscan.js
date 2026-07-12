@@ -164,6 +164,142 @@
         return btn;
       }
 
+      // --- 3D room scan wall texture toggle -----------------------------------------------
+      // Lets the viewer swap the GLB's baked-in brick wall look for an alternate plaster
+      // look, entirely client-side via <model-viewer>'s Scene Graph API
+      // (https://modelviewer.dev/examples/scenegraph/) — no backend re-conversion needed,
+      // since the backend already bakes wall UVs to repeat at a fixed physical tile size
+      // regardless of which image ends up sampling them (see classifySurface/MATERIAL_PARAMS
+      // in uydosh_backend's applyRoomScanStylizedMaterials.ts), so swapping in a differently
+      // generated texture here still tiles correctly.
+      const ROOM_SCAN_WALL_TEXTURES = ['brick', 'plaster'];
+
+      function nextRoomScanWallTexture(texture) {
+        const idx = ROOM_SCAN_WALL_TEXTURES.indexOf(texture);
+        return ROOM_SCAN_WALL_TEXTURES[(idx + 1) % ROOM_SCAN_WALL_TEXTURES.length];
+      }
+
+      function roomScanWallTextureLabelKey(texture) {
+        return texture === 'plaster' ? 'detail.roomScanWallTexturePlaster' : 'detail.roomScanWallTextureBrick';
+      }
+
+      // Static "paint roller" glyph — unlike the mode button, this is a plain two-way
+      // toggle communicated via the aria-label/value, not a per-state icon swap.
+      function roomScanWallTextureIconHtml() {
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="2" width="16" height="6" rx="2"></rect>
+          <path d="M10 16v-2a2 2 0 0 1 2-2h8"></path>
+          <path d="M18 12h2a2 2 0 0 1 2 2v2"></path>
+          <rect x="8" y="16" width="4" height="6" rx="1"></rect>
+        </svg>`;
+      }
+
+      // Stricter than classifyRoomScanMaterialName's grouped 'wall' (which also folds in
+      // ceiling/door/window/opening for display-mode hiding, matching iOS) — texture
+      // swapping should only ever touch actual wall surfaces, mirroring the backend's own
+      // wall-only bake (classifySurface in applyRoomScanStylizedMaterials.ts keeps doors/
+      // windows/openings/ceiling on their originally captured materials).
+      function isRoomScanWallMaterialName(name) {
+        return (name || '').toLowerCase().startsWith('wall');
+      }
+
+      let roomScanPlasterTextureDataUrl = null;
+
+      /** Renders a small tileable plaster-wall pattern into an offscreen canvas once and
+       * caches the resulting data URL — deterministic (no Math.random) so repeated calls
+       * (e.g. across the inline tile and fullscreen viewer, which each need their own
+       * model-viewer <Texture>) always produce byte-identical output, mirroring the
+       * deterministic SVG generators backend/scripts/render-room-scan-textures.js uses for
+       * brick/wood-floor. A warm off-white base (close to the brick texture's own mortar
+       * tone) keeps the two looks feeling like the same room repainted rather than a
+       * jarring palette swap. */
+      function getRoomScanPlasterTextureDataUrl() {
+        if (roomScanPlasterTextureDataUrl) return roomScanPlasterTextureDataUrl;
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#E9E2D3';
+        ctx.fillRect(0, 0, size, size);
+        for (let i = 0; i < 900; i++) {
+          const x = (i * 53) % size;
+          const y = (i * 97) % size;
+          const r = 6 + (i % 5);
+          ctx.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)';
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Faint trowel-stroke streaks running across the tile.
+        for (let i = 0; i < 24; i++) {
+          const y = (i / 24) * size + (i % 2) * 4;
+          ctx.strokeStyle = i % 2 === 0 ? 'rgba(0,0,0,0.035)' : 'rgba(255,255,255,0.05)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(size, y + 10);
+          ctx.stroke();
+        }
+        roomScanPlasterTextureDataUrl = canvas.toDataURL('image/png');
+        return roomScanPlasterTextureDataUrl;
+      }
+
+      /** Creates (once per viewer element, since model-viewer <Texture> objects belong to a
+       * specific loaded model) and caches the plaster <Texture> used to retexture walls. */
+      async function getRoomScanPlasterTexture(viewerEl) {
+        if (viewerEl.__uydoshPlasterTexture) return viewerEl.__uydoshPlasterTexture;
+        const texture = await viewerEl.createTexture(getRoomScanPlasterTextureDataUrl());
+        viewerEl.__uydoshPlasterTexture = texture;
+        return texture;
+      }
+
+      /** Swaps every wall material's base color texture between the GLB's baked-in brick
+       * (cached the first time we switch away from it, same pattern as
+       * setRoomScanMaterialHidden's __uydoshOriginalColor caching) and the plaster texture
+       * above. */
+      async function applyRoomScanWallTexture(viewerEl, texture) {
+        const model = viewerEl && viewerEl.model;
+        if (!model || !Array.isArray(model.materials)) return;
+        const plasterTexture = texture === 'plaster' ? await getRoomScanPlasterTexture(viewerEl) : null;
+        model.materials.forEach((material) => {
+          if (!isRoomScanWallMaterialName(material.name)) return;
+          try {
+            const pbr = material.pbrMetallicRoughness;
+            if (!pbr || !pbr.baseColorTexture) return;
+            if (!material.__uydoshOriginalWallTexture) {
+              material.__uydoshOriginalWallTexture = pbr.baseColorTexture.texture;
+            }
+            pbr.baseColorTexture.setTexture(texture === 'plaster' ? plasterTexture : material.__uydoshOriginalWallTexture);
+          } catch (err) {
+            // Scene Graph API unavailable/model not loaded yet — same tolerance as
+            // setRoomScanMaterialHidden above.
+          }
+        });
+      }
+
+      /** Creates the wall-texture toggle button and wires it to `viewerEl`. Always starts
+       * from 'brick' (the GLB's own baked default) on mount, same as the mode button
+       * resetting to 'fullRoom' — mirrors createRoomScanModeButton just above. */
+      function createRoomScanWallTextureButton(viewerEl) {
+        let texture = 'brick';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roomscan-texture-btn';
+        btn.innerHTML = roomScanWallTextureIconHtml();
+        const updateLabel = () => {
+          btn.setAttribute('aria-label', UyDosh.t(roomScanWallTextureLabelKey(texture)));
+        };
+        updateLabel();
+        btn.addEventListener('click', () => {
+          texture = nextRoomScanWallTexture(texture);
+          updateLabel();
+          UyDosh.haptic?.light?.();
+          applyRoomScanWallTexture(viewerEl, texture);
+        });
+        return btn;
+      }
+
       // --- 3D room scan zoom slider -----------------------------------------------------
       // Mirrors the native app's zoom slider (see zoomSlider/applyZoomFraction in
       // RoomUsdzViewerViewController.swift): a single 0…100 fraction (0 = zoomed out, 100 =
@@ -439,6 +575,7 @@
           const controlsBar = document.createElement('div');
           controlsBar.className = 'roomscan-controls-bar';
           controlsBar.appendChild(createRoomScanModeButton(viewer));
+          controlsBar.appendChild(createRoomScanWallTextureButton(viewer));
           controlsBar.appendChild(createRoomScanZoomSlider(viewer));
           controlsBar.appendChild(fullscreenBtn);
           container.appendChild(controlsBar);
@@ -562,6 +699,7 @@
           statusEl.hidden = true;
           roomScanBackdropEl.insertBefore(viewer, controlsBar);
           controlsBar.insertBefore(createRoomScanModeButton(viewer), closeBtn);
+          controlsBar.insertBefore(createRoomScanWallTextureButton(viewer), closeBtn);
           controlsBar.insertBefore(createRoomScanZoomSlider(viewer), closeBtn);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
