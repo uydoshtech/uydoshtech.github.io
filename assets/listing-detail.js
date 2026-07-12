@@ -299,11 +299,11 @@
                 <h1>${title}</h1>
               </div>
               ${isOwner ? '' : claimBannerHtml()}
-              ${compatibilityTileHtml(isOwner)}
               ${roomScanHtml}
               ${descHtml}
               ${mapHtml}
               ${metaHtml}
+              ${compatibilityTileHtml(isOwner)}
               <div class="cta-row app-cta-row">
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
                 <a class="btn" href="${APK_URL}" download="uydosh.apk" data-i18n="detail.downloadApk">${UyDosh.escapeHtml(UyDosh.t('detail.downloadApk'))}</a>
