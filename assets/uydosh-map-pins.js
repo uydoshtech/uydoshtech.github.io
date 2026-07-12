@@ -1031,7 +1031,7 @@ function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCal
 
   const adminEditBtn = container?.querySelector('[data-detail-admin-edit]');
   adminEditBtn?.addEventListener('click', () => {
-    haptic.light?.();
+    window.UyDosh?.haptic?.light?.();
     const id = adminEditBtn.getAttribute('data-listing-id') || listingId;
     if (id == null) return;
     logMiniAppEvent('admin_edit_listing_tapped', {
