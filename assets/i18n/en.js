@@ -71,6 +71,8 @@ I18N.en = {
     'detail.roomScanModeFloorOnly': '3D view: floor only. Tap to show full room.',
     'detail.roomScanWallTextureBrick': '3D view: brick walls. Tap to try plaster.',
     'detail.roomScanWallTexturePlaster': '3D view: plaster walls. Tap to switch back to brick.',
+    'detail.roomScanFloorTextureWood': '3D view: wood floor. Tap to try tile.',
+    'detail.roomScanFloorTextureTile': '3D view: tile floor. Tap to switch back to wood.',
     'detail.roomScanZoom': 'Zoom',
     'detail.roomScanLoadError': 'Could not load the 3D model.',
     'detail.roomScanShare': 'Share 3D view',

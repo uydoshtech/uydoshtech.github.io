@@ -72,6 +72,8 @@ I18N.uz = {
     'detail.roomScanModeFloorOnly': '3D rejim: faqat pol. Butun xonani ko‘rsatish uchun bosing.',
     'detail.roomScanWallTextureBrick': '3D ko‘rinish: g‘isht devorlar. Suvoqni sinab ko‘rish uchun bosing.',
     'detail.roomScanWallTexturePlaster': '3D ko‘rinish: suvoqli devorlar. G‘ishtga qaytish uchun bosing.',
+    'detail.roomScanFloorTextureWood': '3D ko‘rinish: yog‘och pol. Plitkani sinab ko‘rish uchun bosing.',
+    'detail.roomScanFloorTextureTile': '3D ko‘rinish: plitka pol. Yog‘ochga qaytish uchun bosing.',
     'detail.roomScanZoom': 'Masshtab',
     'detail.roomScanLoadError': '3D modelni yuklab bo‘lmadi.',
     'detail.roomScanShare': '3D ko‘rinishni ulashish',

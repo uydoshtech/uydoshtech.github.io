@@ -203,6 +203,19 @@
         return (name || '').toLowerCase().startsWith('wall');
       }
 
+      // Backend tags each wall material name with an `_exterior`/`_interior` suffix at GLB
+      // bake time (a rough bounding-box heuristic — see tagWallMaterialsWithExteriorInterior
+      // in uydosh_backend's applyRoomScanStylizedMaterials.ts) so the toggle below can leave
+      // exterior walls on brick and only re-texture interior/partition ones.
+      function isRoomScanExteriorWallMaterialName(name) {
+        const n = (name || '').toLowerCase();
+        return isRoomScanWallMaterialName(n) && n.includes('exterior');
+      }
+      function isRoomScanInteriorWallMaterialName(name) {
+        const n = (name || '').toLowerCase();
+        return isRoomScanWallMaterialName(n) && n.includes('interior');
+      }
+
       let roomScanPlasterTextureDataUrl = null;
 
       /** Renders a small tileable plaster-wall pattern into an offscreen canvas once and
@@ -210,9 +223,9 @@
        * (e.g. across the inline tile and fullscreen viewer, which each need their own
        * model-viewer <Texture>) always produce byte-identical output, mirroring the
        * deterministic SVG generators backend/scripts/render-room-scan-textures.js uses for
-       * brick/wood-floor. A warm off-white base (close to the brick texture's own mortar
-       * tone) keeps the two looks feeling like the same room repainted rather than a
-       * jarring palette swap. */
+       * brick/wood-floor. A muted beige base (rather than a near-white one) keeps the
+       * material readable as painted plaster instead of blowing out to a flat white wall
+       * once lit by the scene (same concern the metal furniture texture's comment notes). */
       function getRoomScanPlasterTextureDataUrl() {
         if (roomScanPlasterTextureDataUrl) return roomScanPlasterTextureDataUrl;
         const size = 512;
@@ -220,13 +233,13 @@
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#E9E2D3';
+        ctx.fillStyle = '#C7B896';
         ctx.fillRect(0, 0, size, size);
         for (let i = 0; i < 900; i++) {
           const x = (i * 53) % size;
           const y = (i * 97) % size;
           const r = 6 + (i % 5);
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)';
+          ctx.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
@@ -234,7 +247,7 @@
         // Faint trowel-stroke streaks running across the tile.
         for (let i = 0; i < 24; i++) {
           const y = (i / 24) * size + (i % 2) * 4;
-          ctx.strokeStyle = i % 2 === 0 ? 'rgba(0,0,0,0.035)' : 'rgba(255,255,255,0.05)';
+          ctx.strokeStyle = i % 2 === 0 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.04)';
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(0, y);
@@ -254,16 +267,25 @@
         return texture;
       }
 
-      /** Swaps every wall material's base color texture between the GLB's baked-in brick
+      /** Swaps interior wall materials' base color texture between the GLB's baked-in brick
        * (cached the first time we switch away from it, same pattern as
        * setRoomScanMaterialHidden's __uydoshOriginalColor caching) and the plaster texture
-       * above. */
+       * above — exterior walls are left untouched so they always stay brick. Older GLBs
+       * baked before the backend added the exterior/interior split (see
+       * tagWallMaterialsWithExteriorInterior) have no `_exterior`/`_interior` suffix on any
+       * wall material at all; rather than silently doing nothing on those until they're
+       * reprocessed, this falls back to toggling every wall, matching the toggle's original
+       * behavior. */
       async function applyRoomScanWallTexture(viewerEl, texture) {
         const model = viewerEl && viewerEl.model;
         if (!model || !Array.isArray(model.materials)) return;
+        const hasExteriorInteriorSplit = model.materials.some(
+          (m) => isRoomScanExteriorWallMaterialName(m.name) || isRoomScanInteriorWallMaterialName(m.name),
+        );
         const plasterTexture = texture === 'plaster' ? await getRoomScanPlasterTexture(viewerEl) : null;
         model.materials.forEach((material) => {
           if (!isRoomScanWallMaterialName(material.name)) return;
+          if (hasExteriorInteriorSplit && isRoomScanExteriorWallMaterialName(material.name)) return;
           try {
             const pbr = material.pbrMetallicRoughness;
             if (!pbr || !pbr.baseColorTexture) return;
@@ -296,6 +318,127 @@
           updateLabel();
           UyDosh.haptic?.light?.();
           applyRoomScanWallTexture(viewerEl, texture);
+        });
+        return btn;
+      }
+
+      // --- 3D room scan floor texture toggle ----------------------------------------------
+      // Same idea as the wall texture toggle above, applied to floor materials instead —
+      // swaps the GLB's baked-in dark wood floor for a light tile look, entirely client-side.
+      const ROOM_SCAN_FLOOR_TEXTURES = ['wood', 'tile'];
+
+      function nextRoomScanFloorTexture(texture) {
+        const idx = ROOM_SCAN_FLOOR_TEXTURES.indexOf(texture);
+        return ROOM_SCAN_FLOOR_TEXTURES[(idx + 1) % ROOM_SCAN_FLOOR_TEXTURES.length];
+      }
+
+      function roomScanFloorTextureLabelKey(texture) {
+        return texture === 'tile' ? 'detail.roomScanFloorTextureTile' : 'detail.roomScanFloorTextureWood';
+      }
+
+      // Static 2x2 grid glyph, evoking floor tiles.
+      function roomScanFloorTextureIconHtml() {
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+          <path d="M3 12h18"></path>
+          <path d="M12 3v18"></path>
+        </svg>`;
+      }
+
+      // Mirrors classifySurface's floor check in applyRoomScanStylizedMaterials.ts —
+      // floors have no exterior/interior split, so unlike walls every floor material is
+      // always toggleable.
+      function isRoomScanFloorMaterialName(name) {
+        const n = (name || '').toLowerCase();
+        return n.startsWith('floor') || n.includes('ground');
+      }
+
+      let roomScanTileTextureDataUrl = null;
+
+      /** Renders a small tileable light-tile-floor pattern (white/off-white square tiles,
+       * dark grey grout) into an offscreen canvas once and caches the resulting data URL —
+       * same deterministic-canvas approach as getRoomScanPlasterTextureDataUrl above. */
+      function getRoomScanTileTextureDataUrl() {
+        if (roomScanTileTextureDataUrl) return roomScanTileTextureDataUrl;
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const tiles = 4;
+        const tileSize = size / tiles;
+        const groutW = 6;
+        const tileShades = ['#F1EEE4', '#E9E6DA', '#F6F3EA'];
+        ctx.fillStyle = '#2E2E2E';
+        ctx.fillRect(0, 0, size, size);
+        for (let ty = 0; ty < tiles; ty++) {
+          for (let tx = 0; tx < tiles; tx++) {
+            const x = tx * tileSize;
+            const y = ty * tileSize;
+            const w = tileSize - groutW;
+            ctx.fillStyle = tileShades[(tx + ty * tiles) % tileShades.length];
+            ctx.fillRect(x + groutW / 2, y + groutW / 2, w, w);
+            // Faint top highlight / bottom shadow per tile for a subtle glazed look.
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillRect(x + groutW / 2, y + groutW / 2, w, 3);
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            ctx.fillRect(x + groutW / 2, y + groutW / 2 + w - 3, w, 3);
+          }
+        }
+        roomScanTileTextureDataUrl = canvas.toDataURL('image/png');
+        return roomScanTileTextureDataUrl;
+      }
+
+      /** Creates (once per viewer element) and caches the tile <Texture> used to
+       * retexture floors — mirrors getRoomScanPlasterTexture above. */
+      async function getRoomScanTileTexture(viewerEl) {
+        if (viewerEl.__uydoshTileTexture) return viewerEl.__uydoshTileTexture;
+        const texture = await viewerEl.createTexture(getRoomScanTileTextureDataUrl());
+        viewerEl.__uydoshTileTexture = texture;
+        return texture;
+      }
+
+      /** Swaps every floor material's base color texture between the GLB's baked-in dark
+       * wood and the tile texture above — mirrors applyRoomScanWallTexture above, minus the
+       * exterior/interior split (floors don't have one). */
+      async function applyRoomScanFloorTexture(viewerEl, texture) {
+        const model = viewerEl && viewerEl.model;
+        if (!model || !Array.isArray(model.materials)) return;
+        const tileTexture = texture === 'tile' ? await getRoomScanTileTexture(viewerEl) : null;
+        model.materials.forEach((material) => {
+          if (!isRoomScanFloorMaterialName(material.name)) return;
+          try {
+            const pbr = material.pbrMetallicRoughness;
+            if (!pbr || !pbr.baseColorTexture) return;
+            if (!material.__uydoshOriginalFloorTexture) {
+              material.__uydoshOriginalFloorTexture = pbr.baseColorTexture.texture;
+            }
+            pbr.baseColorTexture.setTexture(texture === 'tile' ? tileTexture : material.__uydoshOriginalFloorTexture);
+          } catch (err) {
+            // Scene Graph API unavailable/model not loaded yet — same tolerance as
+            // setRoomScanMaterialHidden above.
+          }
+        });
+      }
+
+      /** Creates the floor-texture toggle button and wires it to `viewerEl`. Always starts
+       * from 'wood' (the GLB's own baked default) on mount — mirrors
+       * createRoomScanWallTextureButton above. */
+      function createRoomScanFloorTextureButton(viewerEl) {
+        let texture = 'wood';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roomscan-floor-texture-btn';
+        btn.innerHTML = roomScanFloorTextureIconHtml();
+        const updateLabel = () => {
+          btn.setAttribute('aria-label', UyDosh.t(roomScanFloorTextureLabelKey(texture)));
+        };
+        updateLabel();
+        btn.addEventListener('click', () => {
+          texture = nextRoomScanFloorTexture(texture);
+          updateLabel();
+          UyDosh.haptic?.light?.();
+          applyRoomScanFloorTexture(viewerEl, texture);
         });
         return btn;
       }
@@ -575,10 +718,13 @@
           const controlsBar = document.createElement('div');
           controlsBar.className = 'roomscan-controls-bar';
           controlsBar.appendChild(createRoomScanModeButton(viewer));
-          controlsBar.appendChild(createRoomScanWallTextureButton(viewer));
           controlsBar.appendChild(createRoomScanZoomSlider(viewer));
           controlsBar.appendChild(fullscreenBtn);
           container.appendChild(controlsBar);
+          // Floating top-right corner, deliberately outside the bottom controls-bar (see
+          // .roomscan-texture-btn/.roomscan-floor-texture-btn in listing-detail.css).
+          container.appendChild(createRoomScanWallTextureButton(viewer));
+          container.appendChild(createRoomScanFloorTextureButton(viewer));
         } catch (err) {
           console.error('Failed to load 3D room scan viewer', err);
           showRoomScanLoadError(container);
@@ -699,8 +845,14 @@
           statusEl.hidden = true;
           roomScanBackdropEl.insertBefore(viewer, controlsBar);
           controlsBar.insertBefore(createRoomScanModeButton(viewer), closeBtn);
-          controlsBar.insertBefore(createRoomScanWallTextureButton(viewer), closeBtn);
           controlsBar.insertBefore(createRoomScanZoomSlider(viewer), closeBtn);
+          // Floating top-right corner, deliberately outside the bottom controls-bar (see
+          // .roomscan-texture-btn/.roomscan-floor-texture-btn in listing-detail.css) —
+          // inserted before controlsBar so they stack under the dimensions overlay in DOM
+          // order, not that it matters visually since both are absolutely positioned in
+          // opposite corners.
+          roomScanBackdropEl.insertBefore(createRoomScanWallTextureButton(viewer), controlsBar);
+          roomScanBackdropEl.insertBefore(createRoomScanFloorTextureButton(viewer), controlsBar);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.removeAttribute('aria-label');
