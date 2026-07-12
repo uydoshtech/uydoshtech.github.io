@@ -203,6 +203,13 @@ const state = {
   /// Selected walk-time radius (minutes) for "Find nearby metro stations" —
   /// one of `NEARBY_STATION_RADIUS_OPTIONS` (10 by default).
   nearbyStationsRadiusMinutes: 10,
+  /// Station ids the author explicitly unchecked from the nearby-stations
+  /// panel (see `bindNearbyMetroEvents`) — `preselectNearbyStations`/
+  /// `applyNearbyStations`'s fallback-select must not re-add these on a
+  /// later recompute (radius chip, pin drag, re-geocode), or a removed
+  /// suggestion silently reappears and gets submitted with the listing
+  /// (mirrors the mobile app's `_dismissedNearbyStationIds`).
+  dismissedNearbyStationIds: [],
   /// Yandex Geosuggest session token for the address field's autocomplete
   /// (see `addressSuggestSessionToken()`) — one random id per "typing
   /// session", reset after a suggestion is picked or the field is cleared,
@@ -2509,11 +2516,13 @@ function findNearbyStations(latitude, longitude, maxMinutes = DEFAULT_NEARBY_STA
 }
 
 /** Adds `station` to `state.form.selectedStationIds` if it isn't already
- * there — the shared "only ever add, never remove" primitive behind both
- * auto-select paths below. */
+ * there and the author hasn't explicitly dismissed it (see
+ * `state.dismissedNearbyStationIds`) — the shared "only ever add, never
+ * resurrect a removal" primitive behind both auto-select paths below. */
 function selectStationIfNotSelected(station) {
   if (!station) return;
   const id = Number(station.id);
+  if (state.dismissedNearbyStationIds.includes(id)) return;
   if (!state.form.selectedStationIds.includes(id)) {
     state.form.selectedStationIds = [...state.form.selectedStationIds, id];
   }
@@ -2771,11 +2780,20 @@ function bindNearbyMetroEvents() {
       if (lineId && lineId !== state.form.subwayLineId) {
         await selectSubwayLine(lineId);
       }
+      const wasSelected = state.form.selectedStationIds.includes(id);
       state.form.selectedStationIds = toggleSelection(
         state.form.selectedStationIds,
         id,
         supportsMultiStation(),
       );
+      // Remember an explicit removal so a later recompute (radius chip,
+      // pin drag, re-geocode) doesn't silently resurrect it — see
+      // `selectStationIfNotSelected`. Re-checking clears the memory.
+      if (wasSelected) {
+        state.dismissedNearbyStationIds = [...new Set([...state.dismissedNearbyStationIds, id])];
+      } else {
+        state.dismissedNearbyStationIds = state.dismissedNearbyStationIds.filter((sid) => sid !== id);
+      }
       if (state.form.selectedStationIds.length > 0 && state.validationError) {
         showFormError('');
       }
@@ -3263,10 +3281,13 @@ async function submitListing() {
           ? Number(primaryStation.line)
           : state.form.subwayLineId;
         body.subwayStationIds = state.form.selectedStationIds;
-      } else {
+      } else if (!supportsMultiStation()) {
         body.subwayLineId = state.form.subwayLineId;
         body.subwayStationId = state.form.selectedStationIds[0];
       }
+      // else: multi-station flow with no picks — omit both fields rather
+      // than leaking the currently-shown-but-unselected line/station
+      // (matches the mobile app's fix for the same leak).
     } else if (supportsMultiLocation()) {
       body.locationIds = state.form.selectedLocationIds;
     } else {
