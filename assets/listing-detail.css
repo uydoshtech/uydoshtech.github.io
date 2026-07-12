@@ -563,9 +563,11 @@
       .roomscan-body[hidden] { display: none; }
       /* Dimensions/height/area summary, shown under the mini 3D view (rather than up in the
          toggle header) — dimensions + area share one line (separated by a dot, like a stats
-         strip), height gets its own line below. Shared markup/classes with the fullscreen
-         viewer's .roomscan-backdrop-dimensions overlay (see buildRoomScanDimensionsMetaHtml,
-         listing-detail-roomscan.js) — both are just a flex column of "lines". */
+         strip), height gets its own line below, to stay compact under the small mini-view.
+         Shares markup/classes with the fullscreen viewer's .roomscan-backdrop-dimensions
+         overlay (see buildRoomScanDimensionsMetaHtml, listing-detail-roomscan.js) — both are
+         just a flex column of "lines", though fullscreen gives each stat its own line instead
+         (`oneRowPerStat`) since it isn't as space-constrained. */
       .roomscan-meta { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
       .roomscan-toggle-meta-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
       .roomscan-toggle-meta-row { display: flex; align-items: center; gap: 6px; }
@@ -669,6 +671,17 @@
       }
       .roomscan-mode-btn svg *, .roomscan-texture-btn svg *, .roomscan-floor-texture-btn svg * {
         stroke: currentColor; fill: none;
+      }
+      /* Fullscreen-only variant (see `showLabel` on createRoomScanModeButton &co.) showing the
+         current state as short text (e.g. "Стены"/"Кирпич"/"Ламинат") instead of an icon —
+         the inline mini view keeps the plain icon buttons above, since it's tighter on space.
+         All three share one fixed width (sized to fit the longest label, "Штукатурка") rather
+         than each hugging its own text, so the row of pills lines up cleanly instead of
+         jogging left/right as their labels change length on click. */
+      .roomscan-backdrop .roomscan-mode-btn--label, .roomscan-backdrop .roomscan-texture-btn--label,
+      .roomscan-backdrop .roomscan-floor-texture-btn--label {
+        width: 120px; border-radius: 21.5px; padding: 0 12px;
+        font-family: inherit; font-weight: 700; font-size: 14px; white-space: nowrap;
       }
       .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
       .roomscan-backdrop .roomscan-backdrop-close { font-size: 19px; }

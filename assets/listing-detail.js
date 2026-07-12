@@ -77,18 +77,20 @@
         document.documentElement.classList.remove('has-detail-contact');
       }
 
-      function updateDetailContactBar(listing) {
+      function updateDetailContactBar(listing, { isAdminViewer = false } = {}) {
         if (!detailContactBarEl || !UyDosh.isMiniApp()) {
           hideDetailContactBar();
           return;
         }
         const handle = UyDosh.listingContactTelegram(listing);
         const phone = UyDosh.listingContactPhone(listing);
-        if (!handle && !phone) {
+        // Admins still get the bar (just the "Edit (admin)" button, no contact chips)
+        // even when the listing has neither a Telegram handle nor a phone number.
+        if (!handle && !phone && !isAdminViewer) {
           hideDetailContactBar();
           return;
         }
-        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle, phone);
+        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle, phone, isAdminViewer ? listing?.id : null);
         detailContactBarEl.hidden = false;
         detailContactBarEl.setAttribute('aria-hidden', 'false');
         document.documentElement.classList.add('has-detail-contact');
@@ -281,6 +283,10 @@
         const viewerId = isMiniApp ? UyDosh.getSessionUserId() : null;
         const ownerId = Number(l.user_id ?? l.user?.id);
         const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+        // Admins get their own bottom "Edit (admin)" CTA (see `updateDetailContactBar` below)
+        // only when they're not already the owner — owners already have an edit link via
+        // `ownerToolbarHtml`'s "..." menu, so this avoids showing two edit entry points.
+        const isAdminViewer = isMiniApp && !isOwner && Boolean(UyDosh.isAdmin?.());
 
         rootEl.innerHTML = `
           ${ownerToolbarHtml(isOwner, l.id)}
@@ -319,7 +325,7 @@
         bindShareButton(l);
         bindFavoriteButton(l);
         bindReportButton(l);
-        updateDetailContactBar(l);
+        updateDetailContactBar(l, { isAdminViewer });
         if (isOwner) {
           loadOwnerViewCount(l.id);
           bindOwnerMenu(l.id);

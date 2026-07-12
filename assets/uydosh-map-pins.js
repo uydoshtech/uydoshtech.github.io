@@ -954,11 +954,18 @@ async function shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreview
   return 'link';
 }
 
-/** Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct call. */
-function detailContactBarHtml(username, phone) {
+/**
+ * Sticky Mini App footer CTA(s) to reach the listing owner: Telegram and/or a direct
+ * call, plus (admin viewers only, via `adminEditListingId`) an "Edit (admin)" button —
+ * shown even when the listing has no contact info at all, since an admin still needs a
+ * way in to fix/reassign it. See `updateDetailContactBar`/`bindDetailContactBar` in
+ * listing-detail.js for who sets `adminEditListingId` and where the click navigates.
+ */
+function detailContactBarHtml(username, phone, adminEditListingId) {
   const cleanHandle = normalizeTelegramUsername(username);
   const cleanPhone = normalizePhoneNumber(phone);
-  if (!cleanHandle && !cleanPhone) return '';
+  const hasAdminEdit = adminEditListingId != null;
+  if (!cleanHandle && !cleanPhone && !hasAdminEdit) return '';
 
   const telegramBtn = cleanHandle
     ? `
@@ -976,12 +983,21 @@ function detailContactBarHtml(username, phone) {
       </button>
     `
     : '';
+  const adminEditBtn = hasAdminEdit
+    ? `
+      <button type="button" class="detail-contact-btn detail-contact-btn-admin-edit" data-detail-admin-edit data-listing-id="${escapeHtml(String(adminEditListingId))}">
+        ${iconPencil()}
+        <span data-i18n="detail.adminEdit">${escapeHtml(t('detail.adminEdit'))}</span>
+      </button>
+    `
+    : '';
 
-  const rowClass = cleanHandle && cleanPhone ? ' detail-contact-bar-inner-row' : '';
+  const rowClass = [cleanHandle, cleanPhone, adminEditBtn].filter(Boolean).length > 1 ? ' detail-contact-bar-inner-row' : '';
   return `
     <div class="detail-contact-bar-inner${rowClass}">
       ${telegramBtn}
       ${phoneBtn}
+      ${adminEditBtn}
     </div>
   `;
 }
@@ -1011,6 +1027,18 @@ function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCal
         source: 'telegram_mini_app',
       });
     }
+  });
+
+  const adminEditBtn = container?.querySelector('[data-detail-admin-edit]');
+  adminEditBtn?.addEventListener('click', () => {
+    haptic.light?.();
+    const id = adminEditBtn.getAttribute('data-listing-id') || listingId;
+    if (id == null) return;
+    logMiniAppEvent('admin_edit_listing_tapped', {
+      listing_id: Number(id),
+      source: 'telegram_mini_app',
+    });
+    window.location.href = `/telegram/create.html?id=${encodeURIComponent(id)}`;
   });
 }
 

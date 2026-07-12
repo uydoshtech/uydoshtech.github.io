@@ -329,6 +329,32 @@ function setSessionUserId(id) {
   } catch { /* ignore */ }
 }
 
+const SESSION_USER_ROLE_KEY = 'uydosh_session_user_role';
+
+/** The app-side `users.role` behind the current session (see `setSessionUserRole`) —
+ * used client-side only for UI gating (e.g. showing the admin "Edit" button below);
+ * every admin-only endpoint re-checks the role itself from verified initData, so this
+ * is never trusted as the actual authorization boundary. */
+function getSessionUserRole() {
+  try {
+    return sessionStorage.getItem(SESSION_USER_ROLE_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+function setSessionUserRole(role) {
+  try {
+    if (typeof role === 'string' && role) sessionStorage.setItem(SESSION_USER_ROLE_KEY, role);
+    else sessionStorage.removeItem(SESSION_USER_ROLE_KEY);
+  } catch { /* ignore */ }
+}
+
+/** Client-side-only convenience for gating admin UI — see `getSessionUserRole` above. */
+function isAdmin() {
+  return getSessionUserRole() === 'admin';
+}
+
 async function fetchJsonAuth(path, { method = 'GET', body, params } = {}) {
   const token = getSessionToken();
   if (!token) {
@@ -395,6 +421,7 @@ async function authenticateTelegramMiniApp() {
   }
   if (payload?.sessionToken) setSessionToken(payload.sessionToken);
   if (payload?.user?.id != null) setSessionUserId(payload.user.id);
+  setSessionUserRole(payload?.user?.role ?? null);
   return payload;
 }
 
@@ -812,6 +839,80 @@ async function updateListingFromTelegramMiniApp(listingId, listing) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), listing }),
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    _handleMiniAppApiErrorPayload(res, payload);
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/**
+ * Admin-only: fetch any listing (not just the caller's own) for editing, formatted the
+ * same way as `fetchMyTelegramMiniAppListings` so it can be dropped straight into
+ * `hydrateFormFromListing` on the create/edit page — mirrors `updateListingFromTelegramMiniApp`
+ * above, just a GET. Only ever called after `isAdmin()` passes client-side; the backend
+ * re-checks the admin role itself against verified initData either way.
+ */
+async function fetchListingForAdminEditFromTelegramMiniApp(listingId) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/for-admin-edit?${new URLSearchParams({
+      init_data: initData,
+      instance_id: getOrCreateMiniAppInstanceId(),
+    })}`,
+    { headers: { Accept: 'application/json' } },
+  );
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    _handleMiniAppApiErrorPayload(res, payload);
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/**
+ * Admin-only: repoint a listing to a different UyDosh account, identified by the
+ * corrected owner's Telegram @username or phone number rather than a raw numeric user
+ * id. Pass exactly one of `ownerTelegramUsername`/`ownerPhoneNumber`.
+ */
+async function reassignListingOwnerFromTelegramMiniApp(listingId, { ownerTelegramUsername, ownerPhoneNumber } = {}) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/reassign-owner`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      init_data: initData,
+      instance_id: getOrCreateMiniAppInstanceId(),
+      ...(ownerTelegramUsername ? { ownerTelegramUsername } : {}),
+      ...(ownerPhoneNumber ? { ownerPhoneNumber } : {}),
+    }),
   });
   let payload = null;
   try {
@@ -1245,6 +1346,8 @@ Object.assign(window.UyDosh, {
   fetchGeocodeAddress,
   createListingFromTelegramMiniApp,
   updateListingFromTelegramMiniApp,
+  fetchListingForAdminEditFromTelegramMiniApp,
+  reassignListingOwnerFromTelegramMiniApp,
   fetchMyTelegramMiniAppListings,
   toggleListingActiveFromTelegramMiniApp,
   renewListingFromTelegramMiniApp,
@@ -1284,6 +1387,8 @@ Object.assign(window.UyDosh, {
   getSessionToken,
   setSessionToken,
   getSessionUserId,
+  getSessionUserRole,
+  isAdmin,
   loadYandexMapModule,
   resetYandexMaps,
   reflowActiveMaps,

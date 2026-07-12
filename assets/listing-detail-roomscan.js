@@ -85,6 +85,15 @@
         return 'detail.roomScanModeFullRoom';
       }
 
+      // Short one-word label shown on the button face in the fullscreen viewer only (see
+      // `showLabel` on createRoomScanModeButton) — the aria-label above stays the longer
+      // descriptive "tap to..." string for accessibility.
+      function roomScanModeShortLabelKey(mode) {
+        if (mode === 'floorAndFurniture') return 'detail.roomScanModeFloorAndFurnitureShort';
+        if (mode === 'floorOnly') return 'detail.roomScanModeFloorOnlyShort';
+        return 'detail.roomScanModeFullRoomShort';
+      }
+
       /** Wall/ceiling/door/window/opening → 'wall' (hidden in floorAndFurniture and floorOnly);
        * floor → always shown; everything else (furniture) → also hidden in floorOnly. Mirrors
        * shouldHideWallLikeSurface()/isOnFloorObject() on iOS. */
@@ -162,13 +171,14 @@
        * createRoomScanZoomSlider's own care about not burning cycles on a render loop no one
        * can see. The first manual tap always wins permanently — it stops the timer and
        * disconnects the observer, handing full control to the user from then on. */
-      function createRoomScanModeButton(viewerEl, { autoToggleWalls = false } = {}) {
+      function createRoomScanModeButton(viewerEl, { autoToggleWalls = false, showLabel = false } = {}) {
         let mode = 'fullRoom';
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'roomscan-mode-btn';
+        btn.className = showLabel ? 'roomscan-mode-btn roomscan-mode-btn--label' : 'roomscan-mode-btn';
         const updateAppearance = () => {
-          btn.innerHTML = roomScanModeIconHtml(mode);
+          if (showLabel) btn.textContent = UyDosh.t(roomScanModeShortLabelKey(mode));
+          else btn.innerHTML = roomScanModeIconHtml(mode);
           btn.setAttribute('aria-label', UyDosh.t(roomScanModeLabelKey(mode)));
         };
         updateAppearance();
@@ -229,6 +239,12 @@
 
       function roomScanWallTextureLabelKey(texture) {
         return texture === 'plaster' ? 'detail.roomScanWallTexturePlaster' : 'detail.roomScanWallTextureBrick';
+      }
+
+      // Short label shown on the button face in the fullscreen viewer only — mirrors
+      // roomScanModeShortLabelKey.
+      function roomScanWallTextureShortLabelKey(texture) {
+        return texture === 'plaster' ? 'detail.roomScanWallTexturePlasterShort' : 'detail.roomScanWallTextureBrickShort';
       }
 
       // Static "paint roller" glyph — unlike the mode button, this is a plain two-way
@@ -329,13 +345,14 @@
       /** Creates the wall-texture toggle button and wires it to `viewerEl`. Always starts
        * from 'brick' (the GLB's own baked default) on mount, same as the mode button
        * resetting to 'fullRoom' — mirrors createRoomScanModeButton just above. */
-      function createRoomScanWallTextureButton(viewerEl) {
+      function createRoomScanWallTextureButton(viewerEl, { showLabel = false } = {}) {
         let texture = 'brick';
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'roomscan-texture-btn';
-        btn.innerHTML = roomScanWallTextureIconHtml();
+        btn.className = showLabel ? 'roomscan-texture-btn roomscan-texture-btn--label' : 'roomscan-texture-btn';
+        if (!showLabel) btn.innerHTML = roomScanWallTextureIconHtml();
         const updateLabel = () => {
+          if (showLabel) btn.textContent = UyDosh.t(roomScanWallTextureShortLabelKey(texture));
           btn.setAttribute('aria-label', UyDosh.t(roomScanWallTextureLabelKey(texture)));
         };
         updateLabel();
@@ -360,6 +377,12 @@
 
       function roomScanFloorTextureLabelKey(texture) {
         return texture === 'tile' ? 'detail.roomScanFloorTextureTile' : 'detail.roomScanFloorTextureWood';
+      }
+
+      // Short label shown on the button face in the fullscreen viewer only — mirrors
+      // roomScanModeShortLabelKey.
+      function roomScanFloorTextureShortLabelKey(texture) {
+        return texture === 'tile' ? 'detail.roomScanFloorTextureTileShort' : 'detail.roomScanFloorTextureWoodShort';
       }
 
       // Static 2x2 grid glyph, evoking floor tiles.
@@ -447,13 +470,14 @@
       /** Creates the floor-texture toggle button and wires it to `viewerEl`. Always starts
        * from 'wood' (the GLB's own baked default) on mount — mirrors
        * createRoomScanWallTextureButton above. */
-      function createRoomScanFloorTextureButton(viewerEl) {
+      function createRoomScanFloorTextureButton(viewerEl, { showLabel = false } = {}) {
         let texture = 'wood';
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'roomscan-floor-texture-btn';
-        btn.innerHTML = roomScanFloorTextureIconHtml();
+        btn.className = showLabel ? 'roomscan-floor-texture-btn roomscan-floor-texture-btn--label' : 'roomscan-floor-texture-btn';
+        if (!showLabel) btn.innerHTML = roomScanFloorTextureIconHtml();
         const updateLabel = () => {
+          if (showLabel) btn.textContent = UyDosh.t(roomScanFloorTextureShortLabelKey(texture));
           btn.setAttribute('aria-label', UyDosh.t(roomScanFloorTextureLabelKey(texture)));
         };
         updateLabel();
@@ -945,9 +969,9 @@
           // inserted before controlsBar so they stack under the dimensions overlay in DOM
           // order, not that it matters visually since both are absolutely positioned in
           // opposite corners.
-          roomScanBackdropEl.insertBefore(createRoomScanModeButton(viewer), controlsBar);
-          roomScanBackdropEl.insertBefore(createRoomScanWallTextureButton(viewer), controlsBar);
-          roomScanBackdropEl.insertBefore(createRoomScanFloorTextureButton(viewer), controlsBar);
+          roomScanBackdropEl.insertBefore(createRoomScanModeButton(viewer, { showLabel: true }), controlsBar);
+          roomScanBackdropEl.insertBefore(createRoomScanWallTextureButton(viewer, { showLabel: true }), controlsBar);
+          roomScanBackdropEl.insertBefore(createRoomScanFloorTextureButton(viewer, { showLabel: true }), controlsBar);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.removeAttribute('aria-label');

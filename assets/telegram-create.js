@@ -159,8 +159,14 @@ const state = {
   /// `toggleDescriptionDictation`), mirrors the mobile app's `ListingDescriptionDictateButton`.
   dictationState: 'idle',
   /// Set when editing an existing listing (from `?id=` on the URL). Only the
-  /// listing's own owner can load/save it — enforced server-side via initData.
+  /// listing's own owner (or an admin, see `isAdminEditing` below) can load/save
+  /// it — enforced server-side via initData.
   editingListingId: null,
+  /// True when `loadListingForEdit` had to fall back to the admin-only
+  /// fetch/update endpoints because `editingListingId` isn't one of the
+  /// caller's own listings (see `mountAdminOwnerPanel`) — never trusted for
+  /// authorization, just gates the "reassign owner" panel's visibility.
+  isAdminEditing: false,
   /// Photos already saved on the server for the listing being edited. Shown
   /// read-only alongside newly picked `form.photos`, removable via the
   /// dedicated delete-photo endpoint (see removeExistingPhoto).
@@ -443,23 +449,117 @@ function hydrateFormFromListing(listing) {
   state.existingPhotos = Array.isArray(listing.photos) ? listing.photos.slice() : [];
 }
 
-/** Fetch the caller's own listings and find the one being edited (ownership is enforced this way — no separate authenticated single-listing fetch needed). */
+/**
+ * Fetch the caller's own listings and find the one being edited (ownership is enforced
+ * this way — no separate authenticated single-listing fetch needed). Falls back to the
+ * admin-only single-listing fetch (`fetchListingForAdminEditFromTelegramMiniApp`) when
+ * the listing isn't among the caller's own *and* the caller is an admin (see
+ * `UyDosh.isAdmin`) — lets an admin open someone else's listing from the "Edit (admin)"
+ * button on the detail page (`detailContactBarHtml`) without a separate admin UI.
+ */
 async function loadListingForEdit(id) {
   const data = await UyDosh.fetchMyTelegramMiniAppListings();
   const listings = Array.isArray(data?.listings) ? data.listings : [];
   const listing = listings.find((l) => Number(l.id) === Number(id));
-  if (!listing) {
-    const err = new Error('Listing not found or not yours');
-    err.status = 404;
-    throw err;
+  if (listing) {
+    hydrateFormFromListing(listing);
+    return;
   }
-  hydrateFormFromListing(listing);
+
+  if (UyDosh.isAdmin?.()) {
+    const adminData = await UyDosh.fetchListingForAdminEditFromTelegramMiniApp(id).catch(() => null);
+    if (adminData?.listing) {
+      state.isAdminEditing = true;
+      hydrateFormFromListing(adminData.listing);
+      return;
+    }
+  }
+
+  const err = new Error('Listing not found or not yours');
+  err.status = 404;
+  throw err;
 }
 
-/** Swap the browser/tab title to edit-mode wording (the wizard header carries no title text). */
+/** Swap the browser/tab title to edit-mode wording (the wizard header carries no title text),
+ * and — when editing as an admin (see `loadListingForEdit`) — mount the "reassign owner" panel. */
 function applyEditModeChrome() {
   if (!state.editingListingId) return;
   document.title = `UyDosh — ${UyDosh.t('create.editTitle', UyDosh.getLang())}`;
+  mountAdminOwnerPanel();
+}
+
+/**
+ * Admin-only panel, mounted once right under the wizard's progress header (so it stays
+ * visible across every step, unlike `#step-panels`' own per-step content) — lets an admin
+ * type the corrected owner's Telegram @username or phone number and repoint the listing,
+ * completely independent from the regular field edits/submit below it (see
+ * `reassignListingOwnerFromTelegramMiniApp` on the backend for why this never touches the
+ * fields the main form submits).
+ */
+function adminOwnerPanelHtml() {
+  return `
+    <div class="admin-owner-panel" id="admin-owner-panel">
+      <div class="admin-owner-panel-label">${UyDosh.escapeHtml(UyDosh.t('create.adminReassignOwnerTitle'))}</div>
+      <div class="admin-owner-panel-row">
+        <input
+          type="text"
+          id="admin-owner-input"
+          class="admin-owner-input"
+          placeholder="${UyDosh.escapeHtml(UyDosh.t('create.adminReassignOwnerPlaceholder'))}"
+          autocomplete="off"
+          autocapitalize="off"
+        />
+        <button type="button" class="admin-owner-btn" id="admin-owner-submit">
+          ${UyDosh.escapeHtml(UyDosh.t('create.adminReassignOwnerButton'))}
+        </button>
+      </div>
+      <div class="admin-owner-panel-status" id="admin-owner-status" hidden></div>
+    </div>
+  `;
+}
+
+function mountAdminOwnerPanel() {
+  if (!state.isAdminEditing || document.getElementById('admin-owner-panel')) return;
+  const header = document.querySelector('.wizard-header');
+  if (!header) return;
+  header.insertAdjacentHTML('afterend', adminOwnerPanelHtml());
+  bindAdminOwnerPanel();
+}
+
+function bindAdminOwnerPanel() {
+  const panel = document.getElementById('admin-owner-panel');
+  const input = document.getElementById('admin-owner-input');
+  const btn = document.getElementById('admin-owner-submit');
+  const statusEl = document.getElementById('admin-owner-status');
+  if (!panel || !input || !btn || !statusEl) return;
+
+  const setStatus = (kind, message) => {
+    statusEl.hidden = false;
+    statusEl.className = `admin-owner-panel-status admin-owner-panel-status-${kind}`;
+    statusEl.textContent = message;
+  };
+
+  btn.addEventListener('click', async () => {
+    const raw = input.value.trim();
+    if (!raw) return;
+    // A phone-like input is digits/spaces/+/-/() only; anything with letters is treated
+    // as a Telegram username (with or without the leading @) instead.
+    const looksLikePhone = /^[+0-9][0-9\s()-]{4,}$/.test(raw);
+    btn.disabled = true;
+    try {
+      UyDosh.haptic?.light?.();
+      await UyDosh.reassignListingOwnerFromTelegramMiniApp(
+        state.editingListingId,
+        looksLikePhone ? { ownerPhoneNumber: raw } : { ownerTelegramUsername: raw },
+      );
+      input.value = '';
+      setStatus('success', UyDosh.t('create.adminReassignOwnerSuccess'));
+    } catch (err) {
+      setStatus('error', err?.payload?.error || err?.message || UyDosh.t('create.adminReassignOwnerError'));
+    } finally {
+      btn.disabled = false;
+    }
+  });
 }
 
 function reviewListingForBadges() {
