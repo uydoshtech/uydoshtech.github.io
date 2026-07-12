@@ -590,24 +590,31 @@
            indicator / gesture bar. */
         left: 14px; right: 14px; bottom: calc(32px + env(safe-area-inset-bottom, 0px));
       }
-      .roomscan-fullscreen-btn, .roomscan-mode-btn, .roomscan-backdrop-close {
+      .roomscan-fullscreen-btn, .roomscan-mode-btn, .roomscan-backdrop-close, .roomscan-share-btn {
         flex-shrink: 0; appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
         width: 34px; height: 34px; border-radius: 50%;
         display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
       }
       /* Fullscreen viewer's left/right end buttons (mode-cycle + close) sized 20% bigger than
          they used to be (36px * 1.2 = ~43px) — the zoom slider between them keeps its own
-         explicit height below and isn't affected by this. */
+         explicit height below and isn't affected by this. Share (fullscreen-only, see
+         createRoomScanShareButton) matches the same sizing. */
       .roomscan-backdrop .roomscan-fullscreen-btn, .roomscan-backdrop .roomscan-mode-btn,
-      .roomscan-backdrop .roomscan-backdrop-close {
+      .roomscan-backdrop .roomscan-backdrop-close, .roomscan-backdrop .roomscan-share-btn {
         width: 43px; height: 43px; background: rgba(0, 0, 0, 0.55);
       }
-      .roomscan-fullscreen-btn:active, .roomscan-mode-btn:active, .roomscan-backdrop-close:active { opacity: 0.85; }
-      .roomscan-fullscreen-btn svg, .roomscan-mode-btn svg { width: 18px; height: 18px; display: block; }
-      .roomscan-backdrop .roomscan-fullscreen-btn svg, .roomscan-backdrop .roomscan-mode-btn svg {
+      .roomscan-fullscreen-btn:active, .roomscan-mode-btn:active, .roomscan-backdrop-close:active,
+      .roomscan-share-btn:active { opacity: 0.85; }
+      .roomscan-fullscreen-btn svg, .roomscan-mode-btn svg, .roomscan-share-btn svg {
+        width: 18px; height: 18px; display: block;
+      }
+      .roomscan-backdrop .roomscan-fullscreen-btn svg, .roomscan-backdrop .roomscan-mode-btn svg,
+      .roomscan-backdrop .roomscan-share-btn svg {
         width: 22px; height: 22px;
       }
-      .roomscan-fullscreen-btn svg *, .roomscan-mode-btn svg * { stroke: currentColor; fill: none; }
+      .roomscan-fullscreen-btn svg *, .roomscan-mode-btn svg *, .roomscan-share-btn svg * {
+        stroke: currentColor; fill: none;
+      }
       .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
       .roomscan-backdrop .roomscan-backdrop-close { font-size: 19px; }
       /* Pill-shaped zoom slider — same look as the mobile app's zoom slider (a plain

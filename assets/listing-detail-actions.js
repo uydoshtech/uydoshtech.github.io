@@ -24,6 +24,16 @@
         return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=listing_${encodeURIComponent(id)}`;
       }
 
+      // Same bot Mini App deep link as `buildListingShareUrl`, with a `_3d` marker
+      // that `redirectFromMiniAppStartParam` (uydosh-mini-app.js) recognizes and
+      // turns into `?view=3d` on the listing page, so the recipient lands straight
+      // in the fullscreen 3D viewer instead of the collapsed tile. Used only by the
+      // 3D viewer's own share button (see createRoomScanShareButton in
+      // listing-detail-roomscan.js) — separate from the listing's general share button.
+      function buildListing3dShareUrl(id) {
+        return `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=listing_${encodeURIComponent(id)}_3d`;
+      }
+
       function buildListingShareText(l, lang) {
         const title = l.title || '';
         const price = UyDosh.formatPrice(l, lang);

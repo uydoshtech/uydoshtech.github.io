@@ -72,6 +72,7 @@ I18N.uz = {
     'detail.roomScanModeFloorOnly': '3D rejim: faqat pol. Butun xonani ko‘rsatish uchun bosing.',
     'detail.roomScanZoom': 'Masshtab',
     'detail.roomScanLoadError': '3D modelni yuklab bo‘lmadi.',
+    'detail.roomScanShare': '3D ko‘rinishni ulashish',
     'detail.gallery.dots': 'Rasmlar',
     'detail.gallery.photo': 'Rasm',
     'detail.contactTelegram': 'Telegram orqali bog‘lanish',

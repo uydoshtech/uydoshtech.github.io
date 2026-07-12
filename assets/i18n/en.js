@@ -71,6 +71,7 @@ I18N.en = {
     'detail.roomScanModeFloorOnly': '3D view: floor only. Tap to show full room.',
     'detail.roomScanZoom': 'Zoom',
     'detail.roomScanLoadError': 'Could not load the 3D model.',
+    'detail.roomScanShare': 'Share 3D view',
     'detail.gallery.dots': 'Photos',
     'detail.gallery.photo': 'Photo',
     'detail.contactTelegram': 'Contact on Telegram',

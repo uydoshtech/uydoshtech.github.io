@@ -71,6 +71,7 @@ I18N.ru = {
     'detail.roomScanModeFloorOnly': '3D-режим: только пол. Нажмите, чтобы показать всю комнату.',
     'detail.roomScanZoom': 'Масштаб',
     'detail.roomScanLoadError': 'Не удалось загрузить 3D-модель.',
+    'detail.roomScanShare': 'Поделиться 3D-видом',
     'detail.gallery.dots': 'Фото',
     'detail.gallery.photo': 'Фото',
     'detail.contactTelegram': 'Telegram',

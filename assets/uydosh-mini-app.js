@@ -21,6 +21,10 @@ function isMiniApp() {
  * @param {string} [options.backTo] Same-origin path (e.g. a favorites/my-listings
  *   deep link) the Mini App's Telegram header BackButton should return to instead
  *   of the feed — see `miniAppBackTargetFromUrl`/listing.html's BackButton handler.
+ * @param {string} [options.view] When `'3d'`, listing.html auto-opens the fullscreen
+ *   3D room scan viewer once the listing loads (see maybeAutoOpenRoomScanFullscreen
+ *   in listing-detail-roomscan.js) — set by redirectFromMiniAppStartParam for a
+ *   `listing_{id}_3d` share link (see buildListing3dShareUrl).
  */
 function listingPageUrl(id, options = {}) {
   const lid = String(id ?? '').trim();
@@ -28,6 +32,7 @@ function listingPageUrl(id, options = {}) {
   if (isMiniApp()) {
     const params = new URLSearchParams({ id: lid, mini: '1' });
     if (options.backTo) params.set('back', options.backTo);
+    if (options.view) params.set('view', options.view);
     return `/listing.html?${params.toString()}`;
   }
   return `/listing/${encodeURIComponent(lid)}`;
@@ -1593,6 +1598,11 @@ function logMiniAppScreen(screenName, params) {
  * redirect back to the listing every time the feed page loads for the rest
  * of the session, making it impossible to ever land on/stay on the feed
  * after opening a shared listing link.
+ *
+ * A trailing `_3d` (from `buildListing3dShareUrl`, the 3D viewer's own share
+ * button — see listing-detail-roomscan.js) carries through as `?view=3d` so
+ * the listing page auto-opens the fullscreen 3D viewer instead of just
+ * landing on the listing.
  */
 function redirectFromMiniAppStartParam() {
   if (/listing\.html/i.test(location.pathname)) return false;
@@ -1601,14 +1611,14 @@ function redirectFromMiniAppStartParam() {
     tg?.initDataUnsafe?.start_param ||
     new URLSearchParams(location.search).get('tgWebAppStartParam') ||
     '';
-  const match = /^listing_(\d+)$/.exec(String(startParam).trim());
+  const match = /^listing_(\d+)(_3d)?$/.exec(String(startParam).trim());
   if (!match) return false;
   const sessionKey = 'uydosh:consumedStartParam';
   try {
     if (sessionStorage.getItem(sessionKey) === startParam) return false;
     sessionStorage.setItem(sessionKey, startParam);
   } catch { /* ignore — worst case this redirect fires again */ }
-  location.replace(listingPageUrl(match[1]));
+  location.replace(listingPageUrl(match[1], match[2] ? { view: '3d' } : {}));
   return true;
 }
 

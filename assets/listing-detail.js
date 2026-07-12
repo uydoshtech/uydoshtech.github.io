@@ -126,6 +126,10 @@
         // `render()` re-runs on language change, so this guards against
         // recording the same page visit as multiple views.
         viewRecorded: false,
+        // Guards `maybeAutoOpenRoomScanFullscreen` (listing-detail-roomscan.js) so a
+        // `?view=3d` share link only pops the fullscreen 3D viewer once, not again on
+        // every language-change re-render.
+        roomScan3dAutoOpened: false,
       };
 
 

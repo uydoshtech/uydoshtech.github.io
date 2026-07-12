@@ -281,6 +281,41 @@
         }, { passive: false });
       }
 
+      /** Share button for the fullscreen overlay only — separate from the listing's
+       * general share button (`data-share-listing`, listing-detail-actions.js). Shares
+       * a link that lands the recipient straight in this same fullscreen 3D view (see
+       * buildListing3dShareUrl/redirectFromMiniAppStartParam) rather than the plain
+       * listing page. */
+      function createRoomScanShareButton(l) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roomscan-share-btn';
+        btn.innerHTML = UyDosh.iconShare('#fff');
+        btn.setAttribute('aria-label', UyDosh.t('detail.roomScanShare'));
+        btn.addEventListener('click', () => shareRoomScan3d(l));
+        return btn;
+      }
+
+      /** Passes the same URL as both `url` and `linkPreviewUrl` to `shareListingLink`
+       * so every fallback path it might take (Mini App Telegram dialog, browser
+       * `navigator.share`, plain `window.open`) ends up sharing this exact `_3d` link
+       * rather than the general listing share link. */
+      async function shareRoomScan3d(l) {
+        if (!l) return;
+        UyDosh.haptic?.light?.();
+        const lang = UyDosh.getLang();
+        const shareUrl = buildListing3dShareUrl(l.id);
+        const text = buildListingShareText(l, lang);
+        const method = await UyDosh.shareListingLink(shareUrl, text, [], '', shareUrl);
+        if (UyDosh.isMiniApp()) {
+          UyDosh.logMiniAppEvent('listing_share_tapped', {
+            listing_id: Number(l.id),
+            source: 'telegram_mini_app_room_scan_3d',
+            share_method: method || 'unknown',
+          });
+        }
+      }
+
       function roomScanMetaRowHtml(icon, text) {
         return `<span class="roomscan-toggle-meta-row"><span class="roomscan-toggle-meta-icon" aria-hidden="true">${icon}</span>${UyDosh.escapeHtml(text)}</span>`;
       }
@@ -431,6 +466,8 @@
           mountRoomScanViewer(viewerWrap, glbUrl, usdzUrl, l);
         }
 
+        maybeAutoOpenRoomScanFullscreen(glbUrl, usdzUrl, l);
+
         toggle.addEventListener('click', () => {
           const next = section.getAttribute('aria-expanded') !== 'true';
           section.setAttribute('aria-expanded', next ? 'true' : 'false');
@@ -531,5 +568,24 @@
           statusEl.removeAttribute('aria-label');
           statusEl.textContent = UyDosh.t('detail.roomScanLoadError');
         }
+
+        // Added last (regardless of load success above) so it always sits directly
+        // left of close — [mode, zoom, share, close] on success, [share, close] if
+        // the model failed to load — a share link doesn't depend on the model itself.
+        if (l) {
+          controlsBar.insertBefore(createRoomScanShareButton(l), closeBtn);
+        }
+      }
+
+      /** Auto-opens the fullscreen 3D viewer when the page was loaded from a
+       * `?view=3d` share link (see buildListing3dShareUrl/redirectFromMiniAppStartParam),
+       * so the recipient lands straight in it instead of the collapsed tile. Guarded by
+       * `state.roomScan3dAutoOpened` since `render()` (and so `bindRoomScanSection()`)
+       * re-runs on every language change. */
+      function maybeAutoOpenRoomScanFullscreen(glbUrl, usdzUrl, l) {
+        if (state.roomScan3dAutoOpened) return;
+        if (params.get('view') !== '3d') return;
+        state.roomScan3dAutoOpened = true;
+        openRoomScanFullscreen(glbUrl, usdzUrl, l);
       }
 
