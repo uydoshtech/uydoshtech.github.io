@@ -13,7 +13,7 @@ I18N.en = {
     'nav.menuLabel': 'Menu',
     'nav.more': 'More',
     'nav.testflight': 'iOS beta (TestFlight)',
-    'nav.androidApk': 'Download Android APK',
+    'nav.androidApk': 'Android beta (APK)',
     'session.revokedTitle': 'Session ended',
     'session.revokedMessage': 'This app was opened in another window or device. Reopen it to continue.',
     'session.revokedDeviceLine': 'New session: {info}',
