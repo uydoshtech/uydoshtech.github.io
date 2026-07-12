@@ -634,25 +634,19 @@
          vertically in that order, deliberately kept out of the bottom controls-bar row so
          they don't crowd the rotate/zoom/fullscreen buttons — mirrors the dimensions
          overlay's top-left placement below, including the same Telegram-header inset
-         handling (--uydosh-tg-inset-top) in the fullscreen backdrop. Pill-shaped (rather than
-         the round icon buttons elsewhere in this bar) since each shows its current state as
-         short text (e.g. "Стены"/"Кирпич"/"Ламинат", see roomScan*ShortLabelKey in
-         listing-detail-roomscan.js) instead of an icon — width is intentionally left to size
-         to that text via padding, growing left from the fixed right edge as needed. */
+         handling (--uydosh-tg-inset-top) in the fullscreen backdrop. */
       .roomscan-mode-btn, .roomscan-texture-btn, .roomscan-floor-texture-btn {
         position: absolute; right: 10px; z-index: 1;
         flex-shrink: 0; appearance: none; border: 0; background: rgba(0, 0, 0, 0.5); color: #fff;
-        height: 34px; min-width: 34px; padding: 0 12px; border-radius: 17px;
+        width: 34px; height: 34px; border-radius: 50%;
         display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
-        font-family: inherit; font-weight: 700; font-size: 12px; white-space: nowrap;
       }
       .roomscan-mode-btn { top: 10px; }
       .roomscan-texture-btn { top: 52px; /* 10px + 34px button + 8px gap */ }
       .roomscan-floor-texture-btn { top: 94px; /* 52px + 34px button + 8px gap */ }
       .roomscan-backdrop .roomscan-mode-btn, .roomscan-backdrop .roomscan-texture-btn,
       .roomscan-backdrop .roomscan-floor-texture-btn {
-        right: 14px; height: 43px; min-width: 43px; padding: 0 16px; border-radius: 21.5px;
-        background: rgba(0, 0, 0, 0.55); font-size: 14px;
+        right: 14px; width: 43px; height: 43px; background: rgba(0, 0, 0, 0.55);
       }
       .roomscan-backdrop .roomscan-mode-btn {
         top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)));
@@ -665,6 +659,16 @@
         top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)) + 106px);
       }
       .roomscan-mode-btn:active, .roomscan-texture-btn:active, .roomscan-floor-texture-btn:active { opacity: 0.85; }
+      .roomscan-mode-btn svg, .roomscan-texture-btn svg, .roomscan-floor-texture-btn svg {
+        width: 18px; height: 18px; display: block;
+      }
+      .roomscan-backdrop .roomscan-mode-btn svg, .roomscan-backdrop .roomscan-texture-btn svg,
+      .roomscan-backdrop .roomscan-floor-texture-btn svg {
+        width: 22px; height: 22px;
+      }
+      .roomscan-mode-btn svg *, .roomscan-texture-btn svg *, .roomscan-floor-texture-btn svg * {
+        stroke: currentColor; fill: none;
+      }
       .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
       .roomscan-backdrop .roomscan-backdrop-close { font-size: 19px; }
       /* Pill-shaped zoom slider — same look as the mobile app's zoom slider (a plain

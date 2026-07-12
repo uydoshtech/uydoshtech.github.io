@@ -60,20 +60,29 @@
         return ROOM_SCAN_MODE_SEQUENCE[(idx + 1) % ROOM_SCAN_MODE_SEQUENCE.length];
       }
 
+      function roomScanModeIconHtml(mode) {
+        if (mode === 'floorAndFurniture') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 18v-4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"></path>
+            <path d="M4 18v2M20 18v2"></path>
+            <path d="M6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"></path>
+          </svg>`;
+        }
+        if (mode === 'floorOnly') {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="6" width="18" height="12" rx="2"></rect>
+          </svg>`;
+        }
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 10.5 12 4l8 6.5"></path>
+          <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5"></path>
+        </svg>`;
+      }
+
       function roomScanModeLabelKey(mode) {
         if (mode === 'floorAndFurniture') return 'detail.roomScanModeFloorAndFurniture';
         if (mode === 'floorOnly') return 'detail.roomScanModeFloorOnly';
         return 'detail.roomScanModeFullRoom';
-      }
-
-      // Short one-word label actually shown on the button face (the aria-label above stays
-      // the longer descriptive "tap to..." string for accessibility) — walls/furniture/floor
-      // name what's newly revealed at each step of the cycle, not literally what's on screen
-      // (e.g. floorOnly's floor is also visible in fullRoom).
-      function roomScanModeShortLabelKey(mode) {
-        if (mode === 'floorAndFurniture') return 'detail.roomScanModeFloorAndFurnitureShort';
-        if (mode === 'floorOnly') return 'detail.roomScanModeFloorOnlyShort';
-        return 'detail.roomScanModeFullRoomShort';
       }
 
       /** Wall/ceiling/door/window/opening → 'wall' (hidden in floorAndFurniture and floorOnly);
@@ -159,7 +168,7 @@
         btn.type = 'button';
         btn.className = 'roomscan-mode-btn';
         const updateAppearance = () => {
-          btn.textContent = UyDosh.t(roomScanModeShortLabelKey(mode));
+          btn.innerHTML = roomScanModeIconHtml(mode);
           btn.setAttribute('aria-label', UyDosh.t(roomScanModeLabelKey(mode)));
         };
         updateAppearance();
@@ -222,9 +231,15 @@
         return texture === 'plaster' ? 'detail.roomScanWallTexturePlaster' : 'detail.roomScanWallTextureBrick';
       }
 
-      // Short label actually shown on the button face — mirrors roomScanModeShortLabelKey.
-      function roomScanWallTextureShortLabelKey(texture) {
-        return texture === 'plaster' ? 'detail.roomScanWallTexturePlasterShort' : 'detail.roomScanWallTextureBrickShort';
+      // Static "paint roller" glyph — unlike the mode button, this is a plain two-way
+      // toggle communicated via the aria-label/value, not a per-state icon swap.
+      function roomScanWallTextureIconHtml() {
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="2" width="16" height="6" rx="2"></rect>
+          <path d="M10 16v-2a2 2 0 0 1 2-2h8"></path>
+          <path d="M18 12h2a2 2 0 0 1 2 2v2"></path>
+          <rect x="8" y="16" width="4" height="6" rx="1"></rect>
+        </svg>`;
       }
 
       // Stricter than classifyRoomScanMaterialName's grouped 'wall' (which also folds in
@@ -319,8 +334,8 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'roomscan-texture-btn';
+        btn.innerHTML = roomScanWallTextureIconHtml();
         const updateLabel = () => {
-          btn.textContent = UyDosh.t(roomScanWallTextureShortLabelKey(texture));
           btn.setAttribute('aria-label', UyDosh.t(roomScanWallTextureLabelKey(texture)));
         };
         updateLabel();
@@ -347,9 +362,13 @@
         return texture === 'tile' ? 'detail.roomScanFloorTextureTile' : 'detail.roomScanFloorTextureWood';
       }
 
-      // Short label actually shown on the button face — mirrors roomScanModeShortLabelKey.
-      function roomScanFloorTextureShortLabelKey(texture) {
-        return texture === 'tile' ? 'detail.roomScanFloorTextureTileShort' : 'detail.roomScanFloorTextureWoodShort';
+      // Static 2x2 grid glyph, evoking floor tiles.
+      function roomScanFloorTextureIconHtml() {
+        return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+          <path d="M3 12h18"></path>
+          <path d="M12 3v18"></path>
+        </svg>`;
       }
 
       // Mirrors classifySurface's floor check in applyRoomScanStylizedMaterials.ts.
@@ -433,8 +452,8 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'roomscan-floor-texture-btn';
+        btn.innerHTML = roomScanFloorTextureIconHtml();
         const updateLabel = () => {
-          btn.textContent = UyDosh.t(roomScanFloorTextureShortLabelKey(texture));
           btn.setAttribute('aria-label', UyDosh.t(roomScanFloorTextureLabelKey(texture)));
         };
         updateLabel();
