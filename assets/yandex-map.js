@@ -2,11 +2,16 @@
 // Loaded on demand from listing detail and feed map views only.
 
 (function () {
-  const TASHKENT_BOUNDS = {
-    minLatitude: 41.15,
-    maxLatitude: 41.42,
-    minLongitude: 69.05,
-    maxLongitude: 69.45,
+  // Rough bounding box for all of Uzbekistan (not the real border, just a
+  // sanity rectangle) — mirrors `UZBEKISTAN_BOUNDS` in the backend's
+  // `uzbekistanBounds.ts` and `uydosh-core.js`'s copy below. Loose on
+  // purpose so it never rejects a genuine in-country point; it only exists
+  // to catch bogus data (0,0, a different country entirely, etc.).
+  const UZBEKISTAN_BOUNDS = {
+    minLatitude: 37,
+    maxLatitude: 46,
+    minLongitude: 55,
+    maxLongitude: 74,
   };
 
   /** Yandex Maps JavaScript API key (HTTP Referer: uydoshtech.github.io). */
@@ -86,10 +91,10 @@
 
   function isValidCoordinate(latitude, longitude) {
     return (
-      latitude >= TASHKENT_BOUNDS.minLatitude &&
-      latitude <= TASHKENT_BOUNDS.maxLatitude &&
-      longitude >= TASHKENT_BOUNDS.minLongitude &&
-      longitude <= TASHKENT_BOUNDS.maxLongitude
+      latitude >= UZBEKISTAN_BOUNDS.minLatitude &&
+      latitude <= UZBEKISTAN_BOUNDS.maxLatitude &&
+      longitude >= UZBEKISTAN_BOUNDS.minLongitude &&
+      longitude <= UZBEKISTAN_BOUNDS.maxLongitude
     );
   }
 

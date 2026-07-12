@@ -784,23 +784,25 @@ const EARTH_RADIUS_METERS = 6371000;
 const WALK_METERS_PER_MINUTE = 80; // ~4.8 km/h
 const WALK_DETOUR_FACTOR = 1.3; // streets/blocks vs. straight-line distance
 
-// Mirrors `TASHKENT_BOUNDS`/`TASHKENT_POI_BOUNDS` in yandex-map.js and the
-// backend's `resolveListingMapCoordinates` — guards against a corrupt/stray
-// `address_latitude`/`address_longitude` (e.g. 0,0, or some other city
-// entirely) producing a nonsense multi-thousand-km "walk" distance below.
-const TASHKENT_BOUNDS = {
-  minLatitude: 41.15,
-  maxLatitude: 41.42,
-  minLongitude: 69.05,
-  maxLongitude: 69.45,
+// Mirrors `UZBEKISTAN_BOUNDS` in yandex-map.js and the backend's
+// `uzbekistanBounds.ts`/`resolveListingMapCoordinates` — guards against a
+// corrupt/stray `address_latitude`/`address_longitude` (e.g. 0,0, or some
+// other country entirely) producing a nonsense multi-thousand-km "walk"
+// distance below. Loose on purpose (a simple rectangle covering all of
+// Uzbekistan, not the real border) so it never rejects a genuine listing.
+const UZBEKISTAN_BOUNDS = {
+  minLatitude: 37,
+  maxLatitude: 46,
+  minLongitude: 55,
+  maxLongitude: 74,
 };
 
-function isValidTashkentCoordinate(latitude, longitude) {
+function isValidUzbekistanCoordinate(latitude, longitude) {
   return (
-    latitude >= TASHKENT_BOUNDS.minLatitude
-    && latitude <= TASHKENT_BOUNDS.maxLatitude
-    && longitude >= TASHKENT_BOUNDS.minLongitude
-    && longitude <= TASHKENT_BOUNDS.maxLongitude
+    latitude >= UZBEKISTAN_BOUNDS.minLatitude
+    && latitude <= UZBEKISTAN_BOUNDS.maxLatitude
+    && longitude >= UZBEKISTAN_BOUNDS.minLongitude
+    && longitude <= UZBEKISTAN_BOUNDS.maxLongitude
   );
 }
 
@@ -844,7 +846,7 @@ function listingReferenceCoordinates(listing) {
     if (
       Number.isFinite(latitude)
       && Number.isFinite(longitude)
-      && isValidTashkentCoordinate(latitude, longitude)
+      && isValidUzbekistanCoordinate(latitude, longitude)
     ) {
       return { latitude, longitude };
     }
@@ -863,7 +865,7 @@ function stationWalkInfo(from, station) {
   const lat = Number(station?.latitude);
   const lon = Number(station?.longitude);
   if (!from || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  if (!isValidTashkentCoordinate(lat, lon)) return null;
+  if (!isValidUzbekistanCoordinate(lat, lon)) return null;
   const meters = haversineMeters(from.latitude, from.longitude, lat, lon);
   if (meters < 50) return null;
   return { km: meters / 1000, minutes: estimatedWalkMinutes(meters) };
