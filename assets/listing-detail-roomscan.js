@@ -133,9 +133,27 @@
         });
       }
 
+      // 4s: long enough that a glance registers each state (walls on vs. off) before it
+      // flips again, short enough to catch a scrolling viewer's eye — and deliberately not a
+      // clean multiple of the model's own 6s auto-rotate period (see rotation-per-second in
+      // createModelViewerEl), so the reveal doesn't always land at the same rotation angle.
+      const ROOM_SCAN_AUTO_WALL_TOGGLE_INTERVAL_MS = 4000;
+
       /** Creates the mode-cycling button and wires it to `viewerEl`. Re-applies the current
-       * mode once the model finishes loading, covering clicks that land before then. */
-      function createRoomScanModeButton(viewerEl) {
+       * mode once the model finishes loading, covering clicks that land before then.
+       *
+       * `autoToggleWalls` (inline preview tile only, see mountRoomScanViewer — the fullscreen
+       * viewer already gives the user full manual control, so it doesn't need this) makes the
+       * button also automatically alternate fullRoom ⇄ floorAndFurniture on a timer, as a
+       * passive "peek inside" showcase for someone just scrolling past. It reuses the same `mode`/
+       * `updateAppearance`/`applyRoomScanDisplayMode` path the manual click handler uses, so
+       * the button's own label always matches whatever state — manual or automatic — the
+       * model is actually in. An IntersectionObserver pauses the timer once the tile scrolls
+       * off-screen or its section is collapsed (both leave it with zero size), mirroring
+       * createRoomScanZoomSlider's own care about not burning cycles on a render loop no one
+       * can see. The first manual tap always wins permanently — it stops the timer and
+       * disconnects the observer, handing full control to the user from then on. */
+      function createRoomScanModeButton(viewerEl, { autoToggleWalls = false } = {}) {
         let mode = 'fullRoom';
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -145,13 +163,43 @@
           btn.setAttribute('aria-label', UyDosh.t(roomScanModeLabelKey(mode)));
         };
         updateAppearance();
+
+        let autoToggleTimer = null;
+        let autoToggleObserver = null;
+        const stopAutoToggle = () => {
+          if (autoToggleTimer) clearInterval(autoToggleTimer);
+          autoToggleTimer = null;
+          autoToggleObserver?.disconnect();
+          autoToggleObserver = null;
+        };
+
         btn.addEventListener('click', () => {
+          stopAutoToggle();
           mode = nextRoomScanMode(mode);
           updateAppearance();
           UyDosh.haptic?.light?.();
           applyRoomScanDisplayMode(viewerEl, mode);
         });
         viewerEl.addEventListener('load', () => applyRoomScanDisplayMode(viewerEl, mode));
+
+        if (autoToggleWalls) {
+          const tick = () => {
+            mode = mode === 'fullRoom' ? 'floorAndFurniture' : 'fullRoom';
+            updateAppearance();
+            applyRoomScanDisplayMode(viewerEl, mode);
+          };
+          autoToggleObserver = new IntersectionObserver((entries) => {
+            const isVisible = entries.some((entry) => entry.isIntersecting);
+            if (isVisible && !autoToggleTimer) {
+              autoToggleTimer = setInterval(tick, ROOM_SCAN_AUTO_WALL_TOGGLE_INTERVAL_MS);
+            } else if (!isVisible && autoToggleTimer) {
+              clearInterval(autoToggleTimer);
+              autoToggleTimer = null;
+            }
+          });
+          autoToggleObserver.observe(viewerEl.parentElement || viewerEl);
+        }
+
         return btn;
       }
 
@@ -736,7 +784,10 @@
           // Floating top-right corner, deliberately outside the bottom controls-bar — stacked
           // mode / wall-texture / floor-texture toggles (see .roomscan-mode-btn/
           // .roomscan-texture-btn/.roomscan-floor-texture-btn in listing-detail.css).
-          container.appendChild(createRoomScanModeButton(viewer));
+          // `autoToggleWalls` only applies here — this preview is easy to scroll past without
+          // ever tapping anything, so it auto-cycles walls on/off as a passive showcase; the
+          // fullscreen viewer already has the user's full attention and manual controls.
+          container.appendChild(createRoomScanModeButton(viewer, { autoToggleWalls: true }));
           container.appendChild(createRoomScanWallTextureButton(viewer));
           container.appendChild(createRoomScanFloorTextureButton(viewer));
         } catch (err) {
