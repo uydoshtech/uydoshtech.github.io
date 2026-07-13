@@ -795,13 +795,13 @@ function renderFilters() {
           <div class="filters-collapsed">
             <div class="filter-row filter-row-compact">
               <div class="chips chips-compact" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.type.aria', lang))}">
+                ${priceSortChipCompact}
                 ${typeChipCompact}
                 ${genderChipCompact}
                 ${photoChipCompact}
                 ${districtChipCompact}
                 ${lineChipCompact}
                 ${threeDChipCompact}
-                ${priceSortChipCompact}
               </div>
               ${filtersToggleHtml}
             </div>
