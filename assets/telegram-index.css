@@ -319,6 +319,21 @@ header {
   color: #C45A7C;
   border-color: #C45A7C;
 }
+/* Listing-type cycle chip: border matches the selected type's glyph color
+   (LISTING_TYPE_COLORS in uydosh-map-pins.js), same treatment as the gender
+   chip above so both cycling chips signal their state the same way. */
+.chips-compact .chip-type[data-listing-type="1"][aria-pressed="true"] {
+  color: #64B5F6;
+  border-color: #64B5F6;
+}
+.chips-compact .chip-type[data-listing-type="2"][aria-pressed="true"] {
+  color: #FF9800;
+  border-color: #FF9800;
+}
+.chips-compact .chip-type[data-listing-type="3"][aria-pressed="true"] {
+  color: #0288D1;
+  border-color: #0288D1;
+}
 .chip-gender .chip-icon {
   width: 16px;
   height: 16px;

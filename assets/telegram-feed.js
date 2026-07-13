@@ -549,13 +549,34 @@ function renderFilters() {
     label: opt.label,
   })).join('');
 
-  const typeChipsCompact = typeOptions.map((opt) => UyDosh.chipButtonHtml({
-    className: 'chip chip-icon-only',
-    attrs: { 'data-listing-type': opt.value },
-    pressed: state.filters.listingTypeId === opt.value,
-    icon: UyDosh.filterListingTypeIcon(opt.value, { pressed: false }),
-    ariaLabel: opt.label,
-  })).join('');
+  // Compact-row listing-type control: a single cycling chip (all -> home ->
+  // roommate -> all) instead of one chip per type — same single-button cycle
+  // pattern as the gender chip below and the district/metro-line chips. The
+  // expanded row keeps its labeled per-type chips. Icon-only in every state:
+  // the type glyph colors (blue home / orange people) read at a glance, and
+  // the neutral "all" grid glyph marks the off state. The cycle order follows
+  // `typeOptions`, so re-enabling group_forming there adds it automatically.
+  const selectedTypeOption = typeOptions.find(
+    (opt) => opt.value === state.filters.listingTypeId,
+  );
+  const typeCycleLabel = selectedTypeOption?.label ?? UyDosh.t('filter.type.all', lang);
+  const typeChipCompact = UyDosh.chipButtonHtml({
+    className: 'chip chip-icon-only chip-type',
+    attrs: {
+      'data-listing-type-cycle': true,
+      // Set only while a type is picked so the
+      // `.chips-compact .chip-type[data-listing-type="…"][aria-pressed="true"]`
+      // color rules in telegram-index.css apply. The `[data-listing-type]`
+      // click handler below skips this chip via :not([data-listing-type-cycle]).
+      'data-listing-type': selectedTypeOption ? state.filters.listingTypeId : false,
+    },
+    pressed: selectedTypeOption != null,
+    icon: UyDosh.filterListingTypeIcon(
+      selectedTypeOption ? state.filters.listingTypeId : 0,
+      { pressed: false },
+    ),
+    ariaLabel: `${UyDosh.t('filter.type.aria', lang)}: ${typeCycleLabel}`,
+  });
 
   const selectedGender = state.filters.gender;
   const genderSegments = genderOptions.map((opt) => UyDosh.chipButtonHtml({
@@ -613,7 +634,7 @@ function renderFilters() {
     ariaLabel: UyDosh.t('filter.photo.aria', lang),
   });
 
-  // Compact-row twin (icon only, matching typeChipsCompact/genderChipCompact):
+  // Compact-row twin (icon only, matching typeChipCompact/genderChipCompact):
   // the label stays in the DOM (via `.chip-icon-only .chip-label { display: none }`)
   // for consistency, but read via `ariaLabel` for assistive tech.
   const photoChipCompact = UyDosh.chipButtonHtml({
@@ -774,7 +795,7 @@ function renderFilters() {
           <div class="filters-collapsed">
             <div class="filter-row filter-row-compact">
               <div class="chips chips-compact" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.type.aria', lang))}">
-                ${typeChipsCompact}
+                ${typeChipCompact}
                 ${genderChipCompact}
                 ${photoChipCompact}
                 ${districtChipCompact}
@@ -815,11 +836,32 @@ function renderFilters() {
     });
   });
 
-  filtersEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
+  // Expanded-row per-type chips only — the compact cycle chip also carries a
+  // `data-listing-type` attribute (for the pressed-state color CSS) and must
+  // not get this toggle handler on top of its cycle handler below.
+  filtersEl.querySelectorAll('[data-listing-type]:not([data-listing-type-cycle])').forEach((btn) => {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-listing-type'));
       const toggledOff = state.filters.listingTypeId === next;
       state.filters.listingTypeId = toggledOff ? LISTING_TYPE_ALL : next;
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+      if (state.view === 'map') feedMap.loadFeedMap();
+    });
+  });
+
+  filtersEl.querySelectorAll('[data-listing-type-cycle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // all -> first type -> ... -> last type -> all, in typeOptions order
+      // (mirrors nextDistrictId/nextMetroLineId's off -> ... -> off cycle).
+      const order = typeOptions.map((opt) => opt.value);
+      const index = order.indexOf(state.filters.listingTypeId);
+      state.filters.listingTypeId = index === -1
+        ? order[0]
+        : index === order.length - 1
+          ? LISTING_TYPE_ALL
+          : order[index + 1];
       persistFilters();
       logSearchEvent();
       resetAndLoad();
