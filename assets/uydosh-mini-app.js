@@ -1517,15 +1517,115 @@ function redirectFromMiniAppStartParam() {
     tg?.initDataUnsafe?.start_param ||
     new URLSearchParams(location.search).get('tgWebAppStartParam') ||
     '';
-  const match = /^listing_(\d+)(_3d)?$/.exec(String(startParam).trim());
-  if (!match) return false;
+  const trimmed = String(startParam).trim();
   const sessionKey = 'uydosh:consumedStartParam';
+
+  // Return leg of the App Clip room-scan flow: the clip's "Return to
+  // Telegram" button deep-links here with scan_<token>. Show a blocking
+  // status overlay, poll the scan session, and land on the listing's 3D
+  // view once the backend finishes building the plan.
+  const scanMatch = /^scan_([A-Za-z0-9_-]{4,64})$/.exec(trimmed);
+  if (scanMatch) {
+    try {
+      if (sessionStorage.getItem(sessionKey) === trimmed) return false;
+      sessionStorage.setItem(sessionKey, trimmed);
+    } catch { /* ignore — worst case this restore fires again */ }
+    restoreScanSessionFromStartParam(scanMatch[1]);
+    return true;
+  }
+
+  const match = /^listing_(\d+)(_3d)?$/.exec(trimmed);
+  if (!match) return false;
   try {
-    if (sessionStorage.getItem(sessionKey) === startParam) return false;
-    sessionStorage.setItem(sessionKey, startParam);
+    if (sessionStorage.getItem(sessionKey) === trimmed) return false;
+    sessionStorage.setItem(sessionKey, trimmed);
   } catch { /* ignore — worst case this redirect fires again */ }
   location.replace(listingPageUrl(match[1], match[2] ? { view: '3d' } : {}));
   return true;
+}
+
+/**
+ * Blocking overlay + polling for a returning room-scan session. Polls only
+ * while the session is still pending/processing and stops on any terminal
+ * status (completed → redirect to the listing's 3D view; failed/expired →
+ * message with a plain "open listing" fallback).
+ */
+function restoreScanSessionFromStartParam(token) {
+  const t = (key) => window.UyDosh?.t?.(key, window.UyDosh?.getLang?.()) || key;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'scan-restore-overlay';
+  const spinner = document.createElement('div');
+  spinner.className = 'loading-spinner';
+  const message = document.createElement('p');
+  message.className = 'scan-restore-message';
+  message.textContent = t('scanRestore.loading');
+  overlay.appendChild(spinner);
+  overlay.appendChild(message);
+  const attach = () => document.body.appendChild(overlay);
+  if (document.body) attach();
+  else document.addEventListener('DOMContentLoaded', attach, { once: true });
+
+  const showFallbackButton = (listingId) => {
+    spinner.remove();
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'scan-restore-button';
+    button.textContent = t('scanRestore.openListing');
+    button.addEventListener('click', () => {
+      location.replace(listingId ? listingPageUrl(listingId) : MINI_APP_FEED_PATH);
+    });
+    overlay.appendChild(button);
+  };
+
+  const startedAt = Date.now();
+  const maxWaitMs = 4 * 60 * 1000;
+  let listingId = null;
+
+  const poll = async () => {
+    let session;
+    try {
+      session = await window.UyDosh.fetchScanSession(token);
+    } catch (err) {
+      if (err?.status === 404 || err?.status === 410) {
+        message.textContent = t('scanRestore.expired');
+        showFallbackButton(listingId);
+        return;
+      }
+      // Transient error — keep polling until the deadline.
+      session = null;
+    }
+
+    if (session) {
+      listingId = session.listingId ?? listingId;
+      if (session.status === 'completed') {
+        location.replace(listingPageUrl(session.listingId, { view: '3d' }));
+        return;
+      }
+      if (session.status === 'failed') {
+        message.textContent = t('scanRestore.failed');
+        showFallbackButton(listingId);
+        return;
+      }
+      if (session.status === 'expired') {
+        message.textContent = t('scanRestore.expired');
+        showFallbackButton(listingId);
+        return;
+      }
+      message.textContent = t(
+        session.status === 'processing' ? 'scanRestore.processing' : 'scanRestore.loading',
+      );
+    }
+
+    if (Date.now() - startedAt > maxWaitMs) {
+      message.textContent = t('scanRestore.failed');
+      showFallbackButton(listingId);
+      return;
+    }
+    setTimeout(poll, 3000);
+  };
+
+  poll();
 }
 
 /**

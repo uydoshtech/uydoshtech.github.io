@@ -822,6 +822,61 @@ async function createListingFromTelegramMiniApp(listing) {
 }
 
 /**
+ * Create an App Clip room-scan session for a listing the caller owns.
+ * Returns { scanSessionId, invocationUrl, expiresAt }; the invocation URL
+ * launches the UyDosh App Clip via Telegram.WebApp.openLink().
+ */
+async function createListingScanSession(listingId) {
+  const initData = getTelegramInitData();
+  if (!initData) {
+    const err = new Error('Telegram initData missing');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/listings/${encodeURIComponent(listingId)}/scan-sessions`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ init_data: initData }),
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    _handleMiniAppApiErrorPayload(res, payload);
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/**
+ * Poll an App Clip room-scan session (public, token-authorized). Returns
+ * { scanSessionId, listingId, status, roomScanGlbUrl?, ... }.
+ */
+async function fetchScanSession(scanSessionId) {
+  const res = await fetch(`${API_BASE}/scan-sessions/${encodeURIComponent(scanSessionId)}`, {
+    headers: { Accept: 'application/json' },
+  });
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch { /* ignore */ }
+  if (!res.ok) {
+    const err = new Error(payload?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/**
  * Update a listing from the Telegram Mini App (verify initData on submit).
  * Only the listing's own owner (resolved from initData) may edit it.
  */
@@ -1369,6 +1424,8 @@ Object.assign(window.UyDosh, {
   fetchFavoriteListings,
   checkListingClaimEligibility,
   claimListing,
+  createListingScanSession,
+  fetchScanSession,
   fetchComplaintCategories,
   createComplaint,
   fetchListingComplaintsCount,

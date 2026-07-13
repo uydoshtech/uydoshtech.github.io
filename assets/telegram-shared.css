@@ -580,3 +580,44 @@ a { color: inherit; text-decoration: none; }
   fill: currentColor;
 }
 .view-tab:active { opacity: 0.9; }
+
+/* --------------------------------------------------------------------------
+   App Clip room-scan return overlay (see restoreScanSessionFromStartParam in
+   uydosh-mini-app.js): full-screen blocking status while the backend builds
+   the 3D plan after a scan_<token> start_param launch. */
+.scan-restore-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background: var(--bg);
+  text-align: center;
+}
+.scan-restore-overlay .loading-spinner {
+  width: 64px;
+  height: 64px;
+  background: var(--spinner-logo) center / contain no-repeat;
+  animation: uydosh-spin 0.9s linear infinite;
+}
+.scan-restore-message {
+  margin: 0;
+  max-width: 320px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+.scan-restore-button {
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--brand2);
+  background: var(--brand2);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}

@@ -934,6 +934,33 @@ input[readonly] {
   max-width: 280px;
   margin-top: 8px;
 }
+/* Optional 3D room-scan upsell card on the success screen (App Clip flow). */
+.scan-upsell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  background: rgba(127, 127, 127, 0.07);
+}
+.scan-upsell-title { margin: 0; font-size: 16px; }
+.scan-upsell-subtitle { font-size: 13px; }
+.scan-upsell-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand2) !important;
+}
+.scan-upsell-button {
+  width: 100%;
+  max-width: 280px;
+  cursor: pointer;
+  font-size: inherit;
+}
+.scan-upsell-button:disabled { opacity: 0.6; }
 .btn-link {
   display: inline-flex;
   align-items: center;

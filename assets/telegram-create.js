@@ -3375,6 +3375,11 @@ async function submitListing() {
     }
     successRoot.hidden = false;
     successRoot.classList.add('active');
+    // 3D room-scan upsell: optional, only for freshly created "room offered"
+    // listings (nothing to scan for "looking for a room" posts).
+    if (!isEdit && listingId && !isRoomNeeded()) {
+      renderScanUpsell(listingId);
+    }
   } catch (err) {
     console.error(isEdit ? 'Update listing failed' : 'Create listing failed', err, err.payload);
     if (err.status === 401) UyDosh.clearTelegramInitData();
@@ -3390,6 +3395,211 @@ async function submitListing() {
     state.submitting = false;
     updateWizardFooter();
   }
+}
+
+// ---------------------------------------------------------------------------
+// 3D room-scan upsell (iOS App Clip)
+//
+// After publishing, the user can scan the room with their iPhone: we create a
+// short-lived scan session on the backend and open its App Clip invocation
+// URL via Telegram.WebApp.openLink(). The App Clip scans with RoomPlan,
+// uploads the result, and deep-links back into the Mini App with a
+// `scan_<token>` start_param (handled in uydosh-mini-app.js). If the user
+// instead returns to this still-open page manually, the visibility watcher
+// below polls the session and swaps the button to "View 3D plan" when done.
+// ---------------------------------------------------------------------------
+
+let scanUpsellPollTimer = null;
+
+/**
+ * Portrait CSS screen profiles (short×long) unique to iPhones that certainly
+ * have no LiDAR: SE1 (320×568), 6/7/8/SE2/SE3 (375×667), 6–8 Plus (414×736),
+ * X/XS/11 Pro/12 mini/13 mini (375×812), XR/XS Max/11/11 Pro Max (414×896).
+ * LiDAR starts with the iPhone 12 Pro, and none of these sizes belong to a
+ * 12-Pro-or-newer Pro model.
+ */
+const NON_LIDAR_IPHONE_SCREENS = new Set([
+  '320x568',
+  '375x667',
+  '414x736',
+  '375x812',
+  '414x896',
+]);
+
+/**
+ * Best-effort web equivalent of the Flutter app's native LiDAR capability
+ * check (RoomPlanCapability / RoomCaptureSession.isSupported): the Telegram
+ * WebView exposes neither the device model nor LiDAR, so this filters out
+ * what it *can* know — iOS versions below RoomPlan's 16.0 minimum and screen
+ * profiles unique to non-Pro/older iPhones. Recent generations share CSS
+ * sizes between Pro and non-Pro models, so the result is intentionally
+ * optimistic; the App Clip itself runs the real hardware check and shows a
+ * localized "unsupported device" screen when scanning still isn't possible.
+ */
+function isLikelyRoomScanCapableDevice() {
+  const ua = navigator.userAgent || '';
+  // RoomPlan requires iOS 16+. iPads can report a desktop-style UA with no
+  // "OS <major>_" token — treat a failed parse as capable (optimistic).
+  const osMatch = /OS (\d+)_/.exec(ua);
+  if (osMatch && Number(osMatch[1]) < 16) return false;
+  const shortSide = Math.min(screen.width, screen.height);
+  const longSide = Math.max(screen.width, screen.height);
+  return !NON_LIDAR_IPHONE_SCREENS.has(`${shortSide}x${longSide}`);
+}
+
+function renderScanUpsell(listingId) {
+  const root = document.getElementById('scan-upsell');
+  if (!root) return;
+  const lang = UyDosh.getLang();
+  const isIos = (tg()?.platform || '') === 'ios';
+  // Mirror the Flutter app: hide the scan affordance entirely on iPhones
+  // that certainly can't scan. Non-iOS platforms keep the copy-link
+  // fallback (the link can be opened on another device).
+  if (isIos && !isLikelyRoomScanCapableDevice()) return;
+
+  root.innerHTML = '';
+  root.hidden = false;
+
+  const title = document.createElement('h3');
+  title.className = 'scan-upsell-title';
+  title.textContent = UyDosh.t('create.scan3dTitle', lang);
+  root.appendChild(title);
+
+  const subtitle = document.createElement('p');
+  subtitle.className = 'scan-upsell-subtitle';
+  subtitle.textContent = isIos
+    ? UyDosh.t('create.scan3dSubtitle', lang)
+    : UyDosh.t('create.scan3dNotIos', lang);
+  root.appendChild(subtitle);
+
+  const status = document.createElement('p');
+  status.className = 'scan-upsell-status';
+  status.id = 'scan-upsell-status';
+  status.hidden = true;
+  root.appendChild(status);
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'btn-link primary scan-upsell-button';
+  button.id = 'scan-upsell-button';
+  button.textContent = isIos
+    ? UyDosh.t('create.scan3dButton', lang)
+    : UyDosh.t('create.scan3dCopyLink', lang);
+  button.addEventListener('click', () => startScanFlow(listingId, isIos));
+  root.appendChild(button);
+}
+
+async function startScanFlow(listingId, isIos) {
+  const button = document.getElementById('scan-upsell-button');
+  const lang = UyDosh.getLang();
+  if (button) {
+    button.disabled = true;
+    button.textContent = UyDosh.t('create.scan3dStarting', lang);
+  }
+  haptic('medium');
+  try {
+    const session = await UyDosh.createListingScanSession(listingId);
+    try {
+      sessionStorage.setItem(
+        'uydosh:activeScanSession',
+        JSON.stringify({ token: session.scanSessionId, listingId, createdAt: Date.now() }),
+      );
+    } catch { /* ignore */ }
+    UyDosh.logMiniAppEvent('room_scan_session_created', { listing_id: listingId });
+
+    if (isIos) {
+      const webApp = tg();
+      if (webApp?.openLink) webApp.openLink(session.invocationUrl);
+      else window.open(session.invocationUrl, '_blank');
+      if (button) {
+        button.disabled = false;
+        button.textContent = UyDosh.t('create.scan3dButton', lang);
+      }
+      watchScanSession(session.scanSessionId, listingId);
+    } else {
+      await navigator.clipboard?.writeText?.(session.invocationUrl);
+      if (button) {
+        button.disabled = false;
+        button.textContent = UyDosh.t('create.scan3dLinkCopied', lang);
+      }
+    }
+  } catch (err) {
+    console.error('Scan session create failed', err);
+    // 403 lidar_room_scan_disabled → the feature is switched off; hide quietly.
+    const root = document.getElementById('scan-upsell');
+    if (err?.payload?.code === 'lidar_room_scan_disabled' && root) {
+      root.hidden = true;
+      return;
+    }
+    const statusEl = document.getElementById('scan-upsell-status');
+    if (statusEl) {
+      statusEl.hidden = false;
+      statusEl.textContent = UyDosh.t('create.scan3dError', lang);
+    }
+    if (button) {
+      button.disabled = false;
+      button.textContent = isIos
+        ? UyDosh.t('create.scan3dButton', lang)
+        : UyDosh.t('create.scan3dCopyLink', lang);
+    }
+  }
+}
+
+/**
+ * Polls the scan session while this page is visible; stops on any terminal
+ * status (completed/failed/expired) per the polling contract.
+ */
+function watchScanSession(token, listingId) {
+  const statusEl = document.getElementById('scan-upsell-status');
+  const button = document.getElementById('scan-upsell-button');
+  const lang = UyDosh.getLang();
+
+  const stop = () => {
+    if (scanUpsellPollTimer) {
+      clearInterval(scanUpsellPollTimer);
+      scanUpsellPollTimer = null;
+    }
+  };
+
+  const poll = async () => {
+    if (document.visibilityState !== 'visible') return;
+    let session;
+    try {
+      session = await UyDosh.fetchScanSession(token);
+    } catch (err) {
+      if (err?.status === 404 || err?.status === 410) stop();
+      return;
+    }
+    if (session.status === 'processing' && statusEl) {
+      statusEl.hidden = false;
+      statusEl.textContent = UyDosh.t('create.scan3dProcessing', lang);
+    } else if (session.status === 'completed') {
+      stop();
+      try { sessionStorage.removeItem('uydosh:activeScanSession'); } catch { /* ignore */ }
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.textContent = UyDosh.t('create.scan3dReady', lang);
+      }
+      if (button) {
+        button.disabled = false;
+        button.textContent = UyDosh.t('create.scan3dView', lang);
+        const fresh = button.cloneNode(true);
+        button.replaceWith(fresh);
+        fresh.addEventListener('click', () => {
+          location.href = `/listing.html?${new URLSearchParams({ id: String(listingId), mini: '1', view: '3d' })}`;
+        });
+      }
+    } else if (session.status === 'failed' || session.status === 'expired') {
+      stop();
+      try { sessionStorage.removeItem('uydosh:activeScanSession'); } catch { /* ignore */ }
+    }
+  };
+
+  stop();
+  scanUpsellPollTimer = setInterval(poll, 4000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && scanUpsellPollTimer) poll();
+  });
 }
 
 function goNext() {
