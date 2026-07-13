@@ -132,6 +132,17 @@ function threeDTourBadgeHtml(listing, lang = getLang()) {
   return `<div class="threed-badge" role="img" aria-label="${escapeHtml(label)}">${iconCube()}</div>`;
 }
 
+/** Neutral man+woman glyph (Material "wc") for the compact feed ribbon's
+ * cycling gender chip in its "any" (off) state — no color so it inherits the
+ * chip's muted text color, matching the district pin / metro "M" badges'
+ * neutral resting look. */
+function iconGenderAny() {
+  return chipIconFilled(
+    null,
+    'M5.5 22v-7.5H4V9c0-1.1.9-2 2-2h3c1.1 0 2 .9 2 2v5.5H9.5V22h-4zM18 22v-6h3l-2.54-7.63A2.01 2.01 0 0 0 16.56 7h-.12a2 2 0 0 0-1.9 1.37L12 16h3v6h3zM7.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm9 0c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2z',
+  );
+}
+
 function filterGenderIcon(gender, { pressed = false } = {}) {
   const value = Number(gender);
   if (!value) return '';
@@ -300,6 +311,7 @@ Object.assign(window.UyDosh, {
   listingTypeBadgeIcon,
   filterListingTypeIcon,
   filterGenderIcon,
+  iconGenderAny,
   listingHas3dTour,
   threeDTourBadgeHtml,
   formatDate,

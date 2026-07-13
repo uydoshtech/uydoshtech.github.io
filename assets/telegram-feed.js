@@ -578,13 +578,30 @@ function renderFilters() {
     </div>
   `;
 
-  const genderChipsCompact = genderOptions.map((opt) => UyDosh.chipButtonHtml({
+  // Compact-row gender control: a single cycling chip (any -> M -> F -> any)
+  // instead of two side-by-side chips — same single-button cycle pattern as
+  // the district/metro-line chips, reclaiming one chip's width in the dense
+  // icon-only ribbon. The expanded row keeps the two-segment gender switch
+  // above. Icon-only in every state (no label reveal): the ♂/♀ glyph colors
+  // already read at a glance, and a neutral man+woman glyph marks "any".
+  const genderCycleOption = genderOptions.find((opt) => opt.value === selectedGender);
+  const genderCycleLabel = genderCycleOption?.label ?? UyDosh.t('filter.gender.any', lang);
+  const genderChipCompact = UyDosh.chipButtonHtml({
     className: 'chip chip-icon-only chip-gender',
-    attrs: { 'data-gender': opt.value },
-    pressed: selectedGender === opt.value,
-    icon: UyDosh.filterGenderIcon(opt.value, { pressed: false }),
-    ariaLabel: opt.label,
-  })).join('');
+    attrs: {
+      'data-gender-cycle': true,
+      // Set only while a gender is picked so the existing
+      // `.chips-compact .chip-gender[data-gender="…"][aria-pressed="true"]`
+      // color rules in telegram-index.css keep applying. The `[data-gender]`
+      // click handler below skips this chip via :not([data-gender-cycle]).
+      'data-gender': genderCycleOption ? selectedGender : false,
+    },
+    pressed: genderCycleOption != null,
+    icon: genderCycleOption
+      ? UyDosh.filterGenderIcon(selectedGender, { pressed: false })
+      : UyDosh.iconGenderAny(),
+    ariaLabel: `${UyDosh.t('filter.gender.aria', lang)}: ${genderCycleLabel}`,
+  });
 
   const photoPressed = state.filters.withPhoto;
   const photoChip = UyDosh.chipButtonHtml({
@@ -596,7 +613,7 @@ function renderFilters() {
     ariaLabel: UyDosh.t('filter.photo.aria', lang),
   });
 
-  // Compact-row twin (icon only, matching typeChipsCompact/genderChipsCompact):
+  // Compact-row twin (icon only, matching typeChipsCompact/genderChipCompact):
   // the label stays in the DOM (via `.chip-icon-only .chip-label { display: none }`)
   // for consistency, but read via `ariaLabel` for assistive tech.
   const photoChipCompact = UyDosh.chipButtonHtml({
@@ -758,7 +775,7 @@ function renderFilters() {
             <div class="filter-row filter-row-compact">
               <div class="chips chips-compact" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.type.aria', lang))}">
                 ${typeChipsCompact}
-                ${genderChipsCompact}
+                ${genderChipCompact}
                 ${photoChipCompact}
                 ${districtChipCompact}
                 ${lineChipCompact}
@@ -847,11 +864,30 @@ function renderFilters() {
     });
   });
 
-  filtersEl.querySelectorAll('[data-gender]').forEach((btn) => {
+  // Expanded-row gender switch segments only — the compact cycle chip also
+  // carries a `data-gender` attribute (for the pressed-state color CSS) and
+  // must not get this toggle handler on top of its cycle handler below.
+  filtersEl.querySelectorAll('[data-gender]:not([data-gender-cycle])').forEach((btn) => {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-gender'));
       const toggledOff = state.filters.gender === next;
       state.filters.gender = toggledOff ? GENDER_ANY : next;
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+      if (state.view === 'map') feedMap.loadFeedMap();
+    });
+  });
+
+  filtersEl.querySelectorAll('[data-gender-cycle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // any -> male -> female -> any, mirroring nextDistrictId/nextMetroLineId.
+      const current = state.filters.gender;
+      state.filters.gender = current === GENDER_ANY
+        ? GENDER_MALE
+        : current === GENDER_MALE
+          ? GENDER_FEMALE
+          : GENDER_ANY;
       persistFilters();
       logSearchEvent();
       resetAndLoad();
