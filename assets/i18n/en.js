@@ -239,6 +239,7 @@ I18N.en = {
     'create.scan3dNotIos': 'Room scanning needs an iPhone with a LiDAR camera (iPhone 12 Pro or newer Pro models). Copy the scan link and open it on an iPhone.',
     'create.scan3dCopyLink': 'Copy scan link',
     'create.scan3dLinkCopied': 'Link copied',
+    'create.scan3dQrHint': 'Or scan this QR code with the iPhone camera to start scanning.',
     'create.scan3dError': 'Could not start the scan. Try again later.',
     'create.scan3dProcessing': 'Scan received — building the 3D plan…',
     'create.scan3dReady': '3D plan is ready!',

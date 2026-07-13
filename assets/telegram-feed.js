@@ -798,9 +798,9 @@ function renderFilters() {
                 ${priceSortChipCompact}
                 ${typeChipCompact}
                 ${genderChipCompact}
-                ${photoChipCompact}
                 ${districtChipCompact}
                 ${lineChipCompact}
+                ${photoChipCompact}
                 ${threeDChipCompact}
               </div>
               ${filtersToggleHtml}

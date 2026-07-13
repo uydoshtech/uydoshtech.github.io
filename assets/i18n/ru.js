@@ -239,6 +239,7 @@ I18N.ru = {
     'create.scan3dNotIos': 'Для сканирования нужен iPhone с LiDAR-камерой (iPhone 12 Pro или новее из Pro-моделей). Скопируйте ссылку и откройте её на iPhone.',
     'create.scan3dCopyLink': 'Скопировать ссылку',
     'create.scan3dLinkCopied': 'Ссылка скопирована',
+    'create.scan3dQrHint': 'Или отсканируйте этот QR-код камерой iPhone, чтобы начать сканирование.',
     'create.scan3dError': 'Не удалось начать сканирование. Попробуйте позже.',
     'create.scan3dProcessing': 'Скан получен — строим 3D-план…',
     'create.scan3dReady': '3D-план готов!',

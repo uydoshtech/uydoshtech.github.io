@@ -3412,6 +3412,67 @@ async function submitListing() {
 let scanUpsellPollTimer = null;
 
 /**
+ * QR generator, lazy-loaded from CDN like model-viewer / socket.io elsewhere.
+ * Used by the non-iOS scan flow so the invocation URL can be scanned with an
+ * iPhone camera instead of retyped (App Clip invocation via the camera is
+ * also the only way to launch TestFlight builds with a dynamic session URL —
+ * see uydosh_client/docs/APP_CLIP.md "Local Experiences").
+ */
+const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js';
+let qrCodeLibPromise = null;
+
+function loadQrCodeLib() {
+  if (window.QRCode) return Promise.resolve(window.QRCode);
+  if (qrCodeLibPromise) return qrCodeLibPromise;
+  qrCodeLibPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = QRCODE_LIB_SRC;
+    script.async = true;
+    script.onload = () => {
+      if (window.QRCode) resolve(window.QRCode);
+      else {
+        qrCodeLibPromise = null;
+        reject(new Error('QRCode lib missing after load'));
+      }
+    };
+    script.onerror = () => {
+      qrCodeLibPromise = null;
+      reject(new Error('Failed to load QRCode lib'));
+    };
+    document.head.appendChild(script);
+  });
+  return qrCodeLibPromise;
+}
+
+/** Renders the invocation URL as a QR code inside the scan upsell block. */
+async function showScanQrCode(invocationUrl) {
+  const root = document.getElementById('scan-upsell');
+  if (!root) return;
+  let wrap = document.getElementById('scan-upsell-qr');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'scan-upsell-qr';
+    wrap.className = 'scan-upsell-qr';
+    root.appendChild(wrap);
+  }
+  try {
+    const QRCode = await loadQrCodeLib();
+    const canvas = document.createElement('canvas');
+    await QRCode.toCanvas(canvas, invocationUrl, { width: 200, margin: 2 });
+    wrap.innerHTML = '';
+    wrap.appendChild(canvas);
+    const hint = document.createElement('p');
+    hint.className = 'scan-upsell-qr-hint';
+    hint.textContent = UyDosh.t('create.scan3dQrHint', UyDosh.getLang());
+    wrap.appendChild(hint);
+  } catch (err) {
+    // QR is a nice-to-have on top of the copied link; never break the flow.
+    console.error('QR render failed', err);
+    wrap.remove();
+  }
+}
+
+/**
  * Portrait CSS screen profiles (short×long) unique to iPhones that certainly
  * have no LiDAR: SE1 (320×568), 6/7/8/SE2/SE3 (375×667), 6–8 Plus (414×736),
  * X/XS/11 Pro/12 mini/13 mini (375×812), XR/XS Max/11/11 Pro Max (414×896).
@@ -3522,6 +3583,10 @@ async function startScanFlow(listingId, isIos) {
         button.disabled = false;
         button.textContent = UyDosh.t('create.scan3dLinkCopied', lang);
       }
+      // Desktop/Android: show a QR so the link can be scanned with an iPhone
+      // camera, and poll so this page updates once the scan lands.
+      showScanQrCode(session.invocationUrl);
+      watchScanSession(session.scanSessionId, listingId);
     }
   } catch (err) {
     console.error('Scan session create failed', err);
@@ -3576,6 +3641,7 @@ function watchScanSession(token, listingId) {
     } else if (session.status === 'completed') {
       stop();
       try { sessionStorage.removeItem('uydosh:activeScanSession'); } catch { /* ignore */ }
+      document.getElementById('scan-upsell-qr')?.remove();
       if (statusEl) {
         statusEl.hidden = false;
         statusEl.textContent = UyDosh.t('create.scan3dReady', lang);
@@ -3592,6 +3658,7 @@ function watchScanSession(token, listingId) {
     } else if (session.status === 'failed' || session.status === 'expired') {
       stop();
       try { sessionStorage.removeItem('uydosh:activeScanSession'); } catch { /* ignore */ }
+      document.getElementById('scan-upsell-qr')?.remove();
     }
   };
 

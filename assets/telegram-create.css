@@ -961,6 +961,20 @@ input[readonly] {
   font-size: inherit;
 }
 .scan-upsell-button:disabled { opacity: 0.6; }
+.scan-upsell-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.scan-upsell-qr canvas {
+  border-radius: 12px;
+  /* White quiet zone so the code scans on dark Telegram themes. */
+  background: #fff;
+  padding: 6px;
+}
+.scan-upsell-qr-hint { font-size: 12px; margin: 0; text-align: center; }
 .btn-link {
   display: inline-flex;
   align-items: center;

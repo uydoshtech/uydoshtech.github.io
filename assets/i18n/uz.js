@@ -240,6 +240,7 @@ I18N.uz = {
     'create.scan3dNotIos': 'Skanerlash uchun LiDAR kamerali iPhone kerak (iPhone 12 Pro yoki undan yangi Pro modellar). Havolani nusxalab, iPhone’da oching.',
     'create.scan3dCopyLink': 'Havolani nusxalash',
     'create.scan3dLinkCopied': 'Havola nusxalandi',
+    'create.scan3dQrHint': 'Yoki skanerlashni boshlash uchun bu QR-kodni iPhone kamerasi bilan skanerlang.',
     'create.scan3dError': 'Skanerlashni boshlab bo‘lmadi. Keyinroq urinib ko‘ring.',
     'create.scan3dProcessing': 'Skan qabul qilindi — 3D-reja tayyorlanmoqda…',
     'create.scan3dReady': '3D-reja tayyor!',
