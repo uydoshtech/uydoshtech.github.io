@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="meta.title">UyDosh haqida — Ijara va xonadosh topish ilovasi</title>
+    <meta
+      name="description"
+      content="UyDosh — O‘zbekistonda ijara uy va xonadosh topish ilovasi. E’lonlarni qidiring, suhbatlashing va sizga mos variantlar haqida xabarnoma oling."
+      data-i18n-attr="content"
+      data-i18n="meta.description"
+    />
+
+    <meta property="og:title" content="UyDosh haqida" data-i18n-attr="content" data-i18n="meta.ogTitle" />
+    <meta property="og:description" content="Ijara toping. Ulaning. Ko‘ching." data-i18n-attr="content" data-i18n="meta.ogDescription" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://uydoshtech.github.io/about.html" />
+    <meta property="og:image" content="https://uydoshtech.github.io/images/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="images/uydosh-logo.svg?v=20260715-1" as="image" />
+    <link rel="stylesheet" href="assets/site.css?v=20260711-1" />
+
+    <style>
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 64px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        flex: 1 1 auto;
+        max-width: 100%;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+      }
+      .pill:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: var(--fg);
+      }
+      @media (max-width: 720px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        nav {
+          justify-content: flex-start;
+        }
+        .pill {
+          font-size: 14px;
+          padding: 8px 10px;
+        }
+      }
+
+      .content {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(26px, 3.2vw, 36px);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 22px 0 8px;
+        font-size: 17px;
+        letter-spacing: -0.01em;
+      }
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      ol,
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 12px;
+      }
+      @media (max-width: 900px) {
+        .grid3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .card p {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .ctaRow {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--fg);
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.07);
+        text-decoration: none;
+      }
+      .btn.primary {
+        border-color: transparent;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        box-shadow: 0 14px 40px rgba(34, 197, 94, 0.28);
+      }
+      .btn.testflight {
+        border-color: rgba(96, 165, 250, 0.45);
+        background: rgba(96, 165, 250, 0.14);
+      }
+      .btn.testflight:hover {
+        background: rgba(96, 165, 250, 0.22);
+      }
+
+      .note {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(45, 212, 191, 0.28);
+        background: linear-gradient(
+          180deg,
+          rgba(45, 212, 191, 0.16),
+          rgba(255, 255, 255, 0.02)
+        );
+      }
+      .note strong {
+        color: var(--fg);
+      }
+
+      footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 15px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <a href="index.html" style="display: inline-flex; gap: 12px; align-items: center">
+            <img src="images/uydosh-logo.svg?v=20260715-1" alt="UyDosh logo" />
+            <div>
+              <strong>UyDosh</strong><br />
+              <span
+                style="color: var(--muted); font-size: 15px"
+                data-i18n="header.tagline"
+                >Keling Birga Yashaymiz!</span
+              >
+            </div>
+          </a>
+        </div>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="true" aria-label="O'zbekcha">
+              <span class="flag" aria-hidden="true">🇺🇿</span>
+            </button>
+            <button type="button" data-lang="ru" aria-pressed="false" aria-label="Русский">
+              <span class="flag" aria-hidden="true">🇷🇺</span>
+            </button>
+            <button type="button" data-lang="en" aria-pressed="false" aria-label="English">
+              <span class="flag" aria-hidden="true">🇬🇧</span>
+            </button>
+          </div>
+          <a class="pill" href="index.html" data-i18n="nav.home">Bosh sahifa</a>
+          <a class="pill" href="support.html" data-i18n="nav.support">Yordam</a>
+          <a class="pill" href="privacy-policy.html" data-i18n="nav.privacy">Maxfiylik</a>
+          <a class="pill" href="mailto:uydoshtech@gmail.com" data-i18n="nav.contact">Aloqa</a>
+        </nav>
+      </header>
+
+      <main class="content">
+        <h1 data-i18n="title">UyDosh haqida</h1>
+        <p data-i18n="intro">
+          UyDosh — ijara uy va xonadosh topishni osonlashtiruvchi mobil ilova.
+          Biz e’lonlarni qidirish, egalari va xonadoshlar bilan bevosita
+          suhbatlashish hamda sizga mos variantlar paydo bo‘lganda darhol
+          xabardor bo‘lish imkonini bir joyda jamladik.
+        </p>
+
+        <h2 data-i18n="mission.title">Bizning maqsad</h2>
+        <p data-i18n="mission.body">
+          Uy izlash ko‘pincha vaqt va asabni talab qiladi: tarqoq e’lonlar,
+          eskirgan ma’lumotlar, javob bermaydigan raqamlar. UyDosh buni
+          o‘zgartiradi — dolzarb e’lonlar, ilova ichida tezkor muloqot va
+          shaxsiy mezonlaringiz bo‘yicha bildirishnomalar orqali uy topish
+          jarayonini tez, qulay va ishonchli qilamiz.
+        </p>
+
+        <h2 data-i18n="features.title">Ilova nimalarni taklif qiladi</h2>
+        <div class="grid3">
+          <div class="card">
+            <h3 data-i18n="features.search.title">Qulay qidiruv</h3>
+            <p data-i18n="features.search.body">
+              Narx, joylashuv va boshqa muhim mezonlar bo‘yicha filtrlar bilan
+              keraklisini tez toping.
+            </p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="features.chat.title">Ichki chat</h3>
+            <p data-i18n="features.chat.body">
+              Uy egalari va bo‘lajak xonadoshlar bilan to‘g‘ridan-to‘g‘ri
+              yozishing — hammasi bir joyda.
+            </p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="features.alerts.title">Aqlli bildirishnomalar</h3>
+            <p data-i18n="features.alerts.body">
+              Mezonlaringizga mos yangi e’lon paydo bo‘lishi bilan xabarnoma
+              oling va imkoniyatni boy bermang.
+            </p>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="card">
+            <h3 data-i18n="features.post.title">E’lon joylash</h3>
+            <p data-i18n="features.post.body">
+              O‘z uyingiz yoki bo‘sh xonangizni bir necha daqiqada e’lon qilib,
+              izlovchilar bilan bog‘laning.
+            </p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="features.roommates.title">Xonadosh topish</h3>
+            <p data-i18n="features.roommates.body">
+              Faqat uy emas — birga yashash uchun mos insonni ham shu yerda
+              toping.
+            </p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="features.langs.title">Uch tilda</h3>
+            <p data-i18n="features.langs.body">
+              Ilova o‘zbek, rus va ingliz tillarida ishlaydi.
+            </p>
+          </div>
+        </div>
+
+        <h2 data-i18n="download.title">Ilovani yuklab olish</h2>
+        <p data-i18n="download.body">
+          UyDosh Android va iOS qurilmalarida mavjud.
+        </p>
+        <div class="ctaRow">
+          <a
+            class="btn primary"
+            href="https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk"
+            download="uydosh.apk"
+            data-i18n="download.apk"
+            >Android APK yuklab olish</a
+          >
+          <a
+            class="btn testflight"
+            href="https://testflight.apple.com/join/y2pFAA3k"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="download.testflight"
+            >TestFlight — iOS beta</a
+          >
+        </div>
+
+        <h2 data-i18n="team.title">Kim yaratgan</h2>
+        <p data-i18n="team.body">
+          UyDosh’ni O‘zbekistondagi uy-joy izlash muammosini o‘z tajribasida
+          his qilgan kichik jamoa ishlab chiqmoqda. Biz foydalanuvchilar
+          fikriga tayanib ilovani muntazam yangilab boramiz.
+        </p>
+
+        <div class="note">
+          <strong data-i18n="contact.label">Bog‘lanish:</strong>
+          <span data-i18n="contact.body">
+            takliflar va savollar uchun bizga yozing —
+          </span>
+          <a href="mailto:uydoshtech@gmail.com">uydoshtech@gmail.com</a>
+        </div>
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links">
+          <a href="privacy-policy.html" data-i18n="footer.privacy">Maxfiylik</a>
+          <a href="terms-of-service.html" data-i18n="footer.terms">Foydalanish shartlari</a>
+          <a href="support.html" data-i18n="footer.support">Yordam</a>
+          <a href="index.html" data-i18n="footer.home">Bosh sahifa</a>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="footer.contact">Aloqa</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      const STRINGS = {
+        uz: {
+          "meta.title": "UyDosh haqida — Ijara va xonadosh topish ilovasi",
+          "meta.description":
+            "UyDosh — O‘zbekistonda ijara uy va xonadosh topish ilovasi. E’lonlarni qidiring, suhbatlashing va sizga mos variantlar haqida xabarnoma oling.",
+          "meta.ogTitle": "UyDosh haqida",
+          "meta.ogDescription": "Ijara toping. Ulaning. Ko‘ching.",
+          "header.tagline": "Keling Birga Yashaymiz!",
+          "nav.home": "Bosh sahifa",
+          "nav.support": "Yordam",
+          "nav.privacy": "Maxfiylik",
+          "nav.contact": "Aloqa",
+          title: "UyDosh haqida",
+          intro:
+            "UyDosh — ijara uy va xonadosh topishni osonlashtiruvchi mobil ilova. Biz e’lonlarni qidirish, egalari va xonadoshlar bilan bevosita suhbatlashish hamda sizga mos variantlar paydo bo‘lganda darhol xabardor bo‘lish imkonini bir joyda jamladik.",
+          "mission.title": "Bizning maqsad",
+          "mission.body":
+            "Uy izlash ko‘pincha vaqt va asabni talab qiladi: tarqoq e’lonlar, eskirgan ma’lumotlar, javob bermaydigan raqamlar. UyDosh buni o‘zgartiradi — dolzarb e’lonlar, ilova ichida tezkor muloqot va shaxsiy mezonlaringiz bo‘yicha bildirishnomalar orqali uy topish jarayonini tez, qulay va ishonchli qilamiz.",
+          "features.title": "Ilova nimalarni taklif qiladi",
+          "features.search.title": "Qulay qidiruv",
+          "features.search.body":
+            "Narx, joylashuv va boshqa muhim mezonlar bo‘yicha filtrlar bilan keraklisini tez toping.",
+          "features.chat.title": "Ichki chat",
+          "features.chat.body":
+            "Uy egalari va bo‘lajak xonadoshlar bilan to‘g‘ridan-to‘g‘ri yozishing — hammasi bir joyda.",
+          "features.alerts.title": "Aqlli bildirishnomalar",
+          "features.alerts.body":
+            "Mezonlaringizga mos yangi e’lon paydo bo‘lishi bilan xabarnoma oling va imkoniyatni boy bermang.",
+          "features.post.title": "E’lon joylash",
+          "features.post.body":
+            "O‘z uyingiz yoki bo‘sh xonangizni bir necha daqiqada e’lon qilib, izlovchilar bilan bog‘laning.",
+          "features.roommates.title": "Xonadosh topish",
+          "features.roommates.body":
+            "Faqat uy emas — birga yashash uchun mos insonni ham shu yerda toping.",
+          "features.langs.title": "Uch tilda",
+          "features.langs.body":
+            "Ilova o‘zbek, rus va ingliz tillarida ishlaydi.",
+          "download.title": "Ilovani yuklab olish",
+          "download.body": "UyDosh Android va iOS qurilmalarida mavjud.",
+          "download.apk": "Android APK yuklab olish",
+          "download.testflight": "TestFlight — iOS beta",
+          "team.title": "Kim yaratgan",
+          "team.body":
+            "UyDosh’ni O‘zbekistondagi uy-joy izlash muammosini o‘z tajribasida his qilgan kichik jamoa ishlab chiqmoqda. Biz foydalanuvchilar fikriga tayanib ilovani muntazam yangilab boramiz.",
+          "contact.label": "Bog‘lanish:",
+          "contact.body": " takliflar va savollar uchun bizga yozing — ",
+          "footer.privacy": "Maxfiylik",
+          "footer.terms": "Foydalanish shartlari",
+          "footer.support": "Yordam",
+          "footer.home": "Bosh sahifa",
+          "footer.contact": "Aloqa",
+        },
+        ru: {
+          "meta.title": "О UyDosh — приложение для поиска аренды и соседей",
+          "meta.description":
+            "UyDosh — приложение для поиска аренды жилья и соседей по комнате в Узбекистане. Ищите объявления, общайтесь в чате и получайте уведомления о подходящих вариантах.",
+          "meta.ogTitle": "О UyDosh",
+          "meta.ogDescription": "Найдите аренду. Свяжитесь. Заселяйтесь.",
+          "header.tagline": "Давайте жить вместе!",
+          "nav.home": "Главная",
+          "nav.support": "Поддержка",
+          "nav.privacy": "Конфиденциальность",
+          "nav.contact": "Контакты",
+          title: "О UyDosh",
+          intro:
+            "UyDosh — мобильное приложение, которое упрощает поиск арендного жилья и соседей по комнате. Мы собрали в одном месте поиск объявлений, прямое общение с владельцами и соседями, а также мгновенные уведомления о подходящих вариантах.",
+          "mission.title": "Наша цель",
+          "mission.body":
+            "Поиск жилья часто отнимает время и нервы: разрозненные объявления, устаревшая информация, номера, по которым никто не отвечает. UyDosh меняет это — актуальные объявления, быстрое общение прямо в приложении и уведомления по вашим критериям делают поиск жилья быстрым, удобным и надёжным.",
+          "features.title": "Что предлагает приложение",
+          "features.search.title": "Удобный поиск",
+          "features.search.body":
+            "Быстро находите нужное с фильтрами по цене, расположению и другим важным критериям.",
+          "features.chat.title": "Встроенный чат",
+          "features.chat.body":
+            "Переписывайтесь с владельцами и будущими соседями напрямую — всё в одном месте.",
+          "features.alerts.title": "Умные уведомления",
+          "features.alerts.body":
+            "Получайте уведомление, как только появляется объявление по вашим критериям, и не упускайте возможности.",
+          "features.post.title": "Размещение объявлений",
+          "features.post.body":
+            "Разместите своё жильё или свободную комнату за пару минут и свяжитесь с ищущими.",
+          "features.roommates.title": "Поиск соседей",
+          "features.roommates.body":
+            "Не только жильё — здесь же можно найти подходящего человека для совместного проживания.",
+          "features.langs.title": "На трёх языках",
+          "features.langs.body":
+            "Приложение работает на узбекском, русском и английском языках.",
+          "download.title": "Скачать приложение",
+          "download.body": "UyDosh доступен на Android и iOS.",
+          "download.apk": "Скачать Android APK",
+          "download.testflight": "TestFlight — бета для iOS",
+          "team.title": "Кто создаёт",
+          "team.body":
+            "UyDosh разрабатывает небольшая команда, которая на собственном опыте знает, каково искать жильё в Узбекистане. Мы регулярно обновляем приложение, опираясь на отзывы пользователей.",
+          "contact.label": "Связаться:",
+          "contact.body": " пишите нам с предложениями и вопросами — ",
+          "footer.privacy": "Конфиденциальность",
+          "footer.terms": "Условия",
+          "footer.support": "Поддержка",
+          "footer.home": "Главная",
+          "footer.contact": "Контакты",
+        },
+        en: {
+          "meta.title": "About UyDosh — Rental & Roommate Finder App",
+          "meta.description":
+            "UyDosh is an app for finding rentals and roommates in Uzbekistan. Search listings, chat in-app, and get alerts when a match appears.",
+          "meta.ogTitle": "About UyDosh",
+          "meta.ogDescription": "Find rentals. Connect. Move in.",
+          "header.tagline": "Let's Live Together!",
+          "nav.home": "Home",
+          "nav.support": "Support",
+          "nav.privacy": "Privacy Policy",
+          "nav.contact": "Contact",
+          title: "About UyDosh",
+          intro:
+            "UyDosh is a mobile app that makes finding rental housing and roommates easier. We brought together listing search, direct messaging with owners and roommates, and instant alerts for matching options — all in one place.",
+          "mission.title": "Our mission",
+          "mission.body":
+            "House hunting often costs time and nerves: scattered listings, stale information, numbers nobody answers. UyDosh changes that — up-to-date listings, fast in-app communication, and alerts tailored to your criteria make finding a home fast, convenient, and reliable.",
+          "features.title": "What the app offers",
+          "features.search.title": "Smart search",
+          "features.search.body":
+            "Find what you need quickly with filters for price, location, and other criteria that matter.",
+          "features.chat.title": "Built-in chat",
+          "features.chat.body":
+            "Message owners and future roommates directly — everything stays in one place.",
+          "features.alerts.title": "Smart alerts",
+          "features.alerts.body":
+            "Get notified the moment a listing matching your criteria appears, so you never miss out.",
+          "features.post.title": "Post listings",
+          "features.post.body":
+            "List your place or spare room in minutes and connect with people searching.",
+          "features.roommates.title": "Find roommates",
+          "features.roommates.body":
+            "Not just housing — find the right person to share a place with, too.",
+          "features.langs.title": "Three languages",
+          "features.langs.body":
+            "The app works in Uzbek, Russian, and English.",
+          "download.title": "Get the app",
+          "download.body": "UyDosh is available on Android and iOS.",
+          "download.apk": "Download Android APK",
+          "download.testflight": "iOS beta (TestFlight)",
+          "team.title": "Who's behind it",
+          "team.body":
+            "UyDosh is built by a small team that knows first-hand what searching for housing in Uzbekistan is like. We ship regular updates driven by user feedback.",
+          "contact.label": "Get in touch:",
+          "contact.body": " write to us with suggestions and questions — ",
+          "footer.privacy": "Privacy",
+          "footer.terms": "Terms",
+          "footer.support": "Support",
+          "footer.home": "Home",
+          "footer.contact": "Contact",
+        },
+      };
+
+      function normalizeLang(lang) {
+        if (lang === "en" || lang === "ru" || lang === "uz") return lang;
+        return "uz";
+      }
+
+      function applyLang(lang) {
+        const active = normalizeLang(lang);
+        const dict = STRINGS[active] || STRINGS.uz;
+
+        document.documentElement.lang = active;
+
+        for (const el of document.querySelectorAll("[data-i18n]")) {
+          const key = el.getAttribute("data-i18n");
+          const value = dict[key];
+          if (value == null) continue;
+
+          const attr = el.getAttribute("data-i18n-attr");
+          if (attr) el.setAttribute(attr, value);
+          else el.textContent = value;
+        }
+
+        const titleEl = document.querySelector("title[data-i18n]");
+        if (titleEl) {
+          const k = titleEl.getAttribute("data-i18n");
+          if (dict[k]) titleEl.textContent = dict[k];
+        }
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.setAttribute(
+            "aria-pressed",
+            btn.getAttribute("data-lang") === active ? "true" : "false"
+          );
+        }
+
+        try {
+          localStorage.setItem("uydosh_lang", active);
+        } catch {}
+      }
+
+      (function initLang() {
+        let initial = "uz";
+        try {
+          initial = localStorage.getItem("uydosh_lang") || "uz";
+        } catch {}
+        applyLang(initial);
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+        }
+      })();
+    </script>
+  </body>
+</html>
