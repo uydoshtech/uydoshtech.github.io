@@ -3418,26 +3418,26 @@ let scanUpsellPollTimer = null;
  * also the only way to launch TestFlight builds with a dynamic session URL —
  * see uydosh_client/docs/APP_CLIP.md "Local Experiences").
  */
-const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js';
+const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.5.0/qrcode.js';
 let qrCodeLibPromise = null;
 
 function loadQrCodeLib() {
-  if (window.QRCode) return Promise.resolve(window.QRCode);
+  if (window.qrcode) return Promise.resolve(window.qrcode);
   if (qrCodeLibPromise) return qrCodeLibPromise;
   qrCodeLibPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = QRCODE_LIB_SRC;
     script.async = true;
     script.onload = () => {
-      if (window.QRCode) resolve(window.QRCode);
+      if (window.qrcode) resolve(window.qrcode);
       else {
         qrCodeLibPromise = null;
-        reject(new Error('QRCode lib missing after load'));
+        reject(new Error('qrcode lib missing after load'));
       }
     };
     script.onerror = () => {
       qrCodeLibPromise = null;
-      reject(new Error('Failed to load QRCode lib'));
+      reject(new Error('Failed to load qrcode lib'));
     };
     document.head.appendChild(script);
   });
@@ -3456,11 +3456,17 @@ async function showScanQrCode(invocationUrl) {
     root.appendChild(wrap);
   }
   try {
-    const QRCode = await loadQrCodeLib();
-    const canvas = document.createElement('canvas');
-    await QRCode.toCanvas(canvas, invocationUrl, { width: 200, margin: 2 });
+    const qrcode = await loadQrCodeLib();
+    const qr = qrcode(0, 'M'); // type 0 = auto-size for the data
+    qr.addData(invocationUrl);
+    qr.make();
+    const img = document.createElement('img');
+    // cellSize 5px, 4-module quiet zone — comfortably scannable at arm's length.
+    img.src = qr.createDataURL(5, 4);
+    img.alt = invocationUrl;
+    img.decoding = 'async';
     wrap.innerHTML = '';
-    wrap.appendChild(canvas);
+    wrap.appendChild(img);
     const hint = document.createElement('p');
     hint.className = 'scan-upsell-qr-hint';
     hint.textContent = UyDosh.t('create.scan3dQrHint', UyDosh.getLang());
