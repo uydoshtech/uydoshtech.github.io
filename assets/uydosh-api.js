@@ -392,8 +392,27 @@ async function fetchJsonAuth(path, { method = 'GET', body, params } = {}) {
   return payload;
 }
 
-/** Authenticate via Telegram Mini App initData; stores session token on success. */
-async function authenticateTelegramMiniApp() {
+/**
+ * Single in-flight `POST /users/telegram-webapp-auth` shared by every caller
+ * (see `authenticateTelegramMiniApp`). Page startup fires several independent
+ * fire-and-forget tasks (profile badge/nudge, favorites checks, …) that each
+ * try to authenticate; without this they'd race and, for a brand-new user,
+ * trip the backend's unique-constraint fallback on the silent profile create.
+ */
+let telegramMiniAppAuthInFlight = null;
+
+/** Authenticate via Telegram Mini App initData; stores session token on success.
+ * Concurrent calls share one request instead of each hitting the backend. */
+function authenticateTelegramMiniApp() {
+  if (!telegramMiniAppAuthInFlight) {
+    telegramMiniAppAuthInFlight = doAuthenticateTelegramMiniApp().finally(() => {
+      telegramMiniAppAuthInFlight = null;
+    });
+  }
+  return telegramMiniAppAuthInFlight;
+}
+
+async function doAuthenticateTelegramMiniApp() {
   const initData = getTelegramInitData();
   if (!initData) {
     const err = new Error('Telegram initData missing');

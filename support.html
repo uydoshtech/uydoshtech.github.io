@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="meta.title">UyDosh — Yordam</title>
+    <meta
+      name="description"
+      content="UyDosh ilovasi bo‘yicha yordam: qo‘llab-quvvatlash bilan bog‘lanish, tez-tez so‘raladigan savollar va foydali havolalar."
+      data-i18n-attr="content"
+      data-i18n="meta.description"
+    />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="images/uydosh-logo.svg" as="image" />
+    <link rel="stylesheet" href="assets/site.css?v=20260711-1" />
+
+    <style>
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 64px;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        flex: 1 1 auto;
+        max-width: 100%;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 12px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 999px;
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+      }
+      .pill:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: var(--fg);
+      }
+      @media (max-width: 720px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        nav {
+          justify-content: flex-start;
+        }
+        .pill {
+          font-size: 14px;
+          padding: 8px 10px;
+        }
+      }
+
+      .content {
+        border: 1px solid var(--stroke);
+        background: var(--card);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(26px, 3.2vw, 36px);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 18px 0 8px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      ol,
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .note {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(45, 212, 191, 0.28);
+        background: linear-gradient(
+          180deg,
+          rgba(45, 212, 191, 0.16),
+          rgba(255, 255, 255, 0.02)
+        );
+      }
+      .note strong {
+        color: var(--fg);
+      }
+
+      footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 15px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <a href="index.html" style="display: inline-flex; gap: 12px; align-items: center">
+            <img src="images/uydosh-logo.svg" alt="UyDosh logo" />
+            <div>
+              <strong>UyDosh</strong><br />
+              <span
+                style="color: var(--muted); font-size: 15px"
+                data-i18n="header.tagline"
+                >Keling Birga Yashaymiz!</span
+              >
+            </div>
+          </a>
+        </div>
+        <nav>
+          <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="uz" aria-pressed="true" aria-label="O'zbekcha">
+              <span class="flag" aria-hidden="true">🇺🇿</span>
+            </button>
+            <button type="button" data-lang="ru" aria-pressed="false" aria-label="Русский">
+              <span class="flag" aria-hidden="true">🇷🇺</span>
+            </button>
+            <button type="button" data-lang="en" aria-pressed="false" aria-label="English">
+              <span class="flag" aria-hidden="true">🇬🇧</span>
+            </button>
+          </div>
+          <a class="pill" href="index.html" data-i18n="nav.home">Bosh sahifa</a>
+          <a class="pill" href="privacy-policy.html" data-i18n="nav.privacy">Maxfiylik</a>
+          <a class="pill" href="terms-of-service.html" data-i18n="nav.terms">Foydalanish shartlari</a>
+          <a class="pill" href="mailto:uydoshtech@gmail.com" data-i18n="nav.contact">Aloqa</a>
+        </nav>
+      </header>
+
+      <main class="content">
+        <h1 data-i18n="title">Yordam — UyDosh</h1>
+        <p data-i18n="intro">
+          Savolingiz bormi yoki muammoga duch keldingizmi? Biz yordam berishga
+          tayyormiz.
+        </p>
+
+        <h2 data-i18n="contact.title">Biz bilan bog‘lanish</h2>
+        <ul>
+          <li>
+            <span data-i18n="contact.emailLabel">Email</span>:
+            <a href="mailto:uydoshtech@gmail.com">uydoshtech@gmail.com</a>
+          </li>
+        </ul>
+
+        <div class="note">
+          <strong data-i18n="response.label">Javob muddati:</strong>
+          <span data-i18n="response.body">
+            odatda murojaatlarga 1–2 ish kuni ichida javob beramiz.
+          </span>
+        </div>
+
+        <h2 data-i18n="tips.title">Murojaat yuborishdan oldin</h2>
+        <ul>
+          <li data-i18n="tips.1">
+            Muammoni qisqacha tasvirlab bering: nima qildingiz va nima yuz berdi.
+          </li>
+          <li data-i18n="tips.2">
+            Iloji bo‘lsa, ekran rasmini (screenshot) ilova qiling.
+          </li>
+          <li data-i18n="tips.3">
+            Qurilma turi (iPhone/Android) va ilova versiyasini ko‘rsating.
+          </li>
+        </ul>
+
+        <h2 data-i18n="links.title">Foydali havolalar</h2>
+        <ul>
+          <li>
+            <a href="delete-account.html" data-i18n="links.deleteAccount">Akкаунtni o‘chirish bo‘yicha yo‘riqnoma</a>
+          </li>
+          <li>
+            <a href="privacy-policy.html" data-i18n="links.privacy">Maxfiylik siyosati</a>
+          </li>
+          <li>
+            <a href="terms-of-service.html" data-i18n="links.terms">Foydalanish shartlari</a>
+          </li>
+        </ul>
+
+        <p style="margin-top: 14px" data-i18n="signoff">Hurmat bilan, UyDosh jamoasi</p>
+      </main>
+
+      <footer>
+        <div>© <span id="y"></span> UyDosh</div>
+        <div class="links">
+          <a href="privacy-policy.html" data-i18n="footer.privacy">Maxfiylik</a>
+          <a href="terms-of-service.html" data-i18n="footer.terms">Foydalanish shartlari</a>
+          <a href="index.html" data-i18n="footer.home">Bosh sahifa</a>
+          <a href="mailto:uydoshtech@gmail.com" data-i18n="footer.contact">Aloqa</a>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      const STRINGS = {
+        uz: {
+          "meta.title": "UyDosh — Yordam",
+          "meta.description":
+            "UyDosh ilovasi bo‘yicha yordam: qo‘llab-quvvatlash bilan bog‘lanish, tez-tez so‘raladigan savollar va foydali havolalar.",
+          "header.tagline": "Keling Birga Yashaymiz!",
+          "nav.home": "Bosh sahifa",
+          "nav.privacy": "Maxfiylik",
+          "nav.terms": "Foydalanish shartlari",
+          "nav.contact": "Aloqa",
+          title: "Yordam — UyDosh",
+          intro:
+            "Savolingiz bormi yoki muammoga duch keldingizmi? Biz yordam berishga tayyormiz.",
+          "contact.title": "Biz bilan bog‘lanish",
+          "contact.emailLabel": "Email",
+          "response.label": "Javob muddati:",
+          "response.body":
+            " odatda murojaatlarga 1–2 ish kuni ichida javob beramiz.",
+          "tips.title": "Murojaat yuborishdan oldin",
+          "tips.1":
+            "Muammoni qisqacha tasvirlab bering: nima qildingiz va nima yuz berdi.",
+          "tips.2": "Iloji bo‘lsa, ekran rasmini (screenshot) ilova qiling.",
+          "tips.3":
+            "Qurilma turi (iPhone/Android) va ilova versiyasini ko‘rsating.",
+          "links.title": "Foydali havolalar",
+          "links.deleteAccount": "Akкаунtni o‘chirish bo‘yicha yo‘riqnoma",
+          "links.privacy": "Maxfiylik siyosati",
+          "links.terms": "Foydalanish shartlari",
+          signoff: "Hurmat bilan, UyDosh jamoasi",
+          "footer.privacy": "Maxfiylik",
+          "footer.terms": "Foydalanish shartlari",
+          "footer.home": "Bosh sahifa",
+          "footer.contact": "Aloqa",
+        },
+        ru: {
+          "meta.title": "UyDosh — Поддержка",
+          "meta.description":
+            "Поддержка приложения UyDosh: как связаться с нами, советы и полезные ссылки.",
+          "header.tagline": "Давайте жить вместе!",
+          "nav.home": "Главная",
+          "nav.privacy": "Политика конфиденциальности",
+          "nav.terms": "Условия использования",
+          "nav.contact": "Контакты",
+          title: "Поддержка — UyDosh",
+          intro:
+            "Есть вопрос или столкнулись с проблемой? Мы готовы помочь.",
+          "contact.title": "Связаться с нами",
+          "contact.emailLabel": "Email",
+          "response.label": "Время ответа:",
+          "response.body":
+            " обычно мы отвечаем на обращения в течение 1–2 рабочих дней.",
+          "tips.title": "Перед отправкой обращения",
+          "tips.1":
+            "Кратко опишите проблему: что вы делали и что произошло.",
+          "tips.2": "По возможности приложите скриншот.",
+          "tips.3":
+            "Укажите тип устройства (iPhone/Android) и версию приложения.",
+          "links.title": "Полезные ссылки",
+          "links.deleteAccount": "Инструкция по удалению аккаунта",
+          "links.privacy": "Политика конфиденциальности",
+          "links.terms": "Условия использования",
+          signoff: "С уважением, команда UyDosh",
+          "footer.privacy": "Конфиденциальность",
+          "footer.terms": "Условия",
+          "footer.home": "Главная",
+          "footer.contact": "Контакты",
+        },
+        en: {
+          "meta.title": "UyDosh — Support",
+          "meta.description":
+            "UyDosh app support: how to contact us, tips, and useful links.",
+          "header.tagline": "Let's Live Together!",
+          "nav.home": "Home",
+          "nav.privacy": "Privacy Policy",
+          "nav.terms": "Terms",
+          "nav.contact": "Contact",
+          title: "Support — UyDosh",
+          intro: "Have a question or ran into a problem? We're here to help.",
+          "contact.title": "Contact us",
+          "contact.emailLabel": "Email",
+          "response.label": "Response time:",
+          "response.body":
+            " we usually reply to requests within 1–2 business days.",
+          "tips.title": "Before you reach out",
+          "tips.1":
+            "Briefly describe the issue: what you did and what happened.",
+          "tips.2": "Attach a screenshot if possible.",
+          "tips.3":
+            "Mention your device type (iPhone/Android) and app version.",
+          "links.title": "Useful links",
+          "links.deleteAccount": "Account deletion instructions",
+          "links.privacy": "Privacy Policy",
+          "links.terms": "Terms of Service",
+          signoff: "Regards, UyDosh Team",
+          "footer.privacy": "Privacy",
+          "footer.terms": "Terms",
+          "footer.home": "Home",
+          "footer.contact": "Contact",
+        },
+      };
+
+      function normalizeLang(lang) {
+        if (lang === "en" || lang === "ru" || lang === "uz") return lang;
+        return "uz";
+      }
+
+      function applyLang(lang) {
+        const active = normalizeLang(lang);
+        const dict = STRINGS[active] || STRINGS.uz;
+
+        document.documentElement.lang = active;
+
+        for (const el of document.querySelectorAll("[data-i18n]")) {
+          const key = el.getAttribute("data-i18n");
+          const value = dict[key];
+          if (value == null) continue;
+
+          const attr = el.getAttribute("data-i18n-attr");
+          if (attr) el.setAttribute(attr, value);
+          else el.textContent = value;
+        }
+
+        const titleEl = document.querySelector("title[data-i18n]");
+        if (titleEl) {
+          const k = titleEl.getAttribute("data-i18n");
+          if (dict[k]) titleEl.textContent = dict[k];
+        }
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.setAttribute(
+            "aria-pressed",
+            btn.getAttribute("data-lang") === active ? "true" : "false"
+          );
+        }
+
+        try {
+          localStorage.setItem("uydosh_lang", active);
+        } catch {}
+      }
+
+      (function initLang() {
+        let initial = "uz";
+        try {
+          initial = localStorage.getItem("uydosh_lang") || "uz";
+        } catch {}
+        applyLang(initial);
+
+        for (const btn of document.querySelectorAll(".lang button[data-lang]")) {
+          btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang")));
+        }
+      })();
+    </script>
+  </body>
+</html>
