@@ -3578,15 +3578,24 @@ async function startScanFlow(listingId, isIos) {
       }
       watchScanSession(session.scanSessionId, listingId);
     } else {
-      await navigator.clipboard?.writeText?.(session.invocationUrl);
-      if (button) {
-        button.disabled = false;
-        button.textContent = UyDosh.t('create.scan3dLinkCopied', lang);
-      }
       // Desktop/Android: show a QR so the link can be scanned with an iPhone
-      // camera, and poll so this page updates once the scan lands.
+      // camera, and poll so this page updates once the scan lands. Do this
+      // before the clipboard attempt — writeText rejects in some Telegram
+      // webviews (e.g. Telegram Desktop without a fresh user gesture), and
+      // that must not kill the QR flow.
       showScanQrCode(session.invocationUrl);
       watchScanSession(session.scanSessionId, listingId);
+      let copied = false;
+      try {
+        await navigator.clipboard?.writeText?.(session.invocationUrl);
+        copied = true;
+      } catch { /* clipboard unavailable — the QR still carries the link */ }
+      if (button) {
+        button.disabled = false;
+        button.textContent = copied
+          ? UyDosh.t('create.scan3dLinkCopied', lang)
+          : UyDosh.t('create.scan3dCopyLink', lang);
+      }
     }
   } catch (err) {
     console.error('Scan session create failed', err);
