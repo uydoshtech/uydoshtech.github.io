@@ -22,7 +22,7 @@
    * blending into it — mirrors the map's own black-U overlay spinner
    * (`.map-loading-spinner` in telegram-index.css).
    */
-  --spinner-logo: url("../images/uydosh-logo.svg");
+  --spinner-logo: url("../images/uydosh-logo.svg?v=20260715-1");
   /*
    * `--feed-content-gutter` is the standard horizontal inset (from the
    * viewport edge) for the mini-app header, filter ribbon, and view-tabs —

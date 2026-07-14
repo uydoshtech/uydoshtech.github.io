@@ -23,7 +23,7 @@
            left over from before this CSS was split out of listing.html's own
            inline <style> block (where that same relative path used to be
            correct, resolved against the HTML file's own location instead). */
-        --spinner-logo: url("../images/uydosh-logo.svg");
+        --spinner-logo: url("../images/uydosh-logo.svg?v=20260715-1");
       }
       @media (prefers-color-scheme: light) {
         :root {

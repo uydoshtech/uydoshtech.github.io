@@ -628,7 +628,7 @@ function miniAppHeaderHtml(options = {}) {
   const {
     subtitleKey = 'brand.tagline',
     brandLink = true,
-    iconSrc = '/images/uydosh-logo.svg',
+    iconSrc = '/images/uydosh-logo.svg?v=20260715-1',
   } = options;
   const brandContent =
     `<img src="${escapeHtml(iconSrc)}" width="44" height="44" alt="UyDosh" />` +
@@ -1854,7 +1854,7 @@ function showMiniAppSessionRevokedScreen(_reason, details = {}) {
   overlay.setAttribute('aria-modal', 'true');
   overlay.innerHTML = `
     <div class="mini-app-session-revoked-card">
-      <span class="mini-app-session-revoked-icon" aria-hidden="true"><img src="/images/uydosh-logo.svg" alt="" /></span>
+      <span class="mini-app-session-revoked-icon" aria-hidden="true"><img src="/images/uydosh-logo.svg?v=20260715-1" alt="" /></span>
       <h2 class="mini-app-session-revoked-title">${escapeHtml(t('session.revokedTitle', lang))}</h2>
       <p class="mini-app-session-revoked-message">${escapeHtml(t('session.revokedMessage', lang))}</p>
       ${deviceLineHtml}
