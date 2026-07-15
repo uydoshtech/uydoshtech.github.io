@@ -138,8 +138,11 @@
       }
 
       /** Applies `mode` to every material on the already-loaded model. Safe to call before
-       * the model has finished loading (silently does nothing). */
+       * the model has finished loading (silently does nothing). Remembers the last applied
+       * mode on the viewer element so the 2D plan view (see enterRoomScanPlanView) can
+       * re-apply it — with ceilings force-hidden — without owning the mode state itself. */
       function applyRoomScanDisplayMode(viewerEl, mode) {
+        if (viewerEl) viewerEl.__uydoshDisplayMode = mode;
         const model = viewerEl && viewerEl.model;
         if (!model || !Array.isArray(model.materials)) return;
         model.materials.forEach((material) => {
@@ -147,8 +150,111 @@
           let hidden = false;
           if (mode === 'floorAndFurniture') hidden = kind === 'wall';
           else if (mode === 'floorOnly') hidden = kind === 'wall' || kind === 'furniture';
+          // In the top-down 2D plan view a ceiling mesh (RoomPlan captures one for some
+          // rooms; the backend leaves it on its original material, see classifySurface in
+          // applyRoomScanStylizedMaterials.ts) would cover the entire floor plan — walls
+          // seen edge-on from above read as the plan outline, but a ceiling is just a lid.
+          if (viewerEl.__uydoshPlanViewActive && isRoomScanCeilingMaterialName(material.name)) {
+            hidden = true;
+          }
           setRoomScanMaterialHidden(material, hidden);
         });
+      }
+
+      // --- 2D floor plan (bird's-eye) view toggle -----------------------------------------
+      // Mirrors the native app's "3D / 2D" tab switch (ViewerTab in
+      // RoomUsdzViewerViewController.swift). iOS draws a real vector floor plan from the
+      // USDZ geometry (FloorPlanCanvas.swift); on the web we approximate the same bird's-eye
+      // read with the GLB we already have: lock <model-viewer>'s camera straight down (polar
+      // angle pinned to 0° via min/max-camera-orbit, so dragging only rotates/zooms the
+      // plan, never tilts it) and force-hide any ceiling mesh that would otherwise lid the
+      // room. Walls stay visible — seen edge-on from above they read as the plan outline.
+      function isRoomScanCeilingMaterialName(name) {
+        return (name || '').toLowerCase().includes('ceiling');
+      }
+
+      /** Locks the camera top-down and hides ceilings. Saves whatever it changes on the
+       * viewer element so exitRoomScanPlanView can restore the exact prior 3D state. */
+      function enterRoomScanPlanView(viewerEl) {
+        if (viewerEl.__uydoshPlanViewActive) return;
+        viewerEl.__uydoshPlanViewActive = true;
+        viewerEl.__uydoshPlanSavedOrbit = viewerEl.cameraOrbit;
+        viewerEl.__uydoshPlanResumeAutoRotate = viewerEl.hasAttribute('auto-rotate');
+        viewerEl.removeAttribute('auto-rotate');
+        // Keeps the rotate play/pause button's icon in sync (it otherwise only re-reads
+        // the auto-rotate attribute on its own clicks).
+        viewerEl.dispatchEvent(new CustomEvent('uydosh-autorotate-changed'));
+        // Pin the polar (tilt) angle at 0° — theta (plan rotation) and radius (zoom)
+        // stay free, so the plan can still be spun and zoomed like a map.
+        viewerEl.setAttribute('min-camera-orbit', '-Infinity 0deg auto');
+        viewerEl.setAttribute('max-camera-orbit', 'Infinity 0deg auto');
+        // Slightly backed off (105%) so the whole footprint fits with a small margin.
+        viewerEl.cameraOrbit = '0deg 0deg 105%';
+        // Re-apply the mode button's current state — with __uydoshPlanViewActive now set,
+        // this pass additionally hides ceiling meshes (see applyRoomScanDisplayMode).
+        applyRoomScanDisplayMode(viewerEl, viewerEl.__uydoshDisplayMode || 'fullRoom');
+        // Stops the inline tile's passive wall on/off showcase (see autoToggleWalls in
+        // createRoomScanModeButton) — in the top-down plan the walls are the outline, and
+        // an outline that blinks every 4s reads as a glitch, not a showcase.
+        viewerEl.dispatchEvent(new CustomEvent('uydosh-planview-entered'));
+      }
+
+      /** Undoes enterRoomScanPlanView: unclamps the camera, restores the saved orbit and
+       * auto-rotate, and un-hides ceilings by re-applying the current display mode. */
+      function exitRoomScanPlanView(viewerEl) {
+        if (!viewerEl.__uydoshPlanViewActive) return;
+        viewerEl.__uydoshPlanViewActive = false;
+        viewerEl.removeAttribute('min-camera-orbit');
+        viewerEl.removeAttribute('max-camera-orbit');
+        viewerEl.cameraOrbit = viewerEl.__uydoshPlanSavedOrbit || '0deg 45deg 70%';
+        if (viewerEl.__uydoshPlanResumeAutoRotate && !viewerEl.hasAttribute('auto-rotate')) {
+          viewerEl.setAttribute('auto-rotate', '');
+        }
+        viewerEl.__uydoshPlanResumeAutoRotate = false;
+        viewerEl.dispatchEvent(new CustomEvent('uydosh-autorotate-changed'));
+        applyRoomScanDisplayMode(viewerEl, viewerEl.__uydoshDisplayMode || 'fullRoom');
+      }
+
+      /** Creates the "3D | 2D" segmented pill and wires it to `viewerEl` — the web
+       * counterpart of the native viewer's top tab control. Always starts on 3D, same as
+       * the mode/texture buttons resetting on mount. */
+      function createRoomScanPlanToggle(viewerEl) {
+        const wrap = document.createElement('div');
+        wrap.className = 'roomscan-plan-toggle';
+        wrap.setAttribute('role', 'tablist');
+        wrap.setAttribute('aria-label', UyDosh.t('detail.roomScanViewToggle'));
+
+        const makeBtn = (label, ariaKey, isPlan) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'roomscan-plan-toggle-btn';
+          btn.setAttribute('role', 'tab');
+          btn.textContent = label;
+          btn.setAttribute('aria-label', UyDosh.t(ariaKey));
+          btn.addEventListener('click', () => {
+            if (btn.classList.contains('is-active')) return;
+            UyDosh.haptic?.light?.();
+            if (isPlan) enterRoomScanPlanView(viewerEl);
+            else exitRoomScanPlanView(viewerEl);
+            updateSelection();
+          });
+          return btn;
+        };
+        // "3D"/"2D" stay unlocalized on the button faces (same as the native tab control
+        // and the app's own `3D`-style icon labels); the aria-labels carry the translation.
+        const btn3d = makeBtn('3D', 'detail.roomScanView3d', false);
+        const btn2d = makeBtn('2D', 'detail.roomScanView2d', true);
+        const updateSelection = () => {
+          const planActive = !!viewerEl.__uydoshPlanViewActive;
+          btn3d.classList.toggle('is-active', !planActive);
+          btn2d.classList.toggle('is-active', planActive);
+          btn3d.setAttribute('aria-selected', planActive ? 'false' : 'true');
+          btn2d.setAttribute('aria-selected', planActive ? 'true' : 'false');
+        };
+        wrap.appendChild(btn3d);
+        wrap.appendChild(btn2d);
+        updateSelection();
+        return wrap;
       }
 
       // 4s: long enough that a glance registers each state (walls on vs. off) before it
@@ -206,6 +312,9 @@
         viewerEl.addEventListener('load', () => applyRoomScanDisplayMode(viewerEl, mode));
 
         if (autoToggleWalls) {
+          // Entering the 2D plan view (see enterRoomScanPlanView) permanently stops the
+          // showcase too, same as a manual tap — the user is clearly engaged by then.
+          viewerEl.addEventListener('uydosh-planview-entered', stopAutoToggle, { once: true });
           const tick = () => {
             mode = mode === 'fullRoom' ? 'floorAndFurniture' : 'fullRoom';
             updateAppearance();
@@ -561,6 +670,9 @@
           else viewerEl.setAttribute('auto-rotate', '');
           updateAppearance();
         });
+        // The 2D plan toggle also pauses/resumes auto-rotate (see enterRoomScanPlanView)
+        // and announces it via this event so the play/pause icon here doesn't go stale.
+        viewerEl.addEventListener('uydosh-autorotate-changed', updateAppearance);
         return btn;
       }
 
@@ -870,6 +982,9 @@
           container.appendChild(createRoomScanModeButton(viewer, { autoToggleWalls: true }));
           container.appendChild(createRoomScanWallTextureButton(viewer));
           container.appendChild(createRoomScanFloorTextureButton(viewer));
+          // Top-left, opposite the mode/texture buttons — the web counterpart of the
+          // native viewer's 3D/2D tab control (see createRoomScanPlanToggle).
+          container.appendChild(createRoomScanPlanToggle(viewer));
         } catch (err) {
           console.error('Failed to load 3D room scan viewer', err);
           showRoomScanLoadError(container);
@@ -1000,6 +1115,10 @@
           roomScanBackdropEl.insertBefore(createRoomScanModeButton(viewer, { showLabel: true }), controlsBar);
           roomScanBackdropEl.insertBefore(createRoomScanWallTextureButton(viewer, { showLabel: true }), controlsBar);
           roomScanBackdropEl.insertBefore(createRoomScanFloorTextureButton(viewer, { showLabel: true }), controlsBar);
+          // Bottom-center, floating just above the controls bar (the top corners are
+          // already taken by the dimensions overlay and the labeled toggle pills) — the
+          // web counterpart of the native viewer's 3D/2D tab control.
+          roomScanBackdropEl.insertBefore(createRoomScanPlanToggle(viewer), controlsBar);
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.removeAttribute('aria-label');

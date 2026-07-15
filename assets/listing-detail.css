@@ -687,6 +687,32 @@
         font-family: inherit; font-weight: 700; font-size: 13px; white-space: nowrap;
       }
       .roomscan-btn-label-text { display: inline-block; }
+      /* "3D | 2D" segmented pill — web counterpart of the native viewer's tab control
+         (ViewerTab in RoomUsdzViewerViewController.swift); 2D locks the camera top-down
+         for a bird's-eye floor plan read (see createRoomScanPlanToggle,
+         listing-detail-roomscan.js). Inline mini view: top-left, opposite the mode/texture
+         buttons. Fullscreen: bottom-center just above the controls bar, since both top
+         corners are already occupied (dimensions overlay / labeled toggle pills). */
+      .roomscan-plan-toggle {
+        position: absolute; top: 10px; left: 10px; z-index: 1;
+        display: inline-flex; align-items: center; gap: 2px;
+        height: 34px; padding: 3px; border-radius: 17px;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .roomscan-backdrop .roomscan-plan-toggle {
+        top: auto; left: 50%; transform: translateX(-50%);
+        bottom: calc(32px + env(safe-area-inset-bottom, 0px) + 43px + 10px);
+        height: 40px; border-radius: 20px; background: rgba(0, 0, 0, 0.55);
+      }
+      .roomscan-plan-toggle-btn {
+        appearance: none; border: 0; cursor: pointer;
+        height: 100%; padding: 0 14px; border-radius: 14px;
+        background: transparent; color: #fff;
+        font-family: inherit; font-weight: 700; font-size: 13px; line-height: 1;
+      }
+      .roomscan-backdrop .roomscan-plan-toggle-btn { padding: 0 18px; border-radius: 17px; font-size: 14px; }
+      .roomscan-plan-toggle-btn.is-active { background: #fff; color: #111; }
+      .roomscan-plan-toggle-btn:not(.is-active):active { opacity: 0.85; }
       .roomscan-backdrop-close { font-size: 16px; line-height: 1; }
       .roomscan-backdrop .roomscan-backdrop-close { font-size: 19px; }
       /* Pill-shaped zoom slider — same look as the mobile app's zoom slider (a plain
