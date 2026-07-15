@@ -700,7 +700,9 @@
         background: rgba(0, 0, 0, 0.5);
       }
       .roomscan-backdrop .roomscan-plan-toggle {
-        top: auto; left: 50%; transform: translateX(-50%);
+        /* Bottom-left, directly above the rotate button — mirrors the share button's
+           spot above the close button on the opposite edge. */
+        top: auto; left: 14px;
         bottom: calc(32px + env(safe-area-inset-bottom, 0px) + 43px + 10px);
         height: 40px; border-radius: 20px; background: rgba(0, 0, 0, 0.55);
       }
