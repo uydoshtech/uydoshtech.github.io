@@ -942,9 +942,11 @@
         el.setAttribute('auto-rotate', '');
         el.setAttribute('auto-rotate-delay', '0');
         el.setAttribute('rotation-per-second', '60deg');
-        el.setAttribute('shadow-intensity', '1');
-        el.setAttribute('exposure', '1');
-        el.setAttribute('environment-image', 'neutral');
+        el.setAttribute('shadow-intensity', '0.9');
+        // Slightly above 1 so wood/floor PBR reads closer to the native iOS
+        // SceneKit sun look. Avoid environment-image="neutral" — that cool
+        // studio IBL washes Kenney furniture to cream/grey vs warm wood on iOS.
+        el.setAttribute('exposure', '1.08');
         return el;
       }
 
