@@ -217,8 +217,14 @@
 
       /** Creates the "3D | 2D" segmented pill and wires it to `viewerEl` — the web
        * counterpart of the native viewer's top tab control. Always starts on 3D, same as
-       * the mode/texture buttons resetting on mount. */
-      function createRoomScanPlanToggle(viewerEl) {
+       * the mode/texture buttons resetting on mount.
+       *
+       * 2D first tries the vector blueprint overlay (walls/doors/furniture + measurements
+       * extracted from the GLB — see listing-detail-floorplan.js), mounted into `host`
+       * (the inline viewer wrap or the fullscreen backdrop). The top-down camera lock is
+       * applied either way: it's the visible fallback when the blueprint can't be built,
+       * and it stops the hidden 3D render loop from spinning under the overlay when it can. */
+      function createRoomScanPlanToggle(viewerEl, host, glbUrl) {
         const wrap = document.createElement('div');
         wrap.className = 'roomscan-plan-toggle';
         wrap.setAttribute('role', 'tablist');
@@ -234,8 +240,17 @@
           btn.addEventListener('click', () => {
             if (btn.classList.contains('is-active')) return;
             UyDosh.haptic?.light?.();
-            if (isPlan) enterRoomScanPlanView(viewerEl);
-            else exitRoomScanPlanView(viewerEl);
+            if (isPlan) {
+              enterRoomScanPlanView(viewerEl);
+              if (typeof mountRoomScanBlueprint === 'function' && host && glbUrl) {
+                mountRoomScanBlueprint(host, glbUrl);
+              }
+            } else {
+              if (typeof unmountRoomScanBlueprint === 'function' && host) {
+                unmountRoomScanBlueprint(host);
+              }
+              exitRoomScanPlanView(viewerEl);
+            }
             updateSelection();
           });
           return btn;
@@ -984,7 +999,7 @@
           container.appendChild(createRoomScanFloorTextureButton(viewer));
           // Top-left, opposite the mode/texture buttons — the web counterpart of the
           // native viewer's 3D/2D tab control (see createRoomScanPlanToggle).
-          container.appendChild(createRoomScanPlanToggle(viewer));
+          container.appendChild(createRoomScanPlanToggle(viewer, container, glbUrl));
         } catch (err) {
           console.error('Failed to load 3D room scan viewer', err);
           showRoomScanLoadError(container);
@@ -1043,6 +1058,9 @@
 
       function closeRoomScanFullscreen() {
         if (!roomScanBackdropEl) return;
+        // The blueprint overlay's host class must not survive into the next open
+        // (innerHTML is cleared below, but classes aren't).
+        roomScanBackdropEl.classList.remove('is-blueprint');
         roomScanBackdropEl.classList.remove('is-open');
         roomScanBackdropEl.setAttribute('aria-hidden', 'true');
         setTimeout(() => {
@@ -1118,7 +1136,10 @@
           // Bottom-center, floating just above the controls bar (the top corners are
           // already taken by the dimensions overlay and the labeled toggle pills) — the
           // web counterpart of the native viewer's 3D/2D tab control.
-          roomScanBackdropEl.insertBefore(createRoomScanPlanToggle(viewer), controlsBar);
+          roomScanBackdropEl.insertBefore(
+            createRoomScanPlanToggle(viewer, roomScanBackdropEl, glbUrl),
+            controlsBar
+          );
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.removeAttribute('aria-label');
