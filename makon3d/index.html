@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Makon3D</title>
+    <meta name="description" content="Makon3D — view LiDAR room scans in 3D." />
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script src="../assets/theme-init.js?v=20260711-1"></script>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260716-1" />
+  </head>
+  <body>
+    <div class="m3d-app">
+      <header class="m3d-header">
+        <button type="button" class="m3d-back" id="m3d-back" hidden aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <div class="m3d-brand">
+          <span class="m3d-brand-mark" aria-hidden="true">3D</span>
+          <h1 class="m3d-title" id="m3d-title">Makon3D</h1>
+        </div>
+      </header>
+
+      <main class="m3d-main">
+        <section class="m3d-list-panel" id="m3d-list-panel" aria-label="Scans">
+          <div class="m3d-status" id="m3d-status" role="status">Loading scans…</div>
+          <ul class="m3d-list" id="m3d-list" hidden></ul>
+        </section>
+
+        <section class="m3d-viewer-panel" id="m3d-viewer-panel" hidden aria-label="3D view">
+          <div class="m3d-viewer-wrap" id="m3d-viewer-wrap"></div>
+          <div class="m3d-viewer-meta" id="m3d-viewer-meta"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="../assets/uydosh-core.js?v=20260716-1"></script>
+    <script src="../assets/makon3d.js?v=20260716-1" defer></script>
+  </body>
+</html>

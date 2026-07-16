@@ -1,0 +1,292 @@
+/* Makon3D mini app — list of scans + inline <model-viewer> detail. */
+
+:root {
+  color-scheme: light dark;
+  --m3d-bg: #0b1220;
+  --m3d-fg: rgba(255, 255, 255, 0.94);
+  --m3d-muted: rgba(255, 255, 255, 0.62);
+  --m3d-surface: rgba(255, 255, 255, 0.06);
+  --m3d-stroke: rgba(255, 255, 255, 0.12);
+  --m3d-accent: #3dd6c6;
+  --m3d-accent-dim: rgba(61, 214, 198, 0.16);
+  --m3d-warn: #f0b429;
+  --m3d-safe-top: env(safe-area-inset-top, 0px);
+  --m3d-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([style*="--tg-bg"]) {
+    --m3d-bg: #f3f5f8;
+    --m3d-fg: rgba(15, 23, 42, 0.94);
+    --m3d-muted: rgba(15, 23, 42, 0.58);
+    --m3d-surface: rgba(15, 23, 42, 0.04);
+    --m3d-stroke: rgba(15, 23, 42, 0.1);
+    --m3d-accent: #0f8f84;
+    --m3d-accent-dim: rgba(15, 143, 132, 0.12);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--m3d-bg);
+  color: var(--m3d-fg);
+  font-family: "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(61, 214, 198, 0.18), transparent 55%),
+    radial-gradient(700px 480px at 100% 8%, rgba(96, 165, 250, 0.14), transparent 58%),
+    var(--m3d-bg);
+}
+
+.m3d-app {
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding:
+    calc(12px + var(--m3d-safe-top))
+    16px
+    calc(20px + var(--m3d-safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.m3d-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.m3d-back {
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  color: var(--m3d-fg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.m3d-back[hidden] { display: none; }
+.m3d-back:active { opacity: 0.85; }
+.m3d-back svg { width: 20px; height: 20px; display: block; }
+
+.m3d-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.m3d-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--m3d-accent);
+  background: var(--m3d-accent-dim);
+  border: 1px solid rgba(61, 214, 198, 0.28);
+  flex-shrink: 0;
+}
+
+.m3d-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3d-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.m3d-list-panel,
+.m3d-viewer-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.m3d-list-panel[hidden],
+.m3d-viewer-panel[hidden] {
+  display: none;
+}
+
+.m3d-status {
+  color: var(--m3d-muted);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 28px 4px;
+  text-align: center;
+}
+
+.m3d-status[data-error="1"] {
+  color: #f87171;
+}
+
+.m3d-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.m3d-list[hidden] { display: none; }
+
+.m3d-item {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  border-radius: 16px;
+  padding: 14px 14px 14px 16px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.m3d-item:active {
+  opacity: 0.9;
+  transform: scale(0.995);
+}
+
+.m3d-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.m3d-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.m3d-item-title {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.m3d-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: var(--m3d-muted);
+  font-size: 13px;
+}
+
+.m3d-item-chevron {
+  color: var(--m3d-muted);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.m3d-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 650;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.m3d-badge-ready {
+  color: var(--m3d-accent);
+  background: var(--m3d-accent-dim);
+  border-color: rgba(61, 214, 198, 0.28);
+}
+
+.m3d-badge-pending {
+  color: var(--m3d-warn);
+  background: rgba(240, 180, 41, 0.12);
+  border-color: rgba(240, 180, 41, 0.28);
+}
+
+.m3d-viewer-wrap {
+  position: relative;
+  flex: 1;
+  min-height: min(62vh, 520px);
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--m3d-stroke);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.m3d-viewer-wrap model-viewer {
+  width: 100%;
+  height: 100%;
+  --poster-color: transparent;
+  background: transparent;
+}
+
+.m3d-viewer-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--m3d-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.m3d-viewer-meta {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--m3d-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.m3d-viewer-meta strong {
+  color: var(--m3d-fg);
+  font-weight: 650;
+}
+
+.m3d-dim-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}

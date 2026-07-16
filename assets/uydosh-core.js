@@ -11,10 +11,16 @@
 // Default to the canonical HTTPS API host. Override via ?api=..., localStorage,
 // or <meta name="uydosh-api-base"> when testing another environment.
 const API_BASE = (() => {
-  const isTelegramMiniAppPath = (() => {
+  const isLockedApiBasePath = (() => {
     try {
       const path = location.pathname || '';
-      return /\/telegram(\/|$)/i.test(path) || /\/telegram\.html$/i.test(path);
+      // Telegram + Makon3D mini-app paths ignore sticky localStorage API overrides
+      // (a stale ?api= from browser testing can break prod auth / empty galleries).
+      return (
+        /\/telegram(\/|$)/i.test(path) ||
+        /\/telegram\.html$/i.test(path) ||
+        /\/makon3d(\/|$)/i.test(path)
+      );
     } catch {
       return false;
     }
@@ -22,7 +28,7 @@ const API_BASE = (() => {
 
   // Mini App pages always hit production API (meta/default). A stale ?api= localStorage
   // override from browser testing breaks Telegram initData verification (401).
-  if (isTelegramMiniAppPath) {
+  if (isLockedApiBasePath) {
     try {
       const qs = new URLSearchParams(location.search);
       const api = qs.get('api');
