@@ -20,14 +20,20 @@
       let modelViewerLoadPromise = null;
 
       // The backend rewrites room_scan.glb in place (furniture-catalog backfill,
-      // re-stylize, ...) without changing its URL, so WebViews — Telegram's in
-      // particular — keep serving a stale cached copy forever. Bump this
-      // whenever deployed GLBs change server-side to force a re-download.
-      const ROOM_SCAN_GLB_CACHE_VERSION = '20260716-1';
+      // re-stylize, furniture-edit rebuilds, ...) without changing its URL, so
+      // WebViews — Telegram's in particular — keep serving a stale cached copy
+      // forever. Bump this whenever deployed GLBs change server-side globally.
+      const ROOM_SCAN_GLB_CACHE_VERSION = '20260717-1';
 
-      function roomScanGlbUrlWithVersion(url) {
+      // Per-listing busting: furniture edits rebuild only that listing's GLB and
+      // bump its `updated_at`, so fold it into the query string too — otherwise a
+      // global version alone can't refresh a single edited listing.
+      function roomScanGlbUrlWithVersion(url, updatedAt) {
         if (!url) return '';
-        return `${url}${url.includes('?') ? '&' : '?'}v=${ROOM_SCAN_GLB_CACHE_VERSION}`;
+        const sep = url.includes('?') ? '&' : '?';
+        const stamp = updatedAt ? Date.parse(updatedAt) : NaN;
+        const rev = Number.isFinite(stamp) ? `-${stamp}` : '';
+        return `${url}${sep}v=${ROOM_SCAN_GLB_CACHE_VERSION}${rev}`;
       }
 
       function loadModelViewerScript() {
@@ -1027,7 +1033,7 @@
         if (!toggle || !section || !body || !viewerWrap) return;
 
         const l = state.listing;
-        const glbUrl = roomScanGlbUrlWithVersion(UyDosh.photoUrl(l.room_scan_glb_url));
+        const glbUrl = roomScanGlbUrlWithVersion(UyDosh.photoUrl(l.room_scan_glb_url), l.updated_at);
         const usdzUrl = l.point_cloud_url ? UyDosh.photoUrl(l.point_cloud_url) : '';
 
         // Section renders expanded by default (see buildRoomScanSectionHtml)
