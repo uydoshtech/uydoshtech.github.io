@@ -1063,6 +1063,13 @@
         background: var(--spinner-logo) center / contain no-repeat;
         animation: uydosh-spin 0.9s linear infinite;
       }
+      /* In the Mini App, pin the listing-details loader to the black-letter mark
+         (black "U" + black chimney) regardless of the page's dark/light theme —
+         same approach as `.roomscan-loading-spinner` above — instead of letting
+         `--spinner-logo` flip to the white-U variant under dark theme. */
+      html.mini-app .loading-spinner {
+        background-image: url("../images/uydosh-logo-black-u.svg");
+      }
       @keyframes uydosh-spin {
         to { transform: rotate(360deg); }
       }
