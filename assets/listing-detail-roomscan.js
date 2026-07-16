@@ -19,6 +19,17 @@
       const MODEL_VIEWER_SRC = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js';
       let modelViewerLoadPromise = null;
 
+      // The backend rewrites room_scan.glb in place (furniture-catalog backfill,
+      // re-stylize, ...) without changing its URL, so WebViews — Telegram's in
+      // particular — keep serving a stale cached copy forever. Bump this
+      // whenever deployed GLBs change server-side to force a re-download.
+      const ROOM_SCAN_GLB_CACHE_VERSION = '20260716-1';
+
+      function roomScanGlbUrlWithVersion(url) {
+        if (!url) return '';
+        return `${url}${url.includes('?') ? '&' : '?'}v=${ROOM_SCAN_GLB_CACHE_VERSION}`;
+      }
+
       function loadModelViewerScript() {
         if (window.customElements?.get('model-viewer')) return Promise.resolve();
         if (modelViewerLoadPromise) return modelViewerLoadPromise;
@@ -1016,7 +1027,7 @@
         if (!toggle || !section || !body || !viewerWrap) return;
 
         const l = state.listing;
-        const glbUrl = UyDosh.photoUrl(l.room_scan_glb_url);
+        const glbUrl = roomScanGlbUrlWithVersion(UyDosh.photoUrl(l.room_scan_glb_url));
         const usdzUrl = l.point_cloud_url ? UyDosh.photoUrl(l.point_cloud_url) : '';
 
         // Section renders expanded by default (see buildRoomScanSectionHtml)
