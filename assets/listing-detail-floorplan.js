@@ -464,7 +464,7 @@
       function fpRenderBlueprintSvg(model, container) {
         const M = FP_UNITS_PER_M;
         const b = model.bounds;
-        const padM = 1.5; // meters of graph paper around the plan (room for dim chips)
+        const padM = 2.25; // meters of graph paper around the plan (room for dim chips)
         const fit = {
           x: (b.minX - padM) * M,
           y: (b.minY - padM) * M,
