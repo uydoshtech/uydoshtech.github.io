@@ -93,10 +93,16 @@
 
   function readRoute() {
     const qs = new URLSearchParams(location.search);
-    const rawId = qs.get('id') || qs.get('scan');
+    let rawId = qs.get('id') || qs.get('scan');
+    // Support path-style URLs: /makon3d/scans/123 (custom domain / SPA hosts).
+    if (!rawId) {
+      const pathMatch = location.pathname.match(/\/scans\/(\d+)\/?$/);
+      if (pathMatch) rawId = pathMatch[1];
+    }
     const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
     const deviceId = (qs.get('device_id') || '').trim();
-    return { id, deviceId };
+    const token = (qs.get('token') || '').trim();
+    return { id, deviceId, token };
   }
 
   function setRoute(scanId) {
@@ -127,6 +133,91 @@
     titleEl.textContent = 'Makon3D';
     viewerWrapEl.innerHTML = '';
     viewerMetaEl.innerHTML = '';
+    clearShareOgTags();
+  }
+
+  function clearShareOgTags() {
+    document.querySelectorAll('meta[data-m3d-og]').forEach((el) => el.remove());
+  }
+
+  function setShareOgTags({ title, description, imageUrl, pageUrl }) {
+    clearShareOgTags();
+    const tags = [
+      ['og:title', title],
+      ['og:description', description],
+      ['og:image', imageUrl],
+      ['og:url', pageUrl],
+      ['twitter:card', 'summary_large_image'],
+    ];
+    for (const [property, content] of tags) {
+      if (!content) continue;
+      const meta = document.createElement('meta');
+      meta.setAttribute('data-m3d-og', '1');
+      if (property.startsWith('twitter:')) meta.setAttribute('name', property);
+      else meta.setAttribute('property', property);
+      meta.setAttribute('content', content);
+      document.head.appendChild(meta);
+    }
+  }
+
+  function viewerShareUrl(scanId) {
+    return `${location.origin}${location.pathname}?id=${scanId}`;
+  }
+
+  async function shareScan(scan) {
+    const id = Number(scan.id);
+    const shareUrl = scan.viewerUrl || viewerShareUrl(id);
+    const text = `View this 3D scan in Makon3D:\n\n${shareUrl}`;
+    const gifUrl = scan.rotationGifUrl ? photoUrl(scan.rotationGifUrl) : '';
+    try {
+      if (gifUrl && navigator.share && navigator.canShare) {
+        const res = await fetch(gifUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `makon3d-scan-${id}.gif`, {
+          type: 'image/gif',
+        });
+        if (navigator.canShare({ files: [file], text, url: shareUrl })) {
+          await navigator.share({ files: [file], text, url: shareUrl, title: 'Makon3D' });
+          return;
+        }
+      }
+      if (navigator.share) {
+        await navigator.share({ title: 'Makon3D', text, url: shareUrl });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      console.warn('[Makon3D] share failed', err);
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      showStatus('Link copied to clipboard.');
+    } catch {
+      window.prompt('Copy this link:', shareUrl);
+    }
+  }
+
+  function renderViewerMeta(scan) {
+    const dims = scanDimensions(scan);
+    const date = formatDate(scan.createdAt);
+    const bits = [date, ...dims].filter(Boolean);
+    const gifReady = scan.mediaGenerationStatus === 'ready' && scan.rotationGifUrl;
+    viewerMetaEl.innerHTML = `
+      <div class="m3d-viewer-meta-row">
+        <div class="m3d-viewer-meta-text">${bits
+          .map((b) => `<span>${escapeHtml(b)}</span>`)
+          .join('')}</div>
+        <button type="button" class="m3d-share-btn" id="m3d-share-btn">
+          ${gifReady ? 'Share GIF' : 'Share link'}
+        </button>
+      </div>
+    `;
+    const btn = document.getElementById('m3d-share-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        void shareScan(scan);
+      });
+    }
   }
 
   function loadModelViewerScript() {
@@ -227,7 +318,9 @@
     }
     if (!scan) {
       try {
-        const res = await fetch(`${API_BASE}/makon3d/scans/${id}`);
+        const { token } = readRoute();
+        const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+        const res = await fetch(`${API_BASE}/makon3d/scans/${id}${qs}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         scan = await res.json();
       } catch (err) {
@@ -244,6 +337,19 @@
     backEl.hidden = false;
     titleEl.textContent = `Scan #${id}`;
     if (pushHistory) setRoute(id);
+    renderViewerMeta(scan);
+    const pageUrl = scan.viewerUrl || viewerShareUrl(id);
+    const imageUrl = scan.rotationGifUrl
+      ? photoUrl(scan.rotationGifUrl)
+      : scan.posterImageUrl
+        ? photoUrl(scan.posterImageUrl)
+        : '';
+    setShareOgTags({
+      title: `Makon3D scan #${id}`,
+      description: 'View this 3D scan in Makon3D',
+      imageUrl,
+      pageUrl,
+    });
     await mountViewer(scan);
   }
 

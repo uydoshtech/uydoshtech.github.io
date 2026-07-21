@@ -280,6 +280,38 @@ body {
   line-height: 1.4;
 }
 
+.m3d-viewer-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.m3d-viewer-meta-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.m3d-share-btn {
+  flex-shrink: 0;
+  appearance: none;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-accent-dim);
+  color: var(--m3d-fg);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.m3d-share-btn:active {
+  opacity: 0.85;
+}
+
 .m3d-viewer-meta strong {
   color: var(--m3d-fg);
   font-weight: 650;
