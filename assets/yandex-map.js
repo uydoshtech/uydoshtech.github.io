@@ -17,7 +17,12 @@
   /** Yandex Maps JavaScript API key (HTTP Referer: uydoshtech.github.io). */
   const COMPILE_TIME_WEB_MAPS_API_KEY = '70aaf6ac-5a4b-4a69-a5a5-c16536483324';
 
-  const YMAPS_READY_TIMEOUT_MS = 15000;
+  // Telegram Mini App WebViews on cellular often need longer than desktop
+  // browsers to finish downloading `package.full` from yastatic.net after the
+  // bootstrap script returns — 15s was racing the feed map's own 18s outer
+  // timeout and surfacing as a generic "failed to load map" with no pins
+  // problem (the listings fetch itself was fine).
+  const YMAPS_READY_TIMEOUT_MS = 25000;
   let scriptPromise = null;
   const activeMaps = new WeakMap();
   const trackedContainers = new Set();
@@ -199,16 +204,20 @@
       }
     } catch { /* ignore */ }
 
-    try {
-      const saved = localStorage.getItem('uydosh_yandex_maps_key');
-      if (saved && saved.trim()) return saved.trim();
-    } catch { /* ignore */ }
-
+    // Prefer the page's baked-in / backend key over a stale localStorage value
+    // left by a previous `?ymapkey=` test — a bad saved key was permanently
+    // shadowing the good meta key and failing the map while the feed (which
+    // never touches Yandex) kept working.
     const metaKey = readMetaApiKey();
     if (metaKey) return metaKey;
 
     const backendKey = await fetchApiKeyFromBackend();
     if (backendKey) return backendKey;
+
+    try {
+      const saved = localStorage.getItem('uydosh_yandex_maps_key');
+      if (saved && saved.trim()) return saved.trim();
+    } catch { /* ignore */ }
 
     return COMPILE_TIME_WEB_MAPS_API_KEY;
   }
@@ -310,6 +319,10 @@
           const script = document.createElement('script');
           script.src = `https://api-maps.yandex.ru/2.1/?apikey=${encodeURIComponent(apiKey)}&lang=${encodeURIComponent(mapLang)}`;
           script.async = true;
+          // Keep an origin Referer for Yandex's HTTP-Referrer key restriction.
+          // Some Telegram WebView privacy modes otherwise send an empty Referer
+          // on cross-origin script loads, which makes `apikeyValid: false`.
+          script.referrerPolicy = 'strict-origin-when-cross-origin';
           script.dataset.uydoshYandexMaps = '1';
           script.addEventListener('load', () => {
             waitForYmapsReady().then(resolve).catch(reject);
@@ -3225,6 +3238,7 @@
     loadYandexScript,
     resetYandexMapsLoader,
     getApiKey,
+    reportYandexMapIssue,
     yandexMapsOpenUrl,
     yandexMapsLang,
     renderSinglePinMap,

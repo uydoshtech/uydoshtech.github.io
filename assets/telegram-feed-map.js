@@ -2,7 +2,10 @@
 // Loaded from telegram/index.html after the uydosh-*.js modules.
 
 (function () {
-  const MAP_LOAD_TIMEOUT_MS = 18000;
+  // Must stay above Yandex `ymaps.ready` (25s) plus a little headroom for
+  // Map construction — otherwise a slow Telegram WebView download of the
+  // Yandex package fails the whole feed map even when `/listings/map` succeeded.
+  const MAP_LOAD_TIMEOUT_MS = 35000;
 
   /**
    * @param {object} options
@@ -466,7 +469,13 @@
       if (state.mapLoaded && lastLoadedMapSignature === signature) return;
       if (prefetchedMapSignature === signature) return;
       prefetchedMapSignature = signature;
-      UyDosh.loadYandexMapModule().catch(() => { /* loadFeedMap() will retry + surface this */ });
+      // Warm both the wrapper module *and* the heavy Yandex JS API bootstrap
+      // (api-maps.yandex.ru → yastatic.net package.full). Previously only the
+      // thin `/assets/yandex-map.js` wrapper was prefetched, so the first Map
+      // tab open still paid the full SDK download inside the load timeout.
+      UyDosh.loadYandexMapModule()
+        .then((mapModule) => mapModule?.loadYandexScript?.(UyDosh.getLang()))
+        .catch(() => { /* loadFeedMap() will retry + surface this */ });
       const fetchPromise = UyDosh.fetchListingsForMap({
         page: 1,
         limit: 300,
@@ -511,12 +520,24 @@
         await UyDosh.waitForElementLayout(feedMapEl);
         if (generation !== mapLoadGeneration) return;
 
+        // Overlap the Yandex SDK download with the pins fetch — they hit
+        // different hosts, and sequencing them was the main reason Map tab
+        // timed out in Telegram while List (api.uydosh.com only) still worked.
+        const pinsPromise = reusablePinsPromise || UyDosh.fetchListingsForMap({
+          page: 1,
+          limit: 300,
+          ...filterParams,
+        });
+        const mapModulePromise = UyDosh.loadYandexMapModule().then(async (mapModule) => {
+          await mapModule.loadYandexScript(UyDosh.getLang());
+          return mapModule;
+        });
+        // If the pins fetch rejects first, keep this from becoming an unhandled
+        // rejection while we still await pinsPromise below.
+        mapModulePromise.catch(() => { /* surfaced when awaited below */ });
+
         const data = await UyDosh.withTimeout(
-          reusablePinsPromise || UyDosh.fetchListingsForMap({
-            page: 1,
-            limit: 300,
-            ...filterParams,
-          }),
+          pinsPromise,
           MAP_LOAD_TIMEOUT_MS,
           'Map listings fetch timed out',
         );
@@ -533,7 +554,7 @@
         if (generation !== mapLoadGeneration) return;
 
         const mapModule = await UyDosh.withTimeout(
-          UyDosh.loadYandexMapModule(),
+          mapModulePromise,
           MAP_LOAD_TIMEOUT_MS,
           'Map module load timed out',
         );
@@ -619,6 +640,37 @@
       } catch (err) {
         if (generation !== mapLoadGeneration) return;
         console.error('Failed to load feed map', err);
+        const message = err?.message || String(err);
+        // Feed-map failures previously only hit `console.error` (invisible to
+        // us). Script-load failures inside yandex-map.js already report; this
+        // covers the outer timeouts / module failures that never reached that
+        // path — the case we saw when `/listings/map` succeeded but the Map
+        // tab still showed the generic error.
+        try {
+          const reporter = (state.mapModule || window.UyDoshMap)?.reportYandexMapIssue;
+          if (typeof reporter === 'function') {
+            reporter('feed_map_load_failed', message);
+          } else {
+            const apiBase = String(UyDosh.API_BASE || 'https://api.uydosh.com').replace(/\/$/, '');
+            const payload = JSON.stringify({
+              kind: 'feed_map_load_failed',
+              message: String(message).slice(0, 500),
+              page: location.href || '',
+            });
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(
+                `${apiBase}/app/yandex-maps-log`,
+                new Blob([payload], { type: 'application/json' }),
+              );
+            }
+          }
+        } catch { /* best-effort */ }
+        try {
+          UyDosh.logMiniAppEvent?.('exception', {
+            description: `feed_map: ${String(message).slice(0, 80)}`,
+            fatal: false,
+          });
+        } catch { /* best-effort */ }
         showFeedMapError(() => retryFeedMap({ hardReset: true }));
         state.mapLoaded = false;
       } finally {
