@@ -840,22 +840,32 @@
         return btn;
       }
 
-      /** Passes the same URL as both `url` and `linkPreviewUrl` to `shareListingLink`
-       * so every fallback path it might take (Mini App Telegram dialog, browser
-       * `navigator.share`, plain `window.open`) ends up sharing this exact `_3d` link
-       * rather than the general listing share link. */
+      /** Passes a crawlable API URL as `linkPreviewUrl` so Telegram unfurls
+       * Open Graph tags (GIF when ready). The tap target stays the `t.me` `_3d` link. */
       async function shareRoomScan3d(l) {
         if (!l) return;
         UyDosh.haptic?.light?.();
         const lang = UyDosh.getLang();
         const shareUrl = buildListing3dShareUrl(l.id);
         const text = buildListingShareText(l, lang);
-        const method = await UyDosh.shareListingLink(shareUrl, text, [], '', shareUrl);
+        const linkPreviewUrl = `${UyDosh.API_BASE || 'https://api.uydosh.com'}/listing/${encodeURIComponent(l.id)}?preview=3d`;
+        const gifUrl = typeof l.room_scan_rotation_gif_url === 'string'
+          ? UyDosh.photoUrl(l.room_scan_rotation_gif_url)
+          : '';
+        const photoUrls = gifUrl ? [gifUrl] : [];
+        const method = await UyDosh.shareListingLink(
+          shareUrl,
+          text,
+          photoUrls,
+          '',
+          linkPreviewUrl
+        );
         if (UyDosh.isMiniApp()) {
           UyDosh.logMiniAppEvent('listing_share_tapped', {
             listing_id: Number(l.id),
             source: 'telegram_mini_app_room_scan_3d',
             share_method: method || 'unknown',
+            has_rotation_gif: Boolean(gifUrl),
           });
         }
       }

@@ -75,8 +75,15 @@
       // tells the backend's `deepLinkRoutes.ts` that this tap, too,
       // originated from a web share and should stay on the web (bot Mini
       // App) instead of racing the native app scheme.
-      function buildListingLinkPreviewUrl(id) {
-        return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}?preview=photo`;
+      // When the listing has a ready 3D turntable GIF, prefer `?preview=3d` so
+      // Telegram's link header shows the looping model instead of a still photo.
+      // Otherwise keep `?preview=photo` (primary listing photo).
+      function buildListingLinkPreviewUrl(id, listing) {
+        const hasGif =
+          typeof listing?.room_scan_rotation_gif_url === 'string' &&
+          listing.room_scan_rotation_gif_url.trim().length > 0;
+        const preview = hasGif ? '3d' : 'photo';
+        return `${SHARE_WEB_BASE}/listing/${encodeURIComponent(id)}?preview=${preview}`;
       }
 
       // `?preview=map` swaps that same Open Graph image for a static map of
@@ -95,10 +102,19 @@
           const lang = UyDosh.getLang();
           const url = buildListingShareUrl(l.id);
           const text = buildListingShareText(l, lang);
-          const photoUrls = sortedPhotos(l).map((p) => UyDosh.photoUrl(p)).filter(Boolean);
           const mapPreviewUrl = buildListingMapPreviewUrl(l.id);
-          const linkPreviewUrl = buildListingLinkPreviewUrl(l.id);
-          const method = await UyDosh.shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreviewUrl);
+          const linkPreviewUrl = buildListingLinkPreviewUrl(l.id, l);
+          const gifUrl =
+            typeof l.room_scan_rotation_gif_url === 'string' &&
+            l.room_scan_rotation_gif_url.trim()
+              ? UyDosh.photoUrl(l.room_scan_rotation_gif_url)
+              : '';
+          // Prefer attaching the rotation GIF when available so Telegram shows
+          // the looping 3D preview as a media header; fall back to photos.
+          const photoUrls = gifUrl
+            ? [gifUrl]
+            : sortedPhotos(l).map((p) => UyDosh.photoUrl(p)).filter(Boolean);
+          const method = await UyDosh.shareListingLink(url, text, photoUrls, gifUrl ? '' : mapPreviewUrl, linkPreviewUrl);
           if (UyDosh.isMiniApp()) {
             UyDosh.logMiniAppEvent('listing_share_tapped', {
               listing_id: Number(l.id),
