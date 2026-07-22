@@ -88,6 +88,7 @@ I18N.ru = {
     'detail.roomScanView2d': '2D-план (вид сверху)',
     'detail.roomScanLoadError': 'Не удалось загрузить 3D-модель.',
     'detail.roomScanShare': 'Поделиться 3D-видом',
+    'detail.roomScanCompass': 'Стороны света (С, В, Ю, З)',
     'detail.gallery.dots': 'Фото',
     'detail.gallery.photo': 'Фото',
     'detail.contactTelegram': 'Telegram',

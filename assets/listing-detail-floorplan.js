@@ -314,6 +314,9 @@
           furniture: buckets.furniture,
           bounds: { minX, minY, maxX, maxY },
           center: { x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
+          // Plan→screen north uses the same formula as iOS FloorPlanTab:
+          // screenNorth = −(planNorth + footprintYaw). Web's alignAngle is that yaw.
+          alignAngle,
         };
       }
 
@@ -660,6 +663,7 @@
         if (overlay) {
           overlay.hidden = false;
           host.classList.add('is-blueprint');
+          host.dispatchEvent(new CustomEvent('uydosh-blueprint-changed'));
           return true;
         }
         overlay = document.createElement('div');
@@ -673,12 +677,20 @@
           // The user may have toggled back to 3D while we were parsing.
           if (!overlay.isConnected) return false;
           overlay.innerHTML = '';
+          if (Number.isFinite(model.alignAngle)) {
+            host.dataset.roomscanBlueprintAlignRad = String(model.alignAngle);
+          } else {
+            delete host.dataset.roomscanBlueprintAlignRad;
+          }
           fpRenderBlueprintSvg(model, overlay);
+          host.dispatchEvent(new CustomEvent('uydosh-blueprint-changed'));
           return true;
         } catch (err) {
           console.warn('2D blueprint unavailable, falling back to top-down 3D', err);
           overlay.remove();
           host.classList.remove('is-blueprint');
+          delete host.dataset.roomscanBlueprintAlignRad;
+          host.dispatchEvent(new CustomEvent('uydosh-blueprint-changed'));
           return false;
         }
       }
@@ -688,4 +700,5 @@
         const overlay = host.querySelector(':scope > .roomscan-blueprint');
         if (overlay) overlay.hidden = true;
         host.classList.remove('is-blueprint');
+        host.dispatchEvent(new CustomEvent('uydosh-blueprint-changed'));
       }

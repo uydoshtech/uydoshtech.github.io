@@ -88,6 +88,7 @@ I18N.en = {
     'detail.roomScanView2d': '2D floor plan (bird\u2019s-eye view)',
     'detail.roomScanLoadError': 'Could not load the 3D model.',
     'detail.roomScanShare': 'Share 3D view',
+    'detail.roomScanCompass': 'World direction (N, E, S, W)',
     'detail.gallery.dots': 'Photos',
     'detail.gallery.photo': 'Photo',
     'detail.contactTelegram': 'Contact on Telegram',

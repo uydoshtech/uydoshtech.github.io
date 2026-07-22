@@ -825,6 +825,164 @@
         }, { passive: false });
       }
 
+      // --- World-direction compass (fullscreen only) --------------------------------------
+      // Ports FloorPlanNorthOrientation + SunCompassOverlayView from room_scan_kit: a compact
+      // N/E/S/W rose that tracks where geographic north sits on screen as the camera orbits
+      // (3D) or via the blueprint's align yaw (2D). Uses listing
+      // room_scan_world_plus_x_bearing_deg + room_scan_north_correction_deg — same fields the
+      // native viewer gets from Flutter. No owner "adjust north" panel on web yet.
+
+      /** Degrees clockwise from true north of world +X, normalized to [0, 360). */
+      function roomScanEffectiveWorldPlusXBearingDeg(scanBearing, correctionDeg) {
+        let bearing = scanBearing + correctionDeg;
+        bearing %= 360;
+        if (bearing < 0) bearing += 360;
+        return bearing;
+      }
+
+      /**
+       * Plan-space angle (radians, CCW from world +X toward world −Z) of geographic north.
+       * Mirrors FloorPlanNorthOrientation.trueNorthPlanAngleRad (worldEast defaults to 0 —
+       * the published GLB is still in scan/world axes, not a re-yawed editable plan).
+       */
+      function roomScanTrueNorthPlanAngleRad(scanBearingDeg, correctionDeg) {
+        const correction = Number.isFinite(correctionDeg) ? correctionDeg : 0;
+        if (Number.isFinite(scanBearingDeg)) {
+          return roomScanEffectiveWorldPlusXBearingDeg(scanBearingDeg, correction) * Math.PI / 180;
+        }
+        // No compass at scan time: world −Z is scan "forward" on the plan.
+        return Math.PI / 2 + correction * Math.PI / 180;
+      }
+
+      function roomScanParseListingBearing(l) {
+        const bearing = Number(l?.room_scan_world_plus_x_bearing_deg);
+        const correction = Number(l?.room_scan_north_correction_deg);
+        return {
+          scanBearingDeg: Number.isFinite(bearing) ? bearing : null,
+          correctionDeg: Number.isFinite(correction) ? correction : 0,
+        };
+      }
+
+      /** Reads <model-viewer>'s current azimuthal orbit angle (radians). */
+      function roomScanCameraThetaRad(viewerEl) {
+        const orbit = typeof viewerEl.getCameraOrbit === 'function' ? viewerEl.getCameraOrbit() : null;
+        if (orbit && Number.isFinite(orbit.theta)) return orbit.theta;
+        const raw = String(viewerEl.cameraOrbit || viewerEl.getAttribute('camera-orbit') || '').trim();
+        const match = raw.match(/^([-+]?[\d.]+)\s*(deg|rad)?/i);
+        if (!match) return 0;
+        const value = Number(match[1]);
+        if (!Number.isFinite(value)) return 0;
+        return (match[2] || 'rad').toLowerCase() === 'deg' ? value * Math.PI / 180 : value;
+      }
+
+      /**
+       * Screen-space angle (radians; 0 = right, + = clockwise / down) where geographic north
+       * points — same convention as SunCompassOverlayView / CompassScreenProjection.
+       * 3D: −planNorth − cameraTheta. 2D blueprint: −(planNorth + alignYaw).
+       */
+      function roomScanNorthScreenAngleRad(viewerEl, host, trueNorthPlanAngleRad) {
+        if (host?.classList.contains('is-blueprint')) {
+          const align = Number(host.dataset.roomscanBlueprintAlignRad);
+          const yaw = Number.isFinite(align) ? align : 0;
+          return -(trueNorthPlanAngleRad + yaw);
+        }
+        return -trueNorthPlanAngleRad - roomScanCameraThetaRad(viewerEl);
+      }
+
+      /**
+       * Compact N/E/S/W rose for the fullscreen backdrop only (not the inline tile).
+       * Stops itself when detached (closeRoomScanFullscreen clears innerHTML).
+       */
+      function createRoomScanCompassOverlay(viewerEl, host, l) {
+        const { scanBearingDeg, correctionDeg } = roomScanParseListingBearing(l);
+        const trueNorthPlanAngleRad = roomScanTrueNorthPlanAngleRad(scanBearingDeg, correctionDeg);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'roomscan-compass';
+        wrap.setAttribute('role', 'img');
+        wrap.setAttribute('aria-label', UyDosh.t('detail.roomScanCompass'));
+
+        const disc = document.createElement('div');
+        disc.className = 'roomscan-compass-disc';
+        wrap.appendChild(disc);
+
+        const labels = [
+          { text: 'N', className: 'is-n', offset: 0 },
+          { text: 'E', className: '', offset: Math.PI / 2 },
+          { text: 'S', className: '', offset: Math.PI },
+          { text: 'W', className: '', offset: -Math.PI / 2 },
+        ].map(({ text, className, offset }) => {
+          const el = document.createElement('span');
+          el.className = `roomscan-compass-label${className ? ` ${className}` : ''}`;
+          el.textContent = text;
+          el.dataset.offset = String(offset);
+          disc.appendChild(el);
+          return el;
+        });
+
+        const radiusPx = 22;
+        let raf = 0;
+        let lastAngle = NaN;
+        // Abort when the rose is removed (fullscreen close clears backdrop innerHTML) so
+        // listeners on the persistent `#roomscan-backdrop` host don't accumulate across opens.
+        const ac = new AbortController();
+        const { signal } = ac;
+
+        const apply = () => {
+          if (!wrap.isConnected) {
+            ac.abort();
+            return;
+          }
+          const north = roomScanNorthScreenAngleRad(viewerEl, host, trueNorthPlanAngleRad);
+          if (Number.isFinite(lastAngle) && Math.abs(north - lastAngle) < 0.002) return;
+          lastAngle = north;
+          for (const el of labels) {
+            const angle = north + Number(el.dataset.offset);
+            const x = Math.cos(angle) * radiusPx;
+            const y = Math.sin(angle) * radiusPx;
+            el.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
+          }
+        };
+
+        const schedule = () => {
+          if (raf) return;
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            apply();
+          });
+        };
+
+        viewerEl.addEventListener('camera-change', schedule, { signal });
+        // Blueprint mount/unmount swaps the north formula without always firing camera-change.
+        host.addEventListener('uydosh-blueprint-changed', schedule, { signal });
+        // Auto-rotate keeps theta moving; camera-change usually fires, but a light rAF loop
+        // while the attribute is set keeps the rose from lagging behind the spin.
+        let spinRaf = 0;
+        const spinTick = () => {
+          if (!wrap.isConnected) {
+            ac.abort();
+            return;
+          }
+          apply();
+          if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
+            spinRaf = requestAnimationFrame(spinTick);
+          } else {
+            spinRaf = 0;
+          }
+        };
+        const syncSpinLoop = () => {
+          if (spinRaf || signal.aborted) return;
+          if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
+            spinRaf = requestAnimationFrame(spinTick);
+          }
+        };
+        viewerEl.addEventListener('uydosh-autorotate-changed', syncSpinLoop, { signal });
+        wrap.__uydoshCompassAbort = ac;
+        apply();
+        syncSpinLoop();
+        return wrap;
+      }
+
       /** Share button for the fullscreen overlay only — separate from the listing's
        * general share button (`data-share-listing`, listing-detail-actions.js). Shares
        * a link that lands the recipient straight in this same fullscreen 3D view (see
@@ -1087,9 +1245,14 @@
 
       function closeRoomScanFullscreen() {
         if (!roomScanBackdropEl) return;
+        // Drop compass listeners on the persistent backdrop host before clearing DOM.
+        roomScanBackdropEl.querySelectorAll('.roomscan-compass').forEach((el) => {
+          el.__uydoshCompassAbort?.abort?.();
+        });
         // The blueprint overlay's host class must not survive into the next open
-        // (innerHTML is cleared below, but classes aren't).
+        // (innerHTML is cleared below, but classes/dataset aren't).
         roomScanBackdropEl.classList.remove('is-blueprint');
+        delete roomScanBackdropEl.dataset.roomscanBlueprintAlignRad;
         roomScanBackdropEl.classList.remove('is-open');
         roomScanBackdropEl.setAttribute('aria-hidden', 'true');
         setTimeout(() => {
@@ -1107,15 +1270,19 @@
         roomScanBackdropEl.setAttribute('aria-hidden', 'false');
         requestAnimationFrame(() => roomScanBackdropEl.classList.add('is-open'));
 
-        // Dimensions overlay (top-leading, like the mobile app's native SceneKit viewer —
-        // see RoomUsdzViewerViewController.swift's `hintContainer`). Built up front since it
-        // doesn't depend on the model finishing load.
+        // Dimensions + compass stack (top-leading), mirroring the native SceneKit viewer's
+        // hintContainer + SunCompassOverlayView. Built up front so dimensions don't depend
+        // on the model finishing load; the compass is appended once the viewer exists.
+        const topLeadingEl = document.createElement('div');
+        topLeadingEl.className = 'roomscan-backdrop-top-leading';
+        roomScanBackdropEl.appendChild(topLeadingEl);
+
         const metaHtml = l ? buildRoomScanDimensionsMetaHtml(l, { oneRowPerStat: true }) : '';
         if (metaHtml) {
           const dimensionsEl = document.createElement('div');
           dimensionsEl.className = 'roomscan-backdrop-dimensions';
           dimensionsEl.innerHTML = metaHtml;
-          roomScanBackdropEl.appendChild(dimensionsEl);
+          topLeadingEl.appendChild(dimensionsEl);
         }
 
         // Close button (+ its bar) is created up front and stays put regardless of load
@@ -1169,6 +1336,10 @@
             createRoomScanPlanToggle(viewer, roomScanBackdropEl, glbUrl),
             controlsBar
           );
+          // World-direction rose (N/E/S/W) — fullscreen only, under the dimensions card.
+          if (l) {
+            topLeadingEl.appendChild(createRoomScanCompassOverlay(viewer, roomScanBackdropEl, l));
+          }
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
           statusEl.removeAttribute('aria-label');

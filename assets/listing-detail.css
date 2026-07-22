@@ -729,8 +729,9 @@
       .roomscan-blueprint-svg:active { cursor: grabbing; }
       /* While the blueprint is showing, the 3D-only controls (display mode, wall/floor
          textures, auto-rotate, FOV zoom slider) act on a model nobody can see — hide
-         them. The plan toggle, fullscreen/close/share buttons and the dimensions
-         overlay stay. Applies to both hosts: the inline wrap and the fullscreen backdrop. */
+         them. The plan toggle, fullscreen/close/share buttons, dimensions overlay and
+         world-direction compass stay. Applies to both hosts: the inline wrap and the
+         fullscreen backdrop. */
       .is-blueprint .roomscan-mode-btn, .is-blueprint .roomscan-texture-btn,
       .is-blueprint .roomscan-floor-texture-btn, .is-blueprint .roomscan-rotate-btn,
       .is-blueprint .roomscan-zoom-slider {
@@ -787,16 +788,19 @@
       .roomscan-backdrop[hidden] { display: none !important; }
       .roomscan-backdrop.is-open { opacity: 1; }
       .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
-      /* Dimensions overlay in the fullscreen viewer — mirrors the mobile app's native
-         SceneKit viewer's top-leading `hintContainer` (RoomUsdzViewerViewController.swift).
-         In the Mini App, `env(safe-area-inset-top)` alone under-reports the clear space:
-         Telegram draws its own native header (Back button + chevron/"..." menu) above the
-         backdrop, which `--uydosh-tg-inset-top` accounts for (see uydosh-mini-app.js) but the
-         device safe-area inset does not — without it, this card sat underneath that header. */
-      .roomscan-backdrop-dimensions {
+      /* Top-leading stack in the fullscreen viewer: dimensions card + world-direction
+         compass rose (N/E/S/W). Mirrors the native SceneKit viewer's hintContainer +
+         SunCompassOverlayView placement. Telegram's header inset is handled via
+         --uydosh-tg-inset-top (see uydosh-mini-app.js). */
+      .roomscan-backdrop-top-leading {
         position: absolute; z-index: 1;
         top: calc(14px + var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px)));
-        left: 14px; max-width: calc(100% - 100px);
+        left: 14px; max-width: calc(100% - 170px);
+        display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+        pointer-events: none;
+      }
+      .roomscan-backdrop-dimensions {
+        max-width: 100%;
         background: rgba(0, 0, 0, 0.52); color: #fff;
         border-radius: 12px; padding: 8px 14px;
         font-size: 13px; display: flex; flex-direction: column; gap: 4px;
@@ -807,6 +811,35 @@
       }
       .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon svg { width: 14px; height: 14px; display: block; }
       .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon svg * { stroke: currentColor; fill: none; }
+      /* Compact N/E/S/W rose — ports SunCompassOverlayView (no sun arrow on web yet).
+         Stays visible in 2D blueprint mode (unlike mode/texture/zoom controls). */
+      .roomscan-compass {
+        width: 72px; height: 72px; border-radius: 14px;
+        background: rgba(18, 22, 28, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+      .roomscan-compass-disc {
+        position: relative; width: 100%; height: 100%;
+        border-radius: 50%;
+      }
+      .roomscan-compass-disc::before {
+        content: '';
+        position: absolute; left: 50%; top: 50%;
+        width: 44px; height: 44px; margin: -22px 0 0 -22px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        border: 0.75px solid rgba(255, 255, 255, 0.25);
+        box-sizing: border-box;
+      }
+      .roomscan-compass-label {
+        position: absolute; left: 50%; top: 50%;
+        font-family: inherit; font-size: 10px; font-weight: 800; line-height: 1;
+        color: rgba(255, 255, 255, 0.8);
+        pointer-events: none; user-select: none;
+      }
+      .roomscan-compass-label.is-n { color: #f27366; }
 
       .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
       .complaints-group + .complaints-group {

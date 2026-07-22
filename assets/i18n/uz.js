@@ -89,6 +89,7 @@ I18N.uz = {
     'detail.roomScanView2d': '2D reja (tepadan ko\u2018rinish)',
     'detail.roomScanLoadError': '3D modelni yuklab bo‘lmadi.',
     'detail.roomScanShare': '3D ko‘rinishni ulashish',
+    'detail.roomScanCompass': 'Jahon yo‘nalishi (N, E, S, W)',
     'detail.gallery.dots': 'Rasmlar',
     'detail.gallery.photo': 'Rasm',
     'detail.contactTelegram': 'Telegram orqali bog‘lanish',
