@@ -832,16 +832,35 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 1, timeoutMs = 8000 }
 
   const files = await Promise.all(
     urls.map(async (photoUrl, index) => {
+      // GIFs (rotation turntables) are larger and need a longer download window
+      // than still listing photos — 8s was aborting ~15MB fetches on mobile.
+      const looksLikeGif = /\.gif(\?|#|$)/i.test(String(photoUrl));
+      const effectiveTimeoutMs = looksLikeGif ? Math.max(timeoutMs, 45000) : timeoutMs;
       const controller = typeof AbortController === 'function' ? new AbortController() : null;
-      const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+      const timer = controller ? setTimeout(() => controller.abort(), effectiveTimeoutMs) : null;
       try {
         const response = await fetch(photoUrl, { signal: controller?.signal });
         if (!response.ok) return null;
         const blob = await response.blob();
         if (!blob || blob.size === 0) return null;
-        const type = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
-        const ext = type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg';
-        return new File([blob], `uydosh-listing-photo-${index + 1}.${ext}`, { type });
+        const type = blob.type && blob.type.startsWith('image/')
+          ? blob.type
+          : looksLikeGif
+            ? 'image/gif'
+            : 'image/jpeg';
+        // Preserve .gif so Telegram treats the attachment as an animation,
+        // not a still photo (previously every GIF was named *.jpg).
+        const ext = type.includes('gif')
+          ? 'gif'
+          : type.includes('png')
+            ? 'png'
+            : type.includes('webp')
+              ? 'webp'
+              : 'jpg';
+        const basename = ext === 'gif'
+          ? `uydosh-listing-3d-${index + 1}.${ext}`
+          : `uydosh-listing-photo-${index + 1}.${ext}`;
+        return new File([blob], basename, { type });
       } catch {
         return null;
       } finally {
