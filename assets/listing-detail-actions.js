@@ -104,11 +104,17 @@
           const text = buildListingShareText(l, lang);
           const mapPreviewUrl = buildListingMapPreviewUrl(l.id);
           const linkPreviewUrl = buildListingLinkPreviewUrl(l.id, l);
-          const gifUrl =
+          const gifBase =
             typeof l.room_scan_rotation_gif_url === 'string' &&
             l.room_scan_rotation_gif_url.trim()
               ? UyDosh.photoUrl(l.room_scan_rotation_gif_url)
               : '';
+          const gifV = l.room_scan_media_generated_at
+            ? Date.parse(l.room_scan_media_generated_at) || Date.now()
+            : Date.now();
+          const gifUrl = gifBase
+            ? `${gifBase}${gifBase.includes('?') ? '&' : '?'}v=${gifV}`
+            : '';
           // Prefer attaching the rotation GIF when available so Telegram shows
           // the looping 3D preview as a media header; fall back to photos.
           const photoUrls = gifUrl

@@ -834,12 +834,17 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 1, timeoutMs = 8000 }
     urls.map(async (photoUrl, index) => {
       // GIFs (rotation turntables) are larger and need a longer download window
       // than still listing photos — 8s was aborting ~15MB fetches on mobile.
+      // Also bypass HTTP cache: rotation.gif is overwritten in place and was
+      // previously served with Cache-Control: immutable (stale grey/low-fps shares).
       const looksLikeGif = /\.gif(\?|#|$)/i.test(String(photoUrl));
       const effectiveTimeoutMs = looksLikeGif ? Math.max(timeoutMs, 45000) : timeoutMs;
       const controller = typeof AbortController === 'function' ? new AbortController() : null;
       const timer = controller ? setTimeout(() => controller.abort(), effectiveTimeoutMs) : null;
       try {
-        const response = await fetch(photoUrl, { signal: controller?.signal });
+        const response = await fetch(photoUrl, {
+          signal: controller?.signal,
+          cache: looksLikeGif ? 'no-store' : 'default',
+        });
         if (!response.ok) return null;
         const blob = await response.blob();
         if (!blob || blob.size === 0) return null;

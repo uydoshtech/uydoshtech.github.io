@@ -729,9 +729,9 @@
       .roomscan-blueprint-svg:active { cursor: grabbing; }
       /* While the blueprint is showing, the 3D-only controls (display mode, wall/floor
          textures, auto-rotate, FOV zoom slider) act on a model nobody can see — hide
-         them. The plan toggle, fullscreen/close/share buttons, dimensions overlay and
-         world-direction compass stay. Applies to both hosts: the inline wrap and the
-         fullscreen backdrop. */
+         them. The plan toggle, fullscreen/close/share buttons and the dimensions
+         overlay stay. The world compass ring hides itself in JS for 2D. Applies to
+         both hosts: the inline wrap and the fullscreen backdrop. */
       .is-blueprint .roomscan-mode-btn, .is-blueprint .roomscan-texture-btn,
       .is-blueprint .roomscan-floor-texture-btn, .is-blueprint .roomscan-rotate-btn,
       .is-blueprint .roomscan-zoom-slider {
@@ -788,9 +788,8 @@
       .roomscan-backdrop[hidden] { display: none !important; }
       .roomscan-backdrop.is-open { opacity: 1; }
       .roomscan-backdrop model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
-      /* Top-leading stack in the fullscreen viewer: dimensions card + world-direction
-         compass rose (N/E/S/W). Mirrors the native SceneKit viewer's hintContainer +
-         SunCompassOverlayView placement. Telegram's header inset is handled via
+      /* Top-leading dimensions card in the fullscreen viewer — mirrors the native
+         SceneKit viewer's hintContainer. Telegram's header inset is handled via
          --uydosh-tg-inset-top (see uydosh-mini-app.js). */
       .roomscan-backdrop-top-leading {
         position: absolute; z-index: 1;
@@ -811,35 +810,36 @@
       }
       .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon svg { width: 14px; height: 14px; display: block; }
       .roomscan-backdrop-dimensions .roomscan-toggle-meta-icon svg * { stroke: currentColor; fill: none; }
-      /* Compact N/E/S/W rose — ports SunCompassOverlayView (no sun arrow on web yet).
-         Stays visible in 2D blueprint mode (unlike mode/texture/zoom controls). */
-      .roomscan-compass {
-        width: 72px; height: 72px; border-radius: 14px;
-        background: rgba(18, 22, 28, 0.72);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-sizing: border-box;
-        flex-shrink: 0;
+      /* World compass ring around the building — ports WorldCompassRingController
+         (thin floor circle + N/E/S/W badges). Fullscreen 3D only; hidden in 2D. */
+      .roomscan-world-compass {
+        position: absolute; inset: 0; z-index: 0;
+        width: 100%; height: 100%;
+        pointer-events: none; overflow: hidden;
       }
-      .roomscan-compass-disc {
-        position: relative; width: 100%; height: 100%;
-        border-radius: 50%;
+      .roomscan-world-compass[hidden] { display: none !important; }
+      .roomscan-world-compass-ring {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.42);
+        stroke-width: 1.5;
+        stroke-linejoin: round;
       }
-      .roomscan-compass-disc::before {
-        content: '';
-        position: absolute; left: 50%; top: 50%;
-        width: 44px; height: 44px; margin: -22px 0 0 -22px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.08);
-        border: 0.75px solid rgba(255, 255, 255, 0.25);
-        box-sizing: border-box;
+      .roomscan-world-compass-badge circle {
+        fill: rgba(0, 0, 0, 0.72);
+        stroke: rgba(255, 255, 255, 0.35);
+        stroke-width: 1.5;
       }
-      .roomscan-compass-label {
-        position: absolute; left: 50%; top: 50%;
-        font-family: inherit; font-size: 10px; font-weight: 800; line-height: 1;
-        color: rgba(255, 255, 255, 0.8);
-        pointer-events: none; user-select: none;
+      .roomscan-world-compass-badge text {
+        fill: #fff;
+        font-family: inherit;
+        font-weight: 800;
+        paint-order: stroke fill;
       }
-      .roomscan-compass-label.is-n { color: #f27366; }
+      .roomscan-world-compass-badge.is-n circle {
+        fill: rgba(0, 0, 0, 0.78);
+        stroke: rgba(242, 115, 102, 0.55);
+      }
+      .roomscan-world-compass-badge.is-n text { fill: #f27366; }
 
       .complaints-list-status { padding: 24px 0; text-align: center; color: var(--muted); font-size: 14px; }
       .complaints-group + .complaints-group {

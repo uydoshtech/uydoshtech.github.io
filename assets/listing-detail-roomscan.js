@@ -825,12 +825,12 @@
         }, { passive: false });
       }
 
-      // --- World-direction compass (fullscreen only) --------------------------------------
-      // Ports FloorPlanNorthOrientation + SunCompassOverlayView from room_scan_kit: a compact
-      // N/E/S/W rose that tracks where geographic north sits on screen as the camera orbits
-      // (3D) or via the blueprint's align yaw (2D). Uses listing
-      // room_scan_world_plus_x_bearing_deg + room_scan_north_correction_deg — same fields the
-      // native viewer gets from Flutter. No owner "adjust north" panel on web yet.
+      // --- World-direction compass ring (fullscreen 3D only) ------------------------------
+      // Ports FloorPlanNorthOrientation + WorldCompassRingController from room_scan_kit: a
+      // thin floor ring around the building with N/E/S/W badges (same look as the native
+      // Flutter/iOS viewer). Drawn as an SVG overlay projected through <model-viewer>'s
+      // camera — not the small HUD rose. Hidden in 2D blueprint mode (native hides the
+      // 3D ring on the floor-plan tab too).
 
       /** Degrees clockwise from true north of world +X, normalized to [0, 360). */
       function roomScanEffectiveWorldPlusXBearingDeg(scanBearing, correctionDeg) {
@@ -863,103 +863,252 @@
         };
       }
 
-      /** Reads <model-viewer>'s current azimuthal orbit angle (radians). */
-      function roomScanCameraThetaRad(viewerEl) {
-        const orbit = typeof viewerEl.getCameraOrbit === 'function' ? viewerEl.getCameraOrbit() : null;
-        if (orbit && Number.isFinite(orbit.theta)) return orbit.theta;
-        const raw = String(viewerEl.cameraOrbit || viewerEl.getAttribute('camera-orbit') || '').trim();
-        const match = raw.match(/^([-+]?[\d.]+)\s*(deg|rad)?/i);
-        if (!match) return 0;
-        const value = Number(match[1]);
-        if (!Number.isFinite(value)) return 0;
-        return (match[2] || 'rad').toLowerCase() === 'deg' ? value * Math.PI / 180 : value;
+      /** worldXZ(φ) = (cos φ, −sin φ) — same as WorldCompassRingController. */
+      function roomScanWorldXZFromPlanAngle(planAngleRad) {
+        return { x: Math.cos(planAngleRad), z: -Math.sin(planAngleRad) };
       }
 
       /**
-       * Screen-space angle (radians; 0 = right, + = clockwise / down) where geographic north
-       * points — same convention as SunCompassOverlayView / CompassScreenProjection.
-       * 3D: −planNorth − cameraTheta. 2D blueprint: −(planNorth + alignYaw).
+       * Projects a world-space point through <model-viewer>'s current orbit camera into
+       * element-local CSS pixels. Returns null when the point is behind the camera.
        */
-      function roomScanNorthScreenAngleRad(viewerEl, host, trueNorthPlanAngleRad) {
-        if (host?.classList.contains('is-blueprint')) {
-          const align = Number(host.dataset.roomscanBlueprintAlignRad);
-          const yaw = Number.isFinite(align) ? align : 0;
-          return -(trueNorthPlanAngleRad + yaw);
+      function roomScanProjectWorldToScreen(wx, wy, wz, viewerEl) {
+        if (typeof viewerEl.getCameraOrbit !== 'function' || typeof viewerEl.getCameraTarget !== 'function') {
+          return null;
         }
-        return -trueNorthPlanAngleRad - roomScanCameraThetaRad(viewerEl);
+        const orbit = viewerEl.getCameraOrbit();
+        const target = viewerEl.getCameraTarget();
+        const fovDeg = typeof viewerEl.getFieldOfView === 'function' ? viewerEl.getFieldOfView() : 45;
+        if (!orbit || !target || !Number.isFinite(orbit.radius) || !(orbit.radius > 0)) return null;
+
+        const rect = viewerEl.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        if (!(width > 1 && height > 1)) return null;
+        const aspect = width / height;
+        const fovY = (Number.isFinite(fovDeg) ? fovDeg : 45) * Math.PI / 180;
+        const theta = orbit.theta;
+        const phi = orbit.phi;
+        const radius = orbit.radius;
+
+        // Three.js / model-viewer spherical: theta from +Z toward +X, phi from +Y.
+        const eyeX = target.x + radius * Math.sin(phi) * Math.sin(theta);
+        const eyeY = target.y + radius * Math.cos(phi);
+        const eyeZ = target.z + radius * Math.sin(phi) * Math.cos(theta);
+
+        let fx = target.x - eyeX;
+        let fy = target.y - eyeY;
+        let fz = target.z - eyeZ;
+        const fLen = Math.hypot(fx, fy, fz) || 1;
+        fx /= fLen; fy /= fLen; fz /= fLen;
+
+        // Prefer +Y up; when looking nearly straight down/up, derive up from theta so the
+        // basis stays stable (same singularity model-viewer handles in its orbit controls).
+        let ux = 0;
+        let uy = 1;
+        let uz = 0;
+        if (Math.abs(fy) > 0.999) {
+          ux = -Math.sin(theta);
+          uy = 0;
+          uz = -Math.cos(theta);
+        }
+
+        let rx = fy * uz - fz * uy;
+        let ry = fz * ux - fx * uz;
+        let rz = fx * uy - fy * ux;
+        const rLen = Math.hypot(rx, ry, rz) || 1;
+        rx /= rLen; ry /= rLen; rz /= rLen;
+
+        ux = ry * fz - rz * fy;
+        uy = rz * fx - rx * fz;
+        uz = rx * fy - ry * fx;
+
+        const dx = wx - eyeX;
+        const dy = wy - eyeY;
+        const dz = wz - eyeZ;
+        const viewZ = -(dx * fx + dy * fy + dz * fz);
+        if (!(viewZ < -1e-4)) return null;
+        const viewX = dx * rx + dy * ry + dz * rz;
+        const viewY = dx * ux + dy * uy + dz * uz;
+
+        const tanHalf = Math.tan(fovY / 2);
+        const ndcX = viewX / (-viewZ * tanHalf * aspect);
+        const ndcY = viewY / (-viewZ * tanHalf);
+        return {
+          x: (ndcX * 0.5 + 0.5) * width,
+          y: (-ndcY * 0.5 + 0.5) * height,
+        };
       }
 
       /**
-       * Compact N/E/S/W rose for the fullscreen backdrop only (not the inline tile).
-       * Stops itself when detached (closeRoomScanFullscreen clears innerHTML).
+       * Floor compass ring around the scan footprint — fullscreen 3D only.
+       * Mirrors WorldCompassRingController (torus + billboard N/E/S/W badges).
        */
-      function createRoomScanCompassOverlay(viewerEl, host, l) {
+      function createRoomScanWorldCompassRing(viewerEl, host, l) {
         const { scanBearingDeg, correctionDeg } = roomScanParseListingBearing(l);
         const trueNorthPlanAngleRad = roomScanTrueNorthPlanAngleRad(scanBearingDeg, correctionDeg);
 
-        const wrap = document.createElement('div');
-        wrap.className = 'roomscan-compass';
-        wrap.setAttribute('role', 'img');
-        wrap.setAttribute('aria-label', UyDosh.t('detail.roomScanCompass'));
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.classList.add('roomscan-world-compass');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', UyDosh.t('detail.roomScanCompass'));
 
-        const disc = document.createElement('div');
-        disc.className = 'roomscan-compass-disc';
-        wrap.appendChild(disc);
+        const ringPath = document.createElementNS(svgNS, 'path');
+        ringPath.classList.add('roomscan-world-compass-ring');
+        svg.appendChild(ringPath);
 
-        const labels = [
-          { text: 'N', className: 'is-n', offset: 0 },
-          { text: 'E', className: '', offset: Math.PI / 2 },
-          { text: 'S', className: '', offset: Math.PI },
-          { text: 'W', className: '', offset: -Math.PI / 2 },
-        ].map(({ text, className, offset }) => {
-          const el = document.createElement('span');
-          el.className = `roomscan-compass-label${className ? ` ${className}` : ''}`;
-          el.textContent = text;
-          el.dataset.offset = String(offset);
-          disc.appendChild(el);
-          return el;
+        // Plan offsets match WorldCompassRingController.rebuildCardinals.
+        const badges = [
+          { text: 'N', offset: 0, isNorth: true },
+          { text: 'E', offset: -Math.PI / 2, isNorth: false },
+          { text: 'S', offset: Math.PI, isNorth: false },
+          { text: 'W', offset: Math.PI / 2, isNorth: false },
+        ].map(({ text, offset, isNorth }) => {
+          const g = document.createElementNS(svgNS, 'g');
+          g.classList.add('roomscan-world-compass-badge');
+          if (isNorth) g.classList.add('is-n');
+          const circle = document.createElementNS(svgNS, 'circle');
+          circle.setAttribute('r', '16');
+          const label = document.createElementNS(svgNS, 'text');
+          label.textContent = text;
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('dominant-baseline', 'central');
+          g.appendChild(circle);
+          g.appendChild(label);
+          svg.appendChild(g);
+          return { g, circle, label, offset, isNorth };
         });
 
-        const radiusPx = 22;
+        const RING_MARGIN_M = 0.65;
+        const MIN_RADIUS_M = 1.5;
+        const RING_SAMPLES = 64;
+        // Listing footprint as a pre-load fallback (model dims win once available).
+        const listingLong = Number(l?.room_scan_floor_long_m);
+        const listingShort = Number(l?.room_scan_floor_short_m);
+
         let raf = 0;
-        let lastAngle = NaN;
-        // Abort when the rose is removed (fullscreen close clears backdrop innerHTML) so
-        // listeners on the persistent `#roomscan-backdrop` host don't accumulate across opens.
+        let spinRaf = 0;
         const ac = new AbortController();
         const { signal } = ac;
 
+        const resolveLayout = () => {
+          let sizeX = 0;
+          let sizeY = 0;
+          let sizeZ = 0;
+          let cx = 0;
+          let cy = 0;
+          let cz = 0;
+          if (typeof viewerEl.getDimensions === 'function') {
+            const dims = viewerEl.getDimensions();
+            if (dims && Number.isFinite(dims.x) && dims.x > 0.05) {
+              sizeX = dims.x;
+              sizeY = dims.y;
+              sizeZ = dims.z;
+            }
+          }
+          if (!(sizeX > 0) && listingLong > 0 && listingShort > 0) {
+            sizeX = listingLong;
+            sizeZ = listingShort;
+            sizeY = Number(l?.room_scan_height_m) || 3;
+          }
+          if (typeof viewerEl.getBoundingBoxCenter === 'function') {
+            const c = viewerEl.getBoundingBoxCenter();
+            if (c && Number.isFinite(c.x)) {
+              cx = c.x; cy = c.y; cz = c.z;
+            }
+          } else if (typeof viewerEl.getCameraTarget === 'function') {
+            const t = viewerEl.getCameraTarget();
+            if (t && Number.isFinite(t.x)) {
+              cx = t.x; cy = t.y; cz = t.z;
+            }
+          }
+          if (!(sizeX > 0 && sizeZ > 0)) return null;
+          const halfDiag = 0.5 * Math.hypot(sizeX, sizeZ);
+          const radius = Math.max(halfDiag + RING_MARGIN_M, MIN_RADIUS_M);
+          // Sit the ring on the floor plane (bottom of the AABB), slightly lifted.
+          const floorY = cy - sizeY * 0.5 + 0.02;
+          return { cx, cy: floorY, cz, radius };
+        };
+
         const apply = () => {
-          if (!wrap.isConnected) {
+          if (!svg.isConnected) {
             ac.abort();
             return;
           }
-          const north = roomScanNorthScreenAngleRad(viewerEl, host, trueNorthPlanAngleRad);
-          if (Number.isFinite(lastAngle) && Math.abs(north - lastAngle) < 0.002) return;
-          lastAngle = north;
-          for (const el of labels) {
-            const angle = north + Number(el.dataset.offset);
-            const x = Math.cos(angle) * radiusPx;
-            const y = Math.sin(angle) * radiusPx;
-            el.style.transform = `translate(calc(-50% + ${x.toFixed(2)}px), calc(-50% + ${y.toFixed(2)}px))`;
+          // Native hides the 3D floor ring on the floor-plan tab.
+          if (host.classList.contains('is-blueprint') || viewerEl.__uydoshPlanViewActive) {
+            svg.hidden = true;
+            return;
+          }
+          const layout = resolveLayout();
+          if (!layout) {
+            svg.hidden = true;
+            return;
+          }
+          svg.hidden = false;
+
+          const { cx, cy, cz, radius } = layout;
+          const pts = [];
+          for (let i = 0; i <= RING_SAMPLES; i++) {
+            const a = (i / RING_SAMPLES) * Math.PI * 2;
+            const xz = roomScanWorldXZFromPlanAngle(a);
+            const p = roomScanProjectWorldToScreen(
+              cx + xz.x * radius,
+              cy,
+              cz + xz.z * radius,
+              viewerEl
+            );
+            if (p) pts.push(p);
+          }
+          if (pts.length < 8) {
+            svg.hidden = true;
+            return;
+          }
+          ringPath.setAttribute(
+            'd',
+            pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z'
+          );
+
+          // Badge size from projected ring radius (rough: distance between opposite samples).
+          let screenRadius = 80;
+          if (pts.length > 2) {
+            const mid = pts[Math.floor(pts.length / 2)];
+            screenRadius = Math.hypot(pts[0].x - mid.x, pts[0].y - mid.y) * 0.5;
+          }
+          const badgeR = Math.max(14, Math.min(22, screenRadius * 0.09));
+
+          for (const badge of badges) {
+            const planAngle = trueNorthPlanAngleRad + badge.offset;
+            const xz = roomScanWorldXZFromPlanAngle(planAngle);
+            const labelR = radius + (badge.isNorth ? 0.55 : 0.48);
+            const p = roomScanProjectWorldToScreen(
+              cx + xz.x * labelR,
+              cy + badgeR * 0.02,
+              cz + xz.z * labelR,
+              viewerEl
+            );
+            if (!p) {
+              badge.g.setAttribute('visibility', 'hidden');
+              continue;
+            }
+            badge.g.setAttribute('visibility', 'visible');
+            badge.g.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
+            badge.circle.setAttribute('r', badgeR.toFixed(1));
+            badge.label.setAttribute('font-size', Math.max(11, badgeR * 0.95).toFixed(1));
           }
         };
 
         const schedule = () => {
-          if (raf) return;
+          if (raf || signal.aborted) return;
           raf = requestAnimationFrame(() => {
             raf = 0;
             apply();
           });
         };
 
-        viewerEl.addEventListener('camera-change', schedule, { signal });
-        // Blueprint mount/unmount swaps the north formula without always firing camera-change.
-        host.addEventListener('uydosh-blueprint-changed', schedule, { signal });
-        // Auto-rotate keeps theta moving; camera-change usually fires, but a light rAF loop
-        // while the attribute is set keeps the rose from lagging behind the spin.
-        let spinRaf = 0;
         const spinTick = () => {
-          if (!wrap.isConnected) {
+          if (!svg.isConnected) {
             ac.abort();
             return;
           }
@@ -974,13 +1123,20 @@
           if (spinRaf || signal.aborted) return;
           if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
             spinRaf = requestAnimationFrame(spinTick);
+          } else {
+            schedule();
           }
         };
+
+        viewerEl.addEventListener('camera-change', schedule, { signal });
+        viewerEl.addEventListener('load', schedule, { signal });
         viewerEl.addEventListener('uydosh-autorotate-changed', syncSpinLoop, { signal });
-        wrap.__uydoshCompassAbort = ac;
-        apply();
+        host.addEventListener('uydosh-blueprint-changed', schedule, { signal });
+        window.addEventListener('resize', schedule, { signal });
+        svg.__uydoshCompassAbort = ac;
+        schedule();
         syncSpinLoop();
-        return wrap;
+        return svg;
       }
 
       /** Share button for the fullscreen overlay only — separate from the listing's
@@ -1007,8 +1163,15 @@
         const shareUrl = buildListing3dShareUrl(l.id);
         const text = buildListingShareText(l, lang);
         const linkPreviewUrl = `${UyDosh.API_BASE || 'https://api.uydosh.com'}/listing/${encodeURIComponent(l.id)}?preview=3d`;
-        const gifUrl = typeof l.room_scan_rotation_gif_url === 'string'
+        // Bust WebView/CDN immutable cache — rotation.gif is overwritten in place.
+        const gifBase = typeof l.room_scan_rotation_gif_url === 'string'
           ? UyDosh.photoUrl(l.room_scan_rotation_gif_url)
+          : '';
+        const gifV = l.room_scan_media_generated_at
+          ? Date.parse(l.room_scan_media_generated_at) || Date.now()
+          : Date.now();
+        const gifUrl = gifBase
+          ? `${gifBase}${gifBase.includes('?') ? '&' : '?'}v=${gifV}`
           : '';
         const photoUrls = gifUrl ? [gifUrl] : [];
         const method = await UyDosh.shareListingLink(
@@ -1246,7 +1409,7 @@
       function closeRoomScanFullscreen() {
         if (!roomScanBackdropEl) return;
         // Drop compass listeners on the persistent backdrop host before clearing DOM.
-        roomScanBackdropEl.querySelectorAll('.roomscan-compass').forEach((el) => {
+        roomScanBackdropEl.querySelectorAll('.roomscan-world-compass').forEach((el) => {
           el.__uydoshCompassAbort?.abort?.();
         });
         // The blueprint overlay's host class must not survive into the next open
@@ -1270,9 +1433,9 @@
         roomScanBackdropEl.setAttribute('aria-hidden', 'false');
         requestAnimationFrame(() => roomScanBackdropEl.classList.add('is-open'));
 
-        // Dimensions + compass stack (top-leading), mirroring the native SceneKit viewer's
-        // hintContainer + SunCompassOverlayView. Built up front so dimensions don't depend
-        // on the model finishing load; the compass is appended once the viewer exists.
+        // Dimensions overlay (top-leading), like the mobile app's native SceneKit viewer —
+        // see RoomUsdzViewerViewController.swift's `hintContainer`. Built up front since it
+        // doesn't depend on the model finishing load.
         const topLeadingEl = document.createElement('div');
         topLeadingEl.className = 'roomscan-backdrop-top-leading';
         roomScanBackdropEl.appendChild(topLeadingEl);
@@ -1336,9 +1499,13 @@
             createRoomScanPlanToggle(viewer, roomScanBackdropEl, glbUrl),
             controlsBar
           );
-          // World-direction rose (N/E/S/W) — fullscreen only, under the dimensions card.
+          // Floor compass ring around the building (N/E/S/W) — fullscreen 3D only.
+          // Inserted before controls so it paints under the HUD chrome (z-index 0 vs 1).
           if (l) {
-            topLeadingEl.appendChild(createRoomScanCompassOverlay(viewer, roomScanBackdropEl, l));
+            roomScanBackdropEl.insertBefore(
+              createRoomScanWorldCompassRing(viewer, roomScanBackdropEl, l),
+              controlsBar
+            );
           }
         } catch (err) {
           console.error('Failed to load fullscreen 3D room scan viewer', err);
