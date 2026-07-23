@@ -848,6 +848,17 @@ async function fetchListingPhotoFiles(photoUrls, { limit = 1, timeoutMs = 8000 }
         if (!response.ok) return null;
         const blob = await response.blob();
         if (!blob || blob.size === 0) return null;
+        // Telegram Mini App / Web Share silently drops oversized GIFs
+        // (message posts with caption only). Prefer falling through to the
+        // link-unfurl path over attaching a file Telegram will discard.
+        const MAX_TELEGRAM_SHARE_BYTES = 3.8 * 1024 * 1024;
+        if (looksLikeGif && blob.size > MAX_TELEGRAM_SHARE_BYTES) {
+          console.warn('[UyDosh] rotation GIF too large for Telegram share', {
+            bytes: blob.size,
+            url: photoUrl,
+          });
+          return null;
+        }
         const type = blob.type && blob.type.startsWith('image/')
           ? blob.type
           : looksLikeGif

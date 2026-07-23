@@ -823,13 +823,14 @@
       .roomscan-world-compass-ring {
         fill: none;
         stroke: rgba(255, 255, 255, 0.42);
-        stroke-width: 1.5;
+        stroke-width: 1.25;
         stroke-linejoin: round;
+        stroke-linecap: round;
       }
       .roomscan-world-compass-badge circle {
         fill: rgba(0, 0, 0, 0.72);
         stroke: rgba(255, 255, 255, 0.35);
-        stroke-width: 1.5;
+        stroke-width: 1;
       }
       .roomscan-world-compass-badge text {
         fill: #fff;
