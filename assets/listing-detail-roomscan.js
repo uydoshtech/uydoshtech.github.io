@@ -701,6 +701,9 @@
           if (viewerEl.hasAttribute('auto-rotate')) viewerEl.removeAttribute('auto-rotate');
           else viewerEl.setAttribute('auto-rotate', '');
           updateAppearance();
+          // Announces pause/resume to the world-compass yaw watcher (and anyone else
+          // mirroring auto-rotate). Plan toggle already dispatches the same event.
+          viewerEl.dispatchEvent(new CustomEvent('uydosh-autorotate-changed'));
         });
         // The 2D plan toggle also pauses/resumes auto-rotate (see enterRoomScanPlanView)
         // and announces it via this event so the play/pause icon here doesn't go stale.
@@ -780,12 +783,14 @@
           if (viewerEl.hasAttribute('auto-rotate')) {
             resumeAutoRotate = true;
             viewerEl.removeAttribute('auto-rotate');
+            viewerEl.dispatchEvent(new CustomEvent('uydosh-autorotate-changed'));
           }
         };
         const resumeAutoRotateAfterDrag = () => {
           if (!resumeAutoRotate) return;
           resumeAutoRotate = false;
           viewerEl.setAttribute('auto-rotate', '');
+          viewerEl.dispatchEvent(new CustomEvent('uydosh-autorotate-changed'));
         };
         input.addEventListener('pointerdown', pauseAutoRotateForDrag);
         input.addEventListener('pointerup', resumeAutoRotateAfterDrag);
@@ -1038,8 +1043,9 @@
 
         const RING_MARGIN_M = 0.65;
         const MIN_RADIUS_M = 1.5;
-        // 24 samples is smooth enough for a thin ring; 64 was ~3× the project cost.
-        const RING_SAMPLES = 24;
+        // Dense enough that the projected ring reads as a smooth ellipse (24 looked
+        // like a segmented polygon). Labels-only occlusion keeps the stroke closed.
+        const RING_SAMPLES = 64;
         // Compass does not need to match model-viewer's 60fps — 15Hz is plenty and
         // keeps the WebView from fighting the GLB render loop.
         const MIN_UPDATE_MS = 66;
@@ -1062,6 +1068,8 @@
         const pathBuf = new Array(RING_SAMPLES + 1);
         const ac = new AbortController();
         const { signal } = ac;
+        let yawWatchRaf = 0;
+        let yawWatchGen = 0;
 
         const resolveLayout = (force) => {
           if (cachedLayout && !force) return cachedLayout;
@@ -1134,48 +1142,37 @@
           roomScanWorldToYawLocalXZ(ctx.eyeX, ctx.eyeZ, ctx.yaw, eyeLocal);
 
           const { floorY, radius } = layout;
+          // Full closed ring (native torus is continuous; wall occlusion is depth-tested
+          // in 3D — on web we only hide the N/E/S/W badges behind the building).
           let pathLen = 0;
-          let inArc = false;
           let firstX = 0;
           let firstY = 0;
-          let visCount = 0;
-          let sumX = 0;
-          let sumY = 0;
+          let midX = 0;
+          let midY = 0;
           for (let i = 0; i <= RING_SAMPLES; i++) {
             const a = (i / RING_SAMPLES) * Math.PI * 2;
             const lx = Math.cos(a) * radius;
             const lz = -Math.sin(a) * radius;
-            // Far side sits behind walls — skip like native depth-tested ring.
-            if (!roomScanIsCameraFacingLocal(lx, lz, eyeLocal.x, eyeLocal.z)) {
-              inArc = false;
-              continue;
-            }
             roomScanYawLocalToWorld(lx, floorY, lz, ctx.yaw, world);
             const p = roomScanProjectWithContext(world.x, world.y, world.z, ctx, scratch);
-            if (!p) {
-              inArc = false;
-              continue;
-            }
-            pathBuf[pathLen++] = `${inArc ? 'L' : 'M'}${p.x.toFixed(0)} ${p.y.toFixed(0)}`;
-            inArc = true;
-            if (visCount === 0) {
+            if (!p) continue;
+            const cmd = pathLen === 0 ? 'M' : 'L';
+            pathBuf[pathLen++] = `${cmd}${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+            if (pathLen === 1) {
               firstX = p.x; firstY = p.y;
             }
-            sumX += p.x;
-            sumY += p.y;
-            visCount += 1;
+            if (i === (RING_SAMPLES >> 1)) {
+              midX = p.x; midY = p.y;
+            }
           }
-          if (visCount < 3) {
+          if (pathLen < 8) {
             svg.hidden = true;
             return;
           }
           svg.hidden = false;
-          // Open arcs (no Z) — gaps are the wall-occluded far side.
-          ringPath.setAttribute('d', pathBuf.slice(0, pathLen).join(' '));
+          ringPath.setAttribute('d', `${pathBuf.slice(0, pathLen).join(' ')} Z`);
 
-          const midX = sumX / visCount;
-          const midY = sumY / visCount;
-          const screenRadius = Math.hypot(firstX - midX, firstY - midY) || 40;
+          const screenRadius = Math.hypot(firstX - midX, firstY - midY) * 0.5 || 40;
           // ~2× smaller than the first web pass (was max 22 / font 11).
           const badgeR = Math.max(7, Math.min(11, screenRadius * 0.045));
           const badgeRChanged = !Number.isFinite(lastBadgeR) || Math.abs(badgeR - lastBadgeR) > 0.4;
@@ -1185,6 +1182,7 @@
             const planAngle = trueNorthPlanAngleRad + badge.offset;
             const lx = Math.cos(planAngle) * badge.labelR;
             const lz = -Math.sin(planAngle) * badge.labelR;
+            // Labels only: hide when they'd paint through walls (far side of footprint).
             if (!roomScanIsCameraFacingLocal(lx, lz, eyeLocal.x, eyeLocal.z)) {
               badge.g.setAttribute('visibility', 'hidden');
               continue;
@@ -1196,10 +1194,10 @@
               continue;
             }
             badge.g.setAttribute('visibility', 'visible');
-            badge.g.setAttribute('transform', `translate(${p.x.toFixed(0)} ${p.y.toFixed(0)})`);
+            badge.g.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
             if (badgeRChanged) {
-              badge.circle.setAttribute('r', badgeR.toFixed(0));
-              badge.label.setAttribute('font-size', Math.max(6, badgeR * 0.95).toFixed(0));
+              badge.circle.setAttribute('r', badgeR.toFixed(1));
+              badge.label.setAttribute('font-size', Math.max(6, badgeR * 0.95).toFixed(1));
             }
           }
         };
@@ -1216,40 +1214,57 @@
           });
         };
 
-        viewerEl.addEventListener('camera-change', () => schedule(false), { signal });
-        viewerEl.addEventListener('load', () => {
-          cachedLayout = null;
-          schedule(true);
-        }, { signal });
-        // Auto-rotate turns scene.yaw (turntableRotation) without moving the camera, so
-        // camera-change often doesn't fire — poll yaw cheaply while auto-rotate is on.
-        let yawWatchRaf = 0;
-        const watchYaw = () => {
-          if (!svg.isConnected) {
-            ac.abort();
+        const stopYawWatch = () => {
+          yawWatchGen += 1;
+          if (yawWatchRaf) {
+            cancelAnimationFrame(yawWatchRaf);
+            yawWatchRaf = 0;
+          }
+        };
+
+        const watchYaw = (gen) => {
+          if (gen !== yawWatchGen || !svg.isConnected) {
+            if (!svg.isConnected) ac.abort();
             return;
           }
           if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
             const yaw = Number(viewerEl.turntableRotation) || 0;
             if (!(Math.abs(yaw - lastYaw) < 0.004)) schedule(false);
-            yawWatchRaf = requestAnimationFrame(watchYaw);
+            yawWatchRaf = requestAnimationFrame(() => watchYaw(gen));
           } else {
             yawWatchRaf = 0;
             schedule(false);
           }
         };
+
+        // Always cancel + restart so pause→play reliably resumes the yaw poll
+        // (a stale pending rAF used to block syncYawWatch via `if (yawWatchRaf) return`).
         const syncYawWatch = () => {
-          if (yawWatchRaf || signal.aborted) return;
+          stopYawWatch();
+          if (signal.aborted || !svg.isConnected) return;
           if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
-            yawWatchRaf = requestAnimationFrame(watchYaw);
+            const gen = yawWatchGen;
+            yawWatchRaf = requestAnimationFrame(() => watchYaw(gen));
+          } else {
+            schedule(false);
           }
         };
+
+        viewerEl.addEventListener('camera-change', () => schedule(false), { signal });
+        viewerEl.addEventListener('load', () => {
+          cachedLayout = null;
+          schedule(true);
+        }, { signal });
         viewerEl.addEventListener('uydosh-autorotate-changed', syncYawWatch, { signal });
-        host.addEventListener('uydosh-blueprint-changed', () => schedule(false), { signal });
+        host.addEventListener('uydosh-blueprint-changed', () => {
+          schedule(false);
+          syncYawWatch();
+        }, { signal });
         window.addEventListener('resize', () => {
           cachedLayout = null;
           schedule(true);
         }, { signal });
+        signal.addEventListener('abort', stopYawWatch);
         svg.__uydoshCompassAbort = ac;
         schedule(true);
         syncYawWatch();
