@@ -863,35 +863,33 @@
         };
       }
 
-      /** worldXZ(φ) = (cos φ, −sin φ) — same as WorldCompassRingController. */
-      function roomScanWorldXZFromPlanAngle(planAngleRad) {
-        return { x: Math.cos(planAngleRad), z: -Math.sin(planAngleRad) };
-      }
+      /** worldXZ used inline as (cos φ, −sin φ) — same as WorldCompassRingController. */
 
       /**
-       * Projects a world-space point through <model-viewer>'s current orbit camera into
-       * element-local CSS pixels. Returns null when the point is behind the camera.
+       * Builds a one-shot camera/projection context for the current frame. Call once per
+       * compass update, then project many world points through it — avoids repeating
+       * getBoundingClientRect / orbit / FOV work per sample (was a major jank source).
        */
-      function roomScanProjectWorldToScreen(wx, wy, wz, viewerEl) {
+      function roomScanBuildProjectContext(viewerEl) {
         if (typeof viewerEl.getCameraOrbit !== 'function' || typeof viewerEl.getCameraTarget !== 'function') {
           return null;
         }
         const orbit = viewerEl.getCameraOrbit();
         const target = viewerEl.getCameraTarget();
-        const fovDeg = typeof viewerEl.getFieldOfView === 'function' ? viewerEl.getFieldOfView() : 45;
         if (!orbit || !target || !Number.isFinite(orbit.radius) || !(orbit.radius > 0)) return null;
 
         const rect = viewerEl.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
         if (!(width > 1 && height > 1)) return null;
-        const aspect = width / height;
+
+        const fovDeg = typeof viewerEl.getFieldOfView === 'function' ? viewerEl.getFieldOfView() : 45;
         const fovY = (Number.isFinite(fovDeg) ? fovDeg : 45) * Math.PI / 180;
         const theta = orbit.theta;
         const phi = orbit.phi;
         const radius = orbit.radius;
+        const aspect = width / height;
 
-        // Three.js / model-viewer spherical: theta from +Z toward +X, phi from +Y.
         const eyeX = target.x + radius * Math.sin(phi) * Math.sin(theta);
         const eyeY = target.y + radius * Math.cos(phi);
         const eyeZ = target.z + radius * Math.sin(phi) * Math.cos(theta);
@@ -902,8 +900,6 @@
         const fLen = Math.hypot(fx, fy, fz) || 1;
         fx /= fLen; fy /= fLen; fz /= fLen;
 
-        // Prefer +Y up; when looking nearly straight down/up, derive up from theta so the
-        // basis stays stable (same singularity model-viewer handles in its orbit controls).
         let ux = 0;
         let uy = 1;
         let uz = 0;
@@ -923,26 +919,41 @@
         uy = rz * fx - rx * fz;
         uz = rx * fy - ry * fx;
 
-        const dx = wx - eyeX;
-        const dy = wy - eyeY;
-        const dz = wz - eyeZ;
-        const viewZ = -(dx * fx + dy * fy + dz * fz);
-        if (!(viewZ < -1e-4)) return null;
-        const viewX = dx * rx + dy * ry + dz * rz;
-        const viewY = dx * ux + dy * uy + dz * uz;
-
-        const tanHalf = Math.tan(fovY / 2);
-        const ndcX = viewX / (-viewZ * tanHalf * aspect);
-        const ndcY = viewY / (-viewZ * tanHalf);
         return {
-          x: (ndcX * 0.5 + 0.5) * width,
-          y: (-ndcY * 0.5 + 0.5) * height,
+          eyeX, eyeY, eyeZ, fx, fy, fz, rx, ry, rz, ux, uy, uz,
+          tanHalf: Math.tan(fovY / 2),
+          aspect, width, height,
+          // Used to skip redundant redraws while auto-rotate ticks.
+          theta, phi, radius, fovY,
         };
+      }
+
+      /** Projects a world point with a context from roomScanBuildProjectContext. */
+      function roomScanProjectWithContext(wx, wy, wz, ctx, out) {
+        const dx = wx - ctx.eyeX;
+        const dy = wy - ctx.eyeY;
+        const dz = wz - ctx.eyeZ;
+        const viewZ = -(dx * ctx.fx + dy * ctx.fy + dz * ctx.fz);
+        if (!(viewZ < -1e-4)) return null;
+        const viewX = dx * ctx.rx + dy * ctx.ry + dz * ctx.rz;
+        const viewY = dx * ctx.ux + dy * ctx.uy + dz * ctx.uz;
+        const ndcX = viewX / (-viewZ * ctx.tanHalf * ctx.aspect);
+        const ndcY = viewY / (-viewZ * ctx.tanHalf);
+        out.x = (ndcX * 0.5 + 0.5) * ctx.width;
+        out.y = (-ndcY * 0.5 + 0.5) * ctx.height;
+        return out;
       }
 
       /**
        * Floor compass ring around the scan footprint — fullscreen 3D only.
        * Mirrors WorldCompassRingController (torus + billboard N/E/S/W badges).
+       *
+       * Perf notes (Telegram WebView is GPU-tight with <model-viewer>):
+       * - Cache footprint layout after first resolve — getDimensions/getBoundingBoxCenter
+       *   call updateBoundingBoxAndShadowIfDirty() and must not run every frame.
+       * - One camera context per redraw; project samples through it.
+       * - Throttle to ~15fps and skip when orbit hasn't moved — no second rAF spin loop
+       *   (camera-change already fires during auto-rotate).
        */
       function createRoomScanWorldCompassRing(viewerEl, host, l) {
         const { scanBearingDeg, correctionDeg } = roomScanParseListingBearing(l);
@@ -977,22 +988,34 @@
           g.appendChild(circle);
           g.appendChild(label);
           svg.appendChild(g);
-          return { g, circle, label, offset, isNorth };
+          return { g, circle, label, offset, isNorth, labelR: 0 };
         });
 
         const RING_MARGIN_M = 0.65;
         const MIN_RADIUS_M = 1.5;
-        const RING_SAMPLES = 64;
-        // Listing footprint as a pre-load fallback (model dims win once available).
+        // 24 samples is smooth enough for a thin ring; 64 was ~3× the project cost.
+        const RING_SAMPLES = 24;
+        // Compass does not need to match model-viewer's 60fps — 15Hz is plenty and
+        // keeps the WebView from fighting the GLB render loop.
+        const MIN_UPDATE_MS = 66;
         const listingLong = Number(l?.room_scan_floor_long_m);
         const listingShort = Number(l?.room_scan_floor_short_m);
 
         let raf = 0;
-        let spinRaf = 0;
+        let cachedLayout = null;
+        let lastTheta = NaN;
+        let lastPhi = NaN;
+        let lastRadius = NaN;
+        let lastFovY = NaN;
+        let lastBadgeR = NaN;
+        let lastUpdateMs = 0;
+        const scratch = { x: 0, y: 0 };
+        const pathBuf = new Array(RING_SAMPLES + 1);
         const ac = new AbortController();
         const { signal } = ac;
 
-        const resolveLayout = () => {
+        const resolveLayout = (force) => {
+          if (cachedLayout && !force) return cachedLayout;
           let sizeX = 0;
           let sizeY = 0;
           let sizeZ = 0;
@@ -1026,116 +1049,134 @@
           if (!(sizeX > 0 && sizeZ > 0)) return null;
           const halfDiag = 0.5 * Math.hypot(sizeX, sizeZ);
           const radius = Math.max(halfDiag + RING_MARGIN_M, MIN_RADIUS_M);
-          // Sit the ring on the floor plane (bottom of the AABB), slightly lifted.
           const floorY = cy - sizeY * 0.5 + 0.02;
-          return { cx, cy: floorY, cz, radius };
+          cachedLayout = { cx, cy: floorY, cz, radius };
+          for (const badge of badges) {
+            badge.labelR = radius + (badge.isNorth ? 0.55 : 0.48);
+          }
+          return cachedLayout;
         };
 
-        const apply = () => {
+        const apply = (forceLayout) => {
           if (!svg.isConnected) {
             ac.abort();
             return;
           }
-          // Native hides the 3D floor ring on the floor-plan tab.
           if (host.classList.contains('is-blueprint') || viewerEl.__uydoshPlanViewActive) {
             svg.hidden = true;
             return;
           }
-          const layout = resolveLayout();
+          const layout = resolveLayout(forceLayout);
           if (!layout) {
             svg.hidden = true;
             return;
           }
-          svg.hidden = false;
 
-          const { cx, cy, cz, radius } = layout;
-          const pts = [];
-          for (let i = 0; i <= RING_SAMPLES; i++) {
-            const a = (i / RING_SAMPLES) * Math.PI * 2;
-            const xz = roomScanWorldXZFromPlanAngle(a);
-            const p = roomScanProjectWorldToScreen(
-              cx + xz.x * radius,
-              cy,
-              cz + xz.z * radius,
-              viewerEl
-            );
-            if (p) pts.push(p);
-          }
-          if (pts.length < 8) {
+          const ctx = roomScanBuildProjectContext(viewerEl);
+          if (!ctx) {
             svg.hidden = true;
             return;
           }
-          ringPath.setAttribute(
-            'd',
-            pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z'
-          );
 
-          // Badge size from projected ring radius (rough: distance between opposite samples).
-          let screenRadius = 80;
-          if (pts.length > 2) {
-            const mid = pts[Math.floor(pts.length / 2)];
-            screenRadius = Math.hypot(pts[0].x - mid.x, pts[0].y - mid.y) * 0.5;
+          // Skip DOM writes when the camera hasn't meaningfully moved.
+          if (
+            !forceLayout
+            && Math.abs(ctx.theta - lastTheta) < 0.004
+            && Math.abs(ctx.phi - lastPhi) < 0.004
+            && Math.abs(ctx.radius - lastRadius) < 0.02
+            && Math.abs(ctx.fovY - lastFovY) < 0.002
+          ) {
+            return;
           }
+          lastTheta = ctx.theta;
+          lastPhi = ctx.phi;
+          lastRadius = ctx.radius;
+          lastFovY = ctx.fovY;
+
+          const { cx, cy, cz, radius } = layout;
+          let pathLen = 0;
+          let firstX = 0;
+          let firstY = 0;
+          let midX = 0;
+          let midY = 0;
+          for (let i = 0; i <= RING_SAMPLES; i++) {
+            const a = (i / RING_SAMPLES) * Math.PI * 2;
+            const p = roomScanProjectWithContext(
+              cx + Math.cos(a) * radius,
+              cy,
+              cz + (-Math.sin(a)) * radius,
+              ctx,
+              scratch
+            );
+            if (!p) continue;
+            const cmd = pathLen === 0 ? 'M' : 'L';
+            pathBuf[pathLen++] = `${cmd}${p.x.toFixed(0)} ${p.y.toFixed(0)}`;
+            if (pathLen === 1) {
+              firstX = p.x; firstY = p.y;
+            }
+            if (i === (RING_SAMPLES >> 1)) {
+              midX = p.x; midY = p.y;
+            }
+          }
+          if (pathLen < 8) {
+            svg.hidden = true;
+            return;
+          }
+          svg.hidden = false;
+          ringPath.setAttribute('d', `${pathBuf.slice(0, pathLen).join(' ')} Z`);
+
+          const screenRadius = Math.hypot(firstX - midX, firstY - midY) * 0.5 || 80;
           const badgeR = Math.max(14, Math.min(22, screenRadius * 0.09));
+          const badgeRChanged = !Number.isFinite(lastBadgeR) || Math.abs(badgeR - lastBadgeR) > 0.5;
+          if (badgeRChanged) lastBadgeR = badgeR;
 
           for (const badge of badges) {
             const planAngle = trueNorthPlanAngleRad + badge.offset;
-            const xz = roomScanWorldXZFromPlanAngle(planAngle);
-            const labelR = radius + (badge.isNorth ? 0.55 : 0.48);
-            const p = roomScanProjectWorldToScreen(
-              cx + xz.x * labelR,
-              cy + badgeR * 0.02,
-              cz + xz.z * labelR,
-              viewerEl
+            const p = roomScanProjectWithContext(
+              cx + Math.cos(planAngle) * badge.labelR,
+              cy,
+              cz + (-Math.sin(planAngle)) * badge.labelR,
+              ctx,
+              scratch
             );
             if (!p) {
               badge.g.setAttribute('visibility', 'hidden');
               continue;
             }
             badge.g.setAttribute('visibility', 'visible');
-            badge.g.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
-            badge.circle.setAttribute('r', badgeR.toFixed(1));
-            badge.label.setAttribute('font-size', Math.max(11, badgeR * 0.95).toFixed(1));
+            badge.g.setAttribute('transform', `translate(${p.x.toFixed(0)} ${p.y.toFixed(0)})`);
+            if (badgeRChanged) {
+              badge.circle.setAttribute('r', badgeR.toFixed(0));
+              badge.label.setAttribute('font-size', Math.max(11, badgeR * 0.95).toFixed(0));
+            }
           }
         };
 
-        const schedule = () => {
+        const schedule = (forceLayout) => {
           if (raf || signal.aborted) return;
           raf = requestAnimationFrame(() => {
             raf = 0;
-            apply();
+            const now = performance.now();
+            // Always honor forced layout (load/resize); otherwise throttle.
+            if (!forceLayout && now - lastUpdateMs < MIN_UPDATE_MS) return;
+            lastUpdateMs = now;
+            apply(forceLayout);
           });
         };
 
-        const spinTick = () => {
-          if (!svg.isConnected) {
-            ac.abort();
-            return;
-          }
-          apply();
-          if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
-            spinRaf = requestAnimationFrame(spinTick);
-          } else {
-            spinRaf = 0;
-          }
-        };
-        const syncSpinLoop = () => {
-          if (spinRaf || signal.aborted) return;
-          if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
-            spinRaf = requestAnimationFrame(spinTick);
-          } else {
-            schedule();
-          }
-        };
-
-        viewerEl.addEventListener('camera-change', schedule, { signal });
-        viewerEl.addEventListener('load', schedule, { signal });
-        viewerEl.addEventListener('uydosh-autorotate-changed', syncSpinLoop, { signal });
-        host.addEventListener('uydosh-blueprint-changed', schedule, { signal });
-        window.addEventListener('resize', schedule, { signal });
+        viewerEl.addEventListener('camera-change', () => schedule(false), { signal });
+        viewerEl.addEventListener('load', () => {
+          cachedLayout = null;
+          schedule(true);
+        }, { signal });
+        viewerEl.addEventListener('uydosh-autorotate-changed', () => schedule(false), { signal });
+        host.addEventListener('uydosh-blueprint-changed', () => schedule(false), { signal });
+        window.addEventListener('resize', () => {
+          cachedLayout = null;
+          schedule(true);
+        }, { signal });
         svg.__uydoshCompassAbort = ac;
-        schedule();
-        syncSpinLoop();
+        schedule(true);
         return svg;
       }
 
