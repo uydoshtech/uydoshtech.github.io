@@ -100,16 +100,15 @@
       if (pathMatch) rawId = pathMatch[1];
     }
     const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
-    const deviceId = (qs.get('device_id') || '').trim();
     const token = (qs.get('token') || '').trim();
-    return { id, deviceId, token };
+    return { id, token };
   }
 
   function setRoute(scanId) {
     const qs = new URLSearchParams(location.search);
-    const { deviceId } = readRoute();
-    if (deviceId) qs.set('device_id', deviceId);
-    else qs.delete('device_id');
+    // The gallery always shows every public scan — drop any legacy
+    // device-scoped links.
+    qs.delete('device_id');
     if (scanId) qs.set('id', String(scanId));
     else qs.delete('id');
     qs.delete('scan');
@@ -392,17 +391,12 @@
   }
 
   async function loadScans() {
-    const { id, deviceId } = readRoute();
+    const { id } = readRoute();
     showListView();
     showStatus('Loading scans…');
 
-    const qs = new URLSearchParams();
-    if (deviceId) qs.set('device_id', deviceId);
-
     try {
-      const res = await fetch(
-        `${API_BASE}/makon3d/scans${qs.toString() ? `?${qs}` : ''}`
-      );
+      const res = await fetch(`${API_BASE}/makon3d/scans`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderList(data.scans || []);
