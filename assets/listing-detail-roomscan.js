@@ -999,11 +999,11 @@
        * Mirrors WorldCompassRingController (torus + billboard N/E/S/W badges).
        *
        * Perf notes (Telegram WebView is GPU-tight with <model-viewer>):
+       * - Hidden entirely while auto-rotate is on (no yaw polling / SVG updates).
        * - Cache footprint layout after first resolve — getDimensions()
        *   call updateBoundingBoxAndShadowIfDirty() and must not run every frame.
        * - One camera context per redraw; project samples through it.
-       * - Throttle to ~15fps and skip when orbit/yaw haven't moved — no second rAF
-       *   spin loop (camera-change already fires during auto-rotate / wiggle).
+       * - Throttle to ~15fps when visible and skip when orbit/yaw haven't moved.
        */
       function createRoomScanWorldCompassRing(viewerEl, host, l) {
         const { scanBearingDeg, correctionDeg } = roomScanParseListingBearing(l);
@@ -1068,8 +1068,10 @@
         const pathBuf = new Array(RING_SAMPLES + 1);
         const ac = new AbortController();
         const { signal } = ac;
-        let yawWatchRaf = 0;
-        let yawWatchGen = 0;
+
+        const isAutoRotating = () => (
+          viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive
+        );
 
         const resolveLayout = (force) => {
           if (cachedLayout && !force) return cachedLayout;
@@ -1106,7 +1108,12 @@
             ac.abort();
             return;
           }
-          if (host.classList.contains('is-blueprint') || viewerEl.__uydoshPlanViewActive) {
+          // Hidden while the building auto-rotates (and in 2D) — show again when paused.
+          if (
+            host.classList.contains('is-blueprint')
+            || viewerEl.__uydoshPlanViewActive
+            || isAutoRotating()
+          ) {
             svg.hidden = true;
             return;
           }
@@ -1214,60 +1221,35 @@
           });
         };
 
-        const stopYawWatch = () => {
-          yawWatchGen += 1;
-          if (yawWatchRaf) {
-            cancelAnimationFrame(yawWatchRaf);
-            yawWatchRaf = 0;
-          }
-        };
-
-        const watchYaw = (gen) => {
-          if (gen !== yawWatchGen || !svg.isConnected) {
-            if (!svg.isConnected) ac.abort();
+        // Hide while spinning; when paused, force a redraw so the rose matches the
+        // current turntable yaw (no yaw rAF loop needed while hidden).
+        const syncAutoRotateVisibility = () => {
+          if (signal.aborted || !svg.isConnected) return;
+          if (isAutoRotating()) {
+            svg.hidden = true;
+            // Invalidate so the next show doesn't early-out on stale camera keys.
+            lastYaw = NaN;
             return;
           }
-          if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
-            const yaw = Number(viewerEl.turntableRotation) || 0;
-            if (!(Math.abs(yaw - lastYaw) < 0.004)) schedule(false);
-            yawWatchRaf = requestAnimationFrame(() => watchYaw(gen));
-          } else {
-            yawWatchRaf = 0;
-            schedule(false);
-          }
+          schedule(true);
         };
 
-        // Always cancel + restart so pause→play reliably resumes the yaw poll
-        // (a stale pending rAF used to block syncYawWatch via `if (yawWatchRaf) return`).
-        const syncYawWatch = () => {
-          stopYawWatch();
-          if (signal.aborted || !svg.isConnected) return;
-          if (viewerEl.hasAttribute('auto-rotate') && !viewerEl.__uydoshPlanViewActive) {
-            const gen = yawWatchGen;
-            yawWatchRaf = requestAnimationFrame(() => watchYaw(gen));
-          } else {
-            schedule(false);
-          }
-        };
-
-        viewerEl.addEventListener('camera-change', () => schedule(false), { signal });
+        viewerEl.addEventListener('camera-change', () => {
+          if (!isAutoRotating()) schedule(false);
+        }, { signal });
         viewerEl.addEventListener('load', () => {
           cachedLayout = null;
-          schedule(true);
+          syncAutoRotateVisibility();
         }, { signal });
-        viewerEl.addEventListener('uydosh-autorotate-changed', syncYawWatch, { signal });
-        host.addEventListener('uydosh-blueprint-changed', () => {
-          schedule(false);
-          syncYawWatch();
-        }, { signal });
+        viewerEl.addEventListener('uydosh-autorotate-changed', syncAutoRotateVisibility, { signal });
+        host.addEventListener('uydosh-blueprint-changed', syncAutoRotateVisibility, { signal });
         window.addEventListener('resize', () => {
           cachedLayout = null;
-          schedule(true);
+          if (!isAutoRotating()) schedule(true);
         }, { signal });
-        signal.addEventListener('abort', stopYawWatch);
         svg.__uydoshCompassAbort = ac;
-        schedule(true);
-        syncYawWatch();
+        // Starts hidden if auto-rotate is on (default for the fullscreen viewer).
+        syncAutoRotateVisibility();
         return svg;
       }
 
