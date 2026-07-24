@@ -465,6 +465,50 @@ body {
 .roomscan-plan-toggle-btn.is-active { background: #fff; color: #111; }
 .roomscan-plan-toggle-btn:not(.is-active):active { opacity: 0.85; }
 
+/* 2D blueprint overlay — vector floor plan SVG built from the GLB (see
+   listing-detail-floorplan.js, shared with listing.html). Positioned so it
+   paints above the <model-viewer> but below every absolutely-positioned
+   control (z-index 1). White graph-paper look regardless of theme. */
+.roomscan-blueprint {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.roomscan-blueprint[hidden] { display: none; }
+.roomscan-blueprint-svg { width: 100%; height: 100%; display: block; cursor: grab; }
+.roomscan-blueprint-svg:active { cursor: grabbing; }
+
+/* Spinner shown by mountRoomScanBlueprint while the GLB is parsed — UyDosh
+   styles it as its spinning "U" logo; here it's a plain ring in blueprint ink. */
+.roomscan-blueprint .loading-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(31, 58, 84, 0.2);
+  border-top-color: #1f3a54;
+  animation: m3d-spin 0.9s linear infinite;
+}
+
+@keyframes m3d-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* While the blueprint is showing, the 3D-only controls (display mode,
+   wall/floor textures, auto-rotate, FOV zoom slider) act on a model nobody
+   can see — hide them. The plan toggle stays. */
+.is-blueprint .roomscan-mode-btn, .is-blueprint .roomscan-texture-btn,
+.is-blueprint .roomscan-floor-texture-btn, .is-blueprint .roomscan-rotate-btn,
+.is-blueprint .roomscan-zoom-slider {
+  display: none;
+}
+
 /* Pill-shaped zoom slider with magnifier-out/in glyphs at each end. */
 .roomscan-zoom-slider {
   flex: 1 1 auto;

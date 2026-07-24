@@ -135,6 +135,8 @@
     viewerPanelEl.hidden = true;
     backEl.hidden = true;
     navTriggerEl.hidden = false;
+    viewerWrapEl.classList.remove('is-blueprint');
+    delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
     viewerWrapEl.innerHTML = '';
     viewerMetaEl.innerHTML = '';
     clearShareOgTags();
@@ -393,8 +395,15 @@
     applyRoomScanDisplayMode(viewerEl, viewerEl.__m3dDisplayMode || 'fullRoom');
   }
 
-  /** "3D | 2D" segmented pill, wired to `viewerEl`. Always starts on 3D. */
-  function createRoomScanPlanToggle(viewerEl) {
+  /** "3D | 2D" segmented pill, wired to `viewerEl`. Always starts on 3D.
+   *
+   * 2D first tries the vector blueprint overlay (walls/doors/furniture +
+   * measurements extracted from the GLB — mountRoomScanBlueprint, shared with
+   * listing.html via assets/listing-detail-floorplan.js), mounted into `host`
+   * (the viewer wrap). The top-down camera lock is applied either way: it's
+   * the visible fallback when the blueprint can't be built, and it stops the
+   * hidden 3D render loop from spinning under the overlay when it can. */
+  function createRoomScanPlanToggle(viewerEl, host, glbUrl) {
     const wrap = document.createElement('div');
     wrap.className = 'roomscan-plan-toggle';
     wrap.setAttribute('role', 'tablist');
@@ -409,8 +418,17 @@
       btn.addEventListener('click', () => {
         if (btn.classList.contains('is-active')) return;
         haptic();
-        if (isPlan) enterRoomScanPlanView(viewerEl);
-        else exitRoomScanPlanView(viewerEl);
+        if (isPlan) {
+          enterRoomScanPlanView(viewerEl);
+          if (typeof mountRoomScanBlueprint === 'function' && host && glbUrl) {
+            mountRoomScanBlueprint(host, glbUrl);
+          }
+        } else {
+          if (typeof unmountRoomScanBlueprint === 'function' && host) {
+            unmountRoomScanBlueprint(host);
+          }
+          exitRoomScanPlanView(viewerEl);
+        }
         updateSelection();
       });
       return btn;
@@ -804,6 +822,10 @@
   }
 
   async function mountViewer(scan) {
+    // The blueprint overlay's host class/dataset must not survive from a
+    // previously opened scan (innerHTML is cleared, but classes aren't).
+    viewerWrapEl.classList.remove('is-blueprint');
+    delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
     viewerWrapEl.innerHTML =
       '<div class="m3d-viewer-status" role="status">Loading 3D model…</div>';
     renderViewerMeta(scan);
@@ -842,8 +864,8 @@
       viewerWrapEl.appendChild(createRoomScanModeButton(viewer));
       viewerWrapEl.appendChild(createRoomScanWallTextureButton(viewer));
       viewerWrapEl.appendChild(createRoomScanFloorTextureButton(viewer));
-      // Top-left: 3D/2D bird's-eye toggle.
-      viewerWrapEl.appendChild(createRoomScanPlanToggle(viewer));
+      // Top-left: 3D/2D toggle — 2D mounts the vector blueprint floor plan.
+      viewerWrapEl.appendChild(createRoomScanPlanToggle(viewer, viewerWrapEl, glb));
     } catch (err) {
       console.error('[Makon3D] model-viewer failed', err);
       viewerWrapEl.innerHTML =
