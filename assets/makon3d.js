@@ -991,6 +991,403 @@
     }
   }
 
+  // --- Scan a room (UyDosh App Clip) -----------------------------------------
+  // Mirrors the UyDosh Mini App's post-publish upsell (telegram-create.js):
+  // POST /makon3d/scan-sessions mints a short-lived invocation URL, the iOS
+  // App Clip scans with RoomPlan and uploads, the backend feeds the result
+  // into makon3d_scans, and the clip deep-links back here with a
+  // `scan_<token>` start_param (handled by restoreScanSessionFromStartParam).
+
+  const scanCtaEl = document.getElementById('m3d-scan-cta');
+  const SCAN_SESSION_STORAGE_KEY = 'makon3d:activeScanSession';
+  const SCAN_SESSION_TTL_MS = 60 * 60 * 1000;
+  let scanPollTimer = null;
+
+  /** Lazy-loaded QR generator, same CDN pattern as model-viewer above. */
+  const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.5.0/qrcode.js';
+  let qrCodeLibPromise = null;
+
+  function loadQrCodeLib() {
+    if (window.qrcode) return Promise.resolve(window.qrcode);
+    if (qrCodeLibPromise) return qrCodeLibPromise;
+    qrCodeLibPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = QRCODE_LIB_SRC;
+      script.async = true;
+      script.onload = () => {
+        if (window.qrcode) resolve(window.qrcode);
+        else {
+          qrCodeLibPromise = null;
+          reject(new Error('qrcode lib missing after load'));
+        }
+      };
+      script.onerror = () => {
+        qrCodeLibPromise = null;
+        reject(new Error('Failed to load qrcode lib'));
+      };
+      document.head.appendChild(script);
+    });
+    return qrCodeLibPromise;
+  }
+
+  /**
+   * Portrait CSS screen profiles unique to iPhones that certainly have no
+   * LiDAR (LiDAR starts with the iPhone 12 Pro). Copied from the UyDosh Mini
+   * App's device pre-filter (telegram-create.js) — intentionally optimistic;
+   * the App Clip's real RoomCaptureSession.isSupported check is the authority.
+   */
+  const NON_LIDAR_IPHONE_SCREENS = new Set([
+    '320x568',
+    '375x667',
+    '414x736',
+    '375x812',
+    '414x896',
+  ]);
+
+  function isLikelyRoomScanCapableDevice() {
+    const ua = navigator.userAgent || '';
+    const osMatch = /OS (\d+)_/.exec(ua);
+    if (osMatch && Number(osMatch[1]) < 16) return false;
+    const shortSide = Math.min(screen.width, screen.height);
+    const longSide = Math.max(screen.width, screen.height);
+    return !NON_LIDAR_IPHONE_SCREENS.has(`${shortSide}x${longSide}`);
+  }
+
+  function isIosClient() {
+    const tgPlatform = String(window.Telegram?.WebApp?.platform || '').toLowerCase();
+    if (tgPlatform === 'ios') return true;
+    if (tgPlatform && tgPlatform !== 'unknown') return false;
+    return /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+  }
+
+  async function createScanSession() {
+    const res = await fetch(`${API_BASE}/makon3d/scan-sessions`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    let payload = null;
+    try {
+      payload = await res.json();
+    } catch { /* ignore */ }
+    if (!res.ok) {
+      const err = new Error(payload?.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.payload = payload;
+      throw err;
+    }
+    return payload;
+  }
+
+  async function fetchScanSession(token) {
+    const res = await fetch(`${API_BASE}/scan-sessions/${encodeURIComponent(token)}`, {
+      headers: { Accept: 'application/json' },
+    });
+    let payload = null;
+    try {
+      payload = await res.json();
+    } catch { /* ignore */ }
+    if (!res.ok) {
+      const err = new Error(payload?.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.payload = payload;
+      throw err;
+    }
+    return payload;
+  }
+
+  function renderScanCta() {
+    if (!scanCtaEl) return;
+    const isIos = isIosClient();
+    // Mirror the UyDosh Mini App: hide the affordance entirely on iPhones
+    // that certainly can't scan; keep the QR/copy-link path everywhere else
+    // (the link can be opened on another device).
+    if (isIos && !isLikelyRoomScanCapableDevice()) return;
+
+    scanCtaEl.innerHTML = `
+      <div class="m3d-scan-cta-copy">
+        <strong>Scan a room</strong>
+        <span>${
+          isIos
+            ? 'Capture a 3D model with your iPhone — no app install needed.'
+            : 'Get a scan link and open it on an iPhone with LiDAR.'
+        }</span>
+      </div>
+      <p class="m3d-scan-cta-status" id="m3d-scan-cta-status" hidden></p>
+      <button type="button" class="m3d-scan-cta-btn" id="m3d-scan-cta-btn">
+        ${isIos ? 'Scan a room' : 'Get scan link'}
+      </button>
+    `;
+    scanCtaEl.hidden = false;
+    document
+      .getElementById('m3d-scan-cta-btn')
+      ?.addEventListener('click', () => startScanFlow(isIos));
+  }
+
+  function setScanCtaStatus(message) {
+    const el = document.getElementById('m3d-scan-cta-status');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+  }
+
+  async function showScanQrCode(invocationUrl) {
+    if (!scanCtaEl) return;
+    let wrap = document.getElementById('m3d-scan-cta-qr');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'm3d-scan-cta-qr';
+      wrap.className = 'm3d-scan-cta-qr';
+      scanCtaEl.appendChild(wrap);
+    }
+    try {
+      const qrcode = await loadQrCodeLib();
+      const qr = qrcode(0, 'M');
+      qr.addData(invocationUrl);
+      qr.make();
+      const img = document.createElement('img');
+      img.src = qr.createDataURL(5, 4);
+      img.alt = invocationUrl;
+      img.decoding = 'async';
+      wrap.innerHTML = '';
+      wrap.appendChild(img);
+      const hint = document.createElement('p');
+      hint.className = 'm3d-scan-cta-qr-hint';
+      hint.textContent = 'Scan this code with an iPhone camera to start scanning.';
+      wrap.appendChild(hint);
+    } catch (err) {
+      console.error('[Makon3D] QR render failed', err);
+      wrap.remove();
+    }
+  }
+
+  async function startScanFlow(isIos) {
+    const button = document.getElementById('m3d-scan-cta-btn');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Starting…';
+    }
+    haptic();
+    try {
+      const session = await createScanSession();
+      try {
+        sessionStorage.setItem(
+          SCAN_SESSION_STORAGE_KEY,
+          JSON.stringify({ token: session.scanSessionId, createdAt: Date.now() }),
+        );
+      } catch { /* ignore */ }
+
+      if (isIos) {
+        const tg = window.Telegram?.WebApp;
+        if (tg?.openLink) tg.openLink(session.invocationUrl);
+        else window.open(session.invocationUrl, '_blank');
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Scan a room';
+        }
+        watchScanSession(session.scanSessionId);
+      } else {
+        // Desktop/Android: QR first (clipboard writes can reject in some
+        // Telegram webviews and must not kill the flow), then copy.
+        showScanQrCode(session.invocationUrl);
+        watchScanSession(session.scanSessionId);
+        let copied = false;
+        try {
+          await navigator.clipboard?.writeText?.(session.invocationUrl);
+          copied = true;
+        } catch { /* clipboard unavailable — the QR still carries the link */ }
+        if (button) {
+          button.disabled = false;
+          button.textContent = copied ? 'Link copied' : 'Get scan link';
+        }
+      }
+    } catch (err) {
+      console.error('[Makon3D] scan session create failed', err);
+      if (err?.payload?.code === 'lidar_room_scan_disabled' && scanCtaEl) {
+        scanCtaEl.hidden = true;
+        return;
+      }
+      setScanCtaStatus('Could not start scanning. Try again later.');
+      if (button) {
+        button.disabled = false;
+        button.textContent = isIos ? 'Scan a room' : 'Get scan link';
+      }
+    }
+  }
+
+  /** Re-fetches the scan list, then opens the freshly created scan. */
+  async function openCompletedScan(makon3dScanId) {
+    try {
+      const res = await fetch(`${API_BASE}/makon3d/scans`);
+      if (res.ok) {
+        const data = await res.json();
+        renderList(data.scans || []);
+      }
+    } catch { /* list refresh is best-effort */ }
+    if (Number.isInteger(makon3dScanId) && makon3dScanId > 0) {
+      await openScan(makon3dScanId);
+    }
+  }
+
+  /**
+   * Polls the scan session while the page is visible; stops on any terminal
+   * status. Used both after tapping the CTA and when resuming a session
+   * persisted in sessionStorage.
+   */
+  function watchScanSession(token) {
+    const stop = () => {
+      if (scanPollTimer) {
+        clearInterval(scanPollTimer);
+        scanPollTimer = null;
+      }
+    };
+    const clearStored = () => {
+      try { sessionStorage.removeItem(SCAN_SESSION_STORAGE_KEY); } catch { /* ignore */ }
+    };
+
+    const poll = async () => {
+      if (document.visibilityState !== 'visible') return;
+      let session;
+      try {
+        session = await fetchScanSession(token);
+      } catch (err) {
+        if (err?.status === 404 || err?.status === 410) {
+          stop();
+          clearStored();
+        }
+        return;
+      }
+      if (session.status === 'processing') {
+        setScanCtaStatus('Building the 3D model…');
+      } else if (session.status === 'completed') {
+        stop();
+        clearStored();
+        document.getElementById('m3d-scan-cta-qr')?.remove();
+        setScanCtaStatus('');
+        haptic();
+        await openCompletedScan(Number(session.makon3dScanId));
+      } else if (session.status === 'failed' || session.status === 'expired') {
+        stop();
+        clearStored();
+        document.getElementById('m3d-scan-cta-qr')?.remove();
+        setScanCtaStatus(
+          session.status === 'failed'
+            ? 'Scan processing failed. Please try again.'
+            : '',
+        );
+      }
+    };
+
+    stop();
+    scanPollTimer = setInterval(poll, 4000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && scanPollTimer) poll();
+    });
+    poll();
+  }
+
+  /** Resumes polling a scan session persisted before the App Clip hop. */
+  function resumeStoredScanSession() {
+    let stored = null;
+    try {
+      stored = JSON.parse(sessionStorage.getItem(SCAN_SESSION_STORAGE_KEY) || 'null');
+    } catch { /* ignore */ }
+    if (!stored?.token) return;
+    if (Date.now() - (Number(stored.createdAt) || 0) > SCAN_SESSION_TTL_MS) {
+      try { sessionStorage.removeItem(SCAN_SESSION_STORAGE_KEY); } catch { /* ignore */ }
+      return;
+    }
+    watchScanSession(stored.token);
+  }
+
+  // --- Return leg from the App Clip (start_param) ----------------------------
+  // After uploading, the clip opens t.me/<bot>/<app>?startapp=scan_<token>;
+  // Telegram passes that through as initDataUnsafe.start_param. Show a
+  // blocking overlay while the backend converts, then open the scan.
+
+  function scanReturnOverlay() {
+    let overlay = document.getElementById('m3d-scan-overlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'm3d-scan-overlay';
+    overlay.className = 'm3d-scan-overlay';
+    overlay.innerHTML = `
+      <div class="m3d-scan-overlay-card">
+        ${loadingSpinnerHtml()}
+        <p id="m3d-scan-overlay-text">Building the 3D model…</p>
+        <button type="button" class="m3d-scan-cta-btn" id="m3d-scan-overlay-close" hidden>
+          Back to scans
+        </button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#m3d-scan-overlay-close')?.addEventListener('click', () => {
+      overlay.remove();
+    });
+    return overlay;
+  }
+
+  function failScanReturnOverlay(message) {
+    const overlay = document.getElementById('m3d-scan-overlay');
+    if (!overlay) return;
+    overlay.querySelector('.m3d-loading-spinner')?.remove();
+    const text = overlay.querySelector('#m3d-scan-overlay-text');
+    if (text) text.textContent = message;
+    const close = overlay.querySelector('#m3d-scan-overlay-close');
+    if (close) close.hidden = false;
+  }
+
+  async function restoreScanSessionFromStartParam() {
+    let startParam = '';
+    try {
+      startParam = String(window.Telegram?.WebApp?.initDataUnsafe?.start_param || '');
+    } catch { /* ignore */ }
+    const match = /^scan_([A-Za-z0-9_-]{4,64})$/.exec(startParam);
+    if (!match) return false;
+    const token = match[1];
+
+    const overlay = scanReturnOverlay();
+    const finish = () => overlay.remove();
+
+    const poll = async () => {
+      let session;
+      try {
+        session = await fetchScanSession(token);
+      } catch (err) {
+        if (err?.status === 404 || err?.status === 410) {
+          failScanReturnOverlay('This scan link has expired.');
+          return true;
+        }
+        return false; // transient — keep polling
+      }
+      if (session.status === 'completed') {
+        finish();
+        haptic();
+        await openCompletedScan(Number(session.makon3dScanId));
+        return true;
+      }
+      if (session.status === 'failed') {
+        failScanReturnOverlay('Scan processing failed. Please try scanning again.');
+        return true;
+      }
+      if (session.status === 'expired') {
+        failScanReturnOverlay('This scan session has expired.');
+        return true;
+      }
+      return false; // created / uploading / processing — keep waiting
+    };
+
+    if (await poll()) return true;
+    const timer = setInterval(async () => {
+      if (!document.getElementById('m3d-scan-overlay')) {
+        clearInterval(timer);
+        return;
+      }
+      if (await poll()) clearInterval(timer);
+    }, 3000);
+    return true;
+  }
+
   const DRAWER_TRANSITION_MS = 220;
   let drawerCloseTimer = null;
 
@@ -1139,5 +1536,11 @@
 
   initTelegramChrome();
   initTelegramUserChrome();
+  renderScanCta();
   loadScans();
+  // The App Clip return leg (`scan_<token>` start_param) takes precedence
+  // over resuming a stored session — both would poll the same session anyway.
+  restoreScanSessionFromStartParam().then((handled) => {
+    if (!handled) resumeStoredScanSession();
+  });
 })();

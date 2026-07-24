@@ -11,7 +11,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260724-7" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260724-8" />
   </head>
   <body>
     <div class="m3d-app">
@@ -46,7 +46,7 @@
             </svg>
           </span>
           <div class="m3d-brand-copy">
-            <h1 class="m3d-title" id="m3d-title">Makon3D</h1>
+            <h1 class="m3d-title" id="m3d-title">MakonAI</h1>
             <span class="m3d-tagline">Ваше пространство в 3D</span>
           </div>
         </div>
@@ -61,6 +61,9 @@
 
       <main class="m3d-main">
         <section class="m3d-list-panel" id="m3d-list-panel" aria-label="Scans">
+          <!-- "Scan a room" card (UyDosh App Clip flow) — filled by makon3d.js;
+               stays hidden on devices that certainly can't scan. -->
+          <div class="m3d-scan-cta" id="m3d-scan-cta" hidden></div>
           <div class="m3d-status" id="m3d-status" role="status" aria-label="Loading scans"><span class="m3d-loading-spinner" aria-hidden="true"></span></div>
           <ul class="m3d-list" id="m3d-list" hidden></ul>
         </section>
@@ -117,6 +120,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260724-6" defer></script>
+    <script src="../assets/makon3d.js?v=20260724-7" defer></script>
   </body>
 </html>
