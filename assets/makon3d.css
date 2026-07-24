@@ -70,6 +70,68 @@ body {
   min-height: 44px;
 }
 
+/* Bare hamburger icon, no button chrome — mirrors UyDosh's .nav-menu-trigger. */
+.m3d-nav-trigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--m3d-fg);
+  width: 40px;
+  height: 40px;
+  margin-left: -8px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.m3d-nav-trigger[hidden] { display: none; }
+.m3d-nav-trigger:active { opacity: 0.85; }
+.m3d-nav-trigger svg { width: 24px; height: 24px; display: block; }
+
+.m3d-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.m3d-tagline {
+  color: var(--m3d-muted);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3d-avatar {
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  border-radius: 50%;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  color: var(--m3d-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.m3d-avatar svg { width: 18px; height: 18px; display: block; }
+.m3d-avatar.has-avatar svg { display: none; }
+
+.m3d-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .m3d-back {
   appearance: none;
   width: 40px;
@@ -104,13 +166,18 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
   color: var(--m3d-accent);
   background: var(--m3d-accent-dim);
   border: 1px solid var(--m3d-accent-stroke);
   flex-shrink: 0;
+}
+
+/* Inline brand-mark SVG (currentColor picks up --m3d-accent above). The mark's
+   538×538 viewBox carries its own whitespace, so size it near the tile edge. */
+.m3d-brand-mark svg {
+  width: 30px;
+  height: 30px;
+  display: block;
 }
 
 .m3d-title {
@@ -506,4 +573,90 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
+}
+
+/* Left slide-out nav drawer — same pattern as UyDosh's .nav-drawer
+   (mounted on <body>, full-viewport dimmed backdrop, 220ms slide). */
+.m3d-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.m3d-drawer-backdrop[hidden] { display: none !important; }
+.m3d-drawer-backdrop.is-open { opacity: 1; }
+
+.m3d-drawer {
+  width: min(82vw, 300px);
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--m3d-bg);
+  border-right: 1px solid var(--m3d-stroke);
+  padding:
+    calc(16px + var(--m3d-safe-top))
+    16px
+    calc(16px + var(--m3d-safe-bottom));
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+.m3d-drawer-backdrop.is-open .m3d-drawer { transform: translateX(0); }
+
+.m3d-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px 18px;
+  flex-shrink: 0;
+}
+
+.m3d-drawer-avatar {
+  width: 48px;
+  height: 48px;
+  margin-left: 0;
+}
+
+.m3d-drawer-avatar svg { width: 22px; height: 22px; }
+
+.m3d-drawer-username {
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m3d-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m3d-drawer-body a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  color: var(--m3d-fg);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 550;
+}
+
+.m3d-drawer-body a:active { background: rgba(127, 127, 127, 0.16); }
+
+.m3d-drawer-body a svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex-shrink: 0;
+  color: var(--m3d-muted);
 }

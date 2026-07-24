@@ -6,8 +6,13 @@
   // Backend may rewrite room_scan.glb in place — bump to bust caches.
   const GLB_CACHE_VERSION = '20260716-1';
 
-  const titleEl = document.getElementById('m3d-title');
   const backEl = document.getElementById('m3d-back');
+  const navTriggerEl = document.getElementById('m3d-nav-trigger');
+  const drawerBackdropEl = document.getElementById('m3d-drawer-backdrop');
+  const drawerHomeEl = document.getElementById('m3d-drawer-home');
+  const avatarEl = document.getElementById('m3d-avatar');
+  const drawerAvatarEl = document.getElementById('m3d-drawer-avatar');
+  const drawerUsernameEl = document.getElementById('m3d-drawer-username');
   const statusEl = document.getElementById('m3d-status');
   const listEl = document.getElementById('m3d-list');
   const listPanelEl = document.getElementById('m3d-list-panel');
@@ -129,7 +134,7 @@
     listPanelEl.hidden = false;
     viewerPanelEl.hidden = true;
     backEl.hidden = true;
-    titleEl.textContent = 'Makon3D';
+    navTriggerEl.hidden = false;
     viewerWrapEl.innerHTML = '';
     viewerMetaEl.innerHTML = '';
     clearShareOgTags();
@@ -873,7 +878,9 @@
     listPanelEl.hidden = true;
     viewerPanelEl.hidden = false;
     backEl.hidden = false;
-    titleEl.textContent = `Scan #${id}`;
+    // The burger yields its spot to the back button — two buttons before the
+    // brand would crowd the header on narrow phones.
+    navTriggerEl.hidden = true;
     if (pushHistory) setRoute(id);
     renderViewerMeta(scan);
     const pageUrl = scan.viewerUrl || viewerShareUrl(id);
@@ -947,6 +954,65 @@
     }
   }
 
+  const DRAWER_TRANSITION_MS = 220;
+  let drawerCloseTimer = null;
+
+  function openDrawer() {
+    if (!drawerBackdropEl) return;
+    clearTimeout(drawerCloseTimer);
+    drawerBackdropEl.hidden = false;
+    drawerBackdropEl.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => drawerBackdropEl.classList.add('is-open'));
+    navTriggerEl?.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDrawer() {
+    if (!drawerBackdropEl || drawerBackdropEl.hidden) return;
+    drawerBackdropEl.classList.remove('is-open');
+    drawerBackdropEl.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    navTriggerEl?.setAttribute('aria-expanded', 'false');
+    drawerCloseTimer = setTimeout(() => {
+      drawerBackdropEl.hidden = true;
+    }, DRAWER_TRANSITION_MS);
+  }
+
+  /** Telegram user's photo + display name into the header/drawer avatars. */
+  function initTelegramUserChrome() {
+    let user = null;
+    try {
+      user = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+    } catch {
+      user = null;
+    }
+    if (!user) return;
+    const photoUrl = typeof user.photo_url === 'string' ? user.photo_url : '';
+    if (photoUrl) {
+      for (const holder of [avatarEl, drawerAvatarEl]) {
+        if (!holder) continue;
+        const img = document.createElement('img');
+        img.className = 'm3d-avatar-img';
+        img.src = photoUrl;
+        img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        img.onerror = () => {
+          holder.classList.remove('has-avatar');
+          img.remove();
+        };
+        holder.classList.add('has-avatar');
+        holder.appendChild(img);
+      }
+    }
+    const displayName =
+      [user.first_name, user.last_name].filter(Boolean).join(' ').trim() ||
+      (user.username ? `@${user.username}` : '');
+    if (displayName && drawerUsernameEl) {
+      drawerUsernameEl.textContent = displayName;
+      drawerUsernameEl.hidden = false;
+    }
+  }
+
   // Same fix as UyDosh's mini app (see applyTelegramSafeAreaInsets in
   // uydosh-mini-app.js): inside Telegram's WebView env(safe-area-inset-*)
   // reports 0, so Telegram's own Close/menu buttons float over the app's
@@ -1009,6 +1075,25 @@
     setRoute(null);
   });
 
+  navTriggerEl?.addEventListener('click', openDrawer);
+
+  drawerBackdropEl?.addEventListener('click', (event) => {
+    // Only the dimmed area closes; navigation links close via page unload,
+    // except the SPA-style "Scans" home link handled below.
+    if (event.target === drawerBackdropEl) closeDrawer();
+  });
+
+  drawerHomeEl?.addEventListener('click', (event) => {
+    event.preventDefault();
+    closeDrawer();
+    showListView();
+    setRoute(null);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeDrawer();
+  });
+
   window.addEventListener('popstate', () => {
     const { id } = readRoute();
     if (id) openScan(id, { pushHistory: false });
@@ -1016,5 +1101,6 @@
   });
 
   initTelegramChrome();
+  initTelegramUserChrome();
   loadScans();
 })();
