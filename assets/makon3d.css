@@ -1135,3 +1135,11 @@ body.m3d-has-scan-banner .m3d-list-panel {
   color: var(--m3d-muted);
 }
 
+/* Skirting-board line under the tile totals (floor tab only). */
+.m3d-mat-result-plinth {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--m3d-stroke);
+  font-weight: 600;
+}
+

@@ -853,6 +853,8 @@
   };
   const MATERIALS_SQUARE_PRESETS = [[30, 30], [40, 40], [60, 60]];
   const MATERIALS_RECT_PRESETS = [[20, 30], [30, 60], [40, 50]];
+  /** Standard skirting-board strip length. */
+  const PLINTH_STRIP_M = 2.5;
 
   /** Prefer the polygon floor area; fall back to the OBB long × short. */
   function resolveFloorAreaM2(scan) {
@@ -867,6 +869,14 @@
   function floorAreaUsedBoundingFallback(scan) {
     const area = Number(scan?.floorAreaM2);
     return !(Number.isFinite(area) && area > 0) && resolveFloorAreaM2(scan) != null;
+  }
+
+  /** Approximate footprint perimeter from the OBB dims: 2 × (long + short). */
+  function resolvePerimeterM(scan) {
+    const long = Number(scan?.floorLongM);
+    const short = Number(scan?.floorShortM);
+    if (!(long > 0) || !(short > 0)) return null;
+    return 2 * (long + short);
   }
 
   /** Approximate wall area: footprint perimeter (2 × (long + short)) × height.
@@ -1062,12 +1072,21 @@
       const estimate = area == null
         ? null
         : estimateTiles(area, current.widthCm, current.heightCm, current.wastePercent);
+      // Skirting board rides along with the floor tab only.
+      const perimeter = surface === 'floor' ? resolvePerimeterM(scan) : null;
+      const plinthHtml = perimeter == null
+        ? ''
+        : `
+          <div class="m3d-mat-result-plinth">Plinth: ~${perimeter.toFixed(1)} m · ${Math.ceil(perimeter / PLINTH_STRIP_M)} pcs × ${PLINTH_STRIP_M} m</div>
+          <div class="m3d-mat-result-detail">Perimeter, door openings not subtracted.</div>
+        `;
       resultEl.innerHTML = estimate
         ? `
           <div class="m3d-mat-result-heading">To buy</div>
           <div class="m3d-mat-result-count">${estimate.tileCount} tiles</div>
           <div>~${estimate.buyAreaM2.toFixed(1)} m² of tiles</div>
           <div class="m3d-mat-result-detail">Tile ${estimate.tileAreaM2.toFixed(2)} m² · with waste ~${estimate.effectiveAreaM2.toFixed(1)} m²</div>
+          ${plinthHtml}
         `
         : '<div class="m3d-mat-result-detail">Nothing to estimate without measurements.</div>';
     }
