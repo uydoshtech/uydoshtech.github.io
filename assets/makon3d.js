@@ -1144,6 +1144,16 @@
       img.alt = invocationUrl;
       img.decoding = 'async';
       wrap.innerHTML = '';
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'm3d-scan-cta-qr-close';
+      closeBtn.setAttribute('aria-label', 'Close');
+      closeBtn.innerHTML = '&times;';
+      closeBtn.addEventListener('click', () => {
+        haptic();
+        wrap.remove();
+      });
+      wrap.appendChild(closeBtn);
       wrap.appendChild(img);
       const hint = document.createElement('p');
       hint.className = 'm3d-scan-cta-qr-hint';

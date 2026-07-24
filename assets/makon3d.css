@@ -792,12 +792,37 @@ body.m3d-has-scan-banner .m3d-list-panel {
   /* Appended after the button (makon3d.js) but shown above it, so the QR
      grows upward from the bottom banner. */
   order: -1;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 8px 8px 2px;
 }
+
+/* Dismisses the QR panel; polling keeps running so a finished scan still
+   opens (makon3d.js showScanQrCode). */
+.m3d-scan-cta-qr-close {
+  appearance: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--m3d-accent-stroke);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--m3d-muted);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.m3d-scan-cta-qr-close:active { opacity: 0.7; }
 
 .m3d-scan-cta-qr img {
   width: min(220px, 70vw);
