@@ -11,8 +11,12 @@
   --m3d-accent-dim: rgba(255, 204, 0, 0.14);
   --m3d-accent-stroke: rgba(255, 204, 0, 0.32);
   --m3d-warn: #f0b429;
-  --m3d-safe-top: env(safe-area-inset-top, 0px);
-  --m3d-safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* --uydosh-tg-inset-* are set at runtime by makon3d.js from Telegram's
+     WebApp safe-area API (env() reports 0 inside Telegram's WebView, letting
+     Telegram's Close/menu buttons obstruct the app header — same fix as the
+     UyDosh mini app). Outside Telegram they're unset and env() wins. */
+  --m3d-safe-top: var(--uydosh-tg-inset-top, env(safe-area-inset-top, 0px));
+  --m3d-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px));
 }
 
 @media (prefers-color-scheme: light) {
@@ -249,7 +253,12 @@ body {
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid var(--m3d-stroke);
-  background: rgba(0, 0, 0, 0.22);
+  /* Same sky-blue gradient as UyDosh's room-scan viewer (.roomscan-viewer-wrap
+     in listing-detail.css) — always light regardless of the page theme. */
+  background: linear-gradient(180deg, #bcdcf7 0%, #6fa3e0 100%);
+  /* Layer 1 of the double-tap-zoom guard (layer 2: touchend timestamp check in
+     preventRoomScanDoubleTapZoom, makon3d.js — iOS WebViews ignore this). */
+  touch-action: manipulation;
 }
 
 /* Absolutely positioned (not height: 100%) because the wrap's height comes from
@@ -274,9 +283,176 @@ body {
   justify-content: center;
   padding: 24px;
   text-align: center;
-  color: var(--m3d-muted);
+  /* Dark slate rather than the theme's muted color — the viewer backdrop is
+     always the light sky gradient, in dark theme too. */
+  color: rgba(15, 35, 60, 0.75);
   font-size: 14px;
   line-height: 1.45;
+  font-weight: 600;
+}
+
+/* --- 3D scene controls, ported from UyDosh (listing-detail.css) -------------
+   Same class names as the source so the two stay easy to diff/sync. */
+
+/* Bottom overlay row: rotate play/pause — zoom slider. One flex row so the
+   slider flexibly fills the space next to the icon button. */
+.roomscan-controls-bar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomscan-rotate-btn {
+  flex-shrink: 0;
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.roomscan-rotate-btn:active { opacity: 0.85; }
+.roomscan-rotate-btn svg { width: 18px; height: 18px; display: block; }
+.roomscan-rotate-btn svg * { stroke: currentColor; fill: none; }
+
+/* Top-right stacked toggles: display mode / wall texture / floor texture. */
+.roomscan-mode-btn, .roomscan-texture-btn, .roomscan-floor-texture-btn {
+  position: absolute;
+  top: 10px;
+  z-index: 1;
+  flex-shrink: 0;
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.roomscan-floor-texture-btn { right: 10px; }
+.roomscan-texture-btn { right: 52px; /* 10px + 34px button + 8px gap */ }
+.roomscan-mode-btn { right: 94px; /* 52px + 34px button + 8px gap */ }
+
+.roomscan-mode-btn:active, .roomscan-texture-btn:active, .roomscan-floor-texture-btn:active {
+  opacity: 0.85;
+}
+
+.roomscan-mode-btn svg, .roomscan-texture-btn svg, .roomscan-floor-texture-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.roomscan-mode-btn svg *, .roomscan-texture-btn svg *, .roomscan-floor-texture-btn svg * {
+  stroke: currentColor;
+  fill: none;
+}
+
+/* "3D | 2D" segmented pill — 2D locks the camera top-down for a bird's-eye
+   floor plan read (see createRoomScanPlanToggle, makon3d.js). */
+.roomscan-plan-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 3px;
+  border-radius: 17px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.roomscan-plan-toggle-btn {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  height: 100%;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: transparent;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.roomscan-plan-toggle-btn.is-active { background: #fff; color: #111; }
+.roomscan-plan-toggle-btn:not(.is-active):active { opacity: 0.85; }
+
+/* Pill-shaped zoom slider with magnifier-out/in glyphs at each end. */
+.roomscan-zoom-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 34px;
+  border-radius: 17px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.roomscan-zoom-icon { width: 16px; height: 16px; flex-shrink: 0; display: inline-flex; opacity: 0.9; }
+.roomscan-zoom-icon svg { width: 16px; height: 16px; display: block; }
+.roomscan-zoom-icon svg * { stroke: currentColor; fill: none; }
+
+.roomscan-zoom-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  outline: none;
+  cursor: pointer;
+}
+
+.roomscan-zoom-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.roomscan-zoom-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.roomscan-zoom-range::-moz-range-track {
+  background: rgba(255, 255, 255, 0.3);
+  height: 3px;
+  border-radius: 2px;
 }
 
 .m3d-viewer-meta {

@@ -196,29 +196,6 @@
     }
   }
 
-  function renderViewerMeta(scan) {
-    const dims = scanDimensions(scan);
-    const date = formatDate(scan.createdAt);
-    const bits = [date, ...dims].filter(Boolean);
-    const gifReady = scan.mediaGenerationStatus === 'ready' && scan.rotationGifUrl;
-    viewerMetaEl.innerHTML = `
-      <div class="m3d-viewer-meta-row">
-        <div class="m3d-viewer-meta-text">${bits
-          .map((b) => `<span>${escapeHtml(b)}</span>`)
-          .join('')}</div>
-        <button type="button" class="m3d-share-btn" id="m3d-share-btn">
-          ${gifReady ? 'Share GIF' : 'Share link'}
-        </button>
-      </div>
-    `;
-    const btn = document.getElementById('m3d-share-btn');
-    if (btn) {
-      btn.addEventListener('click', () => {
-        void shareScan(scan);
-      });
-    }
-  }
-
   function loadModelViewerScript() {
     if (window.customElements?.get('model-viewer')) return Promise.resolve();
     if (modelViewerLoadPromise) return modelViewerLoadPromise;
@@ -250,17 +227,552 @@
     el.setAttribute('min-field-of-view', '20deg');
     el.setAttribute('max-field-of-view', '90deg');
     el.setAttribute('interaction-prompt', 'auto');
+    el.setAttribute('interaction-prompt-threshold', '0');
     el.setAttribute('auto-rotate', '');
     el.setAttribute('auto-rotate-delay', '0');
-    el.setAttribute('rotation-per-second', '45deg');
+    el.setAttribute('rotation-per-second', '60deg');
     el.setAttribute('shadow-intensity', '0.9');
     el.setAttribute('exposure', '1.08');
     return el;
   }
 
+  function haptic() {
+    window.UyDosh?.haptic?.light?.();
+  }
+
+  // --- 3D scene controls, ported from UyDosh's room-scan viewer -------------
+  // Source of truth: assets/listing-detail-roomscan.js (inline tile variant).
+  // Same class names + behavior so the two stay easy to diff/sync; only the
+  // UyDosh.t() localization and listing-specific bits are dropped.
+
+  // Display mode: full room → floor + furniture → floor only.
+  const ROOM_SCAN_MODE_SEQUENCE = ['fullRoom', 'floorAndFurniture', 'floorOnly'];
+
+  function nextRoomScanMode(mode) {
+    const idx = ROOM_SCAN_MODE_SEQUENCE.indexOf(mode);
+    return ROOM_SCAN_MODE_SEQUENCE[(idx + 1) % ROOM_SCAN_MODE_SEQUENCE.length];
+  }
+
+  function roomScanModeIconHtml(mode) {
+    if (mode === 'floorAndFurniture') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 18v-4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"></path>
+        <path d="M4 18v2M20 18v2"></path>
+        <path d="M6 12V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"></path>
+      </svg>`;
+    }
+    if (mode === 'floorOnly') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="6" width="18" height="12" rx="2"></rect>
+      </svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 10.5 12 4l8 6.5"></path>
+      <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5"></path>
+    </svg>`;
+  }
+
+  function roomScanModeLabel(mode) {
+    if (mode === 'floorAndFurniture') return 'Floor and furniture';
+    if (mode === 'floorOnly') return 'Floor only';
+    return 'Full room';
+  }
+
+  /** Wall/ceiling/door/window/opening → 'wall'; floor → always shown;
+   * everything else (furniture) → also hidden in floorOnly. */
+  function classifyRoomScanMaterialName(name) {
+    const n = (name || '').toLowerCase();
+    if (!n) return 'other';
+    if (
+      n.startsWith('wall') || n.includes('ceiling') ||
+      n.includes('door') || n.includes('window') || n.includes('opening')
+    ) {
+      return 'wall';
+    }
+    if (n.startsWith('floor') || n.includes('ground')) return 'floor';
+    return 'furniture';
+  }
+
+  /** Hides/shows a Scene Graph material by driving its base color alpha to 0/1
+   * (model-viewer has no per-mesh visibility toggle). Caches the original
+   * alpha mode + color the first time it's hidden. */
+  function setRoomScanMaterialHidden(material, hidden) {
+    try {
+      const pbr = material.pbrMetallicRoughness;
+      if (!pbr) return;
+      if (hidden) {
+        if (!material.__m3dOriginalColor) {
+          material.__m3dOriginalColor = pbr.baseColorFactor.slice();
+          material.__m3dOriginalAlphaMode = material.getAlphaMode();
+        }
+        const base = material.__m3dOriginalColor;
+        material.setAlphaMode('BLEND');
+        pbr.setBaseColorFactor([base[0], base[1], base[2], 0]);
+      } else if (material.__m3dOriginalColor) {
+        pbr.setBaseColorFactor(material.__m3dOriginalColor);
+        material.setAlphaMode(material.__m3dOriginalAlphaMode || 'OPAQUE');
+      }
+    } catch {
+      // Scene Graph API unavailable / model not loaded yet — applies next call.
+    }
+  }
+
+  /** Applies `mode` to every material on the loaded model. Safe to call before
+   * the model finishes loading (silently does nothing). */
+  function applyRoomScanDisplayMode(viewerEl, mode) {
+    if (viewerEl) viewerEl.__m3dDisplayMode = mode;
+    const model = viewerEl && viewerEl.model;
+    if (!model || !Array.isArray(model.materials)) return;
+    model.materials.forEach((material) => {
+      const kind = classifyRoomScanMaterialName(material.name);
+      let hidden = false;
+      if (mode === 'floorAndFurniture') hidden = kind === 'wall';
+      else if (mode === 'floorOnly') hidden = kind === 'wall' || kind === 'furniture';
+      // In the top-down 2D view a ceiling mesh would lid the whole plan.
+      if (viewerEl.__m3dPlanViewActive && (material.name || '').toLowerCase().includes('ceiling')) {
+        hidden = true;
+      }
+      setRoomScanMaterialHidden(material, hidden);
+    });
+  }
+
+  /** Creates the mode-cycling button and wires it to `viewerEl`. */
+  function createRoomScanModeButton(viewerEl) {
+    let mode = 'fullRoom';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'roomscan-mode-btn';
+    const updateAppearance = () => {
+      btn.innerHTML = roomScanModeIconHtml(mode);
+      btn.setAttribute('aria-label', roomScanModeLabel(mode));
+    };
+    updateAppearance();
+    btn.addEventListener('click', () => {
+      mode = nextRoomScanMode(mode);
+      updateAppearance();
+      haptic();
+      applyRoomScanDisplayMode(viewerEl, mode);
+    });
+    viewerEl.addEventListener('load', () => applyRoomScanDisplayMode(viewerEl, mode));
+    return btn;
+  }
+
+  // --- 2D floor plan (bird's-eye) toggle ------------------------------------
+  // Locks the camera straight down (polar angle pinned to 0°) so dragging only
+  // rotates/zooms the plan, and hides any ceiling mesh that would lid the room.
+
+  function enterRoomScanPlanView(viewerEl) {
+    if (viewerEl.__m3dPlanViewActive) return;
+    viewerEl.__m3dPlanViewActive = true;
+    viewerEl.__m3dPlanSavedOrbit = viewerEl.cameraOrbit;
+    viewerEl.__m3dPlanResumeAutoRotate = viewerEl.hasAttribute('auto-rotate');
+    viewerEl.removeAttribute('auto-rotate');
+    viewerEl.dispatchEvent(new CustomEvent('m3d-autorotate-changed'));
+    viewerEl.setAttribute('min-camera-orbit', '-Infinity 0deg auto');
+    viewerEl.setAttribute('max-camera-orbit', 'Infinity 0deg auto');
+    viewerEl.cameraOrbit = '0deg 0deg 105%';
+    applyRoomScanDisplayMode(viewerEl, viewerEl.__m3dDisplayMode || 'fullRoom');
+  }
+
+  function exitRoomScanPlanView(viewerEl) {
+    if (!viewerEl.__m3dPlanViewActive) return;
+    viewerEl.__m3dPlanViewActive = false;
+    viewerEl.removeAttribute('min-camera-orbit');
+    viewerEl.removeAttribute('max-camera-orbit');
+    viewerEl.cameraOrbit = viewerEl.__m3dPlanSavedOrbit || '0deg 45deg 70%';
+    if (viewerEl.__m3dPlanResumeAutoRotate && !viewerEl.hasAttribute('auto-rotate')) {
+      viewerEl.setAttribute('auto-rotate', '');
+    }
+    viewerEl.__m3dPlanResumeAutoRotate = false;
+    viewerEl.dispatchEvent(new CustomEvent('m3d-autorotate-changed'));
+    applyRoomScanDisplayMode(viewerEl, viewerEl.__m3dDisplayMode || 'fullRoom');
+  }
+
+  /** "3D | 2D" segmented pill, wired to `viewerEl`. Always starts on 3D. */
+  function createRoomScanPlanToggle(viewerEl) {
+    const wrap = document.createElement('div');
+    wrap.className = 'roomscan-plan-toggle';
+    wrap.setAttribute('role', 'tablist');
+    wrap.setAttribute('aria-label', 'View mode');
+
+    const makeBtn = (label, isPlan) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'roomscan-plan-toggle-btn';
+      btn.setAttribute('role', 'tab');
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('is-active')) return;
+        haptic();
+        if (isPlan) enterRoomScanPlanView(viewerEl);
+        else exitRoomScanPlanView(viewerEl);
+        updateSelection();
+      });
+      return btn;
+    };
+    const btn3d = makeBtn('3D', false);
+    const btn2d = makeBtn('2D', true);
+    const updateSelection = () => {
+      const planActive = !!viewerEl.__m3dPlanViewActive;
+      btn3d.classList.toggle('is-active', !planActive);
+      btn2d.classList.toggle('is-active', planActive);
+      btn3d.setAttribute('aria-selected', planActive ? 'false' : 'true');
+      btn2d.setAttribute('aria-selected', planActive ? 'true' : 'false');
+    };
+    wrap.appendChild(btn3d);
+    wrap.appendChild(btn2d);
+    updateSelection();
+    return wrap;
+  }
+
+  // --- Wall texture toggle (baked-in brick ⇄ generated plaster) --------------
+  const ROOM_SCAN_WALL_TEXTURES = ['brick', 'plaster'];
+
+  function nextRoomScanWallTexture(texture) {
+    const idx = ROOM_SCAN_WALL_TEXTURES.indexOf(texture);
+    return ROOM_SCAN_WALL_TEXTURES[(idx + 1) % ROOM_SCAN_WALL_TEXTURES.length];
+  }
+
+  function roomScanWallTextureIconHtml(texture) {
+    if (texture === 'plaster') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="2" width="16" height="6" rx="2"></rect>
+        <path d="M10 16v-2a2 2 0 0 1 2-2h8"></path>
+        <path d="M18 12h2a2 2 0 0 1 2 2v2"></path>
+        <rect x="8" y="16" width="4" height="6" rx="1"></rect>
+      </svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="1"></rect>
+      <path d="M2 9h20M2 15h20"></path>
+      <path d="M8 4v5M16 9v6M8 15v5"></path>
+    </svg>`;
+  }
+
+  // Texture swapping only ever touches actual wall surfaces (doors/windows/
+  // ceiling keep their originally captured materials).
+  function isRoomScanWallMaterialName(name) {
+    return (name || '').toLowerCase().startsWith('wall');
+  }
+
+  let roomScanPlasterTextureDataUrl = null;
+
+  /** Deterministic tileable plaster pattern rendered to a canvas once. */
+  function getRoomScanPlasterTextureDataUrl() {
+    if (roomScanPlasterTextureDataUrl) return roomScanPlasterTextureDataUrl;
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#C7B896';
+    ctx.fillRect(0, 0, size, size);
+    for (let i = 0; i < 900; i++) {
+      const x = (i * 53) % size;
+      const y = (i * 97) % size;
+      const r = 6 + (i % 5);
+      ctx.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (let i = 0; i < 24; i++) {
+      const y = (i / 24) * size + (i % 2) * 4;
+      ctx.strokeStyle = i % 2 === 0 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size, y + 10);
+      ctx.stroke();
+    }
+    roomScanPlasterTextureDataUrl = canvas.toDataURL('image/png');
+    return roomScanPlasterTextureDataUrl;
+  }
+
+  async function getRoomScanPlasterTexture(viewerEl) {
+    if (viewerEl.__m3dPlasterTexture) return viewerEl.__m3dPlasterTexture;
+    const texture = await viewerEl.createTexture(getRoomScanPlasterTextureDataUrl());
+    viewerEl.__m3dPlasterTexture = texture;
+    return texture;
+  }
+
+  async function applyRoomScanWallTexture(viewerEl, texture) {
+    const model = viewerEl && viewerEl.model;
+    if (!model || !Array.isArray(model.materials)) return;
+    const plasterTexture = texture === 'plaster' ? await getRoomScanPlasterTexture(viewerEl) : null;
+    model.materials.forEach((material) => {
+      if (!isRoomScanWallMaterialName(material.name)) return;
+      try {
+        const pbr = material.pbrMetallicRoughness;
+        if (!pbr || !pbr.baseColorTexture) return;
+        if (!material.__m3dOriginalWallTexture) {
+          material.__m3dOriginalWallTexture = pbr.baseColorTexture.texture;
+        }
+        pbr.baseColorTexture.setTexture(texture === 'plaster' ? plasterTexture : material.__m3dOriginalWallTexture);
+      } catch {
+        // Model not loaded yet — applies next call.
+      }
+    });
+  }
+
+  function createRoomScanWallTextureButton(viewerEl) {
+    let texture = 'brick';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'roomscan-texture-btn';
+    const updateAppearance = () => {
+      btn.innerHTML = roomScanWallTextureIconHtml(texture);
+      btn.setAttribute('aria-label', texture === 'plaster' ? 'Plaster walls' : 'Brick walls');
+    };
+    updateAppearance();
+    btn.addEventListener('click', () => {
+      texture = nextRoomScanWallTexture(texture);
+      updateAppearance();
+      haptic();
+      applyRoomScanWallTexture(viewerEl, texture);
+    });
+    return btn;
+  }
+
+  // --- Floor texture toggle (baked-in wood ⇄ generated light tile) -----------
+  const ROOM_SCAN_FLOOR_TEXTURES = ['wood', 'tile'];
+
+  function nextRoomScanFloorTexture(texture) {
+    const idx = ROOM_SCAN_FLOOR_TEXTURES.indexOf(texture);
+    return ROOM_SCAN_FLOOR_TEXTURES[(idx + 1) % ROOM_SCAN_FLOOR_TEXTURES.length];
+  }
+
+  function roomScanFloorTextureIconHtml(texture) {
+    if (texture === 'tile') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <path d="M3 12h18"></path>
+        <path d="M12 3v18"></path>
+      </svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="1"></rect>
+      <path d="M3 8.5h18M3 13h18M3 17.5h18"></path>
+    </svg>`;
+  }
+
+  function isRoomScanFloorMaterialName(name) {
+    const n = (name || '').toLowerCase();
+    return n.startsWith('floor') || n.includes('ground');
+  }
+
+  let roomScanTileTextureDataUrl = null;
+
+  /** Deterministic tileable light-tile pattern rendered to a canvas once. */
+  function getRoomScanTileTextureDataUrl() {
+    if (roomScanTileTextureDataUrl) return roomScanTileTextureDataUrl;
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const tiles = 4;
+    const tileSize = size / tiles;
+    const groutW = 6;
+    const tileShades = ['#F1EEE4', '#E9E6DA', '#F6F3EA'];
+    ctx.fillStyle = '#2E2E2E';
+    ctx.fillRect(0, 0, size, size);
+    for (let ty = 0; ty < tiles; ty++) {
+      for (let tx = 0; tx < tiles; tx++) {
+        const x = tx * tileSize;
+        const y = ty * tileSize;
+        const w = tileSize - groutW;
+        ctx.fillStyle = tileShades[(tx + ty * tiles) % tileShades.length];
+        ctx.fillRect(x + groutW / 2, y + groutW / 2, w, w);
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(x + groutW / 2, y + groutW / 2, w, 3);
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
+        ctx.fillRect(x + groutW / 2, y + groutW / 2 + w - 3, w, 3);
+      }
+    }
+    roomScanTileTextureDataUrl = canvas.toDataURL('image/png');
+    return roomScanTileTextureDataUrl;
+  }
+
+  async function getRoomScanTileTexture(viewerEl) {
+    if (viewerEl.__m3dTileTexture) return viewerEl.__m3dTileTexture;
+    const texture = await viewerEl.createTexture(getRoomScanTileTextureDataUrl());
+    viewerEl.__m3dTileTexture = texture;
+    return texture;
+  }
+
+  async function applyRoomScanFloorTexture(viewerEl, texture) {
+    const model = viewerEl && viewerEl.model;
+    if (!model || !Array.isArray(model.materials)) return;
+    const tileTexture = texture === 'tile' ? await getRoomScanTileTexture(viewerEl) : null;
+    model.materials.forEach((material) => {
+      if (!isRoomScanFloorMaterialName(material.name)) return;
+      try {
+        const pbr = material.pbrMetallicRoughness;
+        if (!pbr || !pbr.baseColorTexture) return;
+        if (!material.__m3dOriginalFloorTexture) {
+          material.__m3dOriginalFloorTexture = pbr.baseColorTexture.texture;
+        }
+        pbr.baseColorTexture.setTexture(texture === 'tile' ? tileTexture : material.__m3dOriginalFloorTexture);
+      } catch {
+        // Model not loaded yet — applies next call.
+      }
+    });
+  }
+
+  function createRoomScanFloorTextureButton(viewerEl) {
+    let texture = 'wood';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'roomscan-floor-texture-btn';
+    const updateAppearance = () => {
+      btn.innerHTML = roomScanFloorTextureIconHtml(texture);
+      btn.setAttribute('aria-label', texture === 'tile' ? 'Tile floor' : 'Wood floor');
+    };
+    updateAppearance();
+    btn.addEventListener('click', () => {
+      texture = nextRoomScanFloorTexture(texture);
+      updateAppearance();
+      haptic();
+      applyRoomScanFloorTexture(viewerEl, texture);
+    });
+    return btn;
+  }
+
+  // --- Auto-rotate play/pause ------------------------------------------------
+  function roomScanRotateIconHtml(isRotating) {
+    if (isRotating) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+        <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+      </svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M7 4.5v15l13-7.5-13-7.5Z"></path>
+    </svg>`;
+  }
+
+  function createRoomScanRotateButton(viewerEl) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'roomscan-rotate-btn';
+    const updateAppearance = () => {
+      const isRotating = viewerEl.hasAttribute('auto-rotate');
+      btn.innerHTML = roomScanRotateIconHtml(isRotating);
+      btn.setAttribute('aria-label', isRotating ? 'Pause rotation' : 'Rotate');
+    };
+    updateAppearance();
+    btn.addEventListener('click', () => {
+      haptic();
+      if (viewerEl.hasAttribute('auto-rotate')) viewerEl.removeAttribute('auto-rotate');
+      else viewerEl.setAttribute('auto-rotate', '');
+      updateAppearance();
+      viewerEl.dispatchEvent(new CustomEvent('m3d-autorotate-changed'));
+    });
+    // The 2D plan toggle also pauses/resumes auto-rotate and announces it via
+    // this event so the play/pause icon here doesn't go stale.
+    viewerEl.addEventListener('m3d-autorotate-changed', updateAppearance);
+    return btn;
+  }
+
+  // --- Zoom slider (0…100 mapped onto camera field of view) -------------------
+  const ROOM_SCAN_ZOOM_FOV_MIN_DEG = 28;
+  const ROOM_SCAN_ZOOM_FOV_MAX_DEG = 82;
+  const ROOM_SCAN_ZOOM_DEFAULT = 70;
+
+  function roomScanZoomIconHtml(kind) {
+    const glyph = kind === 'in'
+      ? '<path d="M8 11h6M11 8v6"></path>'
+      : '<path d="M8 11h6"></path>';
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle>
+      ${glyph}
+      <path d="M21 21l-4.3-4.3"></path>
+    </svg>`;
+  }
+
+  function createRoomScanZoomSlider(viewerEl) {
+    const wrap = document.createElement('div');
+    wrap.className = 'roomscan-zoom-slider';
+
+    const outIcon = document.createElement('span');
+    outIcon.className = 'roomscan-zoom-icon';
+    outIcon.innerHTML = roomScanZoomIconHtml('out');
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.className = 'roomscan-zoom-range';
+    input.min = '0';
+    input.max = '100';
+    input.value = String(ROOM_SCAN_ZOOM_DEFAULT);
+    input.setAttribute('aria-label', 'Zoom');
+
+    const inIcon = document.createElement('span');
+    inIcon.className = 'roomscan-zoom-icon';
+    inIcon.innerHTML = roomScanZoomIconHtml('in');
+
+    const applyZoom = () => {
+      const t = Number(input.value) / 100;
+      const fov = ROOM_SCAN_ZOOM_FOV_MAX_DEG - t * (ROOM_SCAN_ZOOM_FOV_MAX_DEG - ROOM_SCAN_ZOOM_FOV_MIN_DEG);
+      viewerEl.fieldOfView = `${fov.toFixed(2)}deg`;
+    };
+    // Coalesce rapid input ticks onto one fieldOfView write per frame —
+    // model-viewer re-renders the whole scene on every write.
+    let zoomRaf = 0;
+    const scheduleApplyZoom = () => {
+      if (zoomRaf) return;
+      zoomRaf = requestAnimationFrame(() => {
+        zoomRaf = 0;
+        applyZoom();
+      });
+    };
+    // Pause auto-rotate while dragging so the render loop serves the drag.
+    let resumeAutoRotate = false;
+    const pauseAutoRotateForDrag = () => {
+      if (viewerEl.hasAttribute('auto-rotate')) {
+        resumeAutoRotate = true;
+        viewerEl.removeAttribute('auto-rotate');
+        viewerEl.dispatchEvent(new CustomEvent('m3d-autorotate-changed'));
+      }
+    };
+    const resumeAutoRotateAfterDrag = () => {
+      if (!resumeAutoRotate) return;
+      resumeAutoRotate = false;
+      viewerEl.setAttribute('auto-rotate', '');
+      viewerEl.dispatchEvent(new CustomEvent('m3d-autorotate-changed'));
+    };
+    input.addEventListener('pointerdown', pauseAutoRotateForDrag);
+    input.addEventListener('pointerup', resumeAutoRotateAfterDrag);
+    input.addEventListener('pointercancel', resumeAutoRotateAfterDrag);
+    input.addEventListener('input', scheduleApplyZoom);
+
+    wrap.appendChild(outIcon);
+    wrap.appendChild(input);
+    wrap.appendChild(inIcon);
+    viewerEl.addEventListener('load', applyZoom);
+    return wrap;
+  }
+
+  // Suppresses the browser's native double-tap-to-zoom on the viewer — iOS
+  // WebViews ignore touch-action for that gesture, so the second tap's default
+  // action is prevented directly via a touchend timestamp check.
+  const ROOM_SCAN_DOUBLE_TAP_WINDOW_MS = 350;
+  function preventRoomScanDoubleTapZoom(el) {
+    if (!el || el.dataset.roomscanZoomGuardBound) return;
+    el.dataset.roomscanZoomGuardBound = '1';
+    el.addEventListener('gesturestart', (event) => event.preventDefault());
+    let lastTouchEnd = 0;
+    el.addEventListener('touchend', (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= ROOM_SCAN_DOUBLE_TAP_WINDOW_MS) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+  }
+
   function renderViewerMeta(scan) {
     const dims = scanDimensions(scan);
     const date = formatDate(scan.createdAt);
+    const gifReady = scan.mediaGenerationStatus === 'ready' && scan.rotationGifUrl;
     const rows = [];
     rows.push(`<div><strong>Scan #${escapeHtml(scan.id)}</strong></div>`);
     if (date) rows.push(`<div>${escapeHtml(date)}</div>`);
@@ -270,7 +782,20 @@
     if (!scan.glbUrl) {
       rows.push('<div>3D preview is still processing — USDZ is available for the native app.</div>');
     }
-    viewerMetaEl.innerHTML = rows.join('');
+    viewerMetaEl.innerHTML = `
+      <div class="m3d-viewer-meta-row">
+        <div class="m3d-viewer-meta-text">${rows.join('')}</div>
+        <button type="button" class="m3d-share-btn" id="m3d-share-btn">
+          ${gifReady ? 'Share GIF' : 'Share link'}
+        </button>
+      </div>
+    `;
+    const btn = document.getElementById('m3d-share-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        void shareScan(scan);
+      });
+    }
   }
 
   async function mountViewer(scan) {
@@ -289,6 +814,7 @@
 
     try {
       await loadModelViewerScript();
+      preventRoomScanDoubleTapZoom(viewerWrapEl);
       const viewer = createModelViewer(glb, usdz);
       viewer.addEventListener(
         'error',
@@ -300,6 +826,19 @@
       );
       viewerWrapEl.innerHTML = '';
       viewerWrapEl.appendChild(viewer);
+
+      // Bottom bar: rotate play/pause + zoom slider (mirrors UyDosh's inline tile).
+      const controlsBar = document.createElement('div');
+      controlsBar.className = 'roomscan-controls-bar';
+      controlsBar.appendChild(createRoomScanRotateButton(viewer));
+      controlsBar.appendChild(createRoomScanZoomSlider(viewer));
+      viewerWrapEl.appendChild(controlsBar);
+      // Top-right stacked toggles: display mode / wall texture / floor texture.
+      viewerWrapEl.appendChild(createRoomScanModeButton(viewer));
+      viewerWrapEl.appendChild(createRoomScanWallTextureButton(viewer));
+      viewerWrapEl.appendChild(createRoomScanFloorTextureButton(viewer));
+      // Top-left: 3D/2D bird's-eye toggle.
+      viewerWrapEl.appendChild(createRoomScanPlanToggle(viewer));
     } catch (err) {
       console.error('[Makon3D] model-viewer failed', err);
       viewerWrapEl.innerHTML =
@@ -408,6 +947,33 @@
     }
   }
 
+  // Same fix as UyDosh's mini app (see applyTelegramSafeAreaInsets in
+  // uydosh-mini-app.js): inside Telegram's WebView env(safe-area-inset-*)
+  // reports 0, so Telegram's own Close/menu buttons float over the app's
+  // header. Read the insets from the WebApp API instead and publish them as
+  // CSS vars that makon3d.css prefers over env().
+  const TELEGRAM_MOBILE_PLATFORMS = new Set(['ios', 'android', 'android_x']);
+  /** Minimum space below Telegram mobile header chrome (Close + title bar). */
+  const TELEGRAM_MOBILE_HEADER_MIN_TOP = 72;
+
+  function isTelegramMobile(tg) {
+    return TELEGRAM_MOBILE_PLATFORMS.has(String(tg?.platform || 'unknown').toLowerCase());
+  }
+
+  function applyTelegramSafeAreaInsets(tg) {
+    const root = document.documentElement;
+    const device = tg?.safeAreaInset ?? {};
+    const content = tg?.contentSafeAreaInset ?? {};
+    // Sum device + content insets (Telegram docs); content-only top under-reports on mobile.
+    let top = (Number(device.top) || 0) + (Number(content.top) || 0);
+    const bottom = (Number(device.bottom) || 0) + (Number(content.bottom) || 0);
+    if (isTelegramMobile(tg)) {
+      top = Math.max(top, TELEGRAM_MOBILE_HEADER_MIN_TOP);
+    }
+    root.style.setProperty('--uydosh-tg-inset-top', `${top}px`);
+    root.style.setProperty('--uydosh-tg-inset-bottom', `${bottom}px`);
+  }
+
   function initTelegramChrome() {
     try {
       const tg = window.Telegram?.WebApp;
@@ -416,6 +982,16 @@
       tg.expand?.();
       document.documentElement.style.setProperty('--tg-bg', tg.backgroundColor || '');
       document.documentElement.style.setProperty('--tg-fg', tg.textColor || '');
+      applyTelegramSafeAreaInsets(tg);
+      if (typeof tg.onEvent === 'function') {
+        for (const event of ['safeAreaChanged', 'contentSafeAreaChanged', 'viewportChanged']) {
+          tg.onEvent(event, () => applyTelegramSafeAreaInsets(tg));
+        }
+      }
+      // Insets are often still 0 on the very first tick — re-apply once the
+      // client has settled (same rAF + 150ms retry as uydosh-mini-app.js).
+      requestAnimationFrame(() => applyTelegramSafeAreaInsets(tg));
+      setTimeout(() => applyTelegramSafeAreaInsets(tg), 150);
     } catch {
       /* ignore */
     }
