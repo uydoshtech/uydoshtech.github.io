@@ -19,6 +19,7 @@
   const viewerPanelEl = document.getElementById('m3d-viewer-panel');
   const viewerWrapEl = document.getElementById('m3d-viewer-wrap');
   const viewerMetaEl = document.getElementById('m3d-viewer-meta');
+  const materialsEl = document.getElementById('m3d-materials');
 
   /** @type {any[]} */
   let scansCache = [];
@@ -154,6 +155,10 @@
     delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
     viewerWrapEl.innerHTML = '';
     viewerMetaEl.innerHTML = '';
+    if (materialsEl) {
+      materialsEl.hidden = true;
+      materialsEl.innerHTML = '';
+    }
     clearShareOgTags();
   }
 
@@ -834,6 +839,329 @@
         void shareScan(scan);
       });
     }
+    renderMaterialsPanel(scan);
+  }
+
+  // --- Material estimate (floor / wall tiles) --------------------------------
+  // Ported from makon3d_mobile's RoomMaterialsScreen + FloorTileEstimator:
+  // same math, presets and defaults, so the app and mini app agree.
+
+  const MATERIALS_PREFS_STORAGE_KEY = 'makon3d:tilePrefs';
+  const MATERIALS_DEFAULTS = {
+    floor: { widthCm: 40, heightCm: 40, wastePercent: 10 },
+    walls: { widthCm: 30, heightCm: 60, wastePercent: 10 },
+  };
+  const MATERIALS_SQUARE_PRESETS = [[30, 30], [40, 40], [60, 60]];
+  const MATERIALS_RECT_PRESETS = [[20, 30], [30, 60], [40, 50]];
+
+  /** Prefer the polygon floor area; fall back to the OBB long × short. */
+  function resolveFloorAreaM2(scan) {
+    const area = Number(scan?.floorAreaM2);
+    if (Number.isFinite(area) && area > 0) return area;
+    const long = Number(scan?.floorLongM);
+    const short = Number(scan?.floorShortM);
+    if (long > 0 && short > 0) return long * short;
+    return null;
+  }
+
+  function floorAreaUsedBoundingFallback(scan) {
+    const area = Number(scan?.floorAreaM2);
+    return !(Number.isFinite(area) && area > 0) && resolveFloorAreaM2(scan) != null;
+  }
+
+  /** Approximate wall area: footprint perimeter (2 × (long + short)) × height.
+   * Door/window openings are not subtracted. */
+  function resolveWallAreaM2(scan) {
+    const long = Number(scan?.floorLongM);
+    const short = Number(scan?.floorShortM);
+    const height = Number(scan?.heightM);
+    if (!(long > 0) || !(short > 0) || !(height > 0)) return null;
+    return 2 * (long + short) * height;
+  }
+
+  function estimateTiles(areaM2, widthCm, heightCm, wastePercent) {
+    if (!(areaM2 > 0) || !(widthCm > 0) || !(heightCm > 0)) return null;
+    const waste = Math.min(100, Math.max(0, Number(wastePercent) || 0));
+    const tileAreaM2 = (widthCm / 100) * (heightCm / 100);
+    const effectiveAreaM2 = areaM2 * (1 + waste / 100);
+    const tileCount = Math.max(1, Math.ceil(effectiveAreaM2 / tileAreaM2));
+    return {
+      tileAreaM2,
+      effectiveAreaM2,
+      tileCount,
+      buyAreaM2: tileCount * tileAreaM2,
+    };
+  }
+
+  function loadMaterialsPrefs() {
+    let stored = null;
+    try {
+      stored = JSON.parse(localStorage.getItem(MATERIALS_PREFS_STORAGE_KEY) || 'null');
+    } catch { /* ignore */ }
+    const merged = {};
+    for (const surface of ['floor', 'walls']) {
+      const raw = stored?.[surface] || {};
+      const defaults = MATERIALS_DEFAULTS[surface];
+      merged[surface] = {
+        widthCm: Number(raw.widthCm) > 0 ? Number(raw.widthCm) : defaults.widthCm,
+        heightCm: Number(raw.heightCm) > 0 ? Number(raw.heightCm) : defaults.heightCm,
+        wastePercent: Number.isFinite(Number(raw.wastePercent))
+          ? Math.min(20, Math.max(0, Number(raw.wastePercent)))
+          : defaults.wastePercent,
+      };
+    }
+    return merged;
+  }
+
+  function saveMaterialsPrefs(prefs) {
+    try {
+      localStorage.setItem(MATERIALS_PREFS_STORAGE_KEY, JSON.stringify(prefs));
+    } catch { /* private mode etc. — estimates still work, just not sticky */ }
+  }
+
+  function formatCm(value) {
+    const v = Number(value);
+    if (!Number.isFinite(v)) return '';
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+  }
+
+  // Collapsed by default on every newly opened scan.
+  let materialsExpanded = false;
+  let materialsScanId = null;
+
+  function renderMaterialsPanel(scan) {
+    if (!materialsEl) return;
+    const scanId = Number(scan?.id);
+    if (scanId !== materialsScanId) {
+      materialsScanId = scanId;
+      materialsExpanded = false;
+    }
+
+    const prefs = loadMaterialsPrefs();
+    let surface = 'floor';
+    let current = { ...prefs.floor };
+    let isSquare = Math.abs(current.widthCm - current.heightCm) < 0.001;
+
+    materialsEl.hidden = false;
+    materialsEl.innerHTML = `
+      <button type="button" class="m3d-mat-toggle" id="m3d-mat-toggle" aria-expanded="${materialsExpanded}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+        <span>Material estimate</span>
+        <span class="m3d-mat-toggle-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="m3d-mat-body" id="m3d-mat-body" ${materialsExpanded ? '' : 'hidden'}>
+        <div class="m3d-seg" role="tablist" aria-label="Surface" id="m3d-mat-surface">
+          <button type="button" class="m3d-seg-btn" role="tab" data-surface="floor">Floor</button>
+          <button type="button" class="m3d-seg-btn" role="tab" data-surface="walls">Walls</button>
+        </div>
+        <p class="m3d-mat-area" id="m3d-mat-area"></p>
+        <p class="m3d-mat-approx" id="m3d-mat-approx" hidden></p>
+        <div class="m3d-mat-label">Tile shape</div>
+        <div class="m3d-seg" role="tablist" aria-label="Tile shape" id="m3d-mat-shape">
+          <button type="button" class="m3d-seg-btn" role="tab" data-square="1">Square</button>
+          <button type="button" class="m3d-seg-btn" role="tab" data-square="">Rectangle</button>
+        </div>
+        <div class="m3d-mat-label">Tile size (cm)</div>
+        <div class="m3d-chips" id="m3d-mat-presets"></div>
+        <div class="m3d-mat-inputs">
+          <label class="m3d-mat-input">
+            <span>Width</span>
+            <input type="number" inputmode="decimal" min="1" step="0.1" id="m3d-mat-width" />
+          </label>
+          <label class="m3d-mat-input" id="m3d-mat-height-wrap">
+            <span>Length</span>
+            <input type="number" inputmode="decimal" min="1" step="0.1" id="m3d-mat-height" />
+          </label>
+        </div>
+        <div class="m3d-mat-label" id="m3d-mat-waste-label"></div>
+        <input type="range" class="m3d-mat-range" id="m3d-mat-waste" min="0" max="20" step="1" />
+        <div class="m3d-mat-waste-quick">
+          <button type="button" data-waste="5">5%</button>
+          <button type="button" data-waste="10">10%</button>
+          <button type="button" data-waste="15">15%</button>
+        </div>
+        <div class="m3d-mat-result" id="m3d-mat-result"></div>
+      </div>
+    `;
+
+    const toggleBtn = materialsEl.querySelector('#m3d-mat-toggle');
+    const bodyEl = materialsEl.querySelector('#m3d-mat-body');
+    const surfaceSegEl = materialsEl.querySelector('#m3d-mat-surface');
+    const areaEl = materialsEl.querySelector('#m3d-mat-area');
+    const approxEl = materialsEl.querySelector('#m3d-mat-approx');
+    const shapeSegEl = materialsEl.querySelector('#m3d-mat-shape');
+    const presetsEl = materialsEl.querySelector('#m3d-mat-presets');
+    const widthInput = materialsEl.querySelector('#m3d-mat-width');
+    const heightWrapEl = materialsEl.querySelector('#m3d-mat-height-wrap');
+    const heightInput = materialsEl.querySelector('#m3d-mat-height');
+    const wasteLabelEl = materialsEl.querySelector('#m3d-mat-waste-label');
+    const wasteInput = materialsEl.querySelector('#m3d-mat-waste');
+    const resultEl = materialsEl.querySelector('#m3d-mat-result');
+
+    function persist() {
+      prefs[surface] = { ...current };
+      saveMaterialsPrefs(prefs);
+    }
+
+    function surfaceArea() {
+      return surface === 'walls' ? resolveWallAreaM2(scan) : resolveFloorAreaM2(scan);
+    }
+
+    function renderPresets() {
+      const presets = isSquare ? MATERIALS_SQUARE_PRESETS : MATERIALS_RECT_PRESETS;
+      presetsEl.innerHTML = presets
+        .map(([w, h]) => {
+          const active =
+            Math.abs(current.widthCm - w) < 0.001 && Math.abs(current.heightCm - h) < 0.001;
+          return `<button type="button" class="m3d-chip${active ? ' is-active' : ''}" data-w="${w}" data-h="${h}">${formatCm(w)}×${formatCm(h)}</button>`;
+        })
+        .join('');
+    }
+
+    function update() {
+      for (const btn of surfaceSegEl.querySelectorAll('.m3d-seg-btn')) {
+        const active = btn.dataset.surface === surface;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      }
+      for (const btn of shapeSegEl.querySelectorAll('.m3d-seg-btn')) {
+        const active = Boolean(btn.dataset.square) === isSquare;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      }
+      heightWrapEl.hidden = isSquare;
+      renderPresets();
+
+      const area = surfaceArea();
+      if (area != null) {
+        areaEl.textContent = `${surface === 'walls' ? 'Wall area' : 'Measured area'}: ~${area.toFixed(1)} m²`;
+        areaEl.dataset.error = '';
+      } else {
+        areaEl.textContent =
+          surface === 'walls'
+            ? 'No wall measurements for this scan.'
+            : 'No floor area for this scan.';
+        areaEl.dataset.error = '1';
+      }
+      const approxNote =
+        surface === 'walls'
+          ? area != null
+            ? 'Perimeter × height, door and window openings not subtracted.'
+            : ''
+          : floorAreaUsedBoundingFallback(scan)
+            ? 'Using room length × width (approximate).'
+            : '';
+      approxEl.hidden = !approxNote;
+      approxEl.textContent = approxNote;
+
+      wasteLabelEl.textContent = `Waste: ${Math.round(current.wastePercent)}%`;
+
+      const estimate = area == null
+        ? null
+        : estimateTiles(area, current.widthCm, current.heightCm, current.wastePercent);
+      resultEl.innerHTML = estimate
+        ? `
+          <div class="m3d-mat-result-heading">To buy</div>
+          <div class="m3d-mat-result-count">${estimate.tileCount} tiles</div>
+          <div>~${estimate.buyAreaM2.toFixed(1)} m² of tiles</div>
+          <div class="m3d-mat-result-detail">Tile ${estimate.tileAreaM2.toFixed(2)} m² · with waste ~${estimate.effectiveAreaM2.toFixed(1)} m²</div>
+        `
+        : '<div class="m3d-mat-result-detail">Nothing to estimate without measurements.</div>';
+    }
+
+    function syncInputs() {
+      widthInput.value = formatCm(current.widthCm);
+      heightInput.value = formatCm(current.heightCm);
+      wasteInput.value = String(Math.round(current.wastePercent));
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      haptic();
+      materialsExpanded = !materialsExpanded;
+      bodyEl.hidden = !materialsExpanded;
+      toggleBtn.setAttribute('aria-expanded', String(materialsExpanded));
+    });
+
+    surfaceSegEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-surface]');
+      if (!btn || btn.dataset.surface === surface) return;
+      haptic();
+      surface = btn.dataset.surface;
+      current = { ...prefs[surface] };
+      isSquare = Math.abs(current.widthCm - current.heightCm) < 0.001;
+      syncInputs();
+      update();
+    });
+
+    shapeSegEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-square]');
+      if (!btn) return;
+      const nextSquare = Boolean(btn.dataset.square);
+      if (nextSquare === isSquare) return;
+      haptic();
+      isSquare = nextSquare;
+      if (isSquare) {
+        current.heightCm = current.widthCm;
+        heightInput.value = formatCm(current.heightCm);
+        persist();
+      }
+      update();
+    });
+
+    presetsEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-w]');
+      if (!btn) return;
+      haptic();
+      current.widthCm = Number(btn.dataset.w);
+      current.heightCm = Number(btn.dataset.h);
+      isSquare = current.widthCm === current.heightCm;
+      syncInputs();
+      persist();
+      update();
+    });
+
+    widthInput.addEventListener('input', () => {
+      const parsed = Number(widthInput.value.replace(',', '.'));
+      if (!(parsed > 0)) return;
+      current.widthCm = parsed;
+      if (isSquare) {
+        current.heightCm = parsed;
+        heightInput.value = formatCm(parsed);
+      }
+      persist();
+      update();
+    });
+
+    heightInput.addEventListener('input', () => {
+      const parsed = Number(heightInput.value.replace(',', '.'));
+      if (!(parsed > 0)) return;
+      current.heightCm = parsed;
+      isSquare = false;
+      persist();
+      update();
+    });
+
+    wasteInput.addEventListener('input', () => {
+      current.wastePercent = Number(wasteInput.value) || 0;
+      persist();
+      update();
+    });
+
+    materialsEl.querySelector('.m3d-mat-waste-quick').addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-waste]');
+      if (!btn) return;
+      haptic();
+      current.wastePercent = Number(btn.dataset.waste);
+      wasteInput.value = btn.dataset.waste;
+      persist();
+      update();
+    });
+
+    syncInputs();
+    update();
   }
 
   async function mountViewer(scan) {

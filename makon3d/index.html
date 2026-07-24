@@ -11,7 +11,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260724-9" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260724-10" />
   </head>
   <body>
     <div class="m3d-app">
@@ -72,6 +72,9 @@
         <section class="m3d-viewer-panel" id="m3d-viewer-panel" hidden aria-label="3D view">
           <div class="m3d-viewer-wrap" id="m3d-viewer-wrap"></div>
           <div class="m3d-viewer-meta" id="m3d-viewer-meta"></div>
+          <!-- Floor/wall tile estimate, ported from makon3d_mobile's
+               RoomMaterialsScreen — filled by renderMaterialsPanel (makon3d.js). -->
+          <section class="m3d-materials" id="m3d-materials" hidden aria-label="Material estimate"></section>
         </section>
       </main>
     </div>
@@ -121,6 +124,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260724-8" defer></script>
+    <script src="../assets/makon3d.js?v=20260724-9" defer></script>
   </body>
 </html>

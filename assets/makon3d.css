@@ -873,3 +873,265 @@ body.m3d-has-scan-banner .m3d-list-panel {
 
 .m3d-scan-overlay-card .m3d-scan-cta-btn { align-self: center; }
 
+/* --- Material estimate (floor / wall tiles) ---------------------------------
+   Collapsible card under the viewer meta; ported from makon3d_mobile's
+   RoomMaterialsScreen (see renderMaterialsPanel, makon3d.js). */
+
+.m3d-materials {
+  margin-top: 12px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.m3d-materials[hidden] { display: none; }
+
+.m3d-mat-toggle {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--m3d-fg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: left;
+}
+
+.m3d-mat-toggle:active { opacity: 0.85; }
+.m3d-mat-toggle svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--m3d-accent); }
+
+.m3d-mat-toggle-chevron {
+  margin-left: auto;
+  color: var(--m3d-muted);
+  font-size: 18px;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.15s ease;
+}
+
+.m3d-mat-toggle[aria-expanded="true"] .m3d-mat-toggle-chevron {
+  transform: rotate(-90deg);
+}
+
+.m3d-mat-body {
+  padding: 2px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.m3d-mat-body[hidden] { display: none; }
+
+/* Segmented pill (surface + tile shape), theme-colored unlike the dark
+   viewer-overlay .roomscan-plan-toggle. */
+.m3d-seg {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-bg);
+  align-self: flex-start;
+}
+
+.m3d-seg-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--m3d-muted);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.m3d-seg-btn.is-active {
+  background: var(--m3d-accent-dim);
+  border: 1px solid var(--m3d-accent-stroke);
+  padding: 6px 15px;
+  color: var(--m3d-fg);
+}
+
+.m3d-seg-btn:not(.is-active):active { opacity: 0.8; }
+
+.m3d-mat-area {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--m3d-fg);
+}
+
+.m3d-mat-area[data-error="1"] { color: #f87171; }
+
+.m3d-mat-approx {
+  margin: -6px 0 0;
+  font-size: 12px;
+  color: var(--m3d-muted);
+}
+
+.m3d-mat-approx[hidden] { display: none; }
+
+.m3d-mat-label {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--m3d-fg);
+}
+
+.m3d-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.m3d-chip {
+  appearance: none;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-bg);
+  color: var(--m3d-fg);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.m3d-chip.is-active {
+  background: var(--m3d-accent-dim);
+  border-color: var(--m3d-accent-stroke);
+  color: var(--m3d-fg);
+}
+
+.m3d-chip:active { opacity: 0.85; }
+
+.m3d-mat-inputs {
+  display: flex;
+  gap: 10px;
+}
+
+.m3d-mat-input {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--m3d-muted);
+}
+
+.m3d-mat-input[hidden] { display: none; }
+
+.m3d-mat-input input {
+  width: 100%;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-bg);
+  color: var(--m3d-fg);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+}
+
+.m3d-mat-input input:focus {
+  outline: none;
+  border-color: var(--m3d-accent-stroke);
+}
+
+.m3d-mat-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--m3d-stroke);
+  outline: none;
+  cursor: pointer;
+}
+
+.m3d-mat-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--m3d-accent);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.m3d-mat-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--m3d-accent);
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.m3d-mat-range::-moz-range-track {
+  background: var(--m3d-stroke);
+  height: 3px;
+  border-radius: 2px;
+}
+
+.m3d-mat-waste-quick {
+  display: flex;
+  justify-content: space-between;
+}
+
+.m3d-mat-waste-quick button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--m3d-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.m3d-mat-waste-quick button:active { opacity: 0.75; }
+
+.m3d-mat-result {
+  border-radius: 14px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-bg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.m3d-mat-result-heading {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--m3d-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.m3d-mat-result-count {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.m3d-mat-result-detail {
+  font-size: 12px;
+  color: var(--m3d-muted);
+}
+
