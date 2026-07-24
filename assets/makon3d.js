@@ -125,7 +125,22 @@
   function showStatus(message, isError = false) {
     statusEl.hidden = false;
     statusEl.dataset.error = isError ? '1' : '';
+    statusEl.removeAttribute('aria-label');
     statusEl.textContent = message;
+    listEl.hidden = true;
+  }
+
+  /** Spinning Makon mark (see .m3d-loading-spinner in makon3d.css) — the one
+   * loader used everywhere across the mini app, like UyDosh's spinning "U". */
+  function loadingSpinnerHtml() {
+    return '<span class="m3d-loading-spinner" aria-hidden="true"></span>';
+  }
+
+  function showLoadingStatus(label) {
+    statusEl.hidden = false;
+    statusEl.dataset.error = '';
+    statusEl.setAttribute('aria-label', label);
+    statusEl.innerHTML = loadingSpinnerHtml();
     listEl.hidden = true;
   }
 
@@ -827,7 +842,7 @@
     viewerWrapEl.classList.remove('is-blueprint');
     delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
     viewerWrapEl.innerHTML =
-      '<div class="m3d-viewer-status" role="status">Loading 3D model…</div>';
+      `<div class="m3d-viewer-status" role="status" aria-label="Loading 3D model">${loadingSpinnerHtml()}</div>`;
     renderViewerMeta(scan);
 
     const glb = scan.glbUrl ? withCacheBust(photoUrl(scan.glbUrl)) : '';
@@ -961,7 +976,7 @@
   async function loadScans() {
     const { id } = readRoute();
     showListView();
-    showStatus('Loading scans…');
+    showLoadingStatus('Loading scans');
 
     try {
       const res = await fetch(`${API_BASE}/makon3d/scans`);

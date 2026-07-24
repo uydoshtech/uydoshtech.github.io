@@ -219,6 +219,22 @@ body {
   text-align: center;
 }
 
+/* Spinning Makon mark — the one loader used everywhere across the mini app
+   (scan list, 3D viewer, 2D blueprint), like UyDosh's spinning "U" logo.
+   Masked (rather than a background image) so background-color tints it to
+   whatever surface it sits on: theme text color on the list panel, dark
+   slate on the sky-blue viewer, blueprint ink on the white floor plan. */
+.m3d-loading-spinner {
+  display: inline-block;
+  width: 44px;
+  height: 44px;
+  vertical-align: middle;
+  background-color: currentColor;
+  -webkit-mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
+  mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
+  animation: m3d-spin 0.9s linear infinite;
+}
+
 .m3d-status[data-error="1"] {
   color: #f87171;
 }
@@ -485,14 +501,14 @@ body {
 .roomscan-blueprint-svg { width: 100%; height: 100%; display: block; cursor: grab; }
 .roomscan-blueprint-svg:active { cursor: grabbing; }
 
-/* Spinner shown by mountRoomScanBlueprint while the GLB is parsed — UyDosh
-   styles it as its spinning "U" logo; here it's a plain ring in blueprint ink. */
+/* Spinner shown by mountRoomScanBlueprint while the GLB is parsed — same
+   spinning Makon mark as everywhere else, tinted blueprint ink on white. */
 .roomscan-blueprint .loading-spinner {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 3px solid rgba(31, 58, 84, 0.2);
-  border-top-color: #1f3a54;
+  width: 44px;
+  height: 44px;
+  background-color: #1f3a54;
+  -webkit-mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
+  mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
   animation: m3d-spin 0.9s linear infinite;
 }
 
