@@ -306,6 +306,37 @@ body {
   flex-shrink: 0;
 }
 
+/* --- Projects (scans grouped by the app's Makon projects) ------------------ */
+
+.m3d-section-title {
+  list-style: none;
+  color: var(--m3d-muted);
+  font-size: 13px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 4px 0;
+}
+
+.m3d-section-title:first-child {
+  padding-top: 0;
+}
+
+/* Project view header — the project's name above its room scans. */
+.m3d-project-head {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 4px 6px;
+}
+
+.m3d-project-head-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 .m3d-badge {
   display: inline-flex;
   align-items: center;
@@ -327,6 +358,22 @@ body {
   color: var(--m3d-warn);
   background: rgba(240, 180, 41, 0.12);
   border-color: rgba(240, 180, 41, 0.28);
+}
+
+/* "3D ready" replaced by icons of the room types detected in the scan
+   (bed/sofa/fridge/bathtub — see roomTypeBadgeHtml, makon3d.js). */
+.m3d-badge-rooms {
+  padding: 4px 9px;
+}
+
+.m3d-room-icon {
+  display: inline-flex;
+}
+
+.m3d-room-icon svg {
+  width: 15px;
+  height: 15px;
+  display: block;
 }
 
 .m3d-viewer-wrap {
@@ -719,6 +766,73 @@ body {
   display: block;
   flex-shrink: 0;
   color: var(--m3d-muted);
+}
+
+/* Language picker at the bottom of the drawer — rows styled like the nav
+   links, active language marked with the accent check. */
+.m3d-drawer-lang {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--m3d-stroke);
+}
+
+.m3d-drawer-lang-label {
+  padding: 0 10px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--m3d-muted);
+}
+
+.m3d-drawer-lang-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m3d-drawer-lang-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 10px;
+  border-radius: 12px;
+  color: var(--m3d-fg);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+}
+
+.m3d-drawer-lang-btn:active { background: rgba(127, 127, 127, 0.16); }
+.m3d-drawer-lang-btn.is-active { background: var(--m3d-accent-dim); }
+
+.m3d-drawer-lang-flag {
+  width: 20px;
+  font-size: 17px;
+  line-height: 1;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.m3d-drawer-lang-check {
+  margin-left: auto;
+  display: inline-flex;
+  color: var(--m3d-accent);
+  opacity: 0;
+}
+
+.m3d-drawer-lang-btn.is-active .m3d-drawer-lang-check { opacity: 1; }
+
+.m3d-drawer-lang-check svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 /* "Scan a room" banner button (UyDosh App Clip flow), fixed at the very

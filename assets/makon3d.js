@@ -6,6 +6,358 @@
   // Backend may rewrite room_scan.glb in place — bump to bust caches.
   const GLB_CACHE_VERSION = '20260716-1';
 
+  // --- i18n -----------------------------------------------------------------
+  // Self-contained: the Makon3D mini app doesn't load uydosh-i18n.js (whose
+  // dictionaries are UyDosh-page keys), but mirrors its uz/ru/en language set.
+  const M3D_LANGS = ['uz', 'ru', 'en'];
+  const M3D_LANG_STORAGE_KEY = 'makon3d:lang';
+  const M3D_LANG_META = {
+    uz: { flag: '🇺🇿', label: "O'zbekcha" },
+    ru: { flag: '🇷🇺', label: 'Русский' },
+    en: { flag: '🇬🇧', label: 'English' },
+  };
+
+  const M3D_I18N = {
+    en: {
+      tagline: 'Your space in 3D',
+      'aria.menu': 'Menu',
+      'aria.back': 'Back',
+      'aria.close': 'Close',
+      'aria.scans': 'Scans',
+      'aria.view3d': '3D view',
+      'drawer.scans': 'Scans',
+      'drawer.contact': 'Contact',
+      'drawer.privacy': 'Privacy Policy',
+      'drawer.terms': 'Terms of Service',
+      'drawer.language': 'Language',
+      'list.loading': 'Loading scans',
+      'list.empty': 'No scans yet.',
+      'list.error': 'Could not load scans. Pull to refresh or try again later.',
+      'scan.title': 'Scan #{id}',
+      'scan.notFound': 'Scan not found.',
+      'badge.ready': '3D ready',
+      'badge.processing': 'Processing',
+      'room.livingRoom': 'Living room',
+      'room.bedroom': 'Bedroom',
+      'room.kitchen': 'Kitchen',
+      'room.bathroom': 'Bathroom',
+      'room.hallway': 'Hallway',
+      'room.other': 'Room',
+      'list.projects': 'Projects',
+      'list.otherScans': 'Other scans',
+      'project.scanCount': 'Scans: {count}',
+      'project.mode.entireHousing': 'Entire home',
+      'project.mode.roomByRoom': 'Room by room',
+      'unit.m': 'm',
+      'unit.m2': 'm²',
+      'dims.heightPrefix': 'H',
+      'viewer.loadingModel': 'Loading 3D model',
+      'viewer.processingNote': '3D preview is still processing — USDZ is available for the native app.',
+      'viewer.noPreview': 'No web 3D preview yet for this scan.',
+      'viewer.modelError': 'Could not load this 3D model.',
+      'viewer.viewerError': 'Could not load the 3D viewer.',
+      'share.gif': 'Share GIF',
+      'share.link': 'Share link',
+      'share.text': 'View this 3D scan in Makon3D:',
+      'share.copied': 'Link copied to clipboard.',
+      'share.prompt': 'Copy this link:',
+      'share.ogDescription': 'View this 3D scan in Makon3D',
+      'ctrl.fullRoom': 'Full room',
+      'ctrl.floorFurniture': 'Floor and furniture',
+      'ctrl.floorOnly': 'Floor only',
+      'ctrl.viewMode': 'View mode',
+      'ctrl.brickWalls': 'Brick walls',
+      'ctrl.plasterWalls': 'Plaster walls',
+      'ctrl.woodFloor': 'Wood floor',
+      'ctrl.tileFloor': 'Tile floor',
+      'ctrl.rotate': 'Rotate',
+      'ctrl.pauseRotation': 'Pause rotation',
+      'ctrl.zoom': 'Zoom',
+      'mat.title': 'Material estimate',
+      'mat.surface': 'Surface',
+      'mat.floor': 'Floor',
+      'mat.walls': 'Walls',
+      'mat.measuredArea': 'Measured area',
+      'mat.perimeterHeight': 'Perimeter: ~{len} m · Height: ~{h} m',
+      'mat.noWallArea': 'No wall measurements for this scan.',
+      'mat.noFloorArea': 'No floor area for this scan.',
+      'mat.wallApprox': 'Door and window openings are not subtracted.',
+      'mat.floorApprox': 'Using room length × width (approximate).',
+      'mat.tileShape': 'Tile shape',
+      'mat.square': 'Square',
+      'mat.rectangle': 'Rectangle',
+      'mat.tileSize': 'Tile size (cm)',
+      'mat.width': 'Width',
+      'mat.length': 'Length',
+      'mat.rollSize': 'Roll size (m)',
+      'mat.rollWidth': 'Width, m',
+      'mat.rollLength': 'Length, m',
+      'mat.patternRepeat': 'Pattern repeat, cm',
+      'mat.waste': 'Waste',
+      'mat.toBuy': 'To buy',
+      'mat.tilesCount': '{count} tiles',
+      'mat.buyArea': '~{area} m² of tiles',
+      'mat.tileDetail': 'Tile {tile} m² · with waste ~{eff} m²',
+      'mat.plinth': 'Plinth: ~{len} m · {count} pcs × {strip} m',
+      'mat.plinthNote': 'Perimeter, door openings not subtracted.',
+      'mat.plinthMinusDoorways': 'Wall perimeter ~{len} m minus ~{door} m of doorways.',
+      'mat.plinthNoDoorways': 'Wall perimeter; no doorways detected.',
+      'mat.rollsCount': '{count} rolls',
+      'mat.strips': 'Strips: {count} × {len} m',
+      'mat.stripsPerRoll': '{count} strips per roll',
+      'mat.noEstimate': 'Nothing to estimate without measurements.',
+      'cta.scan': 'Scan a room',
+      'cta.getLink': 'Get scan link',
+      'cta.starting': 'Starting…',
+      'cta.copied': 'Link copied',
+      'cta.error': 'Could not start scanning. Try again later.',
+      'cta.qrHint': 'Scan this code with an iPhone camera to start scanning.',
+      'cta.building': 'Building the 3D model…',
+      'cta.failed': 'Scan processing failed. Please try again.',
+      'overlay.backToScans': 'Back to scans',
+      'overlay.linkExpired': 'This scan link has expired.',
+      'overlay.failed': 'Scan processing failed. Please try scanning again.',
+      'overlay.sessionExpired': 'This scan session has expired.',
+    },
+    ru: {
+      tagline: 'Ваше пространство в 3D',
+      'aria.menu': 'Меню',
+      'aria.back': 'Назад',
+      'aria.close': 'Закрыть',
+      'aria.scans': 'Сканы',
+      'aria.view3d': '3D-просмотр',
+      'drawer.scans': 'Сканы',
+      'drawer.contact': 'Связаться',
+      'drawer.privacy': 'Политика конфиденциальности',
+      'drawer.terms': 'Условия использования',
+      'drawer.language': 'Язык',
+      'list.loading': 'Загрузка сканов',
+      'list.empty': 'Пока нет сканов.',
+      'list.error': 'Не удалось загрузить сканы. Попробуйте позже.',
+      'scan.title': 'Скан #{id}',
+      'scan.notFound': 'Скан не найден.',
+      'badge.ready': '3D готов',
+      'badge.processing': 'Обработка',
+      'room.livingRoom': 'Гостиная',
+      'room.bedroom': 'Спальня',
+      'room.kitchen': 'Кухня',
+      'room.bathroom': 'Ванная',
+      'room.hallway': 'Прихожая',
+      'room.other': 'Комната',
+      'list.projects': 'Проекты',
+      'list.otherScans': 'Другие сканы',
+      'project.scanCount': 'Сканов: {count}',
+      'project.mode.entireHousing': 'Всё жильё',
+      'project.mode.roomByRoom': 'Комната за комнатой',
+      'unit.m': 'м',
+      'unit.m2': 'м²',
+      'dims.heightPrefix': 'В',
+      'viewer.loadingModel': 'Загрузка 3D-модели',
+      'viewer.processingNote': '3D-превью ещё обрабатывается — USDZ доступен для приложения.',
+      'viewer.noPreview': 'Для этого скана пока нет 3D-превью.',
+      'viewer.modelError': 'Не удалось загрузить эту 3D-модель.',
+      'viewer.viewerError': 'Не удалось загрузить 3D-просмотр.',
+      'share.gif': 'Поделиться GIF',
+      'share.link': 'Поделиться ссылкой',
+      'share.text': 'Посмотрите этот 3D-скан в Makon3D:',
+      'share.copied': 'Ссылка скопирована.',
+      'share.prompt': 'Скопируйте ссылку:',
+      'share.ogDescription': 'Посмотрите этот 3D-скан в Makon3D',
+      'ctrl.fullRoom': 'Вся комната',
+      'ctrl.floorFurniture': 'Пол и мебель',
+      'ctrl.floorOnly': 'Только пол',
+      'ctrl.viewMode': 'Режим просмотра',
+      'ctrl.brickWalls': 'Кирпичные стены',
+      'ctrl.plasterWalls': 'Оштукатуренные стены',
+      'ctrl.woodFloor': 'Деревянный пол',
+      'ctrl.tileFloor': 'Плиточный пол',
+      'ctrl.rotate': 'Вращение',
+      'ctrl.pauseRotation': 'Остановить вращение',
+      'ctrl.zoom': 'Масштаб',
+      'mat.title': 'Расчёт материалов',
+      'mat.surface': 'Поверхность',
+      'mat.floor': 'Пол',
+      'mat.walls': 'Стены',
+      'mat.measuredArea': 'Измеренная площадь',
+      'mat.perimeterHeight': 'Периметр: ~{len} м · Высота: ~{h} м',
+      'mat.noWallArea': 'Для этого скана нет замеров стен.',
+      'mat.noFloorArea': 'Для этого скана нет площади пола.',
+      'mat.wallApprox': 'Дверные и оконные проёмы не вычтены.',
+      'mat.floorApprox': 'Используется длина × ширина комнаты (приблизительно).',
+      'mat.tileShape': 'Форма плитки',
+      'mat.square': 'Квадратная',
+      'mat.rectangle': 'Прямоугольная',
+      'mat.tileSize': 'Размер плитки (см)',
+      'mat.width': 'Ширина',
+      'mat.length': 'Длина',
+      'mat.rollSize': 'Размер рулона (м)',
+      'mat.rollWidth': 'Ширина, м',
+      'mat.rollLength': 'Длина, м',
+      'mat.patternRepeat': 'Раппорт, см',
+      'mat.waste': 'Запас',
+      'mat.toBuy': 'К покупке',
+      'mat.tilesCount': '{count} шт.',
+      'mat.buyArea': '~{area} м² плитки',
+      'mat.tileDetail': 'Плитка {tile} м² · с запасом ~{eff} м²',
+      'mat.plinth': 'Плинтус: ~{len} м · {count} шт × {strip} м',
+      'mat.plinthNote': 'Периметр, дверные проёмы не вычтены.',
+      'mat.plinthMinusDoorways': 'Периметр стен ~{len} м минус ~{door} м дверных проёмов.',
+      'mat.plinthNoDoorways': 'Периметр стен; дверные проёмы не обнаружены.',
+      'mat.rollsCount': '{count} рул.',
+      'mat.strips': 'Полосы: {count} × {len} м',
+      'mat.stripsPerRoll': 'Полос в рулоне: {count}',
+      'mat.noEstimate': 'Без замеров рассчитывать нечего.',
+      'cta.scan': 'Сканировать комнату',
+      'cta.getLink': 'Получить ссылку',
+      'cta.starting': 'Запуск…',
+      'cta.copied': 'Ссылка скопирована',
+      'cta.error': 'Не удалось начать сканирование. Попробуйте позже.',
+      'cta.qrHint': 'Отсканируйте этот код камерой iPhone, чтобы начать сканирование.',
+      'cta.building': 'Строим 3D-модель…',
+      'cta.failed': 'Обработка скана не удалась. Попробуйте ещё раз.',
+      'overlay.backToScans': 'К сканам',
+      'overlay.linkExpired': 'Срок действия ссылки на скан истёк.',
+      'overlay.failed': 'Обработка скана не удалась. Попробуйте отсканировать ещё раз.',
+      'overlay.sessionExpired': 'Сессия сканирования истекла.',
+    },
+    uz: {
+      tagline: 'Makoningiz 3D ko‘rinishda',
+      'aria.menu': 'Menyu',
+      'aria.back': 'Orqaga',
+      'aria.close': 'Yopish',
+      'aria.scans': 'Skanlar',
+      'aria.view3d': '3D ko‘rinish',
+      'drawer.scans': 'Skanlar',
+      'drawer.contact': 'Aloqa',
+      'drawer.privacy': 'Maxfiylik siyosati',
+      'drawer.terms': 'Foydalanish shartlari',
+      'drawer.language': 'Til',
+      'list.loading': 'Skanlar yuklanmoqda',
+      'list.empty': 'Hozircha skanlar yo‘q.',
+      'list.error': 'Skanlarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring.',
+      'scan.title': 'Skan #{id}',
+      'scan.notFound': 'Skan topilmadi.',
+      'badge.ready': '3D tayyor',
+      'badge.processing': 'Ishlanmoqda',
+      'room.livingRoom': 'Mehmonxona',
+      'room.bedroom': 'Yotoqxona',
+      'room.kitchen': 'Oshxona',
+      'room.bathroom': 'Hammom',
+      'room.hallway': 'Yo‘lak',
+      'room.other': 'Xona',
+      'list.projects': 'Loyihalar',
+      'list.otherScans': 'Boshqa skanlar',
+      'project.scanCount': 'Skanlar: {count}',
+      'project.mode.entireHousing': 'Butun uy',
+      'project.mode.roomByRoom': 'Xonama-xona',
+      'unit.m': 'm',
+      'unit.m2': 'm²',
+      'dims.heightPrefix': 'B',
+      'viewer.loadingModel': '3D model yuklanmoqda',
+      'viewer.processingNote': '3D ko‘rinish hali tayyorlanmoqda — USDZ ilova uchun mavjud.',
+      'viewer.noPreview': 'Bu skan uchun hali 3D ko‘rinish yo‘q.',
+      'viewer.modelError': 'Bu 3D modelni yuklab bo‘lmadi.',
+      'viewer.viewerError': '3D ko‘rish oynasini yuklab bo‘lmadi.',
+      'share.gif': 'GIF ulashish',
+      'share.link': 'Havolani ulashish',
+      'share.text': 'Ushbu 3D skanni Makon3D’da ko‘ring:',
+      'share.copied': 'Havola nusxalandi.',
+      'share.prompt': 'Havolani nusxalang:',
+      'share.ogDescription': 'Ushbu 3D skanni Makon3D’da ko‘ring',
+      'ctrl.fullRoom': 'Butun xona',
+      'ctrl.floorFurniture': 'Pol va mebel',
+      'ctrl.floorOnly': 'Faqat pol',
+      'ctrl.viewMode': 'Ko‘rish rejimi',
+      'ctrl.brickWalls': 'G‘isht devorlar',
+      'ctrl.plasterWalls': 'Suvoqli devorlar',
+      'ctrl.woodFloor': 'Yog‘och pol',
+      'ctrl.tileFloor': 'Plitka pol',
+      'ctrl.rotate': 'Aylantirish',
+      'ctrl.pauseRotation': 'Aylanishni to‘xtatish',
+      'ctrl.zoom': 'Masshtab',
+      'mat.title': 'Material hisob-kitobi',
+      'mat.surface': 'Yuza',
+      'mat.floor': 'Pol',
+      'mat.walls': 'Devorlar',
+      'mat.measuredArea': 'O‘lchangan maydon',
+      'mat.perimeterHeight': 'Perimetr: ~{len} m · Balandlik: ~{h} m',
+      'mat.noWallArea': 'Bu skan uchun devor o‘lchovlari yo‘q.',
+      'mat.noFloorArea': 'Bu skan uchun pol maydoni yo‘q.',
+      'mat.wallApprox': 'Eshik va deraza o‘rinlari ayirilmagan.',
+      'mat.floorApprox': 'Xona uzunligi × eni ishlatildi (taxminiy).',
+      'mat.tileShape': 'Plitka shakli',
+      'mat.square': 'Kvadrat',
+      'mat.rectangle': 'To‘g‘ri to‘rtburchak',
+      'mat.tileSize': 'Plitka o‘lchami (sm)',
+      'mat.width': 'Eni',
+      'mat.length': 'Bo‘yi',
+      'mat.rollSize': 'Rulon o‘lchami (m)',
+      'mat.rollWidth': 'Eni, m',
+      'mat.rollLength': 'Bo‘yi, m',
+      'mat.patternRepeat': 'Naqsh qadami, sm',
+      'mat.waste': 'Zaxira',
+      'mat.toBuy': 'Sotib olish uchun',
+      'mat.tilesCount': '{count} dona',
+      'mat.buyArea': '~{area} m² plitka',
+      'mat.tileDetail': 'Plitka {tile} m² · zaxira bilan ~{eff} m²',
+      'mat.plinth': 'Plintus: ~{len} m · {count} dona × {strip} m',
+      'mat.plinthNote': 'Perimetr, eshik o‘rinlari ayirilmagan.',
+      'mat.plinthMinusDoorways': 'Devor perimetri ~{len} m minus eshik o‘rinlari ~{door} m.',
+      'mat.plinthNoDoorways': 'Devor perimetri; eshik o‘rinlari topilmadi.',
+      'mat.rollsCount': '{count} rulon',
+      'mat.strips': 'Polosalar: {count} × {len} m',
+      'mat.stripsPerRoll': 'Bir rulonda {count} polosa',
+      'mat.noEstimate': 'O‘lchovlarsiz hisoblab bo‘lmaydi.',
+      'cta.scan': 'Xonani skanerlash',
+      'cta.getLink': 'Skan havolasini olish',
+      'cta.starting': 'Boshlanmoqda…',
+      'cta.copied': 'Havola nusxalandi',
+      'cta.error': 'Skanerlashni boshlab bo‘lmadi. Keyinroq urinib ko‘ring.',
+      'cta.qrHint': 'Skanerlashni boshlash uchun bu kodni iPhone kamerasi bilan skanerlang.',
+      'cta.building': '3D model tayyorlanmoqda…',
+      'cta.failed': 'Skanni qayta ishlash muvaffaqiyatsiz. Qayta urinib ko‘ring.',
+      'overlay.backToScans': 'Skanlarga qaytish',
+      'overlay.linkExpired': 'Skan havolasining muddati tugagan.',
+      'overlay.failed': 'Skanni qayta ishlash muvaffaqiyatsiz. Qayta skanerlab ko‘ring.',
+      'overlay.sessionExpired': 'Skanerlash sessiyasining muddati tugagan.',
+    },
+  };
+
+  function detectLang() {
+    try {
+      const saved = localStorage.getItem(M3D_LANG_STORAGE_KEY);
+      if (M3D_LANGS.includes(saved)) return saved;
+    } catch { /* storage blocked */ }
+    try {
+      const tgLang = String(
+        window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code || '',
+      ).slice(0, 2);
+      if (M3D_LANGS.includes(tgLang)) return tgLang;
+    } catch { /* ignore */ }
+    const nav = (navigator.language || '').slice(0, 2);
+    if (M3D_LANGS.includes(nav)) return nav;
+    return 'ru';
+  }
+
+  let currentLang = detectLang();
+
+  function t(key) {
+    return M3D_I18N[currentLang]?.[key] ?? M3D_I18N.en[key] ?? key;
+  }
+
+  /** t() + `{token}` substitution, e.g. tf('scan.title', { id: 12 }). */
+  function tf(key, params) {
+    let out = t(key);
+    for (const [token, value] of Object.entries(params || {})) {
+      out = out.replace(`{${token}}`, String(value));
+    }
+    return out;
+  }
+
+  function m3dLocale() {
+    return currentLang === 'ru' ? 'ru-RU' : currentLang === 'uz' ? 'uz-UZ' : 'en-US';
+  }
+
   const backEl = document.getElementById('m3d-back');
   const navTriggerEl = document.getElementById('m3d-nav-trigger');
   const drawerBackdropEl = document.getElementById('m3d-drawer-backdrop');
@@ -21,10 +373,21 @@
   const viewerMetaEl = document.getElementById('m3d-viewer-meta');
   const materialsEl = document.getElementById('m3d-materials');
 
+  /** All known scans — the flat public feed merged with every project's scans. */
   /** @type {any[]} */
   let scansCache = [];
+  /** Public projects feed; each entry carries its resolved `scans` array. */
+  /** @type {any[]} */
+  let projectsCache = [];
   /** @type {number|null} */
   let openScanId = null;
+  /** The open scan's data — re-renders its meta panel on language change. */
+  let openScanData = null;
+  /** Open project view, or the project the current scan viewer came from. */
+  /** @type {string|null} */
+  let openProjectId = null;
+  /** Guards renderHome() until the first feed fetch has populated the caches. */
+  let feedLoaded = false;
   let modelViewerLoadPromise = null;
 
   function escapeHtml(value) {
@@ -63,7 +426,7 @@
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return '';
     try {
-      return new Intl.DateTimeFormat(undefined, {
+      return new Intl.DateTimeFormat(m3dLocale(), {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(d);
@@ -75,13 +438,13 @@
   function formatMeters(n) {
     const v = Number(n);
     if (!Number.isFinite(v) || v <= 0) return null;
-    return `${v.toFixed(v >= 10 ? 1 : 2)} m`;
+    return `${v.toFixed(v >= 10 ? 1 : 2)} ${t('unit.m')}`;
   }
 
   function formatArea(n) {
     const v = Number(n);
     if (!Number.isFinite(v) || v <= 0) return null;
-    return `${v.toFixed(v >= 10 ? 1 : 2)} m²`;
+    return `${v.toFixed(v >= 10 ? 1 : 2)} ${t('unit.m2')}`;
   }
 
   function scanDimensions(scan) {
@@ -92,7 +455,7 @@
     const area = formatArea(scan.floorAreaM2);
     if (long && short) parts.push(`${long} × ${short}`);
     else if (long) parts.push(long);
-    if (height) parts.push(`H ${height}`);
+    if (height) parts.push(`${t('dims.heightPrefix')} ${height}`);
     if (area) parts.push(area);
     return parts;
   }
@@ -107,28 +470,42 @@
     }
     const id = rawId && /^\d+$/.test(rawId) ? Number(rawId) : null;
     const token = (qs.get('token') || '').trim();
-    return { id, token };
+    const rawProject = (qs.get('project') || '').trim();
+    const projectId = /^[A-Za-z0-9_-]{1,64}$/.test(rawProject) ? rawProject : null;
+    return { id, token, projectId };
   }
 
-  function setRoute(scanId) {
+  function setRoute({ scanId = null, projectId = null } = {}) {
     const qs = new URLSearchParams(location.search);
     // The gallery always shows every public scan — drop any legacy
     // device-scoped links.
     qs.delete('device_id');
     if (scanId) qs.set('id', String(scanId));
     else qs.delete('id');
+    if (projectId) qs.set('project', String(projectId));
+    else qs.delete('project');
     qs.delete('scan');
     const next = qs.toString();
     const url = `${location.pathname}${next ? `?${next}` : ''}${location.hash || ''}`;
-    history.pushState({ scanId: scanId || null }, '', url);
+    history.pushState({ scanId: scanId || null, projectId: projectId || null }, '', url);
   }
 
+  // Remembers the i18n key of the visible status so a language switch can
+  // re-render it (see rerenderForLangChange).
+  let lastStatusKey = null;
+
   function showStatus(message, isError = false) {
+    lastStatusKey = null;
     statusEl.hidden = false;
     statusEl.dataset.error = isError ? '1' : '';
     statusEl.removeAttribute('aria-label');
     statusEl.textContent = message;
     listEl.hidden = true;
+  }
+
+  function showStatusKey(key, isError = false) {
+    showStatus(t(key), isError);
+    lastStatusKey = key;
   }
 
   /** Spinning Makon mark (see .m3d-loading-spinner in makon3d.css) — the one
@@ -138,6 +515,7 @@
   }
 
   function showLoadingStatus(label) {
+    lastStatusKey = null;
     statusEl.hidden = false;
     statusEl.dataset.error = '';
     statusEl.setAttribute('aria-label', label);
@@ -145,12 +523,10 @@
     listEl.hidden = true;
   }
 
-  function showListView() {
+  function teardownViewer() {
     openScanId = null;
-    listPanelEl.hidden = false;
+    openScanData = null;
     viewerPanelEl.hidden = true;
-    backEl.hidden = true;
-    navTriggerEl.hidden = false;
     viewerWrapEl.classList.remove('is-blueprint');
     delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
     viewerWrapEl.innerHTML = '';
@@ -160,6 +536,18 @@
       materialsEl.innerHTML = '';
     }
     clearShareOgTags();
+  }
+
+  /** Home: the projects list with ungrouped scans below (see renderHome). */
+  function showListView() {
+    teardownViewer();
+    openProjectId = null;
+    listPanelEl.hidden = false;
+    backEl.hidden = true;
+    navTriggerEl.hidden = false;
+    // On the very first call the feeds are still loading — loadScans() shows
+    // its own spinner and calls renderHome() itself.
+    if (feedLoaded) renderHome();
   }
 
   function clearShareOgTags() {
@@ -193,7 +581,7 @@
   async function shareScan(scan) {
     const id = Number(scan.id);
     const shareUrl = scan.viewerUrl || viewerShareUrl(id);
-    const text = `View this 3D scan in Makon3D:\n\n${shareUrl}`;
+    const text = `${t('share.text')}\n\n${shareUrl}`;
     const gifUrl = scan.rotationGifUrl ? photoUrl(scan.rotationGifUrl) : '';
     try {
       if (gifUrl && navigator.share && navigator.canShare) {
@@ -217,9 +605,9 @@
     }
     try {
       await navigator.clipboard.writeText(text);
-      showStatus('Link copied to clipboard.');
+      showStatusKey('share.copied');
     } catch {
-      window.prompt('Copy this link:', shareUrl);
+      window.prompt(t('share.prompt'), shareUrl);
     }
   }
 
@@ -300,9 +688,9 @@
   }
 
   function roomScanModeLabel(mode) {
-    if (mode === 'floorAndFurniture') return 'Floor and furniture';
-    if (mode === 'floorOnly') return 'Floor only';
-    return 'Full room';
+    if (mode === 'floorAndFurniture') return t('ctrl.floorFurniture');
+    if (mode === 'floorOnly') return t('ctrl.floorOnly');
+    return t('ctrl.fullRoom');
   }
 
   /** Wall/ceiling/door/window/opening → 'wall'; floor → always shown;
@@ -427,7 +815,7 @@
     const wrap = document.createElement('div');
     wrap.className = 'roomscan-plan-toggle';
     wrap.setAttribute('role', 'tablist');
-    wrap.setAttribute('aria-label', 'View mode');
+    wrap.setAttribute('aria-label', t('ctrl.viewMode'));
 
     const makeBtn = (label, isPlan) => {
       const btn = document.createElement('button');
@@ -565,7 +953,7 @@
     btn.className = 'roomscan-texture-btn';
     const updateAppearance = () => {
       btn.innerHTML = roomScanWallTextureIconHtml(texture);
-      btn.setAttribute('aria-label', texture === 'plaster' ? 'Plaster walls' : 'Brick walls');
+      btn.setAttribute('aria-label', texture === 'plaster' ? t('ctrl.plasterWalls') : t('ctrl.brickWalls'));
     };
     updateAppearance();
     btn.addEventListener('click', () => {
@@ -670,7 +1058,7 @@
     btn.className = 'roomscan-floor-texture-btn';
     const updateAppearance = () => {
       btn.innerHTML = roomScanFloorTextureIconHtml(texture);
-      btn.setAttribute('aria-label', texture === 'tile' ? 'Tile floor' : 'Wood floor');
+      btn.setAttribute('aria-label', texture === 'tile' ? t('ctrl.tileFloor') : t('ctrl.woodFloor'));
     };
     updateAppearance();
     btn.addEventListener('click', () => {
@@ -702,7 +1090,7 @@
     const updateAppearance = () => {
       const isRotating = viewerEl.hasAttribute('auto-rotate');
       btn.innerHTML = roomScanRotateIconHtml(isRotating);
-      btn.setAttribute('aria-label', isRotating ? 'Pause rotation' : 'Rotate');
+      btn.setAttribute('aria-label', isRotating ? t('ctrl.pauseRotation') : t('ctrl.rotate'));
     };
     updateAppearance();
     btn.addEventListener('click', () => {
@@ -748,15 +1136,15 @@
     input.min = '0';
     input.max = '100';
     input.value = String(ROOM_SCAN_ZOOM_DEFAULT);
-    input.setAttribute('aria-label', 'Zoom');
+    input.setAttribute('aria-label', t('ctrl.zoom'));
 
     const inIcon = document.createElement('span');
     inIcon.className = 'roomscan-zoom-icon';
     inIcon.innerHTML = roomScanZoomIconHtml('in');
 
     const applyZoom = () => {
-      const t = Number(input.value) / 100;
-      const fov = ROOM_SCAN_ZOOM_FOV_MAX_DEG - t * (ROOM_SCAN_ZOOM_FOV_MAX_DEG - ROOM_SCAN_ZOOM_FOV_MIN_DEG);
+      const ratio = Number(input.value) / 100;
+      const fov = ROOM_SCAN_ZOOM_FOV_MAX_DEG - ratio * (ROOM_SCAN_ZOOM_FOV_MAX_DEG - ROOM_SCAN_ZOOM_FOV_MIN_DEG);
       viewerEl.fieldOfView = `${fov.toFixed(2)}deg`;
     };
     // Coalesce rapid input ticks onto one fieldOfView write per frame —
@@ -817,19 +1205,22 @@
     const date = formatDate(scan.createdAt);
     const gifReady = scan.mediaGenerationStatus === 'ready' && scan.rotationGifUrl;
     const rows = [];
-    rows.push(`<div><strong>Scan #${escapeHtml(scan.id)}</strong></div>`);
+    const roomLabel = scanRoomLabel(scan);
+    rows.push(
+      `<div><strong>${roomLabel ? `${escapeHtml(roomLabel)} — ` : ''}${tf('scan.title', { id: escapeHtml(scan.id) })}</strong></div>`,
+    );
     if (date) rows.push(`<div>${escapeHtml(date)}</div>`);
     if (dims.length) {
       rows.push(`<div class="m3d-dim-row">${dims.map((d) => `<span>${escapeHtml(d)}</span>`).join('')}</div>`);
     }
     if (!scan.glbUrl) {
-      rows.push('<div>3D preview is still processing — USDZ is available for the native app.</div>');
+      rows.push(`<div>${escapeHtml(t('viewer.processingNote'))}</div>`);
     }
     viewerMetaEl.innerHTML = `
       <div class="m3d-viewer-meta-row">
         <div class="m3d-viewer-meta-text">${rows.join('')}</div>
         <button type="button" class="m3d-share-btn" id="m3d-share-btn">
-          ${gifReady ? 'Share GIF' : 'Share link'}
+          ${gifReady ? t('share.gif') : t('share.link')}
         </button>
       </div>
     `;
@@ -842,17 +1233,20 @@
     renderMaterialsPanel(scan);
   }
 
-  // --- Material estimate (floor / wall tiles) --------------------------------
+  // --- Material estimate (floor tiles + plinth / wallpaper) ------------------
   // Ported from makon3d_mobile's RoomMaterialsScreen + FloorTileEstimator:
-  // same math, presets and defaults, so the app and mini app agree.
+  // same math, presets and defaults, so the app and mini app agree. One
+  // improvement over the port: plinth prefers the backend-measured wall
+  // perimeter minus doorway widths (wallPerimeterM / doorwayWidthM in the
+  // scan payload) over the OBB approximation.
 
   const MATERIALS_PREFS_STORAGE_KEY = 'makon3d:tilePrefs';
-  const MATERIALS_DEFAULTS = {
-    floor: { widthCm: 40, heightCm: 40, wastePercent: 10 },
-    walls: { widthCm: 30, heightCm: 60, wastePercent: 10 },
-  };
+  const MATERIALS_FLOOR_DEFAULTS = { widthCm: 40, heightCm: 40, wastePercent: 10 };
+  /** Standard European wallpaper roll. */
+  const MATERIALS_WALLS_DEFAULTS = { rollWidthM: 0.53, rollLengthM: 10.05, repeatCm: 0 };
   const MATERIALS_SQUARE_PRESETS = [[30, 30], [40, 40], [60, 60]];
   const MATERIALS_RECT_PRESETS = [[20, 30], [30, 60], [40, 50]];
+  const WALLPAPER_ROLL_PRESETS = [[0.53, 10.05], [1.06, 10.05]];
   /** Standard skirting-board strip length. */
   const PLINTH_STRIP_M = 2.5;
 
@@ -879,14 +1273,51 @@
     return 2 * (long + short);
   }
 
-  /** Approximate wall area: footprint perimeter (2 × (long + short)) × height.
-   * Door/window openings are not subtracted. */
-  function resolveWallAreaM2(scan) {
-    const long = Number(scan?.floorLongM);
-    const short = Number(scan?.floorShortM);
-    const height = Number(scan?.heightM);
-    if (!(long > 0) || !(short > 0) || !(height > 0)) return null;
-    return 2 * (long + short) * height;
+  /** True wall-run perimeter summed from the scan's wall meshes (backend's
+   * computeRoomScanWallMetricsFromGlb.ts); null for scans that predate the
+   * column and haven't been backfilled. */
+  function resolveWallPerimeterM(scan) {
+    const p = Number(scan?.wallPerimeterM);
+    return Number.isFinite(p) && p > 0 ? p : null;
+  }
+
+  /** Plinth run: wall perimeter minus door/opening widths when measured,
+   * otherwise the OBB perimeter with doorways not subtracted. */
+  function resolvePlinth(scan) {
+    const wallPerimeter = resolveWallPerimeterM(scan);
+    if (wallPerimeter != null) {
+      const doorwayWidth = Math.max(0, Number(scan?.doorwayWidthM) || 0);
+      return {
+        lengthM: Math.max(0, wallPerimeter - doorwayWidth),
+        note: doorwayWidth > 0
+          ? tf('mat.plinthMinusDoorways', {
+              len: wallPerimeter.toFixed(1),
+              door: doorwayWidth.toFixed(1),
+            })
+          : t('mat.plinthNoDoorways'),
+      };
+    }
+    const approx = resolvePerimeterM(scan);
+    if (approx == null) return null;
+    return { lengthM: approx, note: t('mat.plinthNote') };
+  }
+
+  /** Strip-based wallpaper math — computing rolls from m² is how people end
+   * up one roll short. Each strip is cut to wall height plus one pattern
+   * repeat for alignment. */
+  function estimateWallpaper(perimeterM, wallHeightM, { rollWidthM, rollLengthM, repeatCm }) {
+    if (!(perimeterM > 0) || !(wallHeightM > 0) || !(rollWidthM > 0) || !(rollLengthM > 0)) {
+      return null;
+    }
+    const repeat = Math.min(500, Math.max(0, Number(repeatCm) || 0));
+    const stripLengthM = wallHeightM + repeat / 100;
+    const stripsNeeded = Math.max(1, Math.ceil(perimeterM / rollWidthM));
+    const stripsPerRoll = Math.floor(rollLengthM / stripLengthM);
+    // Roll shorter than one strip (very tall space): fall back to linear meters.
+    const rollCount = stripsPerRoll >= 1
+      ? Math.ceil(stripsNeeded / stripsPerRoll)
+      : Math.ceil((stripsNeeded * stripLengthM) / rollLengthM);
+    return { stripLengthM, stripsNeeded, stripsPerRoll, rollCount: Math.max(1, rollCount) };
   }
 
   function estimateTiles(areaM2, widthCm, heightCm, wastePercent) {
@@ -908,19 +1339,29 @@
     try {
       stored = JSON.parse(localStorage.getItem(MATERIALS_PREFS_STORAGE_KEY) || 'null');
     } catch { /* ignore */ }
-    const merged = {};
-    for (const surface of ['floor', 'walls']) {
-      const raw = stored?.[surface] || {};
-      const defaults = MATERIALS_DEFAULTS[surface];
-      merged[surface] = {
-        widthCm: Number(raw.widthCm) > 0 ? Number(raw.widthCm) : defaults.widthCm,
-        heightCm: Number(raw.heightCm) > 0 ? Number(raw.heightCm) : defaults.heightCm,
-        wastePercent: Number.isFinite(Number(raw.wastePercent))
-          ? Math.min(20, Math.max(0, Number(raw.wastePercent)))
-          : defaults.wastePercent,
-      };
-    }
-    return merged;
+    const floorRaw = stored?.floor || {};
+    // Older builds stored tile sizes under `walls` — unknown keys fall back
+    // to the wallpaper defaults, so no migration is needed.
+    const wallsRaw = stored?.walls || {};
+    return {
+      floor: {
+        widthCm: Number(floorRaw.widthCm) > 0
+          ? Number(floorRaw.widthCm) : MATERIALS_FLOOR_DEFAULTS.widthCm,
+        heightCm: Number(floorRaw.heightCm) > 0
+          ? Number(floorRaw.heightCm) : MATERIALS_FLOOR_DEFAULTS.heightCm,
+        wastePercent: Number.isFinite(Number(floorRaw.wastePercent))
+          ? Math.min(20, Math.max(0, Number(floorRaw.wastePercent)))
+          : MATERIALS_FLOOR_DEFAULTS.wastePercent,
+      },
+      walls: {
+        rollWidthM: Number(wallsRaw.rollWidthM) > 0
+          ? Number(wallsRaw.rollWidthM) : MATERIALS_WALLS_DEFAULTS.rollWidthM,
+        rollLengthM: Number(wallsRaw.rollLengthM) > 0
+          ? Number(wallsRaw.rollLengthM) : MATERIALS_WALLS_DEFAULTS.rollLengthM,
+        repeatCm: Number(wallsRaw.repeatCm) >= 0
+          ? Math.min(500, Number(wallsRaw.repeatCm)) : MATERIALS_WALLS_DEFAULTS.repeatCm,
+      },
+    };
   }
 
   function saveMaterialsPrefs(prefs) {
@@ -929,10 +1370,11 @@
     } catch { /* private mode etc. — estimates still work, just not sticky */ }
   }
 
-  function formatCm(value) {
+  /** Up to 2 decimals, trailing zeros stripped ("40", "0.53", "10.05"). */
+  function formatNum(value) {
     const v = Number(value);
     if (!Number.isFinite(v)) return '';
-    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+    return Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100);
   }
 
   // Collapsed by default on every newly opened scan.
@@ -949,8 +1391,9 @@
 
     const prefs = loadMaterialsPrefs();
     let surface = 'floor';
-    let current = { ...prefs.floor };
-    let isSquare = Math.abs(current.widthCm - current.heightCm) < 0.001;
+    const floor = { ...prefs.floor };
+    const walls = { ...prefs.walls };
+    let isSquare = Math.abs(floor.widthCm - floor.heightCm) < 0.001;
 
     materialsEl.hidden = false;
     materialsEl.innerHTML = `
@@ -959,39 +1402,61 @@
           <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
         </svg>
-        <span>Material estimate</span>
+        <span>${t('mat.title')}</span>
         <span class="m3d-mat-toggle-chevron" aria-hidden="true">›</span>
       </button>
       <div class="m3d-mat-body" id="m3d-mat-body" ${materialsExpanded ? '' : 'hidden'}>
-        <div class="m3d-seg" role="tablist" aria-label="Surface" id="m3d-mat-surface">
-          <button type="button" class="m3d-seg-btn" role="tab" data-surface="floor">Floor</button>
-          <button type="button" class="m3d-seg-btn" role="tab" data-surface="walls">Walls</button>
+        <div class="m3d-seg" role="tablist" aria-label="${t('mat.surface')}" id="m3d-mat-surface">
+          <button type="button" class="m3d-seg-btn" role="tab" data-surface="floor">${t('mat.floor')}</button>
+          <button type="button" class="m3d-seg-btn" role="tab" data-surface="walls">${t('mat.walls')}</button>
         </div>
         <p class="m3d-mat-area" id="m3d-mat-area"></p>
         <p class="m3d-mat-approx" id="m3d-mat-approx" hidden></p>
-        <div class="m3d-mat-label">Tile shape</div>
-        <div class="m3d-seg" role="tablist" aria-label="Tile shape" id="m3d-mat-shape">
-          <button type="button" class="m3d-seg-btn" role="tab" data-square="1">Square</button>
-          <button type="button" class="m3d-seg-btn" role="tab" data-square="">Rectangle</button>
+        <div id="m3d-mat-floor-controls">
+          <div class="m3d-mat-label">${t('mat.tileShape')}</div>
+          <div class="m3d-seg" role="tablist" aria-label="${t('mat.tileShape')}" id="m3d-mat-shape">
+            <button type="button" class="m3d-seg-btn" role="tab" data-square="1">${t('mat.square')}</button>
+            <button type="button" class="m3d-seg-btn" role="tab" data-square="">${t('mat.rectangle')}</button>
+          </div>
+          <div class="m3d-mat-label">${t('mat.tileSize')}</div>
+          <div class="m3d-chips" id="m3d-mat-presets"></div>
+          <div class="m3d-mat-inputs">
+            <label class="m3d-mat-input">
+              <span>${t('mat.width')}</span>
+              <input type="number" inputmode="decimal" min="1" step="0.1" id="m3d-mat-width" />
+            </label>
+            <label class="m3d-mat-input" id="m3d-mat-height-wrap">
+              <span>${t('mat.length')}</span>
+              <input type="number" inputmode="decimal" min="1" step="0.1" id="m3d-mat-height" />
+            </label>
+          </div>
+          <div class="m3d-mat-label" id="m3d-mat-waste-label"></div>
+          <input type="range" class="m3d-mat-range" id="m3d-mat-waste" min="0" max="20" step="1" />
+          <div class="m3d-mat-waste-quick">
+            <button type="button" data-waste="5">5%</button>
+            <button type="button" data-waste="10">10%</button>
+            <button type="button" data-waste="15">15%</button>
+          </div>
         </div>
-        <div class="m3d-mat-label">Tile size (cm)</div>
-        <div class="m3d-chips" id="m3d-mat-presets"></div>
-        <div class="m3d-mat-inputs">
-          <label class="m3d-mat-input">
-            <span>Width</span>
-            <input type="number" inputmode="decimal" min="1" step="0.1" id="m3d-mat-width" />
-          </label>
-          <label class="m3d-mat-input" id="m3d-mat-height-wrap">
-            <span>Length</span>
-            <input type="number" inputmode="decimal" min="1" step="0.1" id="m3d-mat-height" />
-          </label>
-        </div>
-        <div class="m3d-mat-label" id="m3d-mat-waste-label"></div>
-        <input type="range" class="m3d-mat-range" id="m3d-mat-waste" min="0" max="20" step="1" />
-        <div class="m3d-mat-waste-quick">
-          <button type="button" data-waste="5">5%</button>
-          <button type="button" data-waste="10">10%</button>
-          <button type="button" data-waste="15">15%</button>
+        <div id="m3d-mat-walls-controls" hidden>
+          <div class="m3d-mat-label">${t('mat.rollSize')}</div>
+          <div class="m3d-chips" id="m3d-mat-roll-presets"></div>
+          <div class="m3d-mat-inputs">
+            <label class="m3d-mat-input">
+              <span>${t('mat.rollWidth')}</span>
+              <input type="number" inputmode="decimal" min="0.1" step="0.01" id="m3d-mat-roll-width" />
+            </label>
+            <label class="m3d-mat-input">
+              <span>${t('mat.rollLength')}</span>
+              <input type="number" inputmode="decimal" min="1" step="0.05" id="m3d-mat-roll-length" />
+            </label>
+          </div>
+          <div class="m3d-mat-inputs">
+            <label class="m3d-mat-input">
+              <span>${t('mat.patternRepeat')}</span>
+              <input type="number" inputmode="decimal" min="0" step="1" id="m3d-mat-repeat" />
+            </label>
+          </div>
         </div>
         <div class="m3d-mat-result" id="m3d-mat-result"></div>
       </div>
@@ -1002,6 +1467,7 @@
     const surfaceSegEl = materialsEl.querySelector('#m3d-mat-surface');
     const areaEl = materialsEl.querySelector('#m3d-mat-area');
     const approxEl = materialsEl.querySelector('#m3d-mat-approx');
+    const floorControlsEl = materialsEl.querySelector('#m3d-mat-floor-controls');
     const shapeSegEl = materialsEl.querySelector('#m3d-mat-shape');
     const presetsEl = materialsEl.querySelector('#m3d-mat-presets');
     const widthInput = materialsEl.querySelector('#m3d-mat-width');
@@ -1009,15 +1475,17 @@
     const heightInput = materialsEl.querySelector('#m3d-mat-height');
     const wasteLabelEl = materialsEl.querySelector('#m3d-mat-waste-label');
     const wasteInput = materialsEl.querySelector('#m3d-mat-waste');
+    const wallsControlsEl = materialsEl.querySelector('#m3d-mat-walls-controls');
+    const rollPresetsEl = materialsEl.querySelector('#m3d-mat-roll-presets');
+    const rollWidthInput = materialsEl.querySelector('#m3d-mat-roll-width');
+    const rollLengthInput = materialsEl.querySelector('#m3d-mat-roll-length');
+    const repeatInput = materialsEl.querySelector('#m3d-mat-repeat');
     const resultEl = materialsEl.querySelector('#m3d-mat-result');
 
     function persist() {
-      prefs[surface] = { ...current };
+      prefs.floor = { ...floor };
+      prefs.walls = { ...walls };
       saveMaterialsPrefs(prefs);
-    }
-
-    function surfaceArea() {
-      return surface === 'walls' ? resolveWallAreaM2(scan) : resolveFloorAreaM2(scan);
     }
 
     function renderPresets() {
@@ -1025,18 +1493,23 @@
       presetsEl.innerHTML = presets
         .map(([w, h]) => {
           const active =
-            Math.abs(current.widthCm - w) < 0.001 && Math.abs(current.heightCm - h) < 0.001;
-          return `<button type="button" class="m3d-chip${active ? ' is-active' : ''}" data-w="${w}" data-h="${h}">${formatCm(w)}×${formatCm(h)}</button>`;
+            Math.abs(floor.widthCm - w) < 0.001 && Math.abs(floor.heightCm - h) < 0.001;
+          return `<button type="button" class="m3d-chip${active ? ' is-active' : ''}" data-w="${w}" data-h="${h}">${formatNum(w)}×${formatNum(h)}</button>`;
         })
         .join('');
     }
 
-    function update() {
-      for (const btn of surfaceSegEl.querySelectorAll('.m3d-seg-btn')) {
-        const active = btn.dataset.surface === surface;
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-selected', active ? 'true' : 'false');
-      }
+    function renderRollPresets() {
+      rollPresetsEl.innerHTML = WALLPAPER_ROLL_PRESETS
+        .map(([w, l]) => {
+          const active =
+            Math.abs(walls.rollWidthM - w) < 0.001 && Math.abs(walls.rollLengthM - l) < 0.001;
+          return `<button type="button" class="m3d-chip${active ? ' is-active' : ''}" data-roll-w="${w}" data-roll-l="${l}">${formatNum(w)} × ${formatNum(l)}</button>`;
+        })
+        .join('');
+    }
+
+    function updateFloor() {
       for (const btn of shapeSegEl.querySelectorAll('.m3d-seg-btn')) {
         const active = Boolean(btn.dataset.square) === isSquare;
         btn.classList.toggle('is-active', active);
@@ -1045,56 +1518,107 @@
       heightWrapEl.hidden = isSquare;
       renderPresets();
 
-      const area = surfaceArea();
+      const area = resolveFloorAreaM2(scan);
       if (area != null) {
-        areaEl.textContent = `${surface === 'walls' ? 'Wall area' : 'Measured area'}: ~${area.toFixed(1)} m²`;
+        areaEl.textContent = `${t('mat.measuredArea')}: ~${area.toFixed(1)} ${t('unit.m2')}`;
         areaEl.dataset.error = '';
       } else {
-        areaEl.textContent =
-          surface === 'walls'
-            ? 'No wall measurements for this scan.'
-            : 'No floor area for this scan.';
+        areaEl.textContent = t('mat.noFloorArea');
         areaEl.dataset.error = '1';
       }
-      const approxNote =
-        surface === 'walls'
-          ? area != null
-            ? 'Perimeter × height, door and window openings not subtracted.'
-            : ''
-          : floorAreaUsedBoundingFallback(scan)
-            ? 'Using room length × width (approximate).'
-            : '';
+      const approxNote = floorAreaUsedBoundingFallback(scan)
+        ? t('mat.floorApprox')
+        : '';
       approxEl.hidden = !approxNote;
       approxEl.textContent = approxNote;
 
-      wasteLabelEl.textContent = `Waste: ${Math.round(current.wastePercent)}%`;
+      wasteLabelEl.textContent = `${t('mat.waste')}: ${Math.round(floor.wastePercent)}%`;
 
       const estimate = area == null
         ? null
-        : estimateTiles(area, current.widthCm, current.heightCm, current.wastePercent);
+        : estimateTiles(area, floor.widthCm, floor.heightCm, floor.wastePercent);
       // Skirting board rides along with the floor tab only.
-      const perimeter = surface === 'floor' ? resolvePerimeterM(scan) : null;
-      const plinthHtml = perimeter == null
+      const plinth = resolvePlinth(scan);
+      const plinthHtml = plinth == null || !(plinth.lengthM > 0)
         ? ''
         : `
-          <div class="m3d-mat-result-plinth">Plinth: ~${perimeter.toFixed(1)} m · ${Math.ceil(perimeter / PLINTH_STRIP_M)} pcs × ${PLINTH_STRIP_M} m</div>
-          <div class="m3d-mat-result-detail">Perimeter, door openings not subtracted.</div>
+          <div class="m3d-mat-result-plinth">${tf('mat.plinth', {
+            len: plinth.lengthM.toFixed(1),
+            count: Math.ceil(plinth.lengthM / PLINTH_STRIP_M),
+            strip: PLINTH_STRIP_M,
+          })}</div>
+          <div class="m3d-mat-result-detail">${plinth.note}</div>
         `;
       resultEl.innerHTML = estimate
         ? `
-          <div class="m3d-mat-result-heading">To buy</div>
-          <div class="m3d-mat-result-count">${estimate.tileCount} tiles</div>
-          <div>~${estimate.buyAreaM2.toFixed(1)} m² of tiles</div>
-          <div class="m3d-mat-result-detail">Tile ${estimate.tileAreaM2.toFixed(2)} m² · with waste ~${estimate.effectiveAreaM2.toFixed(1)} m²</div>
+          <div class="m3d-mat-result-heading">${t('mat.toBuy')}</div>
+          <div class="m3d-mat-result-count">${tf('mat.tilesCount', { count: estimate.tileCount })}</div>
+          <div>${tf('mat.buyArea', { area: estimate.buyAreaM2.toFixed(1) })}</div>
+          <div class="m3d-mat-result-detail">${tf('mat.tileDetail', {
+            tile: estimate.tileAreaM2.toFixed(2),
+            eff: estimate.effectiveAreaM2.toFixed(1),
+          })}</div>
           ${plinthHtml}
         `
-        : '<div class="m3d-mat-result-detail">Nothing to estimate without measurements.</div>';
+        : `<div class="m3d-mat-result-detail">${t('mat.noEstimate')}</div>`;
+    }
+
+    function updateWalls() {
+      renderRollPresets();
+
+      const perimeter = resolvePerimeterM(scan);
+      const height = Number(scan?.heightM) > 0 ? Number(scan.heightM) : null;
+      if (perimeter != null && height != null) {
+        areaEl.textContent = tf('mat.perimeterHeight', {
+          len: perimeter.toFixed(1),
+          h: height.toFixed(2),
+        });
+        areaEl.dataset.error = '';
+        approxEl.hidden = false;
+        approxEl.textContent = t('mat.wallApprox');
+      } else {
+        areaEl.textContent = t('mat.noWallArea');
+        areaEl.dataset.error = '1';
+        approxEl.hidden = true;
+      }
+
+      const estimate = (perimeter == null || height == null)
+        ? null
+        : estimateWallpaper(perimeter, height, walls);
+      resultEl.innerHTML = estimate
+        ? `
+          <div class="m3d-mat-result-heading">${t('mat.toBuy')}</div>
+          <div class="m3d-mat-result-count">${tf('mat.rollsCount', { count: estimate.rollCount })}</div>
+          <div>${tf('mat.strips', {
+            count: estimate.stripsNeeded,
+            len: estimate.stripLengthM.toFixed(2),
+          })}</div>
+          ${estimate.stripsPerRoll >= 1
+            ? `<div class="m3d-mat-result-detail">${tf('mat.stripsPerRoll', { count: estimate.stripsPerRoll })}</div>`
+            : ''}
+        `
+        : `<div class="m3d-mat-result-detail">${t('mat.noEstimate')}</div>`;
+    }
+
+    function update() {
+      for (const btn of surfaceSegEl.querySelectorAll('.m3d-seg-btn')) {
+        const active = btn.dataset.surface === surface;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      }
+      floorControlsEl.hidden = surface !== 'floor';
+      wallsControlsEl.hidden = surface !== 'walls';
+      if (surface === 'walls') updateWalls();
+      else updateFloor();
     }
 
     function syncInputs() {
-      widthInput.value = formatCm(current.widthCm);
-      heightInput.value = formatCm(current.heightCm);
-      wasteInput.value = String(Math.round(current.wastePercent));
+      widthInput.value = formatNum(floor.widthCm);
+      heightInput.value = formatNum(floor.heightCm);
+      wasteInput.value = String(Math.round(floor.wastePercent));
+      rollWidthInput.value = formatNum(walls.rollWidthM);
+      rollLengthInput.value = formatNum(walls.rollLengthM);
+      repeatInput.value = formatNum(walls.repeatCm);
     }
 
     toggleBtn.addEventListener('click', () => {
@@ -1109,9 +1633,6 @@
       if (!btn || btn.dataset.surface === surface) return;
       haptic();
       surface = btn.dataset.surface;
-      current = { ...prefs[surface] };
-      isSquare = Math.abs(current.widthCm - current.heightCm) < 0.001;
-      syncInputs();
       update();
     });
 
@@ -1123,8 +1644,8 @@
       haptic();
       isSquare = nextSquare;
       if (isSquare) {
-        current.heightCm = current.widthCm;
-        heightInput.value = formatCm(current.heightCm);
+        floor.heightCm = floor.widthCm;
+        heightInput.value = formatNum(floor.heightCm);
         persist();
       }
       update();
@@ -1134,9 +1655,9 @@
       const btn = event.target.closest('[data-w]');
       if (!btn) return;
       haptic();
-      current.widthCm = Number(btn.dataset.w);
-      current.heightCm = Number(btn.dataset.h);
-      isSquare = current.widthCm === current.heightCm;
+      floor.widthCm = Number(btn.dataset.w);
+      floor.heightCm = Number(btn.dataset.h);
+      isSquare = floor.widthCm === floor.heightCm;
       syncInputs();
       persist();
       update();
@@ -1145,10 +1666,10 @@
     widthInput.addEventListener('input', () => {
       const parsed = Number(widthInput.value.replace(',', '.'));
       if (!(parsed > 0)) return;
-      current.widthCm = parsed;
+      floor.widthCm = parsed;
       if (isSquare) {
-        current.heightCm = parsed;
-        heightInput.value = formatCm(parsed);
+        floor.heightCm = parsed;
+        heightInput.value = formatNum(parsed);
       }
       persist();
       update();
@@ -1157,14 +1678,14 @@
     heightInput.addEventListener('input', () => {
       const parsed = Number(heightInput.value.replace(',', '.'));
       if (!(parsed > 0)) return;
-      current.heightCm = parsed;
+      floor.heightCm = parsed;
       isSquare = false;
       persist();
       update();
     });
 
     wasteInput.addEventListener('input', () => {
-      current.wastePercent = Number(wasteInput.value) || 0;
+      floor.wastePercent = Number(wasteInput.value) || 0;
       persist();
       update();
     });
@@ -1173,8 +1694,44 @@
       const btn = event.target.closest('[data-waste]');
       if (!btn) return;
       haptic();
-      current.wastePercent = Number(btn.dataset.waste);
+      floor.wastePercent = Number(btn.dataset.waste);
       wasteInput.value = btn.dataset.waste;
+      persist();
+      update();
+    });
+
+    rollPresetsEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-roll-w]');
+      if (!btn) return;
+      haptic();
+      walls.rollWidthM = Number(btn.dataset.rollW);
+      walls.rollLengthM = Number(btn.dataset.rollL);
+      syncInputs();
+      persist();
+      update();
+    });
+
+    rollWidthInput.addEventListener('input', () => {
+      const parsed = Number(rollWidthInput.value.replace(',', '.'));
+      if (!(parsed > 0)) return;
+      walls.rollWidthM = parsed;
+      persist();
+      update();
+    });
+
+    rollLengthInput.addEventListener('input', () => {
+      const parsed = Number(rollLengthInput.value.replace(',', '.'));
+      if (!(parsed > 0)) return;
+      walls.rollLengthM = parsed;
+      persist();
+      update();
+    });
+
+    repeatInput.addEventListener('input', () => {
+      // Repeat may legitimately be 0 — accept any non-negative value.
+      const parsed = Number(repeatInput.value.replace(',', '.'));
+      if (!(parsed >= 0)) return;
+      walls.repeatCm = Math.min(500, parsed);
       persist();
       update();
     });
@@ -1189,7 +1746,7 @@
     viewerWrapEl.classList.remove('is-blueprint');
     delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
     viewerWrapEl.innerHTML =
-      `<div class="m3d-viewer-status" role="status" aria-label="Loading 3D model">${loadingSpinnerHtml()}</div>`;
+      `<div class="m3d-viewer-status" role="status" aria-label="${t('viewer.loadingModel')}">${loadingSpinnerHtml()}</div>`;
     renderViewerMeta(scan);
 
     const glb = scan.glbUrl ? withCacheBust(photoUrl(scan.glbUrl)) : '';
@@ -1197,7 +1754,7 @@
 
     if (!glb) {
       viewerWrapEl.innerHTML =
-        '<div class="m3d-viewer-status">No web 3D preview yet for this scan.</div>';
+        `<div class="m3d-viewer-status">${t('viewer.noPreview')}</div>`;
       return;
     }
 
@@ -1209,7 +1766,7 @@
         'error',
         () => {
           viewerWrapEl.innerHTML =
-            '<div class="m3d-viewer-status">Could not load this 3D model.</div>';
+            `<div class="m3d-viewer-status">${t('viewer.modelError')}</div>`;
         },
         { once: true }
       );
@@ -1231,7 +1788,7 @@
     } catch (err) {
       console.error('[Makon3D] model-viewer failed', err);
       viewerWrapEl.innerHTML =
-        '<div class="m3d-viewer-status">Could not load the 3D viewer.</div>';
+        `<div class="m3d-viewer-status">${t('viewer.viewerError')}</div>`;
     }
   }
 
@@ -1252,20 +1809,21 @@
         scan = await res.json();
       } catch (err) {
         console.error('[Makon3D] fetch scan failed', err);
-        showStatus('Scan not found.', true);
         showListView();
+        showStatusKey('scan.notFound', true);
         return;
       }
     }
 
     openScanId = id;
+    openScanData = scan;
     listPanelEl.hidden = true;
     viewerPanelEl.hidden = false;
     backEl.hidden = false;
     // The burger yields its spot to the back button — two buttons before the
     // brand would crowd the header on narrow phones.
     navTriggerEl.hidden = true;
-    if (pushHistory) setRoute(id);
+    if (pushHistory) setRoute({ scanId: id, projectId: openProjectId });
     renderViewerMeta(scan);
     const pageUrl = scan.viewerUrl || viewerShareUrl(id);
     const imageUrl = scan.rotationGifUrl
@@ -1275,65 +1833,263 @@
         : '';
     setShareOgTags({
       title: `Makon3D scan #${id}`,
-      description: 'View this 3D scan in Makon3D',
+      description: t('share.ogDescription'),
       imageUrl,
       pageUrl,
     });
     await mountViewer(scan);
   }
 
-  function renderList(scans) {
-    scansCache = Array.isArray(scans) ? scans : [];
-    if (!scansCache.length) {
-      showStatus('No scans yet.');
+  // Room-type badge icons — wire values mirror makon3d_mobile's RoomType enum
+  // (the backend infers them from RoomPlan objects in the GLB, see
+  // inferRoomTypesFromGlb.ts in uydosh_backend).
+  const ROOM_TYPE_ICONS = {
+    livingRoom: {
+      labelKey: 'room.livingRoom',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 11V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" />
+        <rect x="3" y="11" width="18" height="6" rx="2" />
+        <path d="M5 17v2M19 17v2" />
+      </svg>`,
+    },
+    bedroom: {
+      labelKey: 'room.bedroom',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7" />
+        <path d="M3 18h18" />
+        <path d="M6 9V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" />
+      </svg>`,
+    },
+    kitchen: {
+      labelKey: 'room.kitchen',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="6" y="3" width="12" height="18" rx="2" />
+        <path d="M6 10h12" />
+        <path d="M9 6v1.5M9 13v3" />
+      </svg>`,
+    },
+    bathroom: {
+      labelKey: 'room.bathroom',
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12V6a2 2 0 0 1 4 0" />
+        <path d="M3 12h18v2a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" />
+        <path d="M6 18l-1 2M18 18l1 2" />
+      </svg>`,
+    },
+  };
+
+  /** Icon-pill replacement for the "3D ready" badge; '' when no types known. */
+  function roomTypeBadgeHtml(scan) {
+    const types = Array.isArray(scan.roomTypes) ? scan.roomTypes : [];
+    const known = types.filter((type) => ROOM_TYPE_ICONS[type]);
+    if (!known.length) return '';
+    const labels = known.map((type) => t(ROOM_TYPE_ICONS[type].labelKey));
+    const icons = known
+      .map((type) => `<span class="m3d-room-icon" title="${escapeHtml(t(ROOM_TYPE_ICONS[type].labelKey))}">${ROOM_TYPE_ICONS[type].svg}</span>`)
+      .join('');
+    return `<span class="m3d-badge m3d-badge-ready m3d-badge-rooms" role="img" aria-label="${escapeHtml(labels.join(', '))}">${icons}</span>`;
+  }
+
+  function scanBadgeHtml(scan) {
+    // Room-type icons when the backend knows them; plain "3D ready" for
+    // scans that predate room-type inference.
+    return scan.glbUrl
+      ? roomTypeBadgeHtml(scan) ||
+          `<span class="m3d-badge m3d-badge-ready">${t('badge.ready')}</span>`
+      : `<span class="m3d-badge m3d-badge-pending">${t('badge.processing')}</span>`;
+  }
+
+  /** One scan row. `titleHtml` (pre-escaped) overrides the "Scan #id" title —
+   * project views pass the room label. */
+  function scanItemHtml(scan, titleHtml = '') {
+    const dims = scanDimensions(scan);
+    const date = formatDate(scan.createdAt);
+    const metaBits = [date, ...dims].filter(Boolean);
+    return `
+      <li>
+        <button type="button" class="m3d-item" data-scan-id="${escapeHtml(scan.id)}">
+          <span class="m3d-item-body">
+            <span class="m3d-item-top">
+              <span class="m3d-item-title">${titleHtml || tf('scan.title', { id: escapeHtml(scan.id) })}</span>
+              ${scanBadgeHtml(scan)}
+            </span>
+            <span class="m3d-item-meta">
+              ${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}
+            </span>
+          </span>
+          <span class="m3d-item-chevron" aria-hidden="true">›</span>
+        </button>
+      </li>
+    `;
+  }
+
+  /** Label for a project room's scan: the user-given room name, else the
+   * localized room type (wire values mirror makon3d_mobile's RoomType). */
+  function scanRoomLabel(scan) {
+    if (typeof scan.roomName === 'string' && scan.roomName.trim()) {
+      return scan.roomName.trim();
+    }
+    if (scan.roomType) {
+      const key = `room.${scan.roomType}`;
+      const label = t(key);
+      return label === key ? t('room.other') : label;
+    }
+    return '';
+  }
+
+  function projectModeLabel(mode) {
+    if (mode === 'roomByRoom') return t('project.mode.roomByRoom');
+    if (mode === 'entireHousing') return t('project.mode.entireHousing');
+    return '';
+  }
+
+  function projectItemHtml(project) {
+    const metaBits = [
+      formatDate(project.createdAt || project.updatedAt),
+      projectModeLabel(project.scanMode),
+    ].filter(Boolean);
+    return `
+      <li>
+        <button type="button" class="m3d-item m3d-project-item" data-project-id="${escapeHtml(project.projectId)}">
+          <span class="m3d-item-body">
+            <span class="m3d-item-top">
+              <span class="m3d-item-title">${escapeHtml(project.name)}</span>
+              <span class="m3d-badge m3d-badge-ready">${tf('project.scanCount', { count: project.scans.length })}</span>
+            </span>
+            <span class="m3d-item-meta">
+              ${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}
+            </span>
+          </span>
+          <span class="m3d-item-chevron" aria-hidden="true">›</span>
+        </button>
+      </li>
+    `;
+  }
+
+  /** Updates both caches. Project scans are merged into scansCache so
+   * openScan() resolves them without extra fetches. */
+  function setFeeds(scans, projects) {
+    projectsCache = Array.isArray(projects)
+      ? projects.filter((p) => p && p.projectId && Array.isArray(p.scans) && p.scans.length)
+      : [];
+    const merged = Array.isArray(scans) ? [...scans] : [];
+    const known = new Set(merged.map((s) => Number(s.id)));
+    for (const project of projectsCache) {
+      for (const scan of project.scans) {
+        if (!known.has(Number(scan.id))) {
+          known.add(Number(scan.id));
+          merged.push(scan);
+        }
+      }
+    }
+    scansCache = merged;
+    feedLoaded = true;
+  }
+
+  function findProject(projectId) {
+    return projectsCache.find((p) => p.projectId === projectId) || null;
+  }
+
+  /** Scans that belong to no project — listed below the projects on home. */
+  function ungroupedScans() {
+    const grouped = new Set();
+    for (const project of projectsCache) {
+      for (const scan of project.scans) grouped.add(Number(scan.id));
+    }
+    return scansCache.filter((scan) => !grouped.has(Number(scan.id)));
+  }
+
+  /** Home list: projects first, then scans outside any project. */
+  function renderHome() {
+    const others = ungroupedScans();
+    if (!projectsCache.length && !others.length) {
+      showStatusKey('list.empty');
       return;
     }
-
     statusEl.hidden = true;
     listEl.hidden = false;
-    listEl.innerHTML = scansCache
-      .map((scan) => {
-        const ready = Boolean(scan.glbUrl);
-        const badge = ready
-          ? '<span class="m3d-badge m3d-badge-ready">3D ready</span>'
-          : '<span class="m3d-badge m3d-badge-pending">Processing</span>';
-        const dims = scanDimensions(scan);
-        const date = formatDate(scan.createdAt);
-        const metaBits = [date, ...dims].filter(Boolean);
-        return `
-          <li>
-            <button type="button" class="m3d-item" data-scan-id="${escapeHtml(scan.id)}">
-              <span class="m3d-item-body">
-                <span class="m3d-item-top">
-                  <span class="m3d-item-title">Scan #${escapeHtml(scan.id)}</span>
-                  ${badge}
-                </span>
-                <span class="m3d-item-meta">
-                  ${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}
-                </span>
-              </span>
-              <span class="m3d-item-chevron" aria-hidden="true">›</span>
-            </button>
-          </li>
-        `;
-      })
-      .join('');
+    const parts = [];
+    if (projectsCache.length) {
+      parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.projects'))}</li>`);
+      for (const project of projectsCache) parts.push(projectItemHtml(project));
+    }
+    if (others.length) {
+      if (projectsCache.length) {
+        parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.otherScans'))}</li>`);
+      }
+      for (const scan of others) parts.push(scanItemHtml(scan));
+    }
+    listEl.innerHTML = parts.join('');
+  }
+
+  /** Project view: header card + one row per contained scan (room labels). */
+  function openProject(projectId, { pushHistory = true } = {}) {
+    const project = findProject(projectId);
+    if (!project) {
+      showListView();
+      return;
+    }
+    teardownViewer();
+    openProjectId = project.projectId;
+    listPanelEl.hidden = false;
+    backEl.hidden = false;
+    navTriggerEl.hidden = true;
+    if (pushHistory) setRoute({ projectId: project.projectId });
+    statusEl.hidden = true;
+    listEl.hidden = false;
+    const metaBits = [
+      formatDate(project.createdAt || project.updatedAt),
+      projectModeLabel(project.scanMode),
+      tf('project.scanCount', { count: project.scans.length }),
+    ].filter(Boolean);
+    listEl.innerHTML = [
+      `<li class="m3d-project-head">
+        <span class="m3d-project-head-name">${escapeHtml(project.name)}</span>
+        <span class="m3d-item-meta">${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</span>
+      </li>`,
+      ...project.scans.map((scan) => {
+        const label = scanRoomLabel(scan);
+        return scanItemHtml(scan, label ? escapeHtml(label) : '');
+      }),
+    ].join('');
+  }
+
+  /** Fetches both public feeds. Throws only when the scans feed fails —
+   * projects are additive and must never blank the whole gallery. */
+  async function fetchFeeds() {
+    const [scansRes, projectsRes] = await Promise.all([
+      fetch(`${API_BASE}/makon3d/scans`),
+      fetch(`${API_BASE}/makon3d/projects/feed`),
+    ]);
+    if (!scansRes.ok) throw new Error(`HTTP ${scansRes.status}`);
+    const scansData = await scansRes.json();
+    let projects = [];
+    if (projectsRes.ok) {
+      try {
+        projects = (await projectsRes.json())?.projects || [];
+      } catch { /* additive — a bad projects payload must not break scans */ }
+    }
+    setFeeds(scansData.scans || [], projects);
   }
 
   async function loadScans() {
-    const { id } = readRoute();
+    const { id, projectId } = readRoute();
     showListView();
-    showLoadingStatus('Loading scans');
+    showLoadingStatus(t('list.loading'));
 
     try {
-      const res = await fetch(`${API_BASE}/makon3d/scans`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      renderList(data.scans || []);
-      if (id) await openScan(id, { pushHistory: false });
+      await fetchFeeds();
+      renderHome();
+      if (id) {
+        // Deep link into a scan; remember its project so Back lands there.
+        openProjectId = projectId && findProject(projectId) ? projectId : null;
+        await openScan(id, { pushHistory: false });
+      } else if (projectId) {
+        openProject(projectId, { pushHistory: false });
+      }
     } catch (err) {
       console.error('[Makon3D] list failed', err);
-      showStatus('Could not load scans. Pull to refresh or try again later.', true);
+      showStatusKey('list.error', true);
       if (id) await openScan(id, { pushHistory: false });
     }
   }
@@ -1454,7 +2210,7 @@
     scanCtaEl.innerHTML = `
       <p class="m3d-scan-cta-status" id="m3d-scan-cta-status" hidden></p>
       <button type="button" class="m3d-scan-cta-btn" id="m3d-scan-cta-btn">
-        ${isIos ? 'Scan a room' : 'Get scan link'}
+        ${isIos ? t('cta.scan') : t('cta.getLink')}
       </button>
     `;
     scanCtaEl.hidden = false;
@@ -1494,7 +2250,7 @@
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'm3d-scan-cta-qr-close';
-      closeBtn.setAttribute('aria-label', 'Close');
+      closeBtn.setAttribute('aria-label', t('aria.close'));
       closeBtn.innerHTML = '&times;';
       closeBtn.addEventListener('click', () => {
         haptic();
@@ -1504,7 +2260,7 @@
       wrap.appendChild(img);
       const hint = document.createElement('p');
       hint.className = 'm3d-scan-cta-qr-hint';
-      hint.textContent = 'Scan this code with an iPhone camera to start scanning.';
+      hint.textContent = t('cta.qrHint');
       wrap.appendChild(hint);
     } catch (err) {
       console.error('[Makon3D] QR render failed', err);
@@ -1516,7 +2272,7 @@
     const button = document.getElementById('m3d-scan-cta-btn');
     if (button) {
       button.disabled = true;
-      button.textContent = 'Starting…';
+      button.textContent = t('cta.starting');
     }
     haptic();
     try {
@@ -1534,7 +2290,7 @@
         else window.open(session.invocationUrl, '_blank');
         if (button) {
           button.disabled = false;
-          button.textContent = 'Scan a room';
+          button.textContent = t('cta.scan');
         }
         watchScanSession(session.scanSessionId);
       } else {
@@ -1549,7 +2305,7 @@
         } catch { /* clipboard unavailable — the QR still carries the link */ }
         if (button) {
           button.disabled = false;
-          button.textContent = copied ? 'Link copied' : 'Get scan link';
+          button.textContent = copied ? t('cta.copied') : t('cta.getLink');
         }
       }
     } catch (err) {
@@ -1559,21 +2315,25 @@
         document.body.classList.remove('m3d-has-scan-banner');
         return;
       }
-      setScanCtaStatus('Could not start scanning. Try again later.');
+      setScanCtaStatus(t('cta.error'));
       if (button) {
         button.disabled = false;
-        button.textContent = isIos ? 'Scan a room' : 'Get scan link';
+        button.textContent = isIos ? t('cta.scan') : t('cta.getLink');
       }
     }
   }
 
-  /** Re-fetches the scan list, then opens the freshly created scan. */
+  /** Re-fetches the feeds, then opens the freshly created scan. */
   async function openCompletedScan(makon3dScanId) {
     try {
-      const res = await fetch(`${API_BASE}/makon3d/scans`);
-      if (res.ok) {
-        const data = await res.json();
-        renderList(data.scans || []);
+      await fetchFeeds();
+      // Refresh whichever list view is visible; leave an open viewer alone.
+      if (!listPanelEl.hidden) {
+        if (openProjectId && findProject(openProjectId)) {
+          openProject(openProjectId, { pushHistory: false });
+        } else {
+          renderHome();
+        }
       }
     } catch { /* list refresh is best-effort */ }
     if (Number.isInteger(makon3dScanId) && makon3dScanId > 0) {
@@ -1610,7 +2370,7 @@
         return;
       }
       if (session.status === 'processing') {
-        setScanCtaStatus('Building the 3D model…');
+        setScanCtaStatus(t('cta.building'));
       } else if (session.status === 'completed') {
         stop();
         clearStored();
@@ -1624,7 +2384,7 @@
         document.getElementById('m3d-scan-cta-qr')?.remove();
         setScanCtaStatus(
           session.status === 'failed'
-            ? 'Scan processing failed. Please try again.'
+            ? t('cta.failed')
             : '',
         );
       }
@@ -1666,9 +2426,9 @@
     overlay.innerHTML = `
       <div class="m3d-scan-overlay-card">
         ${loadingSpinnerHtml()}
-        <p id="m3d-scan-overlay-text">Building the 3D model…</p>
+        <p id="m3d-scan-overlay-text">${t('cta.building')}</p>
         <button type="button" class="m3d-scan-cta-btn" id="m3d-scan-overlay-close" hidden>
-          Back to scans
+          ${t('overlay.backToScans')}
         </button>
       </div>
     `;
@@ -1707,7 +2467,7 @@
         session = await fetchScanSession(token);
       } catch (err) {
         if (err?.status === 404 || err?.status === 410) {
-          failScanReturnOverlay('This scan link has expired.');
+          failScanReturnOverlay(t('overlay.linkExpired'));
           return true;
         }
         return false; // transient — keep polling
@@ -1719,11 +2479,11 @@
         return true;
       }
       if (session.status === 'failed') {
-        failScanReturnOverlay('Scan processing failed. Please try scanning again.');
+        failScanReturnOverlay(t('overlay.failed'));
         return true;
       }
       if (session.status === 'expired') {
-        failScanReturnOverlay('This scan session has expired.');
+        failScanReturnOverlay(t('overlay.sessionExpired'));
         return true;
       }
       return false; // created / uploading / processing — keep waiting
@@ -1738,6 +2498,134 @@
       if (await poll()) clearInterval(timer);
     }, 3000);
     return true;
+  }
+
+  // --- Location permission (Telegram LocationManager) ------------------------
+  // Same first-visit prompt pattern as the UyDosh Mini App (see
+  // requestAndReportUserLocation in uydosh-map-pins.js): `getLocation` only
+  // surfaces Telegram's native location permission prompt the very first time
+  // it's ever called for this user; once answered (granted or denied), later
+  // calls resolve/reject silently with no repeat prompt. The resolved position
+  // is reported to the same backend endpoint as UyDosh's map view, which
+  // verifies this app's initData against the Makon 3D bot token.
+
+  function initTelegramLocationManager() {
+    const loc = window.Telegram?.WebApp?.LocationManager;
+    if (!loc || typeof loc.init !== 'function') return Promise.resolve(null);
+    if (loc.isInited) return Promise.resolve(loc);
+    return new Promise((resolve) => {
+      loc.init(() => resolve(loc));
+    });
+  }
+
+  /** Wraps `LocationManager.getLocation` in a promise resolving to `{ latitude, longitude }`. */
+  function getTelegramLocationData(loc) {
+    return new Promise((resolve, reject) => {
+      loc.getLocation((data) => {
+        const latitude = Number(data?.latitude);
+        const longitude = Number(data?.longitude);
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+          resolve({ latitude, longitude });
+          return;
+        }
+        reject(new Error('telegram_location_denied'));
+      });
+    });
+  }
+
+  /** Fire-and-forget: requests location permission on open, reports the position. */
+  async function requestAndReportUserLocation() {
+    if (!inTelegram()) return;
+    try {
+      const loc = await initTelegramLocationManager();
+      if (!loc?.isLocationAvailable) return;
+      const position = await getTelegramLocationData(loc);
+      await fetch(`${API_BASE}/app/telegram-mini-app-location`, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          init_data: window.Telegram.WebApp.initData,
+          latitude: position.latitude,
+          longitude: position.longitude,
+        }),
+      });
+    } catch (err) {
+      console.warn('[Makon3D] location request failed', err);
+    }
+  }
+
+  // --- Language switcher (drawer) --------------------------------------------
+
+  /** Static markup translations: [data-i18n] → textContent, or the attribute
+   * named by [data-i18n-attr] (e.g. aria-label). */
+  function applyStaticI18n() {
+    document.documentElement.lang = currentLang;
+    for (const el of document.querySelectorAll('[data-i18n]')) {
+      const key = el.getAttribute('data-i18n');
+      const attr = el.getAttribute('data-i18n-attr');
+      if (attr) el.setAttribute(attr, t(key));
+      else el.textContent = t(key);
+    }
+  }
+
+  function syncDrawerLangButtons() {
+    for (const btn of document.querySelectorAll('#m3d-drawer-lang-options [data-lang]')) {
+      const active = btn.getAttribute('data-lang') === currentLang;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-checked', active ? 'true' : 'false');
+    }
+  }
+
+  /** Re-renders every dynamic panel in the new language, in place — the
+   * drawer stays open so the switch is visible immediately. */
+  function rerenderForLangChange() {
+    applyStaticI18n();
+    syncDrawerLangButtons();
+    renderScanCta();
+    if (openScanId != null && openScanData) {
+      renderViewerMeta(openScanData);
+    } else if (!listEl.hidden) {
+      if (openProjectId && findProject(openProjectId)) {
+        openProject(openProjectId, { pushHistory: false });
+      } else {
+        renderHome();
+      }
+    } else if (!statusEl.hidden && lastStatusKey) {
+      showStatusKey(lastStatusKey, statusEl.dataset.error === '1');
+    }
+  }
+
+  function setM3dLang(lang) {
+    if (!M3D_LANGS.includes(lang) || lang === currentLang) return;
+    currentLang = lang;
+    try { localStorage.setItem(M3D_LANG_STORAGE_KEY, lang); } catch { /* ignore */ }
+    rerenderForLangChange();
+  }
+
+  function initDrawerLangPicker() {
+    const wrap = document.getElementById('m3d-drawer-lang-options');
+    if (!wrap) return;
+    wrap.innerHTML = M3D_LANGS
+      .map((lang) => {
+        const meta = M3D_LANG_META[lang];
+        return `
+          <button type="button" class="m3d-drawer-lang-btn" role="radio" data-lang="${lang}">
+            <span class="m3d-drawer-lang-flag" aria-hidden="true">${meta.flag}</span>
+            <span>${meta.label}</span>
+            <span class="m3d-drawer-lang-check" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+            </span>
+          </button>
+        `;
+      })
+      .join('');
+    wrap.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-lang]');
+      if (!btn) return;
+      haptic();
+      setM3dLang(btn.getAttribute('data-lang'));
+    });
+    syncDrawerLangButtons();
   }
 
   const DRAWER_TRANSITION_MS = 220;
@@ -1832,6 +2720,11 @@
       if (!tg) return;
       tg.ready?.();
       tg.expand?.();
+      // Dragging the 3D viewer downward to orbit the camera is otherwise
+      // interpreted as Telegram's swipe-down-to-close gesture, collapsing the
+      // Mini App mid-rotation. In-page scrolling keeps working; users can
+      // still close via the header button. No-op on clients < Bot API 7.7.
+      tg.disableVerticalSwipes?.();
       document.documentElement.style.setProperty('--tg-bg', tg.backgroundColor || '');
       document.documentElement.style.setProperty('--tg-fg', tg.textColor || '');
       applyTelegramSafeAreaInsets(tg);
@@ -1850,6 +2743,12 @@
   }
 
   listEl.addEventListener('click', (event) => {
+    const projectBtn = event.target.closest('[data-project-id]');
+    if (projectBtn) {
+      haptic();
+      openProject(projectBtn.getAttribute('data-project-id'));
+      return;
+    }
     const btn = event.target.closest('[data-scan-id]');
     if (!btn) return;
     const id = Number(btn.getAttribute('data-scan-id'));
@@ -1857,8 +2756,14 @@
   });
 
   backEl.addEventListener('click', () => {
+    // From a scan viewer opened inside a project, Back returns to that
+    // project; everything else returns home.
+    if (!viewerPanelEl.hidden && openProjectId && findProject(openProjectId)) {
+      openProject(openProjectId);
+      return;
+    }
     showListView();
-    setRoute(null);
+    setRoute({});
   });
 
   navTriggerEl?.addEventListener('click', openDrawer);
@@ -1873,7 +2778,7 @@
     event.preventDefault();
     closeDrawer();
     showListView();
-    setRoute(null);
+    setRoute({});
   });
 
   document.addEventListener('keydown', (event) => {
@@ -1881,13 +2786,22 @@
   });
 
   window.addEventListener('popstate', () => {
-    const { id } = readRoute();
-    if (id) openScan(id, { pushHistory: false });
-    else showListView();
+    const { id, projectId } = readRoute();
+    if (id) {
+      openProjectId = projectId && findProject(projectId) ? projectId : null;
+      openScan(id, { pushHistory: false });
+    } else if (projectId) {
+      openProject(projectId, { pushHistory: false });
+    } else {
+      showListView();
+    }
   });
 
   initTelegramChrome();
   initTelegramUserChrome();
+  applyStaticI18n();
+  initDrawerLangPicker();
+  requestAndReportUserLocation();
   renderScanCta();
   loadScans();
   // The App Clip return leg (`scan_<token>` start_param) takes precedence

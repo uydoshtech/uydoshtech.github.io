@@ -11,7 +11,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260724-11" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260725-2" />
   </head>
   <body>
     <div class="m3d-app">
@@ -23,12 +23,14 @@
           aria-haspopup="dialog"
           aria-expanded="false"
           aria-label="Menu"
+          data-i18n="aria.menu"
+          data-i18n-attr="aria-label"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <button type="button" class="m3d-back" id="m3d-back" hidden aria-label="Back">
+        <button type="button" class="m3d-back" id="m3d-back" hidden aria-label="Back" data-i18n="aria.back" data-i18n-attr="aria-label">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -47,7 +49,7 @@
           </span>
           <div class="m3d-brand-copy">
             <h1 class="m3d-title" id="m3d-title">MakonAI</h1>
-            <span class="m3d-tagline">Ваше пространство в 3D</span>
+            <span class="m3d-tagline" data-i18n="tagline">Ваше пространство в 3D</span>
           </div>
         </div>
         <!-- Filled with the Telegram user's photo by makon3d.js when available. -->
@@ -60,7 +62,7 @@
       </header>
 
       <main class="m3d-main">
-        <section class="m3d-list-panel" id="m3d-list-panel" aria-label="Scans">
+        <section class="m3d-list-panel" id="m3d-list-panel" aria-label="Scans" data-i18n="aria.scans" data-i18n-attr="aria-label">
           <!-- "Scan a room" banner button (UyDosh App Clip flow) — filled by
                makon3d.js and fixed above the bottom bar via makon3d.css;
                stays hidden on devices that certainly can't scan. -->
@@ -69,18 +71,18 @@
           <ul class="m3d-list" id="m3d-list" hidden></ul>
         </section>
 
-        <section class="m3d-viewer-panel" id="m3d-viewer-panel" hidden aria-label="3D view">
+        <section class="m3d-viewer-panel" id="m3d-viewer-panel" hidden aria-label="3D view" data-i18n="aria.view3d" data-i18n-attr="aria-label">
           <div class="m3d-viewer-wrap" id="m3d-viewer-wrap"></div>
           <div class="m3d-viewer-meta" id="m3d-viewer-meta"></div>
           <!-- Floor/wall tile estimate, ported from makon3d_mobile's
                RoomMaterialsScreen — filled by renderMaterialsPanel (makon3d.js). -->
-          <section class="m3d-materials" id="m3d-materials" hidden aria-label="Material estimate"></section>
+          <section class="m3d-materials" id="m3d-materials" hidden aria-label="Material estimate" data-i18n="mat.title" data-i18n-attr="aria-label"></section>
         </section>
       </main>
     </div>
 
     <div class="m3d-drawer-backdrop" id="m3d-drawer-backdrop" hidden aria-hidden="true">
-      <div class="m3d-drawer" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="m3d-drawer" role="dialog" aria-modal="true" aria-label="Menu" data-i18n="aria.menu" data-i18n-attr="aria-label">
         <div class="m3d-drawer-header">
           <span class="m3d-avatar m3d-drawer-avatar" id="m3d-drawer-avatar" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -96,27 +98,39 @@
               <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" />
               <rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
             </svg>
-            <span>Scans</span>
+            <span data-i18n="drawer.scans">Scans</span>
           </a>
           <a role="menuitem" href="mailto:uydoshtech@gmail.com">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" />
             </svg>
-            <span>Contact</span>
+            <span data-i18n="drawer.contact">Contact</span>
           </a>
           <a role="menuitem" href="/privacy-policy.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span>Privacy Policy</span>
+            <span data-i18n="drawer.privacy">Privacy Policy</span>
           </a>
           <a role="menuitem" href="/terms-of-service.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
             </svg>
-            <span>Terms of Service</span>
+            <span data-i18n="drawer.terms">Terms of Service</span>
           </a>
         </nav>
+        <!-- Language picker — built by initDrawerLangPicker (makon3d.js). -->
+        <div class="m3d-drawer-lang">
+          <div class="m3d-drawer-lang-label" data-i18n="drawer.language">Language</div>
+          <div
+            class="m3d-drawer-lang-options"
+            id="m3d-drawer-lang-options"
+            role="radiogroup"
+            aria-label="Language"
+            data-i18n="drawer.language"
+            data-i18n-attr="aria-label"
+          ></div>
+        </div>
       </div>
     </div>
 
@@ -124,6 +138,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260724-10" defer></script>
+    <script src="../assets/makon3d.js?v=20260725-2" defer></script>
   </body>
 </html>
