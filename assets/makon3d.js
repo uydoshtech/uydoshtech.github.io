@@ -44,10 +44,19 @@
       'room.hallway': 'Hallway',
       'room.other': 'Room',
       'list.projects': 'Projects',
-      'list.otherScans': 'Other scans',
+      'list.myProjects': 'My projects',
       'project.scanCount': 'Scans: {count}',
       'project.mode.entireHousing': 'Entire home',
       'project.mode.roomByRoom': 'Room by room',
+      'project.noScans': 'No scans in this project yet.',
+      'create.title': 'New project',
+      'create.nameLabel': 'Project name',
+      'create.namePlaceholder': 'e.g. My apartment',
+      'create.modeLabel': 'Scan mode',
+      'create.cancel': 'Cancel',
+      'create.submit': 'Create',
+      'create.nameRequired': 'Enter a project name.',
+      'create.failed': 'Could not create the project. Try again later.',
       'unit.m': 'm',
       'unit.m2': 'm²',
       'dims.heightPrefix': 'H',
@@ -82,6 +91,8 @@
       'mat.noWallArea': 'No wall measurements for this scan.',
       'mat.noFloorArea': 'No floor area for this scan.',
       'mat.wallApprox': 'Door and window openings are not subtracted.',
+      'mat.wallNetArea': 'Wall area: ~{net} m² (openings ~{open} m² subtracted).',
+      'mat.wallNoOpenings': 'Wall area: ~{net} m²; no openings detected.',
       'mat.floorApprox': 'Using room length × width (approximate).',
       'mat.tileShape': 'Tile shape',
       'mat.square': 'Square',
@@ -145,10 +156,19 @@
       'room.hallway': 'Прихожая',
       'room.other': 'Комната',
       'list.projects': 'Проекты',
-      'list.otherScans': 'Другие сканы',
+      'list.myProjects': 'Мои проекты',
       'project.scanCount': 'Сканов: {count}',
       'project.mode.entireHousing': 'Всё жильё',
       'project.mode.roomByRoom': 'Комната за комнатой',
+      'project.noScans': 'В этом проекте пока нет сканов.',
+      'create.title': 'Новый проект',
+      'create.nameLabel': 'Название проекта',
+      'create.namePlaceholder': 'напр. Моя квартира',
+      'create.modeLabel': 'Режим сканирования',
+      'create.cancel': 'Отмена',
+      'create.submit': 'Создать',
+      'create.nameRequired': 'Введите название проекта.',
+      'create.failed': 'Не удалось создать проект. Попробуйте позже.',
       'unit.m': 'м',
       'unit.m2': 'м²',
       'dims.heightPrefix': 'В',
@@ -183,6 +203,8 @@
       'mat.noWallArea': 'Для этого скана нет замеров стен.',
       'mat.noFloorArea': 'Для этого скана нет площади пола.',
       'mat.wallApprox': 'Дверные и оконные проёмы не вычтены.',
+      'mat.wallNetArea': 'Площадь стен: ~{net} м² (проёмы ~{open} м² вычтены).',
+      'mat.wallNoOpenings': 'Площадь стен: ~{net} м²; проёмы не обнаружены.',
       'mat.floorApprox': 'Используется длина × ширина комнаты (приблизительно).',
       'mat.tileShape': 'Форма плитки',
       'mat.square': 'Квадратная',
@@ -246,10 +268,19 @@
       'room.hallway': 'Yo‘lak',
       'room.other': 'Xona',
       'list.projects': 'Loyihalar',
-      'list.otherScans': 'Boshqa skanlar',
+      'list.myProjects': 'Mening loyihalarim',
       'project.scanCount': 'Skanlar: {count}',
       'project.mode.entireHousing': 'Butun uy',
       'project.mode.roomByRoom': 'Xonama-xona',
+      'project.noScans': 'Bu loyihada hali skanlar yo‘q.',
+      'create.title': 'Yangi loyiha',
+      'create.nameLabel': 'Loyiha nomi',
+      'create.namePlaceholder': 'masalan, Mening kvartiram',
+      'create.modeLabel': 'Skanerlash rejimi',
+      'create.cancel': 'Bekor qilish',
+      'create.submit': 'Yaratish',
+      'create.nameRequired': 'Loyiha nomini kiriting.',
+      'create.failed': 'Loyiha yaratib bo‘lmadi. Keyinroq urinib ko‘ring.',
       'unit.m': 'm',
       'unit.m2': 'm²',
       'dims.heightPrefix': 'B',
@@ -284,6 +315,8 @@
       'mat.noWallArea': 'Bu skan uchun devor o‘lchovlari yo‘q.',
       'mat.noFloorArea': 'Bu skan uchun pol maydoni yo‘q.',
       'mat.wallApprox': 'Eshik va deraza o‘rinlari ayirilmagan.',
+      'mat.wallNetArea': 'Devor maydoni: ~{net} m² (o‘rinlar ~{open} m² ayirilgan).',
+      'mat.wallNoOpenings': 'Devor maydoni: ~{net} m²; o‘rinlar topilmadi.',
       'mat.floorApprox': 'Xona uzunligi × eni ishlatildi (taxminiy).',
       'mat.tileShape': 'Plitka shakli',
       'mat.square': 'Kvadrat',
@@ -379,6 +412,10 @@
   /** Public projects feed; each entry carries its resolved `scans` array. */
   /** @type {any[]} */
   let projectsCache = [];
+  /** Projects owned by this browser (created via the FAB, keyed by the
+   * localStorage device id) — shown first on home, empty ones included. */
+  /** @type {any[]} */
+  let myProjectsCache = [];
   /** @type {number|null} */
   let openScanId = null;
   /** The open scan's data — re-renders its meta panel on language change. */
@@ -1281,6 +1318,16 @@
     return Number.isFinite(p) && p > 0 ? p : null;
   }
 
+  /** Door/opening + window face areas measured from the scan's GLB
+   * (doorwayAreaM2 / windowAreaM2 in the scan payload); null for scans that
+   * predate the columns and haven't been backfilled. */
+  function resolveOpeningAreaM2(scan) {
+    const door = scan?.doorwayAreaM2;
+    const win = scan?.windowAreaM2;
+    if (door == null && win == null) return null;
+    return Math.max(0, (Number(door) || 0) + (Number(win) || 0));
+  }
+
   /** Plinth run: wall perimeter minus door/opening widths when measured,
    * otherwise the OBB perimeter with doorways not subtracted. */
   function resolvePlinth(scan) {
@@ -1566,7 +1613,9 @@
     function updateWalls() {
       renderRollPresets();
 
-      const perimeter = resolvePerimeterM(scan);
+      // Prefer the true wall-run perimeter measured from the GLB (same source
+      // as the plinth) over the OBB 2 × (long + short) approximation.
+      const perimeter = resolveWallPerimeterM(scan) ?? resolvePerimeterM(scan);
       const height = Number(scan?.heightM) > 0 ? Number(scan.heightM) : null;
       if (perimeter != null && height != null) {
         areaEl.textContent = tf('mat.perimeterHeight', {
@@ -1575,7 +1624,19 @@
         });
         areaEl.dataset.error = '';
         approxEl.hidden = false;
-        approxEl.textContent = t('mat.wallApprox');
+        // Net wall area when opening areas were measured; the honest
+        // "not subtracted" disclaimer for scans that predate the metric.
+        // The roll count below stays strip-based over the full perimeter —
+        // strips still run above doors and around windows.
+        const openings = resolveOpeningAreaM2(scan);
+        if (openings != null) {
+          const net = Math.max(0, perimeter * height - openings);
+          approxEl.textContent = openings > 0.05
+            ? tf('mat.wallNetArea', { net: net.toFixed(1), open: openings.toFixed(1) })
+            : tf('mat.wallNoOpenings', { net: net.toFixed(1) });
+        } else {
+          approxEl.textContent = t('mat.wallApprox');
+        }
       } else {
         areaEl.textContent = t('mat.noWallArea');
         areaEl.dataset.error = '1';
@@ -1820,6 +1881,7 @@
     listPanelEl.hidden = true;
     viewerPanelEl.hidden = false;
     backEl.hidden = false;
+    if (fabEl) fabEl.hidden = true;
     // The burger yields its spot to the back button — two buttons before the
     // brand would crowd the header on narrow phones.
     navTriggerEl.hidden = true;
@@ -1966,9 +2028,10 @@
     `;
   }
 
-  /** Updates both caches. Project scans are merged into scansCache so
-   * openScan() resolves them without extra fetches. */
-  function setFeeds(scans, projects) {
+  /** Updates the caches. Project scans are merged into scansCache so
+   * openScan() resolves them without extra fetches. `myRows` is the raw
+   * device-scoped GET /makon3d/projects payload for this browser. */
+  function setFeeds(scans, projects, myRows = []) {
     projectsCache = Array.isArray(projects)
       ? projects.filter((p) => p && p.projectId && Array.isArray(p.scans) && p.scans.length)
       : [];
@@ -1983,41 +2046,92 @@
       }
     }
     scansCache = merged;
+    // Normalized after scansCache — my projects resolve scans from the caches.
+    myProjectsCache = (Array.isArray(myRows) ? myRows : []).flatMap((row) => {
+      const entry = normalizeMyProject(row);
+      return entry ? [entry] : [];
+    });
     feedLoaded = true;
   }
 
-  function findProject(projectId) {
-    return projectsCache.find((p) => p.projectId === projectId) || null;
+  /** Shapes a device-scoped project row (raw app/web MakonProject JSON in
+   * `data`) into the same {projectId, name, scans, ...} form as the feed. */
+  function normalizeMyProject(row) {
+    const data = row?.data;
+    if (!row?.projectId || data == null || typeof data !== 'object') return null;
+    const refs = [];
+    const pushRef = (scan, roomType, roomName) => {
+      const remoteScanId = Number(scan?.remoteScanId);
+      if (Number.isInteger(remoteScanId) && remoteScanId > 0) {
+        refs.push({ remoteScanId, roomType, roomName });
+      }
+    };
+    pushRef(data.entireHousingScan, null, null);
+    if (Array.isArray(data.rooms)) {
+      for (const room of data.rooms) {
+        pushRef(
+          room?.scan,
+          typeof room?.roomType === 'string' ? room.roomType : null,
+          typeof room?.name === 'string' && room.name.trim() ? room.name.trim() : null,
+        );
+      }
+    }
+    const scans = refs.flatMap((ref) => {
+      const scan = scansCache.find((s) => Number(s.id) === ref.remoteScanId);
+      return scan ? [{ ...scan, roomType: ref.roomType, roomName: ref.roomName }] : [];
+    });
+    return {
+      projectId: String(row.projectId),
+      name: typeof data.name === 'string' && data.name.trim() ? data.name.trim() : 'Project',
+      scanMode: typeof data.scanMode === 'string' ? data.scanMode : null,
+      createdAt: typeof data.createdAt === 'string' ? data.createdAt : null,
+      updatedAt: row.updatedAt || null,
+      scans,
+      isMine: true,
+    };
   }
 
-  /** Scans that belong to no project — listed below the projects on home. */
+  function findProject(projectId) {
+    return (
+      myProjectsCache.find((p) => p.projectId === projectId) ||
+      projectsCache.find((p) => p.projectId === projectId) ||
+      null
+    );
+  }
+
+  /** Scans that belong to no project — shown as single-scan cards on home. */
   function ungroupedScans() {
     const grouped = new Set();
-    for (const project of projectsCache) {
+    for (const project of [...myProjectsCache, ...projectsCache]) {
       for (const scan of project.scans) grouped.add(Number(scan.id));
     }
     return scansCache.filter((scan) => !grouped.has(Number(scan.id)));
   }
 
-  /** Home list: projects first, then scans outside any project. */
+  /** Home is a list of projects: this browser's own first, then the public
+   * feed. Scans outside any project trail as single-scan cards. */
   function renderHome() {
-    const others = ungroupedScans();
-    if (!projectsCache.length && !others.length) {
+    if (fabEl) fabEl.hidden = false;
+    const mineIds = new Set(myProjectsCache.map((p) => p.projectId));
+    const publicProjects = projectsCache.filter((p) => !mineIds.has(p.projectId));
+    const looseScans = ungroupedScans();
+    if (!myProjectsCache.length && !publicProjects.length && !looseScans.length) {
       showStatusKey('list.empty');
       return;
     }
     statusEl.hidden = true;
     listEl.hidden = false;
     const parts = [];
-    if (projectsCache.length) {
-      parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.projects'))}</li>`);
-      for (const project of projectsCache) parts.push(projectItemHtml(project));
+    if (myProjectsCache.length) {
+      parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.myProjects'))}</li>`);
+      for (const project of myProjectsCache) parts.push(projectItemHtml(project));
     }
-    if (others.length) {
-      if (projectsCache.length) {
-        parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.otherScans'))}</li>`);
+    if (publicProjects.length || looseScans.length) {
+      if (myProjectsCache.length) {
+        parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.projects'))}</li>`);
       }
-      for (const scan of others) parts.push(scanItemHtml(scan));
+      for (const project of publicProjects) parts.push(projectItemHtml(project));
+      for (const scan of looseScans) parts.push(scanItemHtml(scan));
     }
     listEl.innerHTML = parts.join('');
   }
@@ -2034,6 +2148,7 @@
     listPanelEl.hidden = false;
     backEl.hidden = false;
     navTriggerEl.hidden = true;
+    if (fabEl) fabEl.hidden = true;
     if (pushHistory) setRoute({ projectId: project.projectId });
     statusEl.hidden = true;
     listEl.hidden = false;
@@ -2047,19 +2162,26 @@
         <span class="m3d-project-head-name">${escapeHtml(project.name)}</span>
         <span class="m3d-item-meta">${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</span>
       </li>`,
-      ...project.scans.map((scan) => {
-        const label = scanRoomLabel(scan);
-        return scanItemHtml(scan, label ? escapeHtml(label) : '');
-      }),
+      ...(project.scans.length
+        ? project.scans.map((scan) => {
+            const label = scanRoomLabel(scan);
+            return scanItemHtml(scan, label ? escapeHtml(label) : '');
+          })
+        : [`<li class="m3d-project-empty">${escapeHtml(t('project.noScans'))}</li>`]),
     ].join('');
   }
 
-  /** Fetches both public feeds. Throws only when the scans feed fails —
-   * projects are additive and must never blank the whole gallery. */
+  /** Fetches the public feeds plus this browser's own projects. Throws only
+   * when the scans feed fails — the rest is additive and must never blank
+   * the whole gallery. */
   async function fetchFeeds() {
-    const [scansRes, projectsRes] = await Promise.all([
+    const deviceId = webDeviceId();
+    const [scansRes, projectsRes, mineRes] = await Promise.all([
       fetch(`${API_BASE}/makon3d/scans`),
       fetch(`${API_BASE}/makon3d/projects/feed`),
+      deviceId
+        ? fetch(`${API_BASE}/makon3d/projects?device_id=${encodeURIComponent(deviceId)}`).catch(() => null)
+        : Promise.resolve(null),
     ]);
     if (!scansRes.ok) throw new Error(`HTTP ${scansRes.status}`);
     const scansData = await scansRes.json();
@@ -2069,7 +2191,13 @@
         projects = (await projectsRes.json())?.projects || [];
       } catch { /* additive — a bad projects payload must not break scans */ }
     }
-    setFeeds(scansData.scans || [], projects);
+    let mine = [];
+    if (mineRes?.ok) {
+      try {
+        mine = (await mineRes.json())?.projects || [];
+      } catch { /* additive */ }
+    }
+    setFeeds(scansData.scans || [], projects, mine);
   }
 
   async function loadScans() {
@@ -2092,6 +2220,151 @@
       showStatusKey('list.error', true);
       if (id) await openScan(id, { pushHistory: false });
     }
+  }
+
+  // --- New project (floating + button) ----------------------------------------
+  // Mirrors the app's create-project sheet: name + scan mode, saved through the
+  // same PUT /makon3d/projects/:id backup endpoint the app syncs through. The
+  // browser owns its projects via a random localStorage device id (the web
+  // counterpart of the app's Keychain-backed DeviceIdentity).
+
+  const fabEl = document.getElementById('m3d-fab');
+  const createBackdropEl = document.getElementById('m3d-create-backdrop');
+  const createNameEl = document.getElementById('m3d-create-name');
+  const createModeEl = document.getElementById('m3d-create-mode');
+  const createErrorEl = document.getElementById('m3d-create-error');
+  const createSubmitEl = document.getElementById('m3d-create-submit');
+  const WEB_DEVICE_ID_STORAGE_KEY = 'makon3d:webDeviceId';
+  let createSelectedMode = 'entireHousing';
+
+  function webDeviceId() {
+    try {
+      let id = localStorage.getItem(WEB_DEVICE_ID_STORAGE_KEY) || '';
+      if (!/^[a-f0-9]{32}$/.test(id)) {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        id = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem(WEB_DEVICE_ID_STORAGE_KEY, id);
+      }
+      return id;
+    } catch {
+      return null; // storage blocked — creating/owning projects is unavailable
+    }
+  }
+
+  /** Same shape as the app's project ids: time hex + '-' + random hex. */
+  function newProjectId() {
+    const bytes = new Uint8Array(8);
+    crypto.getRandomValues(bytes);
+    const rand = Array.from(bytes, (b) => (b % 16).toString(16)).join('');
+    return `${Date.now().toString(16)}-${rand}`;
+  }
+
+  function setCreateMode(mode) {
+    createSelectedMode = mode;
+    for (const btn of createModeEl.querySelectorAll('[data-mode]')) {
+      const active = btn.getAttribute('data-mode') === mode;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    }
+  }
+
+  function openCreateDialog() {
+    if (!createBackdropEl) return;
+    createErrorEl.hidden = true;
+    createNameEl.value = '';
+    setCreateMode('entireHousing');
+    createBackdropEl.hidden = false;
+    createBackdropEl.setAttribute('aria-hidden', 'false');
+    createNameEl.focus();
+  }
+
+  function closeCreateDialog() {
+    if (!createBackdropEl) return;
+    createBackdropEl.hidden = true;
+    createBackdropEl.setAttribute('aria-hidden', 'true');
+  }
+
+  function showCreateError(key) {
+    createErrorEl.textContent = t(key);
+    createErrorEl.hidden = false;
+  }
+
+  async function submitCreateProject() {
+    const name = createNameEl.value.trim();
+    if (!name) {
+      showCreateError('create.nameRequired');
+      return;
+    }
+    const deviceId = webDeviceId();
+    if (!deviceId) {
+      showCreateError('create.failed');
+      return;
+    }
+    const projectId = newProjectId();
+    const createdAt = new Date().toISOString();
+    // Same JSON shape as the app's MakonProject.toJson — scans join later
+    // (via the app) or stay empty; either way the project shows on home.
+    const data = {
+      id: projectId,
+      name,
+      scanMode: createSelectedMode,
+      createdAt,
+      rooms: [],
+    };
+    createErrorEl.hidden = true;
+    createSubmitEl.disabled = true;
+    try {
+      const res = await fetch(`${API_BASE}/makon3d/projects/${encodeURIComponent(projectId)}`, {
+        method: 'PUT',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: deviceId, data }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      haptic();
+      closeCreateDialog();
+      myProjectsCache.unshift({
+        projectId,
+        name,
+        scanMode: createSelectedMode,
+        createdAt,
+        updatedAt: createdAt,
+        scans: [],
+        isMine: true,
+      });
+      // Straight into the new project, like the app after "Create".
+      openProject(projectId);
+    } catch (err) {
+      console.error('[Makon3D] create project failed', err);
+      showCreateError('create.failed');
+    } finally {
+      createSubmitEl.disabled = false;
+    }
+  }
+
+  function initCreateProject() {
+    if (!fabEl || !createBackdropEl) return;
+    fabEl.addEventListener('click', () => {
+      haptic();
+      openCreateDialog();
+    });
+    createBackdropEl.addEventListener('click', (event) => {
+      if (event.target === createBackdropEl) closeCreateDialog();
+    });
+    document.getElementById('m3d-create-cancel')?.addEventListener('click', closeCreateDialog);
+    createSubmitEl.addEventListener('click', () => {
+      void submitCreateProject();
+    });
+    createModeEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-mode]');
+      if (btn) {
+        haptic();
+        setCreateMode(btn.getAttribute('data-mode'));
+      }
+    });
+    createNameEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') void submitCreateProject();
+    });
   }
 
   // --- Scan a room (UyDosh App Clip) -----------------------------------------
@@ -2782,7 +3055,10 @@
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeDrawer();
+    if (event.key === 'Escape') {
+      closeDrawer();
+      closeCreateDialog();
+    }
   });
 
   window.addEventListener('popstate', () => {
@@ -2801,6 +3077,7 @@
   initTelegramUserChrome();
   applyStaticI18n();
   initDrawerLangPicker();
+  initCreateProject();
   requestAndReportUserLocation();
   renderScanCta();
   loadScans();

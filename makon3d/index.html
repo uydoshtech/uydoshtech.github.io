@@ -11,7 +11,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260725-2" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260725-3" />
   </head>
   <body>
     <div class="m3d-app">
@@ -81,6 +81,50 @@
       </main>
     </div>
 
+    <!-- Floating "new project" button (home list only) — mirrors the app's
+         create-project action; handled by initCreateProject (makon3d.js). -->
+    <button
+      type="button"
+      class="m3d-fab"
+      id="m3d-fab"
+      hidden
+      aria-label="New project"
+      data-i18n="create.title"
+      data-i18n-attr="aria-label"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+
+    <!-- New-project dialog: name + scan mode, saved via the same project
+         backup endpoint the app syncs through. -->
+    <div class="m3d-create-backdrop" id="m3d-create-backdrop" hidden aria-hidden="true">
+      <div class="m3d-create-card" role="dialog" aria-modal="true" aria-labelledby="m3d-create-title">
+        <h2 class="m3d-create-title" id="m3d-create-title" data-i18n="create.title">New project</h2>
+        <label class="m3d-create-label" for="m3d-create-name" data-i18n="create.nameLabel">Project name</label>
+        <input
+          type="text"
+          class="m3d-create-input"
+          id="m3d-create-name"
+          maxlength="80"
+          autocomplete="off"
+          data-i18n="create.namePlaceholder"
+          data-i18n-attr="placeholder"
+        />
+        <div class="m3d-create-label" id="m3d-create-mode-label" data-i18n="create.modeLabel">Scan mode</div>
+        <div class="m3d-seg m3d-create-mode" id="m3d-create-mode" role="tablist" aria-labelledby="m3d-create-mode-label">
+          <button type="button" class="m3d-seg-btn is-active" role="tab" aria-selected="true" data-mode="entireHousing" data-i18n="project.mode.entireHousing">Entire home</button>
+          <button type="button" class="m3d-seg-btn" role="tab" aria-selected="false" data-mode="roomByRoom" data-i18n="project.mode.roomByRoom">Room by room</button>
+        </div>
+        <p class="m3d-create-error" id="m3d-create-error" hidden></p>
+        <div class="m3d-create-actions">
+          <button type="button" class="m3d-create-cancel" id="m3d-create-cancel" data-i18n="create.cancel">Cancel</button>
+          <button type="button" class="m3d-scan-cta-btn m3d-create-submit" id="m3d-create-submit" data-i18n="create.submit">Create</button>
+        </div>
+      </div>
+    </div>
+
     <div class="m3d-drawer-backdrop" id="m3d-drawer-backdrop" hidden aria-hidden="true">
       <div class="m3d-drawer" role="dialog" aria-modal="true" aria-label="Menu" data-i18n="aria.menu" data-i18n-attr="aria-label">
         <div class="m3d-drawer-header">
@@ -138,6 +182,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260725-2" defer></script>
+    <script src="../assets/makon3d.js?v=20260725-3" defer></script>
   </body>
 </html>

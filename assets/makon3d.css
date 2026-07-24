@@ -337,6 +337,145 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Placeholder row inside a project that has no scans yet. */
+.m3d-project-empty {
+  list-style: none;
+  color: var(--m3d-muted);
+  font-size: 14px;
+  padding: 14px 4px;
+}
+
+/* --- New project: floating + button and creation dialog -------------------- */
+
+.m3d-fab {
+  appearance: none;
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + var(--m3d-safe-bottom));
+  z-index: 60;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--m3d-accent-stroke);
+  background: var(--m3d-accent);
+  color: #161616;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.m3d-fab[hidden] { display: none; }
+
+.m3d-fab svg {
+  width: 26px;
+  height: 26px;
+}
+
+.m3d-fab:active { opacity: 0.85; }
+
+/* Lift the FAB above the fixed "Scan a room" banner when it's shown
+   (88px matches the banner clearance on body.m3d-has-scan-banner). */
+body.m3d-has-scan-banner .m3d-fab {
+  bottom: calc(88px + var(--m3d-safe-bottom));
+}
+
+.m3d-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--m3d-safe-bottom));
+}
+
+.m3d-create-backdrop[hidden] { display: none; }
+
+.m3d-create-card {
+  width: min(480px, 100%);
+  background: var(--m3d-surface);
+  border: 1px solid var(--m3d-stroke);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+
+.m3d-create-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.m3d-create-label {
+  color: var(--m3d-muted);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.m3d-create-input {
+  appearance: none;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-bg);
+  color: var(--m3d-fg);
+  border-radius: 12px;
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 15px;
+}
+
+.m3d-create-input:focus {
+  outline: none;
+  border-color: var(--m3d-accent-stroke);
+}
+
+.m3d-create-mode {
+  align-self: flex-start;
+}
+
+.m3d-create-error {
+  margin: 0;
+  color: #e5484d;
+  font-size: 13px;
+}
+
+.m3d-create-error[hidden] { display: none; }
+
+.m3d-create-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.m3d-create-cancel {
+  appearance: none;
+  flex: 1;
+  border: 1px solid var(--m3d-stroke);
+  background: transparent;
+  color: var(--m3d-fg);
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.m3d-create-cancel:active { opacity: 0.8; }
+
+.m3d-create-submit {
+  flex: 1.4;
+  padding: 12px 18px;
+}
+
 .m3d-badge {
   display: inline-flex;
   align-items: center;
