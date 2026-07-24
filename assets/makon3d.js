@@ -1105,20 +1105,14 @@
     if (isIos && !isLikelyRoomScanCapableDevice()) return;
 
     scanCtaEl.innerHTML = `
-      <div class="m3d-scan-cta-copy">
-        <strong>Scan a room</strong>
-        <span>${
-          isIos
-            ? 'Capture a 3D model with your iPhone — no app install needed.'
-            : 'Get a scan link and open it on an iPhone with LiDAR.'
-        }</span>
-      </div>
       <p class="m3d-scan-cta-status" id="m3d-scan-cta-status" hidden></p>
       <button type="button" class="m3d-scan-cta-btn" id="m3d-scan-cta-btn">
         ${isIos ? 'Scan a room' : 'Get scan link'}
       </button>
     `;
     scanCtaEl.hidden = false;
+    // Reserves list-panel space for the fixed bottom banner (see makon3d.css).
+    document.body.classList.add('m3d-has-scan-banner');
     document
       .getElementById('m3d-scan-cta-btn')
       ?.addEventListener('click', () => startScanFlow(isIos));
@@ -1205,6 +1199,7 @@
       console.error('[Makon3D] scan session create failed', err);
       if (err?.payload?.code === 'lidar_room_scan_disabled' && scanCtaEl) {
         scanCtaEl.hidden = true;
+        document.body.classList.remove('m3d-has-scan-banner');
         return;
       }
       setScanCtaStatus('Could not start scanning. Try again later.');

@@ -721,35 +721,36 @@ body {
   color: var(--m3d-muted);
 }
 
-/* "Scan a room" card at the top of the list (UyDosh App Clip flow). */
+/* "Scan a room" banner button (UyDosh App Clip flow), fixed at the very
+   bottom of the screen above Telegram's curved bottom bar / home indicator
+   (--m3d-safe-bottom). Lives inside .m3d-list-panel, so it disappears with
+   it when the 3D viewer opens. The QR / status expand upward from it. */
 .m3d-scan-cta {
+  position: fixed;
+  left: 50%;
+  bottom: calc(10px + var(--m3d-safe-bottom));
+  transform: translateX(-50%);
+  z-index: 50;
+  width: min(688px, calc(100vw - 32px));
   border: 1px solid var(--m3d-accent-stroke);
-  background: var(--m3d-accent-dim);
-  border-radius: 16px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
+  /* Solid backdrop under the translucent accent tint — the banner floats
+     over list content. */
+  background:
+    linear-gradient(var(--m3d-accent-dim), var(--m3d-accent-dim)),
+    var(--m3d-bg);
+  border-radius: 18px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .m3d-scan-cta[hidden] { display: none; }
 
-.m3d-scan-cta-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.m3d-scan-cta-copy strong {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.m3d-scan-cta-copy span {
-  color: var(--m3d-muted);
-  font-size: 13px;
-  line-height: 1.4;
+/* Keeps the last list items reachable behind the fixed banner. */
+body.m3d-has-scan-banner .m3d-list-panel {
+  padding-bottom: 88px;
 }
 
 .m3d-scan-cta-status {
@@ -775,14 +776,27 @@ body {
   cursor: pointer;
 }
 
+/* Full-width variant inside the bottom banner (the scan-restore overlay
+   reuses .m3d-scan-cta-btn and keeps the compact shape). */
+.m3d-scan-cta .m3d-scan-cta-btn {
+  align-self: stretch;
+  width: 100%;
+  padding: 13px 18px;
+  font-size: 15px;
+}
+
 .m3d-scan-cta-btn:active { opacity: 0.85; }
 .m3d-scan-cta-btn:disabled { opacity: 0.6; cursor: default; }
 
 .m3d-scan-cta-qr {
+  /* Appended after the button (makon3d.js) but shown above it, so the QR
+     grows upward from the bottom banner. */
+  order: -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  padding: 8px 8px 2px;
 }
 
 .m3d-scan-cta-qr img {
