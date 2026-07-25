@@ -31,7 +31,7 @@
       'drawer.terms': 'Terms of Service',
       'drawer.language': 'Language',
       'list.loading': 'Loading scans',
-      'list.empty': 'No scans yet.',
+      'list.empty': 'No projects yet. Tap + to create one.',
       'list.error': 'Could not load scans. Pull to refresh or try again later.',
       'scan.title': 'Scan #{id}',
       'scan.notFound': 'Scan not found.',
@@ -49,6 +49,14 @@
       'project.mode.entireHousing': 'Entire home',
       'project.mode.roomByRoom': 'Room by room',
       'project.noScans': 'No scans in this project yet.',
+      'project.noRooms': 'No rooms yet — add one to scan.',
+      'project.addRoom': 'Add room',
+      'project.scanRoom': 'Scan',
+      'project.startScan': 'Start scan',
+      'project.rescan': 'Rescan',
+      'project.roomPending': 'Not scanned',
+      'project.updateFailed': 'Could not save changes. Try again later.',
+      'roomType.title': 'Select room type',
       'create.title': 'New project',
       'create.nameLabel': 'Project name',
       'create.namePlaceholder': 'e.g. My apartment',
@@ -122,8 +130,6 @@
       'mat.strips': 'Strips: {count} × {len} m',
       'mat.stripsPerRoll': '{count} strips per roll',
       'mat.noEstimate': 'Nothing to estimate without measurements.',
-      'cta.scan': 'Scan a room',
-      'cta.getLink': 'Get scan link',
       'cta.starting': 'Starting…',
       'cta.copied': 'Link copied',
       'cta.error': 'Could not start scanning. Try again later.',
@@ -148,7 +154,7 @@
       'drawer.terms': 'Условия использования',
       'drawer.language': 'Язык',
       'list.loading': 'Загрузка сканов',
-      'list.empty': 'Пока нет сканов.',
+      'list.empty': 'Пока нет проектов. Нажмите +, чтобы создать.',
       'list.error': 'Не удалось загрузить сканы. Попробуйте позже.',
       'scan.title': 'Скан #{id}',
       'scan.notFound': 'Скан не найден.',
@@ -166,6 +172,14 @@
       'project.mode.entireHousing': 'Всё жильё',
       'project.mode.roomByRoom': 'Комната за комнатой',
       'project.noScans': 'В этом проекте пока нет сканов.',
+      'project.noRooms': 'Пока нет комнат — добавьте, чтобы сканировать.',
+      'project.addRoom': 'Добавить комнату',
+      'project.scanRoom': 'Сканировать',
+      'project.startScan': 'Начать сканирование',
+      'project.rescan': 'Пересканировать',
+      'project.roomPending': 'Не отсканировано',
+      'project.updateFailed': 'Не удалось сохранить изменения. Попробуйте позже.',
+      'roomType.title': 'Выберите тип комнаты',
       'create.title': 'Новый проект',
       'create.nameLabel': 'Название проекта',
       'create.namePlaceholder': 'напр. Моя квартира',
@@ -239,8 +253,6 @@
       'mat.strips': 'Полосы: {count} × {len} м',
       'mat.stripsPerRoll': 'Полос в рулоне: {count}',
       'mat.noEstimate': 'Без замеров рассчитывать нечего.',
-      'cta.scan': 'Сканировать комнату',
-      'cta.getLink': 'Получить ссылку',
       'cta.starting': 'Запуск…',
       'cta.copied': 'Ссылка скопирована',
       'cta.error': 'Не удалось начать сканирование. Попробуйте позже.',
@@ -265,7 +277,7 @@
       'drawer.terms': 'Foydalanish shartlari',
       'drawer.language': 'Til',
       'list.loading': 'Skanlar yuklanmoqda',
-      'list.empty': 'Hozircha skanlar yo‘q.',
+      'list.empty': 'Hozircha loyihalar yo‘q. Yaratish uchun + tugmasini bosing.',
       'list.error': 'Skanlarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring.',
       'scan.title': 'Skan #{id}',
       'scan.notFound': 'Skan topilmadi.',
@@ -283,6 +295,14 @@
       'project.mode.entireHousing': 'Butun uy',
       'project.mode.roomByRoom': 'Xonama-xona',
       'project.noScans': 'Bu loyihada hali skanlar yo‘q.',
+      'project.noRooms': 'Hozircha xonalar yo‘q — skanerlash uchun xona qo‘shing.',
+      'project.addRoom': 'Xona qo‘shish',
+      'project.scanRoom': 'Skanerlash',
+      'project.startScan': 'Skanerlashni boshlash',
+      'project.rescan': 'Qayta skanerlash',
+      'project.roomPending': 'Skanerlanmagan',
+      'project.updateFailed': 'O‘zgarishlarni saqlab bo‘lmadi. Keyinroq urinib ko‘ring.',
+      'roomType.title': 'Xona turini tanlang',
       'create.title': 'Yangi loyiha',
       'create.nameLabel': 'Loyiha nomi',
       'create.namePlaceholder': 'masalan, Mening kvartiram',
@@ -356,8 +376,6 @@
       'mat.strips': 'Polosalar: {count} × {len} m',
       'mat.stripsPerRoll': 'Bir rulonda {count} polosa',
       'mat.noEstimate': 'O‘lchovlarsiz hisoblab bo‘lmaydi.',
-      'cta.scan': 'Xonani skanerlash',
-      'cta.getLink': 'Skan havolasini olish',
       'cta.starting': 'Boshlanmoqda…',
       'cta.copied': 'Havola nusxalandi',
       'cta.error': 'Skanerlashni boshlab bo‘lmadi. Keyinroq urinib ko‘ring.',
@@ -2008,17 +2026,20 @@
     `;
   }
 
+  /** Localized label for a RoomType wire value (mirrors makon3d_mobile). */
+  function roomTypeLabel(type) {
+    const key = `room.${type}`;
+    const label = t(key);
+    return label === key ? t('room.other') : label;
+  }
+
   /** Label for a project room's scan: the user-given room name, else the
    * localized room type (wire values mirror makon3d_mobile's RoomType). */
   function scanRoomLabel(scan) {
     if (typeof scan.roomName === 'string' && scan.roomName.trim()) {
       return scan.roomName.trim();
     }
-    if (scan.roomType) {
-      const key = `room.${scan.roomType}`;
-      const label = t(key);
-      return label === key ? t('room.other') : label;
-    }
+    if (scan.roomType) return roomTypeLabel(scan.roomType);
     return '';
   }
 
@@ -2077,32 +2098,58 @@
     feedLoaded = true;
   }
 
+  /** Resolves a room's HousingScan JSON to a renderable scan object: prefer
+   * the fresher feed row, else rebuild from the stored JSON (it carries the
+   * same field names the backend serializes — enough to render and open). */
+  function resolveHousingScan(scanJson, roomType, roomName) {
+    const remoteScanId = Number(scanJson?.remoteScanId);
+    if (!Number.isInteger(remoteScanId) || remoteScanId <= 0) return null;
+    const cached = scansCache.find((s) => Number(s.id) === remoteScanId);
+    if (cached) return { ...cached, roomType, roomName };
+    return {
+      id: remoteScanId,
+      usdzUrl: scanJson.usdzUrl || null,
+      glbUrl: scanJson.glbUrl || null,
+      floorLongM: scanJson.floorLongM ?? null,
+      floorShortM: scanJson.floorShortM ?? null,
+      heightM: scanJson.heightM ?? null,
+      floorAreaM2: scanJson.floorAreaM2 ?? null,
+      wallPerimeterM: scanJson.wallPerimeterM ?? null,
+      doorwayWidthM: scanJson.doorwayWidthM ?? null,
+      doorwayAreaM2: scanJson.doorwayAreaM2 ?? null,
+      windowAreaM2: scanJson.windowAreaM2 ?? null,
+      worldPlusXBearingDeg: scanJson.worldPlusXBearingDeg ?? null,
+      createdAt: scanJson.capturedAt || null,
+      roomType,
+      roomName,
+    };
+  }
+
   /** Shapes a device-scoped project row (raw app/web MakonProject JSON in
-   * `data`) into the same {projectId, name, scans, ...} form as the feed. */
+   * `data`) into the same {projectId, name, scans, ...} form as the feed.
+   * Owned projects additionally keep `raw` (the full MakonProject JSON, for
+   * PUT round trips), `rooms` (including pending, scanless ones) and
+   * `entireHousingScan` so the project view can mirror the app's dashboard. */
   function normalizeMyProject(row) {
     const data = row?.data;
     if (!row?.projectId || data == null || typeof data !== 'object') return null;
-    const refs = [];
-    const pushRef = (scan, roomType, roomName) => {
-      const remoteScanId = Number(scan?.remoteScanId);
-      if (Number.isInteger(remoteScanId) && remoteScanId > 0) {
-        refs.push({ remoteScanId, roomType, roomName });
-      }
-    };
-    pushRef(data.entireHousingScan, null, null);
+    const entireHousingScan = resolveHousingScan(data.entireHousingScan, null, null);
+    const rooms = [];
     if (Array.isArray(data.rooms)) {
-      for (const room of data.rooms) {
-        pushRef(
-          room?.scan,
-          typeof room?.roomType === 'string' ? room.roomType : null,
-          typeof room?.name === 'string' && room.name.trim() ? room.name.trim() : null,
-        );
+      for (const roomJson of data.rooms) {
+        if (roomJson == null || typeof roomJson !== 'object') continue;
+        const roomType = typeof roomJson.roomType === 'string' ? roomJson.roomType : 'other';
+        const roomName =
+          typeof roomJson.name === 'string' && roomJson.name.trim() ? roomJson.name.trim() : null;
+        rooms.push({
+          id: typeof roomJson.id === 'string' && roomJson.id ? roomJson.id : null,
+          roomType,
+          name: roomName,
+          scan: resolveHousingScan(roomJson.scan, roomType, roomName),
+        });
       }
     }
-    const scans = refs.flatMap((ref) => {
-      const scan = scansCache.find((s) => Number(s.id) === ref.remoteScanId);
-      return scan ? [{ ...scan, roomType: ref.roomType, roomName: ref.roomName }] : [];
-    });
+    const scans = [entireHousingScan, ...rooms.map((r) => r.scan)].filter(Boolean);
     return {
       projectId: String(row.projectId),
       name: typeof data.name === 'string' && data.name.trim() ? data.name.trim() : 'Project',
@@ -2110,6 +2157,9 @@
       createdAt: typeof data.createdAt === 'string' ? data.createdAt : null,
       updatedAt: row.updatedAt || null,
       scans,
+      rooms,
+      entireHousingScan,
+      raw: data,
       isMine: true,
     };
   }
@@ -2159,7 +2209,36 @@
     listEl.innerHTML = parts.join('');
   }
 
-  /** Project view: header card + one row per contained scan (room labels). */
+  /** Pending (scanless) room row for an owned room-by-room project — the
+   * mini-app counterpart of the app dashboard's "Start scan" room card. */
+  function pendingRoomItemHtml(room, canScan) {
+    const label = room.name || roomTypeLabel(room.roomType);
+    const scanBtn =
+      canScan && room.id
+        ? `<button type="button" class="m3d-scan-cta-btn m3d-room-scan-btn"
+             data-room-scan="${escapeHtml(room.id)}" data-room-type="${escapeHtml(room.roomType)}">
+             ${escapeHtml(t('project.scanRoom'))}
+           </button>`
+        : '';
+    return `
+      <li>
+        <div class="m3d-item m3d-room-pending">
+          <span class="m3d-item-body">
+            <span class="m3d-item-top">
+              <span class="m3d-item-title">${escapeHtml(label)}</span>
+              <span class="m3d-badge m3d-badge-pending">${escapeHtml(t('project.roomPending'))}</span>
+            </span>
+          </span>
+          ${scanBtn}
+        </div>
+      </li>
+    `;
+  }
+
+  /** Project view. Owned projects mirror the app's dashboard: room-by-room
+   * shows the room list (scan per room, add-room below), entire-home shows
+   * the single scan plus a Start scan/Rescan action. Public feed projects
+   * stay a read-only list of their scans. */
   function openProject(projectId, { pushHistory = true } = {}) {
     const project = findProject(projectId);
     if (!project) {
@@ -2180,7 +2259,7 @@
       projectModeLabel(project.scanMode),
       tf('project.scanCount', { count: project.scans.length }),
     ].filter(Boolean);
-    listEl.innerHTML = [
+    const parts = [
       `<li class="m3d-project-head">
         <span class="m3d-project-head-name">${escapeHtml(project.name)}</span>
         <span class="m3d-item-meta">${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</span>
@@ -2188,16 +2267,78 @@
           ${trashIconHtml()}<span>${escapeHtml(t('action.deleteProject'))}</span>
         </button>
       </li>`,
-      ...(project.scans.length
-        ? project.scans.map((scan) => {
-            const label = scanRoomLabel(scan);
-            return scanItemHtml(scan, label ? escapeHtml(label) : '');
-          })
-        : [`<li class="m3d-project-empty">${escapeHtml(t('project.noScans'))}</li>`]),
-    ].join('');
+    ];
+    const canScan = canStartScanHere();
+    if (project.isMine && project.scanMode === 'roomByRoom') {
+      if (project.rooms.length) {
+        for (const room of project.rooms) {
+          if (room.scan) {
+            const label = room.name || roomTypeLabel(room.roomType);
+            parts.push(scanItemHtml(room.scan, escapeHtml(label)));
+          } else {
+            parts.push(pendingRoomItemHtml(room, canScan));
+          }
+        }
+      } else {
+        parts.push(`<li class="m3d-project-empty">${escapeHtml(t('project.noRooms'))}</li>`);
+      }
+      parts.push(`
+        <li class="m3d-project-action">
+          <button type="button" class="m3d-add-room-btn" id="m3d-add-room-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>${escapeHtml(t('project.addRoom'))}</span>
+          </button>
+        </li>
+      `);
+    } else if (project.isMine && project.scanMode === 'entireHousing') {
+      if (project.entireHousingScan) {
+        parts.push(scanItemHtml(project.entireHousingScan));
+      } else if (!canScan) {
+        parts.push(`<li class="m3d-project-empty">${escapeHtml(t('project.noScans'))}</li>`);
+      }
+      if (canScan) {
+        parts.push(`
+          <li class="m3d-project-action">
+            <button type="button" class="m3d-scan-cta-btn m3d-project-scan-btn" id="m3d-entire-scan-btn">
+              ${escapeHtml(t(project.entireHousingScan ? 'project.rescan' : 'project.startScan'))}
+            </button>
+          </li>
+        `);
+      }
+    } else if (project.scans.length) {
+      for (const scan of project.scans) {
+        const label = scanRoomLabel(scan);
+        parts.push(scanItemHtml(scan, label ? escapeHtml(label) : ''));
+      }
+    } else {
+      parts.push(`<li class="m3d-project-empty">${escapeHtml(t('project.noScans'))}</li>`);
+    }
+    listEl.innerHTML = parts.join('');
     document.getElementById('m3d-project-delete-btn')?.addEventListener('click', () => {
       void deleteProjectFlow(project);
     });
+    document.getElementById('m3d-add-room-btn')?.addEventListener('click', () => {
+      haptic();
+      openRoomTypeDialog(project);
+    });
+    document.getElementById('m3d-entire-scan-btn')?.addEventListener('click', (event) => {
+      void startScanFlow({ projectId: project.projectId }, event.currentTarget);
+    });
+    for (const btn of listEl.querySelectorAll('[data-room-scan]')) {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        void startScanFlow(
+          {
+            projectId: project.projectId,
+            roomId: btn.getAttribute('data-room-scan'),
+            roomType: btn.getAttribute('data-room-type') || 'other',
+          },
+          btn,
+        );
+      });
+    }
   }
 
   // --- Deleting scans and projects --------------------------------------------
@@ -2246,8 +2387,44 @@
     for (const project of [...projectsCache, ...myProjectsCache]) {
       project.scans = project.scans.filter((s) => Number(s.id) !== id);
     }
+    // Owned projects: the room stays (back to pending), only its scan goes.
+    for (const project of myProjectsCache) {
+      if (Number(project.entireHousingScan?.id) === id) project.entireHousingScan = null;
+      for (const room of project.rooms || []) {
+        if (Number(room.scan?.id) === id) room.scan = null;
+      }
+    }
     // Feed projects with no public scans left vanish, same as on the server.
     projectsCache = projectsCache.filter((p) => p.scans.length > 0);
+  }
+
+  /** Clears deleted-scan references from owned projects' raw JSON and syncs
+   * them, so the backup doesn't resurrect a scan whose files are gone. */
+  async function detachScanFromMyProjects(scanId) {
+    const id = Number(scanId);
+    for (const project of myProjectsCache) {
+      const data = project.raw;
+      if (data == null || typeof data !== 'object') continue;
+      let changed = false;
+      if (Number(data.entireHousingScan?.remoteScanId) === id) {
+        data.entireHousingScan = null;
+        changed = true;
+      }
+      if (Array.isArray(data.rooms)) {
+        for (const room of data.rooms) {
+          if (room && Number(room.scan?.remoteScanId) === id) {
+            room.scan = null;
+            changed = true;
+          }
+        }
+      }
+      if (!changed) continue;
+      try {
+        await pushProjectData(project.projectId, data);
+      } catch (err) {
+        console.warn('[Makon3D] project sync after scan delete failed', err);
+      }
+    }
   }
 
   function removeProjectFromCaches(projectId) {
@@ -2273,6 +2450,7 @@
       await deleteScanRequest(scan.id);
       haptic();
       removeScanFromCaches(scan.id);
+      await detachScanFromMyProjects(scan.id);
       if (openProjectId && findProject(openProjectId)) {
         openProject(openProjectId);
       } else {
@@ -2434,6 +2612,19 @@
     createErrorEl.hidden = false;
   }
 
+  /** Upserts a project's raw MakonProject JSON through the same backup
+   * endpoint the app syncs through (owned via the browser's device id). */
+  async function pushProjectData(projectId, data) {
+    const deviceId = webDeviceId();
+    if (!deviceId) throw new Error('device id unavailable');
+    const res = await fetch(`${API_BASE}/makon3d/projects/${encodeURIComponent(projectId)}`, {
+      method: 'PUT',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId, data }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  }
+
   async function submitCreateProject() {
     const name = createNameEl.value.trim();
     if (!name) {
@@ -2459,12 +2650,7 @@
     createErrorEl.hidden = true;
     createSubmitEl.disabled = true;
     try {
-      const res = await fetch(`${API_BASE}/makon3d/projects/${encodeURIComponent(projectId)}`, {
-        method: 'PUT',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: deviceId, data }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await pushProjectData(projectId, data);
       haptic();
       closeCreateDialog();
       myProjectsCache.unshift({
@@ -2474,6 +2660,9 @@
         createdAt,
         updatedAt: createdAt,
         scans: [],
+        rooms: [],
+        entireHousingScan: null,
+        raw: data,
         isMine: true,
       });
       // Straight into the new project, like the app after "Create".
@@ -2511,17 +2700,166 @@
     });
   }
 
-  // --- Scan a room (UyDosh App Clip) -----------------------------------------
-  // Mirrors the UyDosh Mini App's post-publish upsell (telegram-create.js):
-  // POST /makon3d/scan-sessions mints a short-lived invocation URL, the iOS
-  // App Clip scans with RoomPlan and uploads, the backend feeds the result
-  // into makon3d_scans, and the clip deep-links back here with a
-  // `scan_<token>` start_param (handled by restoreScanSessionFromStartParam).
+  // --- Add room (room-by-room projects) ---------------------------------------
+  // Mirrors the app's RoomTypeSelectionScreen: pick a type, the room appears
+  // as a pending row, then its "Scan" button drives the App Clip flow.
+
+  const roomTypeBackdropEl = document.getElementById('m3d-roomtype-backdrop');
+  const roomTypeOptionsEl = document.getElementById('m3d-roomtype-options');
+  // Wire values mirror makon3d_mobile's RoomType enum; livingRoom..bathroom
+  // reuse the badge icons (ROOM_TYPE_ICONS), hallway/other are picker-only.
+  const ROOM_TYPE_PICKER_EXTRA_ICONS = {
+    hallway: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 21h16" />
+      <path d="M7 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16" />
+      <path d="M14 11.5v1" />
+    </svg>`,
+    other: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M9.5 9.2a2.5 2.5 0 1 1 3.4 2.33c-.55.21-.9.72-.9 1.31v.36" />
+      <path d="M12 16.4v.1" />
+    </svg>`,
+  };
+  const ROOM_TYPE_WIRE_VALUES = ['livingRoom', 'bedroom', 'kitchen', 'bathroom', 'hallway', 'other'];
+  /** The project the open picker adds a room to. */
+  let roomTypeDialogProject = null;
+
+  function roomTypePickerIcon(type) {
+    return ROOM_TYPE_ICONS[type]?.svg || ROOM_TYPE_PICKER_EXTRA_ICONS[type] || '';
+  }
+
+  function openRoomTypeDialog(project) {
+    if (!roomTypeBackdropEl || !roomTypeOptionsEl) return;
+    roomTypeDialogProject = project;
+    // Rebuilt on every open so labels track the current language.
+    roomTypeOptionsEl.innerHTML = ROOM_TYPE_WIRE_VALUES.map(
+      (type) => `
+        <button type="button" class="m3d-roomtype-btn" data-room-type="${type}">
+          <span class="m3d-roomtype-btn-icon">${roomTypePickerIcon(type)}</span>
+          <span>${escapeHtml(roomTypeLabel(type))}</span>
+        </button>
+      `,
+    ).join('');
+    roomTypeBackdropEl.hidden = false;
+    roomTypeBackdropEl.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeRoomTypeDialog() {
+    if (!roomTypeBackdropEl) return;
+    roomTypeDialogProject = null;
+    roomTypeBackdropEl.hidden = true;
+    roomTypeBackdropEl.setAttribute('aria-hidden', 'true');
+  }
+
+  /** Appends a pending room (no scan yet) to the project's raw JSON — same
+   * shape as the app's ProjectRoom — and syncs it to the backend. */
+  async function addRoomToProject(project, roomType) {
+    const data = project.raw;
+    if (!data || typeof data !== 'object') {
+      notifyError(t('project.updateFailed'));
+      return;
+    }
+    if (!Array.isArray(data.rooms)) data.rooms = [];
+    const roomJson = {
+      id: newProjectId(),
+      roomType,
+      createdAt: new Date().toISOString(),
+      name: roomTypeLabel(roomType),
+    };
+    data.rooms.push(roomJson);
+    try {
+      await pushProjectData(project.projectId, data);
+      haptic();
+      project.rooms.push({
+        id: roomJson.id,
+        roomType,
+        name: roomJson.name,
+        scan: null,
+      });
+      if (openProjectId === project.projectId) {
+        openProject(project.projectId, { pushHistory: false });
+      }
+    } catch (err) {
+      console.error('[Makon3D] add room failed', err);
+      data.rooms = data.rooms.filter((r) => r !== roomJson);
+      notifyError(t('project.updateFailed'));
+    }
+  }
+
+  function initRoomTypeDialog() {
+    if (!roomTypeBackdropEl) return;
+    roomTypeBackdropEl.addEventListener('click', (event) => {
+      if (event.target === roomTypeBackdropEl) closeRoomTypeDialog();
+    });
+    document
+      .getElementById('m3d-roomtype-cancel')
+      ?.addEventListener('click', closeRoomTypeDialog);
+    roomTypeOptionsEl?.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-room-type]');
+      if (!btn) return;
+      const project = roomTypeDialogProject;
+      const type = btn.getAttribute('data-room-type');
+      haptic();
+      closeRoomTypeDialog();
+      if (project && ROOM_TYPE_WIRE_VALUES.includes(type)) {
+        void addRoomToProject(project, type);
+      }
+    });
+  }
+
+  // --- Scanning (UyDosh App Clip, always project-scoped) ----------------------
+  // Scans are started from inside an owned project — per pending room in
+  // room-by-room projects, or via Start scan/Rescan in entire-home ones —
+  // mirroring the app's dashboard. POST /makon3d/scan-sessions mints a
+  // short-lived invocation URL, the iOS App Clip scans with RoomPlan and
+  // uploads, the backend feeds the result into makon3d_scans, and the clip
+  // deep-links back here with a `scan_<token>` start_param (handled by
+  // restoreScanSessionFromStartParam). The project/room the session belongs
+  // to is remembered in localStorage (survives the App Clip round trip) and
+  // written into the project's JSON once the scan completes.
 
   const scanCtaEl = document.getElementById('m3d-scan-cta');
   const SCAN_SESSION_STORAGE_KEY = 'makon3d:activeScanSession';
+  const SCAN_TARGETS_STORAGE_KEY = 'makon3d:scanTargets';
   const SCAN_SESSION_TTL_MS = 60 * 60 * 1000;
   let scanPollTimer = null;
+
+  /** token → {projectId, roomId?, roomType?, createdAt} map in localStorage;
+   * entries older than the session TTL are pruned on every read. */
+  function loadScanTargets() {
+    let map = {};
+    try {
+      map = JSON.parse(localStorage.getItem(SCAN_TARGETS_STORAGE_KEY) || '{}') || {};
+    } catch { /* storage blocked or corrupt — start fresh */ }
+    const now = Date.now();
+    for (const [token, entry] of Object.entries(map)) {
+      if (!entry || now - (Number(entry.createdAt) || 0) > SCAN_SESSION_TTL_MS) {
+        delete map[token];
+      }
+    }
+    return map;
+  }
+
+  function storeScanTargets(map) {
+    try { localStorage.setItem(SCAN_TARGETS_STORAGE_KEY, JSON.stringify(map)); } catch { /* ignore */ }
+  }
+
+  function saveScanTarget(token, target) {
+    const map = loadScanTargets();
+    map[token] = { ...target, createdAt: Date.now() };
+    storeScanTargets(map);
+  }
+
+  /** Reads and removes the target for a finished session. */
+  function takeScanTarget(token) {
+    const map = loadScanTargets();
+    const entry = map[token] || null;
+    if (entry) {
+      delete map[token];
+      storeScanTargets(map);
+    }
+    return entry;
+  }
 
   /** Lazy-loaded QR generator, same CDN pattern as model-viewer above. */
   const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.5.0/qrcode.js';
@@ -2616,37 +2954,45 @@
     return payload;
   }
 
-  function renderScanCta() {
-    if (!scanCtaEl) return;
-    const isIos = isIosClient();
-    // Mirror the UyDosh Mini App: hide the affordance entirely on iPhones
-    // that certainly can't scan; keep the QR/copy-link path everywhere else
-    // (the link can be opened on another device).
-    if (isIos && !isLikelyRoomScanCapableDevice()) return;
+  /** Mirror the UyDosh Mini App's pre-filter: hide scan affordances entirely
+   * on iPhones that certainly can't scan; keep the QR/copy-link path
+   * everywhere else (the link can be opened on another device). */
+  function canStartScanHere() {
+    return !(isIosClient() && !isLikelyRoomScanCapableDevice());
+  }
 
-    scanCtaEl.innerHTML = `
-      <p class="m3d-scan-cta-status" id="m3d-scan-cta-status" hidden></p>
-      <button type="button" class="m3d-scan-cta-btn" id="m3d-scan-cta-btn">
-        ${isIos ? t('cta.scan') : t('cta.getLink')}
-      </button>
-    `;
+  /** The fixed bottom banner now only hosts scan-flow feedback (status text,
+   * QR code) while a session is live — the actions live in the project view. */
+  function ensureScanBanner() {
+    if (!scanCtaEl) return;
+    if (!document.getElementById('m3d-scan-cta-status')) {
+      scanCtaEl.innerHTML = '<p class="m3d-scan-cta-status" id="m3d-scan-cta-status" hidden></p>';
+    }
     scanCtaEl.hidden = false;
     // Reserves list-panel space for the fixed bottom banner (see makon3d.css).
     document.body.classList.add('m3d-has-scan-banner');
-    document
-      .getElementById('m3d-scan-cta-btn')
-      ?.addEventListener('click', () => startScanFlow(isIos));
+  }
+
+  function hideScanBanner() {
+    if (!scanCtaEl) return;
+    scanCtaEl.hidden = true;
+    scanCtaEl.innerHTML = '';
+    document.body.classList.remove('m3d-has-scan-banner');
   }
 
   function setScanCtaStatus(message) {
+    if (message) ensureScanBanner();
     const el = document.getElementById('m3d-scan-cta-status');
     if (!el) return;
     el.hidden = !message;
     el.textContent = message || '';
+    // Drop the banner when there's nothing left to show in it.
+    if (!message && !document.getElementById('m3d-scan-cta-qr')) hideScanBanner();
   }
 
   async function showScanQrCode(invocationUrl) {
     if (!scanCtaEl) return;
+    ensureScanBanner();
     let wrap = document.getElementById('m3d-scan-cta-qr');
     if (!wrap) {
       wrap = document.createElement('div');
@@ -2672,6 +3018,8 @@
       closeBtn.addEventListener('click', () => {
         haptic();
         wrap.remove();
+        const status = document.getElementById('m3d-scan-cta-status');
+        if (!status || status.hidden) hideScanBanner();
       });
       wrap.appendChild(closeBtn);
       wrap.appendChild(img);
@@ -2685,8 +3033,15 @@
     }
   }
 
-  async function startScanFlow(isIos) {
-    const button = document.getElementById('m3d-scan-cta-btn');
+  /**
+   * Starts a scan session for a project target: `{projectId}` scans the
+   * entire home, `{projectId, roomId, roomType}` scans one room. On iOS the
+   * App Clip opens directly; elsewhere the invocation link shows as QR +
+   * clipboard copy so it can be opened on an iPhone.
+   */
+  async function startScanFlow(target, button) {
+    const isIos = isIosClient();
+    const originalLabel = button ? button.textContent : '';
     if (button) {
       button.disabled = true;
       button.textContent = t('cta.starting');
@@ -2694,6 +3049,7 @@
     haptic();
     try {
       const session = await createScanSession();
+      saveScanTarget(session.scanSessionId, target);
       try {
         sessionStorage.setItem(
           SCAN_SESSION_STORAGE_KEY,
@@ -2705,45 +3061,119 @@
         const tg = window.Telegram?.WebApp;
         if (tg?.openLink) tg.openLink(session.invocationUrl);
         else window.open(session.invocationUrl, '_blank');
-        if (button) {
-          button.disabled = false;
-          button.textContent = t('cta.scan');
-        }
         watchScanSession(session.scanSessionId);
       } else {
         // Desktop/Android: QR first (clipboard writes can reject in some
         // Telegram webviews and must not kill the flow), then copy.
         showScanQrCode(session.invocationUrl);
         watchScanSession(session.scanSessionId);
-        let copied = false;
         try {
           await navigator.clipboard?.writeText?.(session.invocationUrl);
-          copied = true;
+          setScanCtaStatus(t('cta.copied'));
         } catch { /* clipboard unavailable — the QR still carries the link */ }
-        if (button) {
-          button.disabled = false;
-          button.textContent = copied ? t('cta.copied') : t('cta.getLink');
-        }
+      }
+      if (button) {
+        button.disabled = false;
+        button.textContent = originalLabel;
       }
     } catch (err) {
       console.error('[Makon3D] scan session create failed', err);
-      if (err?.payload?.code === 'lidar_room_scan_disabled' && scanCtaEl) {
-        scanCtaEl.hidden = true;
-        document.body.classList.remove('m3d-has-scan-banner');
-        return;
-      }
-      setScanCtaStatus(t('cta.error'));
       if (button) {
         button.disabled = false;
-        button.textContent = isIos ? t('cta.scan') : t('cta.getLink');
+        button.textContent = originalLabel;
       }
+      notifyError(t('cta.error'));
     }
   }
 
-  /** Re-fetches the feeds, then opens the freshly created scan. */
-  async function openCompletedScan(makon3dScanId) {
+  /** The HousingScan JSON the app stores in project rooms, rebuilt from the
+   * backend's scan row (the field names already match — see makon_project
+   * models in makon3d_mobile and Makon3dScanController.serialize). */
+  function housingScanFromRemote(scan) {
+    return {
+      id: newProjectId(),
+      localUsdzPath: null,
+      remoteScanId: Number(scan.id),
+      usdzUrl: scan.usdzUrl || null,
+      glbUrl: scan.glbUrl || null,
+      floorLongM: scan.floorLongM ?? null,
+      floorShortM: scan.floorShortM ?? null,
+      heightM: scan.heightM ?? null,
+      floorAreaM2: scan.floorAreaM2 ?? null,
+      wallPerimeterM: scan.wallPerimeterM ?? null,
+      doorwayWidthM: scan.doorwayWidthM ?? null,
+      doorwayAreaM2: scan.doorwayAreaM2 ?? null,
+      windowAreaM2: scan.windowAreaM2 ?? null,
+      worldPlusXBearingDeg: scan.worldPlusXBearingDeg ?? null,
+      capturedAt: scan.createdAt || new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Writes a completed scan into its project's JSON (room's `scan` for
+   * room-by-room targets, `entireHousingScan` otherwise) and PUTs the update.
+   * Works from a fresh device-scoped fetch — after the App Clip round trip
+   * the in-memory caches may not be populated yet.
+   */
+  async function attachScanToProjectTarget(target, makon3dScanId) {
+    const deviceId = webDeviceId();
+    if (!deviceId || !target?.projectId) return;
+    const rowsRes = await fetch(
+      `${API_BASE}/makon3d/projects?device_id=${encodeURIComponent(deviceId)}`,
+    );
+    if (!rowsRes.ok) throw new Error(`HTTP ${rowsRes.status}`);
+    const rows = (await rowsRes.json())?.projects || [];
+    const row = rows.find((r) => String(r?.projectId) === String(target.projectId));
+    const data = row?.data;
+    if (data == null || typeof data !== 'object') return;
+
+    const scanRes = await fetch(`${API_BASE}/makon3d/scans/${Number(makon3dScanId)}`);
+    if (!scanRes.ok) throw new Error(`HTTP ${scanRes.status}`);
+    const housing = housingScanFromRemote(await scanRes.json());
+
+    if (target.roomId) {
+      if (!Array.isArray(data.rooms)) data.rooms = [];
+      const room = data.rooms.find((r) => r && r.id === target.roomId);
+      if (room) {
+        room.scan = housing;
+      } else {
+        // The room row vanished (e.g. deleted from the app mid-scan) — keep
+        // the result anyway, matching the app's append-on-capture behavior.
+        data.rooms.push({
+          id: target.roomId,
+          roomType: target.roomType || 'other',
+          createdAt: new Date().toISOString(),
+          name: roomTypeLabel(target.roomType || 'other'),
+          scan: housing,
+        });
+      }
+    } else {
+      data.entireHousingScan = housing;
+    }
+    await pushProjectData(target.projectId, data);
+  }
+
+  /** Terminal "completed" handler shared by the poller and the App Clip
+   * return leg: attach to the target project, refresh, open the scan. */
+  async function handleScanSessionCompleted(token, makon3dScanId) {
+    const target = takeScanTarget(token);
+    if (target?.projectId) {
+      try {
+        await attachScanToProjectTarget(target, makon3dScanId);
+      } catch (err) {
+        // The scan still exists as a loose gallery item — don't block on it.
+        console.error('[Makon3D] attaching scan to project failed', err);
+      }
+    }
+    await openCompletedScan(makon3dScanId, target?.projectId || null);
+  }
+
+  /** Re-fetches the feeds, then opens the freshly created scan (with Back
+   * leading to its project when the scan was project-scoped). */
+  async function openCompletedScan(makon3dScanId, projectId = null) {
     try {
       await fetchFeeds();
+      if (projectId && findProject(projectId)) openProjectId = projectId;
       // Refresh whichever list view is visible; leave an open viewer alone.
       if (!listPanelEl.hidden) {
         if (openProjectId && findProject(openProjectId)) {
@@ -2783,6 +3213,7 @@
         if (err?.status === 404 || err?.status === 410) {
           stop();
           clearStored();
+          takeScanTarget(token);
         }
         return;
       }
@@ -2792,18 +3223,16 @@
         stop();
         clearStored();
         document.getElementById('m3d-scan-cta-qr')?.remove();
-        setScanCtaStatus('');
+        hideScanBanner();
         haptic();
-        await openCompletedScan(Number(session.makon3dScanId));
+        await handleScanSessionCompleted(token, Number(session.makon3dScanId));
       } else if (session.status === 'failed' || session.status === 'expired') {
         stop();
         clearStored();
+        takeScanTarget(token);
         document.getElementById('m3d-scan-cta-qr')?.remove();
-        setScanCtaStatus(
-          session.status === 'failed'
-            ? t('cta.failed')
-            : '',
-        );
+        hideScanBanner();
+        if (session.status === 'failed') notifyError(t('cta.failed'));
       }
     };
 
@@ -2884,6 +3313,7 @@
         session = await fetchScanSession(token);
       } catch (err) {
         if (err?.status === 404 || err?.status === 410) {
+          takeScanTarget(token);
           failScanReturnOverlay(t('overlay.linkExpired'));
           return true;
         }
@@ -2892,14 +3322,16 @@
       if (session.status === 'completed') {
         finish();
         haptic();
-        await openCompletedScan(Number(session.makon3dScanId));
+        await handleScanSessionCompleted(token, Number(session.makon3dScanId));
         return true;
       }
       if (session.status === 'failed') {
+        takeScanTarget(token);
         failScanReturnOverlay(t('overlay.failed'));
         return true;
       }
       if (session.status === 'expired') {
+        takeScanTarget(token);
         failScanReturnOverlay(t('overlay.sessionExpired'));
         return true;
       }
@@ -2998,7 +3430,6 @@
   function rerenderForLangChange() {
     applyStaticI18n();
     syncDrawerLangButtons();
-    renderScanCta();
     if (openScanId != null && openScanData) {
       renderViewerMeta(openScanData);
     } else if (!listEl.hidden) {
@@ -3202,6 +3633,7 @@
     if (event.key === 'Escape') {
       closeDrawer();
       closeCreateDialog();
+      closeRoomTypeDialog();
     }
   });
 
@@ -3222,8 +3654,8 @@
   applyStaticI18n();
   initDrawerLangPicker();
   initCreateProject();
+  initRoomTypeDialog();
   requestAndReportUserLocation();
-  renderScanCta();
   loadScans();
   // The App Clip return leg (`scan_<token>` start_param) takes precedence
   // over resuming a stored session — both would poll the same session anyway.

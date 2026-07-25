@@ -11,7 +11,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260725-6" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260725-7" />
   </head>
   <body>
     <div class="m3d-app">
@@ -63,9 +63,10 @@
 
       <main class="m3d-main">
         <section class="m3d-list-panel" id="m3d-list-panel" aria-label="Scans" data-i18n="aria.scans" data-i18n-attr="aria-label">
-          <!-- "Scan a room" banner button (UyDosh App Clip flow) — filled by
-               makon3d.js and fixed above the bottom bar via makon3d.css;
-               stays hidden on devices that certainly can't scan. -->
+          <!-- Scan-flow feedback banner (QR code / status) — filled by
+               makon3d.js while an App Clip scan session is live and fixed
+               above the bottom bar via makon3d.css. Scans are started from
+               inside a project (per room, or entire home). -->
           <div class="m3d-scan-cta" id="m3d-scan-cta" hidden></div>
           <div class="m3d-status" id="m3d-status" role="status" aria-label="Loading scans"><span class="m3d-loading-spinner" aria-hidden="true"></span></div>
           <ul class="m3d-list" id="m3d-list" hidden></ul>
@@ -121,6 +122,18 @@
         <div class="m3d-create-actions">
           <button type="button" class="m3d-create-cancel" id="m3d-create-cancel" data-i18n="create.cancel">Cancel</button>
           <button type="button" class="m3d-scan-cta-btn m3d-create-submit" id="m3d-create-submit" data-i18n="create.submit">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room type picker for "Add room" in room-by-room projects — mirrors
+         the app's RoomTypeSelectionScreen; options built by makon3d.js. -->
+    <div class="m3d-create-backdrop" id="m3d-roomtype-backdrop" hidden aria-hidden="true">
+      <div class="m3d-create-card" role="dialog" aria-modal="true" aria-labelledby="m3d-roomtype-title">
+        <h2 class="m3d-create-title" id="m3d-roomtype-title" data-i18n="roomType.title">Select room type</h2>
+        <div class="m3d-roomtype-options" id="m3d-roomtype-options"></div>
+        <div class="m3d-create-actions">
+          <button type="button" class="m3d-create-cancel" id="m3d-roomtype-cancel" data-i18n="create.cancel">Cancel</button>
         </div>
       </div>
     </div>
@@ -182,6 +195,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260725-6" defer></script>
+    <script src="../assets/makon3d.js?v=20260725-7" defer></script>
   </body>
 </html>

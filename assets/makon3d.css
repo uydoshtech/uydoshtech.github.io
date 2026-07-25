@@ -349,6 +349,105 @@ body {
   padding: 14px 4px;
 }
 
+/* --- Project actions: per-room scan, add room, entire-home scan ------------ */
+
+/* Pending (not yet scanned) room row — a plain card, not a button. */
+.m3d-room-pending {
+  cursor: default;
+}
+
+.m3d-room-pending:active {
+  opacity: 1;
+  transform: none;
+}
+
+/* Compact per-room "Scan" pill inside a pending room row. */
+.m3d-room-scan-btn {
+  align-self: center;
+  flex-shrink: 0;
+  padding: 9px 16px;
+  font-size: 13px;
+}
+
+.m3d-project-action {
+  list-style: none;
+  padding-top: 2px;
+}
+
+/* Full-width primary action (entire-home Start scan / Rescan). */
+.m3d-project-scan-btn {
+  width: 100%;
+  padding: 13px 18px;
+  font-size: 15px;
+}
+
+/* Dashed "Add room" row, like the app dashboard's add-room card. */
+.m3d-add-room-btn {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px dashed var(--m3d-accent-stroke);
+  background: var(--m3d-accent-dim);
+  color: var(--m3d-accent);
+  border-radius: 16px;
+  padding: 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.m3d-add-room-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.m3d-add-room-btn:active { opacity: 0.8; }
+
+/* --- Room type picker (Add room dialog) ------------------------------------ */
+
+.m3d-roomtype-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.m3d-roomtype-btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  color: var(--m3d-fg);
+  border-radius: 14px;
+  padding: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.m3d-roomtype-btn:active {
+  border-color: var(--m3d-accent-stroke);
+  opacity: 0.9;
+}
+
+.m3d-roomtype-btn-icon {
+  display: inline-flex;
+  color: var(--m3d-accent);
+  flex-shrink: 0;
+}
+
+.m3d-roomtype-btn-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* --- New project: floating + button and creation dialog -------------------- */
 
 .m3d-fab {
