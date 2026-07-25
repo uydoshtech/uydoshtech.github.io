@@ -540,6 +540,45 @@ body.m3d-has-scan-banner .m3d-fab {
   border-color: var(--m3d-accent-stroke);
 }
 
+/* Address input + "use current location" button side by side. */
+.m3d-create-address-row {
+  display: flex;
+  gap: 8px;
+}
+
+.m3d-create-address-row .m3d-create-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.m3d-create-locate {
+  appearance: none;
+  flex-shrink: 0;
+  width: 46px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  color: var(--m3d-accent);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.m3d-create-locate svg {
+  width: 20px;
+  height: 20px;
+}
+
+.m3d-create-locate:active { opacity: 0.8; }
+.m3d-create-locate:disabled { cursor: default; }
+
+/* While locating, the icon is swapped for the shared Makon spinner. */
+.m3d-create-locate .m3d-loading-spinner {
+  width: 20px;
+  height: 20px;
+}
+
 .m3d-create-mode {
   align-self: flex-start;
 }

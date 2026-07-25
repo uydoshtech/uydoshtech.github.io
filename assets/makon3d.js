@@ -60,6 +60,11 @@
       'create.title': 'New project',
       'create.nameLabel': 'Project name',
       'create.namePlaceholder': 'e.g. My apartment',
+      'create.addressLabel': 'Property address',
+      'create.addressPlaceholder': 'Optional',
+      'create.useLocation': 'Use current location',
+      'create.locationFailed': 'Could not determine the address from your current location.',
+      'create.locationDenied': 'Location permission is required to use current location.',
       'create.modeLabel': 'Scan mode',
       'create.cancel': 'Cancel',
       'create.submit': 'Create',
@@ -183,6 +188,11 @@
       'create.title': 'Новый проект',
       'create.nameLabel': 'Название проекта',
       'create.namePlaceholder': 'напр. Моя квартира',
+      'create.addressLabel': 'Адрес объекта',
+      'create.addressPlaceholder': 'Необязательно',
+      'create.useLocation': 'Моя геолокация',
+      'create.locationFailed': 'Не удалось определить адрес по текущему местоположению.',
+      'create.locationDenied': 'Для текущего местоположения нужен доступ к геолокации.',
       'create.modeLabel': 'Режим сканирования',
       'create.cancel': 'Отмена',
       'create.submit': 'Создать',
@@ -306,6 +316,11 @@
       'create.title': 'Yangi loyiha',
       'create.nameLabel': 'Loyiha nomi',
       'create.namePlaceholder': 'masalan, Mening kvartiram',
+      'create.addressLabel': 'Mulk manzili',
+      'create.addressPlaceholder': 'Ixtiyoriy',
+      'create.useLocation': 'Joriy joylashuv',
+      'create.locationFailed': 'Joriy joylashuv bo‘yicha manzilni aniqlab bo‘lmadi.',
+      'create.locationDenied': 'Joriy joylashuvdan foydalanish uchun joylashuv ruxsati kerak.',
       'create.modeLabel': 'Skanerlash rejimi',
       'create.cancel': 'Bekor qilish',
       'create.submit': 'Yaratish',
@@ -2053,6 +2068,7 @@
     const metaBits = [
       formatDate(project.createdAt || project.updatedAt),
       projectModeLabel(project.scanMode),
+      project.address || '', // owned projects only — the public feed strips it
     ].filter(Boolean);
     return `
       <li>
@@ -2156,6 +2172,8 @@
       scanMode: typeof data.scanMode === 'string' ? data.scanMode : null,
       createdAt: typeof data.createdAt === 'string' ? data.createdAt : null,
       updatedAt: row.updatedAt || null,
+      address:
+        typeof data.address === 'string' && data.address.trim() ? data.address.trim() : null,
       scans,
       rooms,
       entireHousingScan,
@@ -2257,6 +2275,7 @@
     const metaBits = [
       formatDate(project.createdAt || project.updatedAt),
       projectModeLabel(project.scanMode),
+      project.address || '', // owned projects only — the public feed strips it
       tf('project.scanCount', { count: project.scans.length }),
     ].filter(Boolean);
     const parts = [
@@ -2553,6 +2572,8 @@
   const fabEl = document.getElementById('m3d-fab');
   const createBackdropEl = document.getElementById('m3d-create-backdrop');
   const createNameEl = document.getElementById('m3d-create-name');
+  const createAddressEl = document.getElementById('m3d-create-address');
+  const createLocateEl = document.getElementById('m3d-create-locate');
   const createModeEl = document.getElementById('m3d-create-mode');
   const createErrorEl = document.getElementById('m3d-create-error');
   const createSubmitEl = document.getElementById('m3d-create-submit');
@@ -2595,6 +2616,7 @@
     if (!createBackdropEl) return;
     createErrorEl.hidden = true;
     createNameEl.value = '';
+    if (createAddressEl) createAddressEl.value = '';
     setCreateMode('entireHousing');
     createBackdropEl.hidden = false;
     createBackdropEl.setAttribute('aria-hidden', 'false');
@@ -2638,6 +2660,7 @@
     }
     const projectId = newProjectId();
     const createdAt = new Date().toISOString();
+    const address = createAddressEl ? createAddressEl.value.trim() : '';
     // Same JSON shape as the app's MakonProject.toJson — scans join later
     // (via the app) or stay empty; either way the project shows on home.
     const data = {
@@ -2645,6 +2668,7 @@
       name,
       scanMode: createSelectedMode,
       createdAt,
+      address: address || null,
       rooms: [],
     };
     createErrorEl.hidden = true;
@@ -2659,6 +2683,7 @@
         scanMode: createSelectedMode,
         createdAt,
         updatedAt: createdAt,
+        address: address || null,
         scans: [],
         rooms: [],
         entireHousingScan: null,
@@ -2672,6 +2697,81 @@
       showCreateError('create.failed');
     } finally {
       createSubmitEl.disabled = false;
+    }
+  }
+
+  /** navigator.geolocation as a promise; `denied` marks permission refusals. */
+  function browserGeolocate() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('geolocation unavailable'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        (err) => reject(Object.assign(new Error('geolocation failed'), { denied: err?.code === 1 })),
+        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 },
+      );
+    });
+  }
+
+  /** Device position: Telegram's LocationManager inside the Mini App (its
+   * native permission prompt), the browser geolocation API elsewhere. */
+  async function currentDevicePosition() {
+    if (inTelegram()) {
+      const loc = await initTelegramLocationManager();
+      if (loc?.isLocationAvailable) {
+        try {
+          return await getTelegramLocationData(loc);
+        } catch (err) {
+          throw Object.assign(err instanceof Error ? err : new Error('telegram location'), {
+            denied: true,
+          });
+        }
+      }
+      // LocationManager missing (old client) — fall through to the browser API.
+    }
+    return browserGeolocate();
+  }
+
+  /** Coordinates → human-readable address via the backend's anonymous Yandex
+   * proxy — the same endpoint the app's NewProjectScreen uses. */
+  async function reverseGeocodeAddress(latitude, longitude) {
+    const qs = new URLSearchParams({
+      latitude: String(latitude),
+      longitude: String(longitude),
+      lang: currentLang,
+    });
+    const res = await fetch(`${API_BASE}/makon3d/geocode/reverse?${qs}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const address = (await res.json())?.addressText;
+    return typeof address === 'string' && address.trim() ? address.trim() : null;
+  }
+
+  /** Fills the create dialog's address input from the device location. */
+  async function useCurrentLocationForCreate() {
+    if (!createAddressEl || !createLocateEl || createLocateEl.disabled) return;
+    haptic();
+    createErrorEl.hidden = true;
+    createLocateEl.disabled = true;
+    const iconHtml = createLocateEl.innerHTML;
+    createLocateEl.innerHTML = loadingSpinnerHtml();
+    try {
+      const position = await currentDevicePosition();
+      const address = await reverseGeocodeAddress(position.latitude, position.longitude);
+      if (!address) {
+        showCreateError('create.locationFailed');
+        return;
+      }
+      createAddressEl.value = address;
+    } catch (err) {
+      console.warn('[Makon3D] use current location failed', err);
+      showCreateError(err?.denied ? 'create.locationDenied' : 'create.locationFailed');
+    } finally {
+      createLocateEl.disabled = false;
+      createLocateEl.innerHTML = iconHtml;
     }
   }
 
@@ -2697,6 +2797,12 @@
     });
     createNameEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') void submitCreateProject();
+    });
+    createAddressEl?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') void submitCreateProject();
+    });
+    createLocateEl?.addEventListener('click', () => {
+      void useCurrentLocationForCreate();
     });
   }
 

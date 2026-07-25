@@ -11,7 +11,7 @@
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260725-7" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260726-1" />
   </head>
   <body>
     <div class="m3d-app">
@@ -113,6 +113,35 @@
           data-i18n="create.namePlaceholder"
           data-i18n-attr="placeholder"
         />
+        <label class="m3d-create-label" for="m3d-create-address" data-i18n="create.addressLabel">Property address</label>
+        <!-- Optional address, mirroring the app's NewProjectScreen; the locate
+             button fills it from the device position via the backend's
+             anonymous reverse-geocode proxy (useCurrentLocationForCreate). -->
+        <div class="m3d-create-address-row">
+          <input
+            type="text"
+            class="m3d-create-input"
+            id="m3d-create-address"
+            maxlength="160"
+            autocomplete="off"
+            data-i18n="create.addressPlaceholder"
+            data-i18n-attr="placeholder"
+          />
+          <button
+            type="button"
+            class="m3d-create-locate"
+            id="m3d-create-locate"
+            aria-label="Use current location"
+            data-i18n="create.useLocation"
+            data-i18n-attr="aria-label"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+              <circle cx="12" cy="12" r="8" />
+            </svg>
+          </button>
+        </div>
         <div class="m3d-create-label" id="m3d-create-mode-label" data-i18n="create.modeLabel">Scan mode</div>
         <div class="m3d-seg m3d-create-mode" id="m3d-create-mode" role="tablist" aria-labelledby="m3d-create-mode-label">
           <button type="button" class="m3d-seg-btn is-active" role="tab" aria-selected="true" data-mode="entireHousing" data-i18n="project.mode.entireHousing">Entire home</button>
@@ -195,6 +224,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260725-7" defer></script>
+    <script src="../assets/makon3d.js?v=20260726-1" defer></script>
   </body>
 </html>
