@@ -57,6 +57,11 @@
       'create.submit': 'Create',
       'create.nameRequired': 'Enter a project name.',
       'create.failed': 'Could not create the project. Try again later.',
+      'action.deleteScan': 'Delete scan',
+      'action.deleteProject': 'Delete project',
+      'confirm.deleteScan': 'Delete this scan? This cannot be undone.',
+      'confirm.deleteProject': 'Delete this project and its scans? This cannot be undone.',
+      'delete.failed': 'Could not delete. Try again later.',
       'unit.m': 'm',
       'unit.m2': 'm²',
       'dims.heightPrefix': 'H',
@@ -169,6 +174,11 @@
       'create.submit': 'Создать',
       'create.nameRequired': 'Введите название проекта.',
       'create.failed': 'Не удалось создать проект. Попробуйте позже.',
+      'action.deleteScan': 'Удалить скан',
+      'action.deleteProject': 'Удалить проект',
+      'confirm.deleteScan': 'Удалить этот скан? Это действие нельзя отменить.',
+      'confirm.deleteProject': 'Удалить этот проект и его сканы? Это действие нельзя отменить.',
+      'delete.failed': 'Не удалось удалить. Попробуйте позже.',
       'unit.m': 'м',
       'unit.m2': 'м²',
       'dims.heightPrefix': 'В',
@@ -281,6 +291,11 @@
       'create.submit': 'Yaratish',
       'create.nameRequired': 'Loyiha nomini kiriting.',
       'create.failed': 'Loyiha yaratib bo‘lmadi. Keyinroq urinib ko‘ring.',
+      'action.deleteScan': 'Skanni o‘chirish',
+      'action.deleteProject': 'Loyihani o‘chirish',
+      'confirm.deleteScan': 'Bu skan o‘chirilsinmi? Buni ortga qaytarib bo‘lmaydi.',
+      'confirm.deleteProject': 'Bu loyiha va uning skanlari o‘chirilsinmi? Buni ortga qaytarib bo‘lmaydi.',
+      'delete.failed': 'O‘chirib bo‘lmadi. Keyinroq urinib ko‘ring.',
       'unit.m': 'm',
       'unit.m2': 'm²',
       'dims.heightPrefix': 'B',
@@ -1256,9 +1271,14 @@
     viewerMetaEl.innerHTML = `
       <div class="m3d-viewer-meta-row">
         <div class="m3d-viewer-meta-text">${rows.join('')}</div>
-        <button type="button" class="m3d-share-btn" id="m3d-share-btn">
-          ${gifReady ? t('share.gif') : t('share.link')}
-        </button>
+        <div class="m3d-viewer-actions">
+          <button type="button" class="m3d-share-btn" id="m3d-share-btn">
+            ${gifReady ? t('share.gif') : t('share.link')}
+          </button>
+          <button type="button" class="m3d-delete-btn" id="m3d-delete-btn">
+            ${t('action.deleteScan')}
+          </button>
+        </div>
       </div>
     `;
     const btn = document.getElementById('m3d-share-btn');
@@ -1267,6 +1287,9 @@
         void shareScan(scan);
       });
     }
+    document.getElementById('m3d-delete-btn')?.addEventListener('click', () => {
+      void deleteScanFlow(scan);
+    });
     renderMaterialsPanel(scan);
   }
 
@@ -2161,6 +2184,9 @@
       `<li class="m3d-project-head">
         <span class="m3d-project-head-name">${escapeHtml(project.name)}</span>
         <span class="m3d-item-meta">${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</span>
+        <button type="button" class="m3d-delete-btn m3d-project-delete" id="m3d-project-delete-btn">
+          ${escapeHtml(t('action.deleteProject'))}
+        </button>
       </li>`,
       ...(project.scans.length
         ? project.scans.map((scan) => {
@@ -2169,6 +2195,115 @@
           })
         : [`<li class="m3d-project-empty">${escapeHtml(t('project.noScans'))}</li>`]),
     ].join('');
+    document.getElementById('m3d-project-delete-btn')?.addEventListener('click', () => {
+      void deleteProjectFlow(project);
+    });
+  }
+
+  // --- Deleting scans and projects --------------------------------------------
+  // Every gallery item is deletable: scans from their viewer, projects (and
+  // their scans) from the project view. The backend endpoints are open, the
+  // same anonymous trust model as scan uploads; web-owned projects also pass
+  // the browser's device id so only the matching backup row is removed.
+
+  /** Native Telegram confirm when available, window.confirm otherwise. */
+  function confirmAction(message) {
+    return new Promise((resolve) => {
+      const tg = window.Telegram?.WebApp;
+      if (inTelegram() && typeof tg?.showConfirm === 'function') {
+        try {
+          tg.showConfirm(message, (ok) => resolve(Boolean(ok)));
+          return;
+        } catch { /* older Telegram client — fall back below */ }
+      }
+      resolve(window.confirm(message));
+    });
+  }
+
+  function notifyError(message) {
+    const tg = window.Telegram?.WebApp;
+    if (inTelegram() && typeof tg?.showAlert === 'function') {
+      try {
+        tg.showAlert(message);
+        return;
+      } catch { /* fall back below */ }
+    }
+    window.alert(message);
+  }
+
+  function removeScanFromCaches(scanId) {
+    const id = Number(scanId);
+    scansCache = scansCache.filter((s) => Number(s.id) !== id);
+    for (const project of [...projectsCache, ...myProjectsCache]) {
+      project.scans = project.scans.filter((s) => Number(s.id) !== id);
+    }
+    // Feed projects with no public scans left vanish, same as on the server.
+    projectsCache = projectsCache.filter((p) => p.scans.length > 0);
+  }
+
+  function removeProjectFromCaches(projectId) {
+    projectsCache = projectsCache.filter((p) => p.projectId !== projectId);
+    myProjectsCache = myProjectsCache.filter((p) => p.projectId !== projectId);
+  }
+
+  async function deleteScanRequest(scanId) {
+    const res = await fetch(`${API_BASE}/makon3d/scans/${Number(scanId)}`, {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    });
+    // 404 = already gone — that's the outcome we wanted.
+    if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
+  }
+
+  /** Viewer delete button: confirm, delete, return to the project or home. */
+  async function deleteScanFlow(scan) {
+    if (!(await confirmAction(t('confirm.deleteScan')))) return;
+    const btn = document.getElementById('m3d-delete-btn');
+    if (btn) btn.disabled = true;
+    try {
+      await deleteScanRequest(scan.id);
+      haptic();
+      removeScanFromCaches(scan.id);
+      if (openProjectId && findProject(openProjectId)) {
+        openProject(openProjectId);
+      } else {
+        showListView();
+        setRoute({});
+      }
+    } catch (err) {
+      console.error('[Makon3D] delete scan failed', err);
+      if (btn) btn.disabled = false;
+      notifyError(t('delete.failed'));
+    }
+  }
+
+  /** Project-view delete button: removes the project's scans, then the
+   * project itself, and lands back on home. */
+  async function deleteProjectFlow(project) {
+    if (!(await confirmAction(t('confirm.deleteProject')))) return;
+    const btn = document.getElementById('m3d-project-delete-btn');
+    if (btn) btn.disabled = true;
+    try {
+      for (const scan of [...project.scans]) {
+        await deleteScanRequest(scan.id);
+        removeScanFromCaches(scan.id);
+      }
+      const deviceId = project.isMine ? webDeviceId() : null;
+      const qs = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '';
+      const res = await fetch(
+        `${API_BASE}/makon3d/projects/${encodeURIComponent(project.projectId)}${qs}`,
+        { method: 'DELETE', headers: { Accept: 'application/json' } },
+      );
+      if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
+      haptic();
+      removeProjectFromCaches(project.projectId);
+      showListView();
+      setRoute({});
+    } catch (err) {
+      console.error('[Makon3D] delete project failed', err);
+      if (btn) btn.disabled = false;
+      notifyError(t('delete.failed'));
+    }
   }
 
   /** Fetches the public feeds plus this browser's own projects. Throws only

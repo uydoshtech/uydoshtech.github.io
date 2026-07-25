@@ -810,6 +810,38 @@ body.m3d-has-scan-banner .m3d-fab {
   opacity: 0.85;
 }
 
+/* Share + delete stacked beside the viewer meta text. */
+.m3d-viewer-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.m3d-delete-btn {
+  flex-shrink: 0;
+  appearance: none;
+  border: 1px solid rgba(229, 72, 77, 0.5);
+  background: transparent;
+  color: #e5484d;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.m3d-delete-btn:active { opacity: 0.8; }
+.m3d-delete-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* "Delete project" under the project header meta, sized to its label. */
+.m3d-project-delete {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
 .m3d-viewer-meta strong {
   color: var(--m3d-fg);
   font-weight: 650;
