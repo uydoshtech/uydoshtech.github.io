@@ -1276,7 +1276,7 @@
             ${gifReady ? t('share.gif') : t('share.link')}
           </button>
           <button type="button" class="m3d-delete-btn" id="m3d-delete-btn">
-            ${t('action.deleteScan')}
+            ${trashIconHtml()}<span>${t('action.deleteScan')}</span>
           </button>
         </div>
       </div>
@@ -2185,7 +2185,7 @@
         <span class="m3d-project-head-name">${escapeHtml(project.name)}</span>
         <span class="m3d-item-meta">${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</span>
         <button type="button" class="m3d-delete-btn m3d-project-delete" id="m3d-project-delete-btn">
-          ${escapeHtml(t('action.deleteProject'))}
+          ${trashIconHtml()}<span>${escapeHtml(t('action.deleteProject'))}</span>
         </button>
       </li>`,
       ...(project.scans.length
@@ -2205,6 +2205,15 @@
   // their scans) from the project view. The backend endpoints are open, the
   // same anonymous trust model as scan uploads; web-owned projects also pass
   // the browser's device id so only the matching backup row is removed.
+
+  function trashIconHtml() {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 6h18"></path>
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+      <path d="M10 11v6M14 11v6"></path>
+    </svg>`;
+  }
 
   /** Native Telegram confirm when available, window.confirm otherwise. */
   function confirmAction(message) {
