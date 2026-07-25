@@ -3416,7 +3416,7 @@ let scanUpsellPollTimer = null;
  * Used by the non-iOS scan flow so the invocation URL can be scanned with an
  * iPhone camera instead of retyped (App Clip invocation via the camera is
  * also the only way to launch TestFlight builds with a dynamic session URL —
- * see uydosh_client/docs/APP_CLIP.md "Local Experiences").
+ * see uydosh_mobile/docs/APP_CLIP.md "Local Experiences").
  */
 const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.5.0/qrcode.js';
 let qrCodeLibPromise = null;

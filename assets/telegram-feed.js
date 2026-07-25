@@ -8,7 +8,7 @@ const PAGE_SIZE = 10;
 // with the same name throws a SyntaxError that aborts this entire script.
 const DEFAULT_WITH_PHOTO = false;
 const DEFAULT_HAS_3D_TOUR = false;
-// Default period filter value; kept in sync with uydosh_client's
+// Default period filter value; kept in sync with uydosh_mobile's
 // listingBrowseCreatedWithinDays so first-load behavior matches the app.
 const PERIOD_DEFAULT_DAYS = 30;
 const PERIOD_ALL_TIME = 0;
@@ -26,7 +26,7 @@ const FILTER_COLLAPSED_KEY = 'uydosh_tg_filters_collapsed';
 // returning from a listing's detail page would otherwise cold-start the feed
 // back at page 1 / scrollY 0 — see `saveFeedScrollState()` (set on card tap)
 // and `restoreFeedScrollOrLoad()` (consumed once on the next feed load).
-// Mirrors the equivalent fix in uydosh_client's ListingsBloc.
+// Mirrors the equivalent fix in uydosh_mobile's ListingsBloc.
 const FEED_SCROLL_STATE_KEY = 'uydosh_tg_feed_scroll_state';
 const FEED_SCROLL_STATE_MAX_AGE_MS = 30 * 60 * 1000;
 // Sanity cap on how many pages a single restore will re-fetch, in case of a
