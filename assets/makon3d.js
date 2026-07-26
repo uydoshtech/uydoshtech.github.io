@@ -42,6 +42,8 @@
       'room.kitchen': 'Kitchen',
       'room.bathroom': 'Bathroom',
       'room.hallway': 'Hallway',
+      'room.balcony': 'Balcony',
+      'room.garage': 'Garage',
       'room.other': 'Room',
       'list.projects': 'Projects',
       'list.myProjects': 'My projects',
@@ -170,6 +172,8 @@
       'room.kitchen': 'Кухня',
       'room.bathroom': 'Ванная',
       'room.hallway': 'Прихожая',
+      'room.balcony': 'Балкон',
+      'room.garage': 'Гараж',
       'room.other': 'Комната',
       'list.projects': 'Проекты',
       'list.myProjects': 'Мои проекты',
@@ -298,6 +302,8 @@
       'room.kitchen': 'Oshxona',
       'room.bathroom': 'Hammom',
       'room.hallway': 'Yo‘lak',
+      'room.balcony': 'Balkon',
+      'room.garage': 'Garaj',
       'room.other': 'Xona',
       'list.projects': 'Loyihalar',
       'list.myProjects': 'Mening loyihalarim',
@@ -2813,12 +2819,20 @@
   const roomTypeBackdropEl = document.getElementById('m3d-roomtype-backdrop');
   const roomTypeOptionsEl = document.getElementById('m3d-roomtype-options');
   // Wire values mirror makon3d_mobile's RoomType enum; livingRoom..bathroom
-  // reuse the badge icons (ROOM_TYPE_ICONS), hallway/other are picker-only.
+  // reuse the badge icons (ROOM_TYPE_ICONS); remaining types are picker-only.
   const ROOM_TYPE_PICKER_EXTRA_ICONS = {
     hallway: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M4 21h16" />
       <path d="M7 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16" />
       <path d="M14 11.5v1" />
+    </svg>`,
+    balcony: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 4h16v10H4z" />
+      <path d="M7 14v6m5-6v6m5-6v6M3 20h18" />
+    </svg>`,
+    garage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 21V9l9-6 9 6v12" />
+      <path d="M6 21v-7h12v7M8 17h.01M12 17h.01M16 17h.01" />
     </svg>`,
     other: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -2826,7 +2840,16 @@
       <path d="M12 16.4v.1" />
     </svg>`,
   };
-  const ROOM_TYPE_WIRE_VALUES = ['livingRoom', 'bedroom', 'kitchen', 'bathroom', 'hallway', 'other'];
+  const ROOM_TYPE_WIRE_VALUES = [
+    'livingRoom',
+    'bedroom',
+    'kitchen',
+    'bathroom',
+    'hallway',
+    'balcony',
+    'garage',
+    'other',
+  ];
   /** The project the open picker adds a room to. */
   let roomTypeDialogProject = null;
 
