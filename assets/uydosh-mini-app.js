@@ -1899,6 +1899,11 @@ function initTelegramMiniApp() {
     getTelegramInitData();
     try { tg.ready(); } catch { /* ignore */ }
     try { tg.expand(); } catch { /* ignore */ }
+    // Block content-area swipe-down so the Mini App doesn't collapse while
+    // scrolling / dragging maps. Users still close via the header ✕ (or by
+    // swiping the header itself). No-op on clients < Bot API 7.7.
+    // Same call as makon3d.js `initTelegramChrome`.
+    try { tg.disableVerticalSwipes?.(); } catch { /* ignore */ }
     // Telegram doesn't reset the header BackButton to match whatever page
     // you've navigated to — it can carry over "shown" from wherever you came
     // from (e.g. back from a listing to the feed). Default it off here, on
