@@ -1302,8 +1302,12 @@
     const gifReady = scan.mediaGenerationStatus === 'ready' && scan.rotationGifUrl;
     const rows = [];
     const roomLabel = scanRoomLabel(scan);
+    const roomTypesBadge = roomTypeBadgeHtml(scan);
     rows.push(
-      `<div><strong>${roomLabel ? `${escapeHtml(roomLabel)} — ` : ''}${tf('scan.title', { id: escapeHtml(scan.id) })}</strong></div>`,
+      `<div class="m3d-viewer-title-row">
+        <strong>${roomLabel ? `${escapeHtml(roomLabel)} — ` : ''}${tf('scan.title', { id: escapeHtml(scan.id) })}</strong>
+        ${roomTypesBadge}
+      </div>`,
     );
     if (date) rows.push(`<div>${escapeHtml(date)}</div>`);
     if (dims.length) {
