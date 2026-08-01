@@ -87,6 +87,7 @@
       'viewer.viewerError': 'Could not load the 3D viewer.',
       'share.gif': 'Share GIF',
       'share.link': 'Share link',
+      'share.action': 'Share',
       'share.text': 'View this 3D scan in Makon3D:',
       'share.copied': 'Link copied to clipboard.',
       'share.prompt': 'Copy this link:',
@@ -217,6 +218,7 @@
       'viewer.viewerError': 'Не удалось загрузить 3D-просмотр.',
       'share.gif': 'Поделиться GIF',
       'share.link': 'Поделиться ссылкой',
+      'share.action': 'Поделиться',
       'share.text': 'Посмотрите этот 3D-скан в Makon3D:',
       'share.copied': 'Ссылка скопирована.',
       'share.prompt': 'Скопируйте ссылку:',
@@ -347,6 +349,7 @@
       'viewer.viewerError': '3D ko‘rish oynasini yuklab bo‘lmadi.',
       'share.gif': 'GIF ulashish',
       'share.link': 'Havolani ulashish',
+      'share.action': 'Ulashish',
       'share.text': 'Ushbu 3D skanni Makon3D’da ko‘ring:',
       'share.copied': 'Havola nusxalandi.',
       'share.prompt': 'Havolani nusxalang:',
@@ -459,6 +462,7 @@
   const viewerWrapEl = document.getElementById('m3d-viewer-wrap');
   const viewerMetaEl = document.getElementById('m3d-viewer-meta');
   const materialsEl = document.getElementById('m3d-materials');
+  const inventoryEl = document.getElementById('m3d-inventory');
 
   /** All known scans — the flat public feed merged with every project's scans. */
   /** @type {any[]} */
@@ -630,6 +634,10 @@
     if (materialsEl) {
       materialsEl.hidden = true;
       materialsEl.innerHTML = '';
+    }
+    if (inventoryEl) {
+      inventoryEl.hidden = true;
+      inventoryEl.innerHTML = '';
     }
     clearShareOgTags();
   }
@@ -1299,7 +1307,6 @@
   function renderViewerMeta(scan) {
     const dims = scanDimensions(scan);
     const date = formatDate(scan.createdAt);
-    const gifReady = scan.mediaGenerationStatus === 'ready' && scan.rotationGifUrl;
     const rows = [];
     const roomLabel = scanRoomLabel(scan);
     const roomTypesBadge = roomTypeBadgeHtml(scan);
@@ -1321,7 +1328,11 @@
         <div class="m3d-viewer-meta-text">${rows.join('')}</div>
         <div class="m3d-viewer-actions">
           <button type="button" class="m3d-share-btn" id="m3d-share-btn">
-            ${gifReady ? t('share.gif') : t('share.link')}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+              <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path>
+            </svg>
+            <span>${t('share.action')}</span>
           </button>
           <button type="button" class="m3d-delete-btn" id="m3d-delete-btn">
             ${trashIconHtml()}<span>${t('action.deleteScan')}</span>
@@ -1339,6 +1350,47 @@
       void deleteScanFlow(scan);
     });
     renderMaterialsPanel(scan);
+    renderObjectInventory(scan);
+  }
+
+  const OBJECT_LABELS = {
+    en: { window: 'Windows', door: 'Doors', opening: 'Openings', storage: 'Storage', cabinet: 'Cabinets', bed: 'Beds', sofa: 'Sofas', table: 'Tables', chair: 'Chairs', television: 'Televisions', refrigerator: 'Refrigerators', sink: 'Sinks', toilet: 'Toilets', bathtub: 'Bathtubs', shower: 'Showers', oven: 'Ovens', stove: 'Stoves', dishwasher: 'Dishwashers', washerDryer: 'Washers / dryers', fireplace: 'Fireplaces', stairs: 'Stairs' },
+    ru: { window: 'Окна', door: 'Двери', opening: 'Проёмы', storage: 'Хранение', cabinet: 'Шкафы', bed: 'Кровати', sofa: 'Диваны', table: 'Столы', chair: 'Стулья', television: 'Телевизоры', refrigerator: 'Холодильники', sink: 'Раковины', toilet: 'Унитазы', bathtub: 'Ванны', shower: 'Душевые', oven: 'Духовки', stove: 'Плиты', dishwasher: 'Посудомоечные машины', washerDryer: 'Стиральные машины', fireplace: 'Камины', stairs: 'Лестницы' },
+    uz: { window: 'Derazalar', door: 'Eshiklar', opening: 'Ochiq joylar', storage: 'Saqlash joylari', cabinet: 'Shkaflar', bed: 'Karavotlar', sofa: 'Divanlar', table: 'Stollar', chair: 'Stullar', television: 'Televizorlar', refrigerator: 'Muzlatgichlar', sink: 'Rakovinalar', toilet: 'Unitazlar', bathtub: 'Vannalar', shower: 'Dushlar', oven: 'Pechlar', stove: 'Plitalar', dishwasher: 'Idish yuvish mashinalari', washerDryer: 'Kir yuvish mashinalari', fireplace: 'Kaminlar', stairs: 'Zinapoyalar' },
+  };
+
+  function renderObjectInventory(scan) {
+    if (!inventoryEl) return;
+    const counts = scan?.objectCounts;
+    const entries = counts && typeof counts === 'object'
+      ? Object.entries(counts).filter(([, count]) => Number.isInteger(Number(count)) && Number(count) > 0)
+      : [];
+    if (!entries.length) {
+      inventoryEl.hidden = true;
+      inventoryEl.innerHTML = '';
+      return;
+    }
+    const title = currentLang === 'ru' ? 'Обнаруженные объекты' : currentLang === 'uz' ? 'Aniqlangan obyektlar' : 'Detected objects';
+    const labels = OBJECT_LABELS[currentLang] || OBJECT_LABELS.en;
+    inventoryEl.hidden = false;
+    inventoryEl.innerHTML = `
+      <button type="button" class="m3d-mat-toggle" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h16M4 16h16"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/></svg>
+        <span>${escapeHtml(title)}</span><span class="m3d-mat-toggle-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="m3d-mat-body" aria-hidden="true" inert><div class="m3d-mat-body-inner m3d-inventory-list">
+        ${entries.map(([type, count]) => `<div class="m3d-inventory-row"><span>${escapeHtml(labels[type] || type)}</span><strong>× ${Number(count)}</strong></div>`).join('')}
+      </div></div>`;
+    const toggle = inventoryEl.querySelector('.m3d-mat-toggle');
+    const body = inventoryEl.querySelector('.m3d-mat-body');
+    toggle.addEventListener('click', () => {
+      haptic();
+      const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+      toggle.setAttribute('aria-expanded', String(expanded));
+      body.classList.toggle('is-expanded', expanded);
+      body.setAttribute('aria-hidden', String(!expanded));
+      body.toggleAttribute('inert', !expanded);
+    });
   }
 
   // --- Material estimate (floor tiles + plinth / wallpaper) ------------------

@@ -944,6 +944,10 @@ body.m3d-has-scan-banner .m3d-fab {
 .m3d-share-btn {
   flex-shrink: 0;
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid var(--m3d-stroke);
   background: var(--m3d-accent-dim);
   color: var(--m3d-fg);
@@ -953,6 +957,12 @@ body.m3d-has-scan-banner .m3d-fab {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.m3d-share-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .m3d-share-btn:active {
@@ -1330,6 +1340,28 @@ body.m3d-has-scan-banner .m3d-list-panel {
 }
 
 .m3d-materials[hidden] { display: none; }
+
+.m3d-inventory {
+  margin-top: 12px;
+  border: 1px solid var(--m3d-stroke);
+  background: var(--m3d-surface);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.m3d-inventory[hidden] { display: none; }
+.m3d-inventory-list { gap: 0; }
+
+.m3d-inventory-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 1px solid var(--m3d-stroke);
+}
+
+.m3d-inventory-row strong { color: var(--m3d-accent); }
 
 .m3d-mat-toggle {
   appearance: none;
