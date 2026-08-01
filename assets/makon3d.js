@@ -477,6 +477,10 @@
   /** Open project view, or the project the current scan viewer came from. */
   /** @type {string|null} */
   let openProjectId = null;
+  /** True when an entire-housing project uses its scan viewer as the project
+   * detail screen. Back then returns home instead of revealing a redundant
+   * one-item scan list. */
+  let directProjectViewer = false;
   /** Guards renderHome() until the first feed fetch has populated the caches. */
   let feedLoaded = false;
   let modelViewerLoadPromise = null;
@@ -617,6 +621,7 @@
   function teardownViewer() {
     openScanId = null;
     openScanData = null;
+    directProjectViewer = false;
     viewerPanelEl.hidden = true;
     viewerWrapEl.classList.remove('is-blueprint');
     delete viewerWrapEl.dataset.roomscanBlueprintAlignRad;
@@ -1915,7 +1920,10 @@
     }
   }
 
-  async function openScan(scanOrId, { pushHistory = true } = {}) {
+  async function openScan(
+    scanOrId,
+    { pushHistory = true, asProjectDetail = false } = {},
+  ) {
     let scan = typeof scanOrId === 'object' && scanOrId ? scanOrId : null;
     const id = scan ? Number(scan.id) : Number(scanOrId);
     if (!Number.isInteger(id) || id <= 0) return;
@@ -1940,6 +1948,7 @@
 
     openScanId = id;
     openScanData = scan;
+    directProjectViewer = asProjectDetail;
     listPanelEl.hidden = true;
     viewerPanelEl.hidden = false;
     backEl.hidden = false;
@@ -2276,6 +2285,23 @@
     navTriggerEl.hidden = true;
     if (fabEl) fabEl.hidden = true;
     if (pushHistory) setRoute({ projectId: project.projectId });
+
+    // An entire-home project has only one meaningful scan. Use the complete
+    // scan viewer as the project-detail screen, matching the Flutter flow:
+    // Projects -> 3D model. The former scan-card screen added an unnecessary
+    // third navigation level in the Mini App.
+    const entireHousingScan =
+      project.scanMode === 'entireHousing'
+        ? (project.entireHousingScan || (project.scans.length === 1 ? project.scans[0] : null))
+        : null;
+    if (entireHousingScan) {
+      void openScan(entireHousingScan, {
+        pushHistory: false,
+        asProjectDetail: true,
+      });
+      return;
+    }
+
     statusEl.hidden = true;
     listEl.hidden = false;
     const metaBits = [
@@ -3733,6 +3759,11 @@
   });
 
   backEl.addEventListener('click', () => {
+    if (!viewerPanelEl.hidden && directProjectViewer) {
+      showListView();
+      setRoute({});
+      return;
+    }
     // From a scan viewer opened inside a project, Back returns to that
     // project; everything else returns home.
     if (!viewerPanelEl.hidden && openProjectId && findProject(openProjectId)) {
