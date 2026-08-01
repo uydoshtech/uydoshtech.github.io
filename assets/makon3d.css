@@ -1365,13 +1365,31 @@ body.m3d-has-scan-banner .m3d-list-panel {
 }
 
 .m3d-mat-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease-out;
+}
+
+.m3d-mat-body.is-expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.m3d-mat-body-inner {
+  min-height: 0;
+  overflow: hidden;
   padding: 2px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.m3d-mat-body[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .m3d-mat-body { transition: none; }
+}
 
 /* Segmented pill (surface + tile shape), theme-colored unlike the dark
    viewer-overlay .roomscan-plan-toggle. */

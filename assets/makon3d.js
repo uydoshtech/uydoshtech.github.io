@@ -1523,7 +1523,8 @@
         <span>${t('mat.title')}</span>
         <span class="m3d-mat-toggle-chevron" aria-hidden="true">›</span>
       </button>
-      <div class="m3d-mat-body" id="m3d-mat-body" ${materialsExpanded ? '' : 'hidden'}>
+      <div class="m3d-mat-body${materialsExpanded ? ' is-expanded' : ''}" id="m3d-mat-body" aria-hidden="${!materialsExpanded}" ${materialsExpanded ? '' : 'inert'}>
+        <div class="m3d-mat-body-inner">
         <div class="m3d-seg" role="tablist" aria-label="${t('mat.surface')}" id="m3d-mat-surface">
           <button type="button" class="m3d-seg-btn" role="tab" data-surface="floor">${t('mat.floor')}</button>
           <button type="button" class="m3d-seg-btn" role="tab" data-surface="walls">${t('mat.walls')}</button>
@@ -1576,7 +1577,8 @@
             </label>
           </div>
         </div>
-        <div class="m3d-mat-result" id="m3d-mat-result"></div>
+          <div class="m3d-mat-result" id="m3d-mat-result"></div>
+        </div>
       </div>
     `;
 
@@ -1756,7 +1758,9 @@
     toggleBtn.addEventListener('click', () => {
       haptic();
       materialsExpanded = !materialsExpanded;
-      bodyEl.hidden = !materialsExpanded;
+      bodyEl.classList.toggle('is-expanded', materialsExpanded);
+      bodyEl.setAttribute('aria-hidden', String(!materialsExpanded));
+      bodyEl.toggleAttribute('inert', !materialsExpanded);
       toggleBtn.setAttribute('aria-expanded', String(materialsExpanded));
     });
 
