@@ -1528,8 +1528,9 @@ body.m3d-has-scan-banner .m3d-list-panel {
 .m3d-chip:active { opacity: 0.85; }
 
 .m3d-mat-inputs {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .m3d-mat-input {
@@ -1549,15 +1550,83 @@ body.m3d-has-scan-banner .m3d-list-panel {
   border: 1px solid var(--m3d-stroke);
   background: var(--m3d-bg);
   color: var(--m3d-fg);
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 11px 12px;
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
+  appearance: textfield;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.m3d-mat-input input::-webkit-inner-spin-button,
+.m3d-mat-input input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 .m3d-mat-input input:focus {
   outline: none;
   border-color: var(--m3d-accent-stroke);
+}
+
+.m3d-mat-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.m3d-mat-controls[hidden] { display: none; }
+
+.m3d-mat-wall-controls > .m3d-mat-label {
+  margin: 0;
+}
+
+.m3d-mat-floor-controls > .m3d-mat-label {
+  margin: 0;
+}
+
+#m3d-mat-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#m3d-mat-presets .m3d-chip {
+  width: 100%;
+  padding-inline: 8px;
+  white-space: nowrap;
+}
+
+.m3d-mat-floor-controls .m3d-mat-inputs {
+  margin-top: -2px;
+}
+
+.m3d-mat-floor-controls .m3d-mat-range {
+  margin-top: -2px;
+}
+
+#m3d-mat-roll-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#m3d-mat-roll-presets .m3d-chip {
+  width: 100%;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.m3d-mat-repeat-row {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: calc(50% - 6px);
+}
+
+@media (max-width: 390px) {
+  .m3d-mat-inputs { grid-template-columns: minmax(0, 1fr); }
+  .m3d-mat-repeat-row { max-width: none; }
+  #m3d-mat-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .m3d-mat-range {

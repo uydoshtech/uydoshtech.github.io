@@ -1583,7 +1583,7 @@
         </div>
         <p class="m3d-mat-area" id="m3d-mat-area"></p>
         <p class="m3d-mat-approx" id="m3d-mat-approx" hidden></p>
-        <div id="m3d-mat-floor-controls">
+        <div class="m3d-mat-controls m3d-mat-floor-controls" id="m3d-mat-floor-controls">
           <div class="m3d-mat-label">${t('mat.tileShape')}</div>
           <div class="m3d-seg" role="tablist" aria-label="${t('mat.tileShape')}" id="m3d-mat-shape">
             <button type="button" class="m3d-seg-btn" role="tab" data-square="1">${t('mat.square')}</button>
@@ -1609,7 +1609,7 @@
             <button type="button" data-waste="15">15%</button>
           </div>
         </div>
-        <div id="m3d-mat-walls-controls" hidden>
+        <div class="m3d-mat-controls m3d-mat-wall-controls" id="m3d-mat-walls-controls" hidden>
           <div class="m3d-mat-label">${t('mat.rollSize')}</div>
           <div class="m3d-chips" id="m3d-mat-roll-presets"></div>
           <div class="m3d-mat-inputs">
@@ -1622,7 +1622,7 @@
               <input type="number" inputmode="decimal" min="1" step="0.05" id="m3d-mat-roll-length" />
             </label>
           </div>
-          <div class="m3d-mat-inputs">
+          <div class="m3d-mat-inputs m3d-mat-repeat-row">
             <label class="m3d-mat-input">
               <span>${t('mat.patternRepeat')}</span>
               <input type="number" inputmode="decimal" min="0" step="1" id="m3d-mat-repeat" />
