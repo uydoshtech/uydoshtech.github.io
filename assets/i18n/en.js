@@ -12,6 +12,7 @@ I18N.en = {
     'nav.contact': 'Contact',
     'nav.menuLabel': 'Menu',
     'nav.more': 'More',
+    'nav.appStore': 'App Store — iOS',
     'nav.testflight': 'iOS beta (TestFlight)',
     'nav.androidApk': 'Android beta (APK)',
     'session.revokedTitle': 'Session ended',

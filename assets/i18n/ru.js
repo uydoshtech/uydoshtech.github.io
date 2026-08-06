@@ -12,6 +12,7 @@ I18N.ru = {
     'nav.contact': 'Контакты',
     'nav.menuLabel': 'Меню',
     'nav.more': 'Ещё',
+    'nav.appStore': 'App Store — iOS',
     'nav.testflight': 'iOS beta (TestFlight)',
     'nav.androidApk': 'Android beta (APK)',
     'session.revokedTitle': 'Сессия завершена',
