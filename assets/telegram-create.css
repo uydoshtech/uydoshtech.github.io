@@ -180,12 +180,20 @@ input[type="date"] {
 .date-field-wrap {
   position: relative;
 }
+/*
+ * Match `.toggle-row` height (12 + 31px switch + 12 + borders) so the
+ * move-in date control doesn't look cropped next to "Private room".
+ */
 .date-field-wrap input[type="date"] {
   color: transparent;
+  min-height: 57px;
+  padding: 12px 14px;
+  padding-right: 24px;
+  border-radius: 14px;
 }
 .date-field-wrap .date-field-display {
   position: absolute;
-  left: 12px;
+  left: 14px;
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
