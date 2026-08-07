@@ -140,16 +140,17 @@
        * `ListingDetailScreen._buildActionMenuItems`, and the edit/delete row actions
        * in `telegram-account.js`) sits in the same row, pinned to the far right corner.
        */
-      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false } = {}) {
+      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false, isAdmin = false } = {}) {
         if (!isOwner) return '';
         const editHref = `/telegram/create.html?id=${encodeURIComponent(listingId)}`;
         // Replace scan only when a GLB already exists; the empty-state add card
         // on the detail body covers first-time scans (see buildOwnerAddRoomScanHtml).
+        // Admins always get Replace; owners only on supply-side listing types.
         const showReplaceScan =
           hasRoomScan &&
           UyDosh.isMiniApp?.() &&
           UyDosh.shouldShowRoomScanClipCta?.() &&
-          UyDosh.isListingEligibleForRoomScan?.(state.listing ?? { id: listingId });
+          (isAdmin || UyDosh.isListingEligibleForRoomScan?.(state.listing ?? { id: listingId }));
         const replaceScanItem = showReplaceScan
           ? `<button type="button" class="owner-menu-item" data-owner-menu-replace-scan>
                   ${UyDosh.iconCube()}

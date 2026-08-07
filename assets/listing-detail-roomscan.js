@@ -1358,14 +1358,17 @@
       }
 
       /**
-       * Owner-only "Add 3D scan" card when the listing has no GLB yet.
+       * Owner/admin "Add 3D scan" card when the listing has no GLB yet.
        * Same App Clip session flow as the post-publish upsell
-       * (`room-scan-clip.js`). Hidden for demand listing types and for
-       * iPhones that clearly can't scan.
+       * (`room-scan-clip.js`). Admins always get the CTA (any listing);
+       * owners only on supply-side types. Hidden on iPhones that clearly
+       * can't scan.
        */
-      function buildOwnerAddRoomScanHtml(l, { isOwner }) {
-        if (!isOwner || !UyDosh.isMiniApp?.()) return '';
-        if (!UyDosh.isListingEligibleForRoomScan?.(l)) return '';
+      function buildOwnerAddRoomScanHtml(l, { isOwner, isAdmin = false } = {}) {
+        if (!UyDosh.isMiniApp?.()) return '';
+        if (!isOwner && !isAdmin) return '';
+        // Admins may scan any listing; owners skip demand-side types.
+        if (!isAdmin && !UyDosh.isListingEligibleForRoomScan?.(l)) return '';
         if (!UyDosh.shouldShowRoomScanClipCta?.()) return '';
         const lang = UyDosh.getLang();
         const isIos = UyDosh.isIosPlatform?.() ?? false;
@@ -1392,9 +1395,33 @@
         `;
       }
 
-      function buildRoomScanSectionHtml(l, { isOwner = false } = {}) {
+      /** Admin viewing someone else's listing that already has a scan — no owner ⋯ menu. */
+      function buildAdminReplaceRoomScanHtml({ isOwner, isAdmin }) {
+        if (!isAdmin || isOwner || !UyDosh.isMiniApp?.()) return '';
+        if (!UyDosh.shouldShowRoomScanClipCta?.()) return '';
+        const lang = UyDosh.getLang();
+        const isIos = UyDosh.isIosPlatform?.() ?? false;
+        const label = isIos
+          ? UyDosh.t('detail.replaceRoomScan', lang)
+          : UyDosh.t('create.scan3dCopyLink', lang);
+        return `
+          <section class="roomscan-add-card" data-owner-add-roomscan data-admin-replace-roomscan>
+            <button
+              type="button"
+              class="btn primary roomscan-add-btn"
+              data-owner-add-roomscan-btn
+              data-use-icon-label="1"
+              data-haptic="medium"
+            >${UyDosh.iconCube()}<span>${UyDosh.escapeHtml(label)}</span></button>
+            <p class="roomscan-add-card-status" data-owner-add-roomscan-status hidden></p>
+            <div class="scan-upsell-qr roomscan-add-qr" data-owner-add-roomscan-qr hidden></div>
+          </section>
+        `;
+      }
+
+      function buildRoomScanSectionHtml(l, { isOwner = false, isAdmin = false } = {}) {
         const glbUrl = typeof l.room_scan_glb_url === 'string' ? l.room_scan_glb_url.trim() : '';
-        if (!glbUrl) return buildOwnerAddRoomScanHtml(l, { isOwner });
+        if (!glbUrl) return buildOwnerAddRoomScanHtml(l, { isOwner, isAdmin });
         const metaHtml = buildRoomScanDimensionsMetaHtml(l);
         return `
           <section class="roomscan-section" data-roomscan-section aria-expanded="true">
@@ -1410,6 +1437,7 @@
               ${metaHtml ? `<div class="roomscan-meta">${metaHtml}</div>` : ''}
             </div>
           </section>
+          ${buildAdminReplaceRoomScanHtml({ isOwner, isAdmin })}
         `;
       }
 
@@ -1419,6 +1447,7 @@
         if (!card || !button || !listingId) return;
         const statusEl = rootEl.querySelector('[data-owner-add-roomscan-status]');
         const qrHostEl = rootEl.querySelector('[data-owner-add-roomscan-qr]');
+        const isReplace = card.hasAttribute('data-admin-replace-roomscan');
 
         button.addEventListener('click', () => {
           UyDosh.startListingRoomScanFlow?.({
@@ -1426,7 +1455,16 @@
             buttonEl: button,
             statusEl,
             qrHostEl,
-            getButtonIdleLabel: (lang) => ownerAddRoomScanButtonLabelHtml(lang),
+            getButtonIdleLabel: (lang) => {
+              if (isReplace) {
+                const isIos = UyDosh.isIosPlatform?.() ?? false;
+                const label = isIos
+                  ? UyDosh.t('detail.replaceRoomScan', lang)
+                  : UyDosh.t('create.scan3dCopyLink', lang);
+                return `${UyDosh.iconCube()}<span>${UyDosh.escapeHtml(label)}</span>`;
+              }
+              return ownerAddRoomScanButtonLabelHtml(lang);
+            },
             onFeatureDisabled: () => {
               card.hidden = true;
             },

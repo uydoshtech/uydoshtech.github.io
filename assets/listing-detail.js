@@ -299,18 +299,22 @@
         const viewerId = isMiniApp ? UyDosh.getSessionUserId() : null;
         const ownerId = Number(l.user_id ?? l.user?.id);
         const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+        const isAdmin = isMiniApp && Boolean(UyDosh.isAdmin?.());
         const mapHtml = buildMapSectionHtml(l, lang);
-        const roomScanHtml = buildRoomScanSectionHtml(l, { isOwner });
+        const roomScanHtml = buildRoomScanSectionHtml(l, { isOwner, isAdmin });
         state.mapExpanded = false;
         state.mapLoaded = false;
         state.mapLoading = false;
         // Admins get their own floating "Edit (admin)" FAB (see `updateDetailAdminEditFab` below)
         // only when they're not already the owner — owners already have an edit link via
         // `ownerToolbarHtml`'s "..." menu, so this avoids showing two edit entry points.
-        const isAdminViewer = isMiniApp && !isOwner && Boolean(UyDosh.isAdmin?.());
+        const isAdminViewer = isAdmin && !isOwner;
 
         rootEl.innerHTML = `
-          ${ownerToolbarHtml(isOwner, l.id, { hasRoomScan: Boolean(l.room_scan_glb_url) })}
+          ${ownerToolbarHtml(isOwner, l.id, {
+            hasRoomScan: Boolean(l.room_scan_glb_url),
+            isAdmin,
+          })}
           <div class="layout">
             <div class="gallery-col">
               ${buildGalleryHtml()}
@@ -351,10 +355,13 @@
         if (isOwner) {
           loadOwnerViewCount(l.id);
           bindOwnerMenu(l.id);
-          bindOwnerAddRoomScan(l.id);
         } else {
           loadClaimBanner(l);
           recordNonOwnerView(l.id);
+        }
+        // Owner *or* admin may start a scan (admin CTA also shows on others' listings).
+        if (isOwner || isAdmin) {
+          bindOwnerAddRoomScan(l.id);
         }
         if (isMiniApp) loadComplaintsWarning(l);
         if (isMiniApp && !isOwner) {
