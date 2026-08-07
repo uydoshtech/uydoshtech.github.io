@@ -13,7 +13,6 @@ I18N.ru = {
     'nav.menuLabel': 'Меню',
     'nav.more': 'Ещё',
     'nav.appStore': 'App Store — iOS',
-    'nav.testflight': 'iOS beta (TestFlight)',
     'nav.androidApk': 'Android beta (APK)',
     'session.revokedTitle': 'Сессия завершена',
     'session.revokedMessage': 'Приложение было открыто в другом окне или на другом устройстве. Откройте его заново, чтобы продолжить.',

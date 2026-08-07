@@ -14,7 +14,6 @@ I18N.uz = {
     'nav.menuLabel': 'Menyu',
     'nav.more': 'Yana',
     'nav.appStore': 'App Store — iOS',
-    'nav.testflight': 'iOS beta (TestFlight)',
     'nav.androidApk': 'Android beta (APK)',
     'session.revokedTitle': 'Sessiya tugatildi',
     'session.revokedMessage': 'Ilova boshqa oynada yoki qurilmada ochildi. Davom etish uchun uni qayta oching.',

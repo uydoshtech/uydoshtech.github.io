@@ -42,9 +42,8 @@ const CHROME_ICONS = {
   fileText: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M14 3v4h4"></path><path d="M9 12h6M9 16h6"></path></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"></path><path d="M10 11v6M14 11v6"></path></svg>',
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M4 7l8 6 8-6"></path></svg>',
-  // Nav drawer App Store / TestFlight / APK download links — see
-  // MINI_APP_APP_STORE_HREF / MINI_APP_TESTFLIGHT_HREF /
-  // MINI_APP_ANDROID_APK_HREF in uydosh-mini-app.js.
+  // Nav drawer App Store / APK download links — see
+  // MINI_APP_APP_STORE_HREF / MINI_APP_ANDROID_APK_HREF in uydosh-mini-app.js.
   // Drawn as open stroke outlines (not filled logos) since the drawer's own
   // CSS forces `fill: none` on every icon inside it (see `.nav-drawer-body
   // svg` in ensureMiniAppSafeAreaStyles) — a filled Apple/Android silhouette

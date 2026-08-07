@@ -367,11 +367,10 @@ const MINI_APP_TERMS_PATH = '/terms-of-service.html';
 const MINI_APP_DELETE_ACCOUNT_PATH = '/delete-account.html';
 const MINI_APP_CONTACT_HREF = 'mailto:uydoshtech@gmail.com';
 // Native-app download links — App Store (production iOS) plus the same
-// beta CTAs as the public landing page (index.html). Surfaced here since
-// Mini App users otherwise have no way to find them without leaving
-// Telegram to visit the website.
+// App Store / APK CTAs as the public landing page (index.html). Surfaced
+// here since Mini App users otherwise have no way to find them without
+// leaving Telegram to visit the website.
 const MINI_APP_APP_STORE_HREF = 'https://apps.apple.com/uz/app/uydosh/id6767800712';
-const MINI_APP_TESTFLIGHT_HREF = 'https://testflight.apple.com/join/y2pFAA3k';
 const MINI_APP_ANDROID_APK_HREF = 'https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk';
 
 /** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
@@ -474,8 +473,8 @@ function navMenuHtml() {
  * on `document.body` (not inside the header) so it renders as a true
  * full-viewport overlay regardless of the header's own position/overflow.
  * Holds the account shortcuts (see accountShortcutItemsHtml()), the native
- * app download links (App Store / TestFlight / Android APK — kept flat/always
- * visible since they're a promo, not app-level plumbing), then a collapsed "More"
+ * app download links (App Store / Android APK — kept flat/always visible
+ * since they're a promo, not app-level plumbing), then a collapsed "More"
  * disclosure (see setNavDrawerMoreExpanded()) holding the app-level links
  * that otherwise have no entry point inside the Mini App (privacy, terms,
  * delete account, contact) — the public site exposes those via its own nav
@@ -501,7 +500,6 @@ function navDrawerHtml() {
           ${accountShortcutItemsHtml()}
           <div class="account-menu-divider" role="separator"></div>
           <a role="menuitem" href="${MINI_APP_APP_STORE_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-app-store>${UyDosh.iconChrome('apple')}<span data-i18n="nav.appStore"></span></a>
-          <a role="menuitem" href="${MINI_APP_TESTFLIGHT_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-testflight>${UyDosh.iconChrome('apple')}<span data-i18n="nav.testflight"></span></a>
           <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome('android')}<span data-i18n="nav.androidApk"></span></a>
           <div class="account-menu-divider" role="separator"></div>
           <button
@@ -608,18 +606,16 @@ function ensureNavDrawerMounted() {
   });
   // Nav items (`<a>`) close the drawer implicitly by navigating away; button
   // items (e.g. the theme toggle) don't navigate, so close explicitly. The
-  // App Store / TestFlight / APK links are `<a>`s too, but `target="_blank"`/
-  // `download` means this page never navigates away, so they need the same
-  // explicit close as a button — plus a one-off analytics ping.
+  // App Store / APK links are `<a>`s too, but `target="_blank"` / `download`
+  // means this page never navigates away, so they need the same explicit
+  // close as a button — plus a one-off analytics ping.
   backdrop.querySelector('.nav-drawer')?.addEventListener('click', (e) => {
     if (e.target.closest('[data-get-app-app-store]')) {
       logMiniAppEvent('get_app_tap', { platform: 'ios' });
-    } else if (e.target.closest('[data-get-app-testflight]')) {
-      logMiniAppEvent('get_app_tap', { platform: 'ios_testflight' });
     } else if (e.target.closest('[data-get-app-android-apk]')) {
       logMiniAppEvent('get_app_tap', { platform: 'android' });
     }
-    if (e.target.closest('button:not([data-nav-drawer-more-toggle]), [data-get-app-app-store], [data-get-app-testflight], [data-get-app-android-apk]')) {
+    if (e.target.closest('button:not([data-nav-drawer-more-toggle]), [data-get-app-app-store], [data-get-app-android-apk]')) {
       closeNavDrawer();
     }
   });
