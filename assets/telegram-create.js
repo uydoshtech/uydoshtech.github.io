@@ -3409,45 +3409,11 @@ async function submitListing() {
 // below polls the session and swaps the button to "View 3D plan" when done.
 // ---------------------------------------------------------------------------
 
-let scanUpsellPollTimer = null;
-
 /**
- * QR generator, lazy-loaded from CDN like model-viewer / socket.io elsewhere.
- * Used by the non-iOS scan flow so the invocation URL can be scanned with an
- * iPhone camera instead of retyped (App Clip invocation via the camera is
- * also the only way to launch TestFlight builds with a dynamic session URL —
- * see uydosh_mobile/docs/APP_CLIP.md "Local Experiences").
+ * Post-publish 3D scan upsell — session create / App Clip launch / QR /
+ * polling live in `assets/room-scan-clip.js` (shared with listing detail).
  */
-const QRCODE_LIB_SRC = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.5.0/qrcode.js';
-let qrCodeLibPromise = null;
-
-function loadQrCodeLib() {
-  if (window.qrcode) return Promise.resolve(window.qrcode);
-  if (qrCodeLibPromise) return qrCodeLibPromise;
-  qrCodeLibPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = QRCODE_LIB_SRC;
-    script.async = true;
-    script.onload = () => {
-      if (window.qrcode) resolve(window.qrcode);
-      else {
-        qrCodeLibPromise = null;
-        reject(new Error('qrcode lib missing after load'));
-      }
-    };
-    script.onerror = () => {
-      qrCodeLibPromise = null;
-      reject(new Error('Failed to load qrcode lib'));
-    };
-    document.head.appendChild(script);
-  });
-  return qrCodeLibPromise;
-}
-
-/** Renders the invocation URL as a QR code inside the scan upsell block. */
-async function showScanQrCode(invocationUrl) {
-  const root = document.getElementById('scan-upsell');
-  if (!root) return;
+function ensureScanUpsellQrHost(root) {
   let wrap = document.getElementById('scan-upsell-qr');
   if (!wrap) {
     wrap = document.createElement('div');
@@ -3455,74 +3421,14 @@ async function showScanQrCode(invocationUrl) {
     wrap.className = 'scan-upsell-qr';
     root.appendChild(wrap);
   }
-  try {
-    const qrcode = await loadQrCodeLib();
-    const qr = qrcode(0, 'M'); // type 0 = auto-size for the data
-    qr.addData(invocationUrl);
-    qr.make();
-    const img = document.createElement('img');
-    // cellSize 5px, 4-module quiet zone — comfortably scannable at arm's length.
-    img.src = qr.createDataURL(5, 4);
-    img.alt = invocationUrl;
-    img.decoding = 'async';
-    wrap.innerHTML = '';
-    wrap.appendChild(img);
-    const hint = document.createElement('p');
-    hint.className = 'scan-upsell-qr-hint';
-    hint.textContent = UyDosh.t('create.scan3dQrHint', UyDosh.getLang());
-    wrap.appendChild(hint);
-  } catch (err) {
-    // QR is a nice-to-have on top of the copied link; never break the flow.
-    console.error('QR render failed', err);
-    wrap.remove();
-  }
-}
-
-/**
- * Portrait CSS screen profiles (short×long) unique to iPhones that certainly
- * have no LiDAR: SE1 (320×568), 6/7/8/SE2/SE3 (375×667), 6–8 Plus (414×736),
- * X/XS/11 Pro/12 mini/13 mini (375×812), XR/XS Max/11/11 Pro Max (414×896).
- * LiDAR starts with the iPhone 12 Pro, and none of these sizes belong to a
- * 12-Pro-or-newer Pro model.
- */
-const NON_LIDAR_IPHONE_SCREENS = new Set([
-  '320x568',
-  '375x667',
-  '414x736',
-  '375x812',
-  '414x896',
-]);
-
-/**
- * Best-effort web equivalent of the Flutter app's native LiDAR capability
- * check (RoomPlanCapability / RoomCaptureSession.isSupported): the Telegram
- * WebView exposes neither the device model nor LiDAR, so this filters out
- * what it *can* know — iOS versions below RoomPlan's 16.0 minimum and screen
- * profiles unique to non-Pro/older iPhones. Recent generations share CSS
- * sizes between Pro and non-Pro models, so the result is intentionally
- * optimistic; the App Clip itself runs the real hardware check and shows a
- * localized "unsupported device" screen when scanning still isn't possible.
- */
-function isLikelyRoomScanCapableDevice() {
-  const ua = navigator.userAgent || '';
-  // RoomPlan requires iOS 16+. iPads can report a desktop-style UA with no
-  // "OS <major>_" token — treat a failed parse as capable (optimistic).
-  const osMatch = /OS (\d+)_/.exec(ua);
-  if (osMatch && Number(osMatch[1]) < 16) return false;
-  const shortSide = Math.min(screen.width, screen.height);
-  const longSide = Math.max(screen.width, screen.height);
-  return !NON_LIDAR_IPHONE_SCREENS.has(`${shortSide}x${longSide}`);
+  return wrap;
 }
 
 function renderScanUpsell(listingId) {
   const root = document.getElementById('scan-upsell');
-  if (!root) return;
+  if (!root || !UyDosh.shouldShowRoomScanClipCta?.()) return;
   const lang = UyDosh.getLang();
-  const isIos = (tg()?.platform || '') === 'ios';
-  // Mirror the Flutter app: hide the scan affordance entirely on iPhones
-  // that certainly can't scan. Non-iOS platforms keep the copy-link
-  // fallback (the link can be opened on another device).
-  if (isIos && !isLikelyRoomScanCapableDevice()) return;
+  const isIos = UyDosh.isIosPlatform?.() ?? false;
 
   root.innerHTML = '';
   root.hidden = false;
@@ -3545,6 +3451,9 @@ function renderScanUpsell(listingId) {
   status.hidden = true;
   root.appendChild(status);
 
+  const qrHost = ensureScanUpsellQrHost(root);
+  qrHost.hidden = true;
+
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'btn-link primary scan-upsell-button';
@@ -3552,135 +3461,38 @@ function renderScanUpsell(listingId) {
   button.textContent = isIos
     ? UyDosh.t('create.scan3dButton', lang)
     : UyDosh.t('create.scan3dCopyLink', lang);
-  button.addEventListener('click', () => startScanFlow(listingId, isIos));
+  button.addEventListener('click', () => startScanFlow(listingId));
   root.appendChild(button);
 }
 
-async function startScanFlow(listingId, isIos) {
+async function startScanFlow(listingId) {
+  const root = document.getElementById('scan-upsell');
   const button = document.getElementById('scan-upsell-button');
-  const lang = UyDosh.getLang();
-  if (button) {
-    button.disabled = true;
-    button.textContent = UyDosh.t('create.scan3dStarting', lang);
-  }
-  haptic('medium');
-  try {
-    const session = await UyDosh.createListingScanSession(listingId);
-    try {
-      sessionStorage.setItem(
-        'uydosh:activeScanSession',
-        JSON.stringify({ token: session.scanSessionId, listingId, createdAt: Date.now() }),
-      );
-    } catch { /* ignore */ }
-    UyDosh.logMiniAppEvent('room_scan_session_created', { listing_id: listingId });
-
-    if (isIos) {
-      const webApp = tg();
-      if (webApp?.openLink) webApp.openLink(session.invocationUrl);
-      else window.open(session.invocationUrl, '_blank');
-      if (button) {
-        button.disabled = false;
-        button.textContent = UyDosh.t('create.scan3dButton', lang);
-      }
-      watchScanSession(session.scanSessionId, listingId);
-    } else {
-      // Desktop/Android: show a QR so the link can be scanned with an iPhone
-      // camera, and poll so this page updates once the scan lands. Do this
-      // before the clipboard attempt — writeText rejects in some Telegram
-      // webviews (e.g. Telegram Desktop without a fresh user gesture), and
-      // that must not kill the QR flow.
-      showScanQrCode(session.invocationUrl);
-      watchScanSession(session.scanSessionId, listingId);
-      let copied = false;
-      try {
-        await navigator.clipboard?.writeText?.(session.invocationUrl);
-        copied = true;
-      } catch { /* clipboard unavailable — the QR still carries the link */ }
-      if (button) {
-        button.disabled = false;
-        button.textContent = copied
-          ? UyDosh.t('create.scan3dLinkCopied', lang)
-          : UyDosh.t('create.scan3dCopyLink', lang);
-      }
-    }
-  } catch (err) {
-    console.error('Scan session create failed', err);
-    // 403 lidar_room_scan_disabled → the feature is switched off; hide quietly.
-    const root = document.getElementById('scan-upsell');
-    if (err?.payload?.code === 'lidar_room_scan_disabled' && root) {
-      root.hidden = true;
-      return;
-    }
-    const statusEl = document.getElementById('scan-upsell-status');
-    if (statusEl) {
-      statusEl.hidden = false;
-      statusEl.textContent = UyDosh.t('create.scan3dError', lang);
-    }
-    if (button) {
-      button.disabled = false;
-      button.textContent = isIos
-        ? UyDosh.t('create.scan3dButton', lang)
-        : UyDosh.t('create.scan3dCopyLink', lang);
-    }
-  }
-}
-
-/**
- * Polls the scan session while this page is visible; stops on any terminal
- * status (completed/failed/expired) per the polling contract.
- */
-function watchScanSession(token, listingId) {
   const statusEl = document.getElementById('scan-upsell-status');
-  const button = document.getElementById('scan-upsell-button');
-  const lang = UyDosh.getLang();
+  const qrHostEl = ensureScanUpsellQrHost(root);
+  const isIos = UyDosh.isIosPlatform?.() ?? false;
 
-  const stop = () => {
-    if (scanUpsellPollTimer) {
-      clearInterval(scanUpsellPollTimer);
-      scanUpsellPollTimer = null;
-    }
-  };
-
-  const poll = async () => {
-    if (document.visibilityState !== 'visible') return;
-    let session;
-    try {
-      session = await UyDosh.fetchScanSession(token);
-    } catch (err) {
-      if (err?.status === 404 || err?.status === 410) stop();
-      return;
-    }
-    if (session.status === 'processing' && statusEl) {
-      statusEl.hidden = false;
-      statusEl.textContent = UyDosh.t('create.scan3dProcessing', lang);
-    } else if (session.status === 'completed') {
-      stop();
-      try { sessionStorage.removeItem('uydosh:activeScanSession'); } catch { /* ignore */ }
-      document.getElementById('scan-upsell-qr')?.remove();
-      if (statusEl) {
-        statusEl.hidden = false;
-        statusEl.textContent = UyDosh.t('create.scan3dReady', lang);
-      }
-      if (button) {
-        button.disabled = false;
-        button.textContent = UyDosh.t('create.scan3dView', lang);
-        const fresh = button.cloneNode(true);
-        button.replaceWith(fresh);
-        fresh.addEventListener('click', () => {
-          location.href = `/listing.html?${new URLSearchParams({ id: String(listingId), mini: '1', view: '3d' })}`;
-        });
-      }
-    } else if (session.status === 'failed' || session.status === 'expired') {
-      stop();
-      try { sessionStorage.removeItem('uydosh:activeScanSession'); } catch { /* ignore */ }
-      document.getElementById('scan-upsell-qr')?.remove();
-    }
-  };
-
-  stop();
-  scanUpsellPollTimer = setInterval(poll, 4000);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && scanUpsellPollTimer) poll();
+  await UyDosh.startListingRoomScanFlow({
+    listingId,
+    buttonEl: button,
+    statusEl,
+    qrHostEl,
+    getButtonIdleLabel: (lang) => (isIos
+      ? UyDosh.t('create.scan3dButton', lang)
+      : UyDosh.t('create.scan3dCopyLink', lang)),
+    onFeatureDisabled: () => {
+      if (root) root.hidden = true;
+    },
+    onCompleted: ({ listingId: id, buttonEl }) => {
+      if (!buttonEl) return;
+      buttonEl.disabled = false;
+      buttonEl.textContent = UyDosh.t('create.scan3dView', UyDosh.getLang());
+      const fresh = buttonEl.cloneNode(true);
+      buttonEl.replaceWith(fresh);
+      fresh.addEventListener('click', () => {
+        location.href = `/listing.html?${new URLSearchParams({ id: String(id), mini: '1', view: '3d' })}`;
+      });
+    },
   });
 }
 

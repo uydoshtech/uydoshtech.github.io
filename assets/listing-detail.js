@@ -293,25 +293,24 @@
         // → location/map.
         const descHtml = cardExtraHtml ? `<div class="map-section map-section-static">${cardExtraHtml}</div>` : '';
 
-        const mapHtml = buildMapSectionHtml(l, lang);
-        const roomScanHtml = buildRoomScanSectionHtml(l);
-        state.mapExpanded = false;
-        state.mapLoaded = false;
-        state.mapLoading = false;
-
         // Owner-only "views" toolbar (see `ownerToolbarHtml`) — the viewer's own
         // user id is only resolvable inside the Mini App (see `ensureViewerIdentity`,
         // called from `load()` before the listing itself is fetched).
         const viewerId = isMiniApp ? UyDosh.getSessionUserId() : null;
         const ownerId = Number(l.user_id ?? l.user?.id);
         const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+        const mapHtml = buildMapSectionHtml(l, lang);
+        const roomScanHtml = buildRoomScanSectionHtml(l, { isOwner });
+        state.mapExpanded = false;
+        state.mapLoaded = false;
+        state.mapLoading = false;
         // Admins get their own floating "Edit (admin)" FAB (see `updateDetailAdminEditFab` below)
         // only when they're not already the owner — owners already have an edit link via
         // `ownerToolbarHtml`'s "..." menu, so this avoids showing two edit entry points.
         const isAdminViewer = isMiniApp && !isOwner && Boolean(UyDosh.isAdmin?.());
 
         rootEl.innerHTML = `
-          ${ownerToolbarHtml(isOwner, l.id)}
+          ${ownerToolbarHtml(isOwner, l.id, { hasRoomScan: Boolean(l.room_scan_glb_url) })}
           <div class="layout">
             <div class="gallery-col">
               ${buildGalleryHtml()}
@@ -352,6 +351,7 @@
         if (isOwner) {
           loadOwnerViewCount(l.id);
           bindOwnerMenu(l.id);
+          bindOwnerAddRoomScan(l.id);
         } else {
           loadClaimBanner(l);
           recordNonOwnerView(l.id);

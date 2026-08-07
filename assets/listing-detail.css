@@ -533,6 +533,38 @@
       }
       .compat-cta-btn:hover { text-decoration: none; background: rgba(127, 127, 127, 0.08); }
 
+      /* Owner "Add 3D scan" card — same App Clip flow as the post-publish
+         upsell, shown on detail when the owner has no GLB yet. */
+      .roomscan-add-card {
+        border: 1px solid var(--stroke); background: var(--card);
+        border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      }
+      .roomscan-add-card-title { margin: 0; font-size: 16px; font-weight: 700; }
+      .roomscan-add-card-subtitle { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+      .roomscan-add-card-status { margin: 0; font-size: 13px; color: var(--muted); }
+      .roomscan-add-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%;
+      }
+      .roomscan-add-btn .icon,
+      .roomscan-add-btn .icon svg { width: 18px; height: 18px; flex-shrink: 0; }
+      .roomscan-add-btn .icon svg * { stroke: currentColor; fill: none; }
+      .roomscan-add-qr { margin-top: 4px; }
+      .scan-upsell-qr {
+        display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 4px;
+      }
+      .scan-upsell-qr img {
+        width: 200px; height: 200px; image-rendering: pixelated; border-radius: 12px;
+        background: #fff; padding: 6px;
+      }
+      .scan-upsell-qr-hint { font-size: 12px; margin: 0; text-align: center; color: var(--muted); }
+      .owner-replace-scan-panel {
+        margin: 0 0 12px; padding: 12px 14px; border: 1px solid var(--stroke);
+        border-radius: 14px; background: var(--card);
+        display: flex; flex-direction: column; gap: 10px;
+      }
+      .owner-replace-scan-status { margin: 0; font-size: 13px; color: var(--muted); }
+
       /* 3D room scan tile — collapsible summary (mirrors .map-section) that
          expands into an inline <model-viewer> (Google's web component,
          lazy-loaded only when this tile is actually expanded — most

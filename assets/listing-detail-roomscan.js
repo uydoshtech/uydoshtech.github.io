@@ -1349,9 +1349,52 @@
         return '';
       }
 
-      function buildRoomScanSectionHtml(l) {
+      function ownerAddRoomScanButtonLabelHtml(lang) {
+        const isIos = UyDosh.isIosPlatform?.() ?? false;
+        const label = isIos
+          ? UyDosh.t('detail.addRoomScan', lang)
+          : UyDosh.t('create.scan3dCopyLink', lang);
+        return `${UyDosh.iconCube()}<span>${UyDosh.escapeHtml(label)}</span>`;
+      }
+
+      /**
+       * Owner-only "Add 3D scan" card when the listing has no GLB yet.
+       * Same App Clip session flow as the post-publish upsell
+       * (`room-scan-clip.js`). Hidden for demand listing types and for
+       * iPhones that clearly can't scan.
+       */
+      function buildOwnerAddRoomScanHtml(l, { isOwner }) {
+        if (!isOwner || !UyDosh.isMiniApp?.()) return '';
+        if (!UyDosh.isListingEligibleForRoomScan?.(l)) return '';
+        if (!UyDosh.shouldShowRoomScanClipCta?.()) return '';
+        const lang = UyDosh.getLang();
+        const isIos = UyDosh.isIosPlatform?.() ?? false;
+        return `
+          <section class="roomscan-add-card" data-owner-add-roomscan>
+            <div class="roomscan-add-card-copy">
+              <h3 class="roomscan-add-card-title">${UyDosh.escapeHtml(UyDosh.t('detail.addRoomScanTitle', lang))}</h3>
+              <p class="roomscan-add-card-subtitle">${UyDosh.escapeHtml(
+                isIos
+                  ? UyDosh.t('detail.addRoomScanHint', lang)
+                  : UyDosh.t('create.scan3dNotIos', lang),
+              )}</p>
+              <p class="roomscan-add-card-status" data-owner-add-roomscan-status hidden></p>
+            </div>
+            <button
+              type="button"
+              class="btn primary roomscan-add-btn"
+              data-owner-add-roomscan-btn
+              data-use-icon-label="1"
+              data-haptic="medium"
+            >${ownerAddRoomScanButtonLabelHtml(lang)}</button>
+            <div class="scan-upsell-qr roomscan-add-qr" data-owner-add-roomscan-qr hidden></div>
+          </section>
+        `;
+      }
+
+      function buildRoomScanSectionHtml(l, { isOwner = false } = {}) {
         const glbUrl = typeof l.room_scan_glb_url === 'string' ? l.room_scan_glb_url.trim() : '';
-        if (!glbUrl) return '';
+        if (!glbUrl) return buildOwnerAddRoomScanHtml(l, { isOwner });
         const metaHtml = buildRoomScanDimensionsMetaHtml(l);
         return `
           <section class="roomscan-section" data-roomscan-section aria-expanded="true">
@@ -1368,6 +1411,34 @@
             </div>
           </section>
         `;
+      }
+
+      function bindOwnerAddRoomScan(listingId) {
+        const card = rootEl.querySelector('[data-owner-add-roomscan]');
+        const button = rootEl.querySelector('[data-owner-add-roomscan-btn]');
+        if (!card || !button || !listingId) return;
+        const statusEl = rootEl.querySelector('[data-owner-add-roomscan-status]');
+        const qrHostEl = rootEl.querySelector('[data-owner-add-roomscan-qr]');
+
+        button.addEventListener('click', () => {
+          UyDosh.startListingRoomScanFlow?.({
+            listingId,
+            buttonEl: button,
+            statusEl,
+            qrHostEl,
+            getButtonIdleLabel: (lang) => ownerAddRoomScanButtonLabelHtml(lang),
+            onFeatureDisabled: () => {
+              card.hidden = true;
+            },
+            onCompleted: () => {
+              // Reload so the viewer tile replaces the add card (and open 3D).
+              const params = new URLSearchParams(location.search);
+              params.set('view', '3d');
+              if (!params.get('mini')) params.set('mini', '1');
+              location.replace(`${location.pathname}?${params}`);
+            },
+          });
+        });
       }
 
       /**

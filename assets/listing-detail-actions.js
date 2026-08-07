@@ -140,9 +140,22 @@
        * `ListingDetailScreen._buildActionMenuItems`, and the edit/delete row actions
        * in `telegram-account.js`) sits in the same row, pinned to the far right corner.
        */
-      function ownerToolbarHtml(isOwner, listingId) {
+      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false } = {}) {
         if (!isOwner) return '';
         const editHref = `/telegram/create.html?id=${encodeURIComponent(listingId)}`;
+        // Replace scan only when a GLB already exists; the empty-state add card
+        // on the detail body covers first-time scans (see buildOwnerAddRoomScanHtml).
+        const showReplaceScan =
+          hasRoomScan &&
+          UyDosh.isMiniApp?.() &&
+          UyDosh.shouldShowRoomScanClipCta?.() &&
+          UyDosh.isListingEligibleForRoomScan?.(state.listing ?? { id: listingId });
+        const replaceScanItem = showReplaceScan
+          ? `<button type="button" class="owner-menu-item" data-owner-menu-replace-scan>
+                  ${UyDosh.iconCube()}
+                  <span>${UyDosh.escapeHtml(UyDosh.t('detail.replaceRoomScan'))}</span>
+                </button>`
+          : '';
         return `
           <div class="owner-toolbar-row">
             <div class="owner-toolbar" data-owner-toolbar>
@@ -165,6 +178,7 @@
                   ${UyDosh.iconPencil()}
                   <span>${UyDosh.escapeHtml(UyDosh.t('account.edit'))}</span>
                 </a>
+                ${replaceScanItem}
                 <button type="button" class="owner-menu-item owner-menu-item-danger" data-owner-menu-delete>
                   ${UyDosh.iconTrash()}
                   <span>${UyDosh.escapeHtml(UyDosh.t('account.delete'))}</span>
@@ -201,6 +215,7 @@
         const toggleBtn = rootEl.querySelector('[data-owner-menu-toggle]');
         const dropdownEl = rootEl.querySelector('[data-owner-menu-dropdown]');
         const deleteBtn = rootEl.querySelector('[data-owner-menu-delete]');
+        const replaceScanBtn = rootEl.querySelector('[data-owner-menu-replace-scan]');
         if (!menuEl || !toggleBtn || !dropdownEl) return;
 
         toggleBtn.addEventListener('click', (e) => {
@@ -211,6 +226,54 @@
           } else {
             closeOwnerMenu();
           }
+        });
+
+        replaceScanBtn?.addEventListener('click', () => {
+          closeOwnerMenu();
+          const lang = UyDosh.getLang();
+          const isIos = UyDosh.isIosPlatform?.() ?? false;
+          // Ephemeral progress UI under the toolbar — viewer stays visible.
+          let panel = rootEl.querySelector('[data-owner-replace-scan-panel]');
+          if (!panel) {
+            panel = document.createElement('div');
+            panel.className = 'owner-replace-scan-panel';
+            panel.dataset.ownerReplaceScanPanel = '';
+            panel.innerHTML = `
+              <p class="owner-replace-scan-status" data-owner-replace-scan-status hidden></p>
+              <button type="button" class="btn primary roomscan-add-btn" data-owner-replace-scan-btn data-use-icon-label="1"></button>
+              <div class="scan-upsell-qr owner-replace-scan-qr" data-owner-replace-scan-qr hidden></div>
+            `;
+            rootEl.querySelector('.owner-toolbar-row')?.after(panel);
+          }
+          panel.hidden = false;
+          const statusEl = panel.querySelector('[data-owner-replace-scan-status]');
+          const progressBtn = panel.querySelector('[data-owner-replace-scan-btn]');
+          const qrHostEl = panel.querySelector('[data-owner-replace-scan-qr]');
+          const idleLabel = (l) => (
+            `${UyDosh.iconCube()}<span>${UyDosh.escapeHtml(
+              isIos
+                ? UyDosh.t('detail.replaceRoomScan', l)
+                : UyDosh.t('create.scan3dCopyLink', l),
+            )}</span>`
+          );
+          progressBtn.innerHTML = idleLabel(lang);
+          UyDosh.startListingRoomScanFlow?.({
+            listingId,
+            buttonEl: progressBtn,
+            statusEl,
+            qrHostEl,
+            getButtonIdleLabel: idleLabel,
+            onFeatureDisabled: () => {
+              panel.hidden = true;
+              replaceScanBtn.hidden = true;
+            },
+            onCompleted: () => {
+              const params = new URLSearchParams(location.search);
+              params.set('view', '3d');
+              if (!params.get('mini')) params.set('mini', '1');
+              location.replace(`${location.pathname}?${params}`);
+            },
+          });
         });
 
         deleteBtn?.addEventListener('click', async () => {
