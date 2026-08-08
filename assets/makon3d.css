@@ -1361,7 +1361,9 @@ body.m3d-has-scan-banner .m3d-list-panel {
   border-top: 1px solid var(--m3d-stroke);
 }
 
-.m3d-inventory-row strong { color: var(--m3d-accent); }
+.m3d-inventory-row strong { color: var(--m3d-fg); }
+
+.m3d-inventory .m3d-mat-toggle svg { color: var(--m3d-fg); }
 
 .m3d-mat-toggle {
   appearance: none;
