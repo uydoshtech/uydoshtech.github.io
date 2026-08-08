@@ -685,20 +685,30 @@
   async function shareScan(scan) {
     const id = Number(scan.id);
     const shareUrl = scan.viewerUrl || viewerShareUrl(id);
-    const text = `${t('share.text')}\n\n${shareUrl}`;
-    const gifUrl = scan.rotationGifUrl ? photoUrl(scan.rotationGifUrl) : '';
-    try {
-      if (gifUrl && navigator.share && navigator.canShare) {
-        const res = await fetch(gifUrl);
-        const blob = await res.blob();
-        const file = new File([blob], `makon3d-scan-${id}.gif`, {
-          type: 'image/gif',
-        });
-        if (navigator.canShare({ files: [file], text, url: shareUrl })) {
-          await navigator.share({ files: [file], text, url: shareUrl, title: 'Makon3D' });
-          return;
-        }
+    const caption = t('share.text');
+    const text = `${caption}\n\n${shareUrl}`;
+    const tg = window.Telegram?.WebApp;
+
+    // Telegram Mini Apps should use Telegram's own share composer. It must be
+    // opened directly from the click handler: awaiting the optional GIF fetch
+    // first consumes the transient user activation and makes Share appear to
+    // do nothing in Telegram's WebView.
+    if (inTelegram() && typeof tg?.openTelegramLink === 'function') {
+      const telegramShareUrl =
+        `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}` +
+        `&text=${encodeURIComponent(caption)}`;
+      try {
+        tg.openTelegramLink(telegramShareUrl);
+        return;
+      } catch (err) {
+        console.warn('[Makon3D] Telegram share failed', err);
       }
+    }
+
+    // navigator.share has the same user-activation requirement. Invoke it
+    // before any network or file work; the shared link still unfurls the scan
+    // preview through its Open Graph metadata.
+    try {
       if (navigator.share) {
         await navigator.share({ title: 'Makon3D', text, url: shareUrl });
         return;
