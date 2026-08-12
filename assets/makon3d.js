@@ -490,6 +490,10 @@
   let directProjectViewer = false;
   /** Guards renderHome() until the first feed fetch has populated the caches. */
   let feedLoaded = false;
+  /** Project mutations are account-owned; true once Telegram initData has
+   * produced the Bearer session required by the project API. */
+  let projectAccountReady = false;
+  let projectDeviceClaimAttempted = false;
   let modelViewerLoadPromise = null;
 
   function escapeHtml(value) {
@@ -2207,7 +2211,7 @@
 
   /** Updates the caches. Project scans are merged into scansCache so
    * openScan() resolves them without extra fetches. `myRows` is the raw
-   * device-scoped GET /makon3d/projects payload for this browser. */
+   * account-scoped GET /makon3d/projects payload for this user. */
   function setFeeds(scans, projects, myRows = []) {
     projectsCache = Array.isArray(projects)
       ? projects.filter((p) => p && p.projectId && Array.isArray(p.scans) && p.scans.length)
@@ -2316,10 +2320,10 @@
     return scansCache.filter((scan) => !grouped.has(Number(scan.id)));
   }
 
-  /** Home is a list of projects: this browser's own first, then the public
+  /** Home is a list of projects: this account's own first, then the public
    * feed. Scans outside any project trail as single-scan cards. */
   function renderHome() {
-    if (fabEl) fabEl.hidden = false;
+    if (fabEl) fabEl.hidden = !projectAccountReady;
     const mineIds = new Set(myProjectsCache.map((p) => p.projectId));
     const publicProjects = projectsCache.filter((p) => !mineIds.has(p.projectId));
     const looseScans = ungroupedScans();
@@ -2407,13 +2411,15 @@
 
     statusEl.hidden = true;
     listEl.hidden = false;
-    const parts = [
-      `<li class="m3d-project-head">
-        <button type="button" class="m3d-delete-btn m3d-project-delete" id="m3d-project-delete-btn">
-          ${trashIconHtml()}<span>${escapeHtml(t('action.deleteProject'))}</span>
-        </button>
-      </li>`,
-    ];
+    const parts = project.isMine
+      ? [
+          `<li class="m3d-project-head">
+            <button type="button" class="m3d-delete-btn m3d-project-delete" id="m3d-project-delete-btn">
+              ${trashIconHtml()}<span>${escapeHtml(t('action.deleteProject'))}</span>
+            </button>
+          </li>`,
+        ]
+      : [];
     const canScan = canStartScanHere();
     if (project.isMine && project.scanMode === 'roomByRoom') {
       if (project.rooms.length) {
@@ -2617,15 +2623,18 @@
     const btn = document.getElementById('m3d-project-delete-btn');
     if (btn) btn.disabled = true;
     try {
+      if (!(await ensureProjectAccountSession())) {
+        const err = new Error('Project account session unavailable');
+        err.status = 401;
+        throw err;
+      }
       for (const scan of [...project.scans]) {
         await deleteScanRequest(scan.id);
         removeScanFromCaches(scan.id);
       }
-      const deviceId = project.isMine ? webDeviceId() : null;
-      const qs = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '';
-      const res = await fetch(
-        `${API_BASE}/makon3d/projects/${encodeURIComponent(project.projectId)}${qs}`,
-        { method: 'DELETE', headers: { Accept: 'application/json' } },
+      const res = await projectApiFetch(
+        `/makon3d/projects/${encodeURIComponent(project.projectId)}`,
+        { method: 'DELETE' },
       );
       if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
       haptic();
@@ -2643,12 +2652,12 @@
    * when the scans feed fails — the rest is additive and must never blank
    * the whole gallery. */
   async function fetchFeeds() {
-    const deviceId = webDeviceId();
+    projectAccountReady = await ensureProjectAccountSession();
     const [scansRes, projectsRes, mineRes] = await Promise.all([
       fetch(`${API_BASE}/makon3d/scans`),
       fetch(`${API_BASE}/makon3d/projects/feed`),
-      deviceId
-        ? fetch(`${API_BASE}/makon3d/projects?device_id=${encodeURIComponent(deviceId)}`).catch(() => null)
+      projectAccountReady
+        ? projectApiFetch('/makon3d/projects').catch(() => null)
         : Promise.resolve(null),
     ]);
     if (!scansRes.ok) throw new Error(`HTTP ${scansRes.status}`);
@@ -2693,8 +2702,8 @@
   // --- New project (floating + button) ----------------------------------------
   // Mirrors the app's create-project sheet: name + scan mode, saved through the
   // same PUT /makon3d/projects/:id backup endpoint the app syncs through. The
-  // browser owns its projects via a random localStorage device id (the web
-  // counterpart of the app's Keychain-backed DeviceIdentity).
+  // signed-in Telegram account owns its projects. The local device id remains
+  // as a migration key for project backups created before account ownership.
 
   const fabEl = document.getElementById('m3d-fab');
   const createBackdropEl = document.getElementById('m3d-create-backdrop');
@@ -2720,6 +2729,72 @@
     } catch {
       return null; // storage blocked — creating/owning projects is unavailable
     }
+  }
+
+  function projectAuthHeaders({ json = false } = {}) {
+    const token = window.UyDosh?.getSessionToken?.() || '';
+    if (!token) {
+      const err = new Error('Project account session unavailable');
+      err.status = 401;
+      throw err;
+    }
+    return {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(json ? { 'Content-Type': 'application/json' } : {}),
+    };
+  }
+
+  /** Establishes the account session from Makonix Telegram initData, then
+   * claims this browser's pre-account project backups once. */
+  async function ensureProjectAccountSession() {
+    const ensureSession = window.UyDosh?.ensureTelegramMiniAppSession;
+    if (typeof ensureSession !== 'function') return false;
+    const ready = await ensureSession();
+    if (!ready || !window.UyDosh?.getSessionToken?.()) return false;
+
+    if (!projectDeviceClaimAttempted) {
+      projectDeviceClaimAttempted = true;
+      const deviceId = webDeviceId();
+      if (deviceId) {
+        try {
+          const claimRes = await fetch(`${API_BASE}/makon3d/projects/claim-device`, {
+            method: 'POST',
+            headers: projectAuthHeaders({ json: true }),
+            body: JSON.stringify({ device_id: deviceId }),
+          });
+          if (!claimRes.ok) {
+            console.warn(`[Makonix] legacy project claim failed: HTTP ${claimRes.status}`);
+          }
+        } catch (err) {
+          console.warn('[Makonix] legacy project claim failed', err);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /** Account-scoped project request with one transparent session refresh when
+   * a cached Bearer token has expired while the Mini App tab stayed open. */
+  async function projectApiFetch(path, { method = 'GET', body } = {}) {
+    if (!(await ensureProjectAccountSession())) {
+      const err = new Error('Project account session unavailable');
+      err.status = 401;
+      throw err;
+    }
+    const send = () => fetch(`${API_BASE}${path}`, {
+      method,
+      headers: projectAuthHeaders({ json: body !== undefined }),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+    let res = await send();
+    if (res.status === 401 && inTelegram()) {
+      window.UyDosh?.setSessionToken?.('');
+      projectDeviceClaimAttempted = false;
+      if (await ensureProjectAccountSession()) res = await send();
+    }
+    return res;
   }
 
   /** Same shape as the app's project ids: time hex + '-' + random hex. */
@@ -2762,14 +2837,13 @@
   }
 
   /** Upserts a project's raw MakonProject JSON through the same backup
-   * endpoint the app syncs through (owned via the browser's device id). */
+   * endpoint the app syncs through (owned by the signed-in Telegram user). */
   async function pushProjectData(projectId, data) {
     const deviceId = webDeviceId();
     if (!deviceId) throw new Error('device id unavailable');
-    const res = await fetch(`${API_BASE}/makon3d/projects/${encodeURIComponent(projectId)}`, {
+    const res = await projectApiFetch(`/makon3d/projects/${encodeURIComponent(projectId)}`, {
       method: 'PUT',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ device_id: deviceId, data }),
+      body: { device_id: deviceId, data },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
   }
@@ -3362,15 +3436,13 @@
   /**
    * Writes a completed scan into its project's JSON (room's `scan` for
    * room-by-room targets, `entireHousingScan` otherwise) and PUTs the update.
-   * Works from a fresh device-scoped fetch — after the App Clip round trip
+   * Works from a fresh account-scoped fetch — after the App Clip round trip
    * the in-memory caches may not be populated yet.
    */
   async function attachScanToProjectTarget(target, makon3dScanId) {
     const deviceId = webDeviceId();
     if (!deviceId || !target?.projectId) return;
-    const rowsRes = await fetch(
-      `${API_BASE}/makon3d/projects?device_id=${encodeURIComponent(deviceId)}`,
-    );
+    const rowsRes = await projectApiFetch('/makon3d/projects');
     if (!rowsRes.ok) throw new Error(`HTTP ${rowsRes.status}`);
     const rows = (await rowsRes.json())?.projects || [];
     const row = rows.find((r) => String(r?.projectId) === String(target.projectId));
