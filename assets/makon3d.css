@@ -111,6 +111,25 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Project detail routes reuse the brand slot for the project's own title and
+   metadata. Let that copy take the available width and show up to two lines
+   of details instead of clipping everything after the date on narrow phones. */
+.m3d-header.is-project .m3d-brand {
+  flex: 1;
+}
+
+.m3d-header.is-project .m3d-brand-copy {
+  flex: 1;
+}
+
+.m3d-header.is-project .m3d-tagline {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .m3d-avatar {
   width: 36px;
   height: 36px;
@@ -327,19 +346,12 @@ body {
   padding-top: 0;
 }
 
-/* Project view header — the project's name above its room scans. */
+/* Project actions below the project details now shown in the app header. */
 .m3d-project-head {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 2px 4px 6px;
-}
-
-.m3d-project-head-name {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  padding: 0 4px 6px;
 }
 
 /* Placeholder row inside a project that has no scans yet. */
@@ -1006,10 +1018,9 @@ body.m3d-has-scan-banner .m3d-fab {
 .m3d-delete-btn:active { opacity: 0.8; }
 .m3d-delete-btn:disabled { opacity: 0.5; cursor: default; }
 
-/* "Delete project" under the project header meta, sized to its label. */
+/* "Delete project" below the header, sized to its label. */
 .m3d-project-delete {
   align-self: flex-start;
-  margin-top: 6px;
 }
 
 .m3d-viewer-meta strong {

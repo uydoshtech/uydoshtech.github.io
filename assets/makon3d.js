@@ -455,6 +455,9 @@
   const avatarEl = document.getElementById('m3d-avatar');
   const drawerAvatarEl = document.getElementById('m3d-drawer-avatar');
   const drawerUsernameEl = document.getElementById('m3d-drawer-username');
+  const headerEl = document.querySelector('.m3d-header');
+  const titleEl = document.getElementById('m3d-title');
+  const taglineEl = document.querySelector('.m3d-tagline');
   const statusEl = document.getElementById('m3d-status');
   const listEl = document.getElementById('m3d-list');
   const listPanelEl = document.getElementById('m3d-list-panel');
@@ -646,6 +649,7 @@
   function showListView() {
     teardownViewer();
     openProjectId = null;
+    renderAppHeader();
     listPanelEl.hidden = false;
     backEl.hidden = true;
     navTriggerEl.hidden = false;
@@ -2019,6 +2023,7 @@
     openScanId = id;
     openScanData = scan;
     directProjectViewer = asProjectDetail;
+    renderAppHeader(openProjectId ? findProject(openProjectId) : null);
     listPanelEl.hidden = true;
     viewerPanelEl.hidden = false;
     backEl.hidden = false;
@@ -2147,6 +2152,33 @@
     if (mode === 'roomByRoom') return t('project.mode.roomByRoom');
     if (mode === 'entireHousing') return t('project.mode.entireHousing');
     return '';
+  }
+
+  /** The home route shows Makonix branding. Project and project-scoped scan
+   * routes use the same header space for the project's useful context. */
+  function renderAppHeader(project = null) {
+    if (!headerEl || !titleEl || !taglineEl) return;
+    if (!project) {
+      headerEl.classList.remove('is-project');
+      titleEl.textContent = 'Makonix';
+      titleEl.removeAttribute('title');
+      taglineEl.textContent = t('tagline');
+      taglineEl.removeAttribute('title');
+      return;
+    }
+
+    const meta = [
+      formatDate(project.createdAt || project.updatedAt),
+      projectModeLabel(project.scanMode),
+      project.address || '',
+      tf('project.scanCount', { count: project.scans.length }),
+    ].filter(Boolean).join(' · ');
+    const name = String(project.name || 'Project');
+    headerEl.classList.add('is-project');
+    titleEl.textContent = name;
+    titleEl.title = name;
+    taglineEl.textContent = meta;
+    taglineEl.title = meta;
   }
 
   function projectItemHtml(project) {
@@ -2350,6 +2382,7 @@
     }
     teardownViewer();
     openProjectId = project.projectId;
+    renderAppHeader(project);
     listPanelEl.hidden = false;
     backEl.hidden = false;
     navTriggerEl.hidden = true;
@@ -2374,16 +2407,8 @@
 
     statusEl.hidden = true;
     listEl.hidden = false;
-    const metaBits = [
-      formatDate(project.createdAt || project.updatedAt),
-      projectModeLabel(project.scanMode),
-      project.address || '', // owned projects only — the public feed strips it
-      tf('project.scanCount', { count: project.scans.length }),
-    ].filter(Boolean);
     const parts = [
       `<li class="m3d-project-head">
-        <span class="m3d-project-head-name">${escapeHtml(project.name)}</span>
-        <span class="m3d-item-meta">${metaBits.map((b) => `<span>${escapeHtml(b)}</span>`).join('')}</span>
         <button type="button" class="m3d-delete-btn m3d-project-delete" id="m3d-project-delete-btn">
           ${trashIconHtml()}<span>${escapeHtml(t('action.deleteProject'))}</span>
         </button>
@@ -3655,6 +3680,7 @@
   function rerenderForLangChange() {
     applyStaticI18n();
     syncDrawerLangButtons();
+    renderAppHeader(openProjectId ? findProject(openProjectId) : null);
     if (openScanId != null && openScanData) {
       renderViewerMeta(openScanData);
     } else if (!listEl.hidden) {
