@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>Makon3D</title>
-    <meta name="description" content="Makon3D — view LiDAR room scans in 3D." />
+    <title>Makonix</title>
+    <meta name="description" content="Makonix — view LiDAR room scans in 3D." />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <script src="../assets/theme-init.js?v=20260711-1"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/makon3d.css?v=20260802-6" />
+    <link rel="stylesheet" href="../assets/makon3d.css?v=20260812-1" />
   </head>
   <body>
     <div class="m3d-app">
@@ -36,19 +36,10 @@
           </svg>
         </button>
         <div class="m3d-brand">
-          <!-- Inline copy of makon3d_mobile/assets/branding/makon3d_logo.svg,
-               refilled with currentColor so it follows the accent color. -->
-          <span class="m3d-brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 538 538" fill="currentColor" aria-hidden="true">
-              <g transform="translate(25,0)">
-                <g transform="translate(0,538) scale(0.1,-0.1)" stroke="none">
-                  <path d="M1744 4392 c-380 -229 -691 -421 -692 -427 -2 -10 1374 -845 1392 -845 10 0 1364 816 1383 834 10 8 -14 27 -98 79 l-110 67 -462 -277 c-254 -153 -471 -278 -482 -278 -21 0 -474 264 -475 277 0 4 209 132 465 285 255 153 464 280 464 283 0 5 -671 413 -686 417 -4 1 -319 -186 -699 -415z M600 2656 l0 -984 292 -173 c160 -96 295 -175 300 -177 4 -2 8 301 8 673 0 373 4 675 9 673 4 -1 117 -68 250 -148 l241 -145 2 -684 3 -685 370 -221 369 -220 368 220 367 220 1 833 c0 457 3 832 6 832 3 0 115 -66 250 -146 l244 -147 0 -528 c0 -291 2 -529 5 -529 3 0 138 79 300 175 l295 176 0 986 0 985 -22 -14 c-13 -8 -426 -257 -920 -552 l-896 -538 -849 508 c-466 279 -881 527 -920 551 l-73 43 0 -984z"/>
-                </g>
-              </g>
-            </svg>
-          </span>
+          <!-- Makonix brand mark (cube) — tinted via CSS mask to --m3d-accent. -->
+          <span class="m3d-brand-mark" aria-hidden="true"></span>
           <div class="m3d-brand-copy">
-            <h1 class="m3d-title" id="m3d-title">MakonAI</h1>
+            <h1 class="m3d-title" id="m3d-title">Makonix</h1>
             <span class="m3d-tagline" data-i18n="tagline">Ваше пространство в 3D</span>
           </div>
         </div>
@@ -225,6 +216,6 @@
     <!-- Shared with listing.html: the 2D vector blueprint floor plan the
          viewer's 2D toggle mounts (mountRoomScanBlueprint & co). -->
     <script src="../assets/listing-detail-floorplan.js?v=20260715-1" defer></script>
-    <script src="../assets/makon3d.js?v=20260808-1" defer></script>
+    <script src="../assets/makon3d.js?v=20260812-1" defer></script>
   </body>
 </html>

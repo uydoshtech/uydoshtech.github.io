@@ -1,4 +1,4 @@
-/* Makon3D mini app — list of scans + inline <model-viewer> detail. */
+/* Makonix mini app — list of scans + inline <model-viewer> detail. */
 
 :root {
   color-scheme: light dark;
@@ -170,18 +170,19 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--m3d-accent);
   background: var(--m3d-accent-dim);
   border: 1px solid var(--m3d-accent-stroke);
   flex-shrink: 0;
 }
 
-/* Inline brand-mark SVG (currentColor picks up --m3d-accent above). The mark's
-   538×538 viewBox carries its own whitespace, so size it near the tile edge. */
-.m3d-brand-mark svg {
-  width: 30px;
-  height: 30px;
-  display: block;
+/* Tinted brand cube via CSS mask (same technique as .m3d-loading-spinner). */
+.m3d-brand-mark::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background-color: var(--m3d-accent);
+  -webkit-mask: url("../images/makonix-mark-white.png") center / contain no-repeat;
+  mask: url("../images/makonix-mark-white.png") center / contain no-repeat;
 }
 
 .m3d-title {
@@ -234,8 +235,8 @@ body {
   height: 44px;
   vertical-align: middle;
   background-color: currentColor;
-  -webkit-mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
-  mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
+  -webkit-mask: url("../images/makonix-mark-white.png") center / contain no-repeat;
+  mask: url("../images/makonix-mark-white.png") center / contain no-repeat;
   animation: m3d-spin 0.9s linear infinite;
 }
 
@@ -835,8 +836,8 @@ body.m3d-has-scan-banner .m3d-fab {
   width: 44px;
   height: 44px;
   background-color: #1f3a54;
-  -webkit-mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
-  mask: url("../images/makon-icon-mono-white.svg") center / contain no-repeat;
+  -webkit-mask: url("../images/makonix-mark-white.png") center / contain no-repeat;
+  mask: url("../images/makonix-mark-white.png") center / contain no-repeat;
   animation: m3d-spin 0.9s linear infinite;
 }
 

@@ -1,4 +1,4 @@
-// Makon3D web gallery — list recent scans, open one in <model-viewer>.
+// Makonix web gallery — list recent scans, open one in <model-viewer>.
 (() => {
   const API_BASE = window.UyDosh?.API_BASE || 'https://api.uydosh.com';
   const MODEL_VIEWER_SRC =
@@ -7,7 +7,7 @@
   const GLB_CACHE_VERSION = '20260716-1';
 
   // --- i18n -----------------------------------------------------------------
-  // Self-contained: the Makon3D mini app doesn't load uydosh-i18n.js (whose
+  // Self-contained: the Makonix mini app doesn't load uydosh-i18n.js (whose
   // dictionaries are UyDosh-page keys), but mirrors its uz/ru/en language set.
   const M3D_LANGS = ['uz', 'ru', 'en'];
   const M3D_LANG_STORAGE_KEY = 'makon3d:lang';
@@ -88,10 +88,10 @@
       'share.gif': 'Share GIF',
       'share.link': 'Share link',
       'share.action': 'Share',
-      'share.text': 'View this 3D scan in Makon3D:',
+      'share.text': 'View this 3D scan in Makonix:',
       'share.copied': 'Link copied to clipboard.',
       'share.prompt': 'Copy this link:',
-      'share.ogDescription': 'View this 3D scan in Makon3D',
+      'share.ogDescription': 'View this 3D scan in Makonix',
       'ctrl.fullRoom': 'Full room',
       'ctrl.floorFurniture': 'Floor and furniture',
       'ctrl.floorOnly': 'Floor only',
@@ -219,10 +219,10 @@
       'share.gif': 'Поделиться GIF',
       'share.link': 'Поделиться ссылкой',
       'share.action': 'Поделиться',
-      'share.text': 'Посмотрите этот 3D-скан в Makon3D:',
+      'share.text': 'Посмотрите этот 3D-скан в Makonix:',
       'share.copied': 'Ссылка скопирована.',
       'share.prompt': 'Скопируйте ссылку:',
-      'share.ogDescription': 'Посмотрите этот 3D-скан в Makon3D',
+      'share.ogDescription': 'Посмотрите этот 3D-скан в Makonix',
       'ctrl.fullRoom': 'Вся комната',
       'ctrl.floorFurniture': 'Пол и мебель',
       'ctrl.floorOnly': 'Только пол',
@@ -350,10 +350,10 @@
       'share.gif': 'GIF ulashish',
       'share.link': 'Havolani ulashish',
       'share.action': 'Ulashish',
-      'share.text': 'Ushbu 3D skanni Makon3D’da ko‘ring:',
+      'share.text': 'Ushbu 3D skanni Makonix’da ko‘ring:',
       'share.copied': 'Havola nusxalandi.',
       'share.prompt': 'Havolani nusxalang:',
-      'share.ogDescription': 'Ushbu 3D skanni Makon3D’da ko‘ring',
+      'share.ogDescription': 'Ushbu 3D skanni Makonix’da ko‘ring',
       'ctrl.fullRoom': 'Butun xona',
       'ctrl.floorFurniture': 'Pol va mebel',
       'ctrl.floorOnly': 'Faqat pol',
@@ -701,7 +701,7 @@
         tg.openTelegramLink(telegramShareUrl);
         return;
       } catch (err) {
-        console.warn('[Makon3D] Telegram share failed', err);
+        console.warn('[Makonix] Telegram share failed', err);
       }
     }
 
@@ -710,12 +710,12 @@
     // preview through its Open Graph metadata.
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Makon3D', text, url: shareUrl });
+        await navigator.share({ title: 'Makonix', text, url: shareUrl });
         return;
       }
     } catch (err) {
       if (err && err.name === 'AbortError') return;
-      console.warn('[Makon3D] share failed', err);
+      console.warn('[Makonix] share failed', err);
     }
     try {
       await navigator.clipboard.writeText(text);
@@ -1984,7 +1984,7 @@
       // Top-left: 3D/2D toggle — 2D mounts the vector blueprint floor plan.
       viewerWrapEl.appendChild(createRoomScanPlanToggle(viewer, viewerWrapEl, glb));
     } catch (err) {
-      console.error('[Makon3D] model-viewer failed', err);
+      console.error('[Makonix] model-viewer failed', err);
       viewerWrapEl.innerHTML =
         `<div class="m3d-viewer-status">${t('viewer.viewerError')}</div>`;
     }
@@ -2009,7 +2009,7 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         scan = await res.json();
       } catch (err) {
-        console.error('[Makon3D] fetch scan failed', err);
+        console.error('[Makonix] fetch scan failed', err);
         showListView();
         showStatusKey('scan.notFound', true);
         return;
@@ -2035,7 +2035,7 @@
         ? photoUrl(scan.posterImageUrl)
         : '';
     setShareOgTags({
-      title: `Makon3D scan #${id}`,
+      title: `Makonix scan #${id}`,
       description: t('share.ogDescription'),
       imageUrl,
       pageUrl,
@@ -2543,7 +2543,7 @@
       try {
         await pushProjectData(project.projectId, data);
       } catch (err) {
-        console.warn('[Makon3D] project sync after scan delete failed', err);
+        console.warn('[Makonix] project sync after scan delete failed', err);
       }
     }
   }
@@ -2579,7 +2579,7 @@
         setRoute({});
       }
     } catch (err) {
-      console.error('[Makon3D] delete scan failed', err);
+      console.error('[Makonix] delete scan failed', err);
       if (btn) btn.disabled = false;
       notifyError(t('delete.failed'));
     }
@@ -2608,7 +2608,7 @@
       showListView();
       setRoute({});
     } catch (err) {
-      console.error('[Makon3D] delete project failed', err);
+      console.error('[Makonix] delete project failed', err);
       if (btn) btn.disabled = false;
       notifyError(t('delete.failed'));
     }
@@ -2659,7 +2659,7 @@
         openProject(projectId, { pushHistory: false });
       }
     } catch (err) {
-      console.error('[Makon3D] list failed', err);
+      console.error('[Makonix] list failed', err);
       showStatusKey('list.error', true);
       if (id) await openScan(id, { pushHistory: false });
     }
@@ -2795,7 +2795,7 @@
       // Straight into the new project, like the app after "Create".
       openProject(projectId);
     } catch (err) {
-      console.error('[Makon3D] create project failed', err);
+      console.error('[Makonix] create project failed', err);
       showCreateError('create.failed');
     } finally {
       createSubmitEl.disabled = false;
@@ -2869,7 +2869,7 @@
       }
       createAddressEl.value = address;
     } catch (err) {
-      console.warn('[Makon3D] use current location failed', err);
+      console.warn('[Makonix] use current location failed', err);
       showCreateError(err?.denied ? 'create.locationDenied' : 'create.locationFailed');
     } finally {
       createLocateEl.disabled = false;
@@ -3005,7 +3005,7 @@
         openProject(project.projectId, { pushHistory: false });
       }
     } catch (err) {
-      console.error('[Makon3D] add room failed', err);
+      console.error('[Makonix] add room failed', err);
       data.rooms = data.rooms.filter((r) => r !== roomJson);
       notifyError(t('project.updateFailed'));
     }
@@ -3253,7 +3253,7 @@
       hint.textContent = t('cta.qrHint');
       wrap.appendChild(hint);
     } catch (err) {
-      console.error('[Makon3D] QR render failed', err);
+      console.error('[Makonix] QR render failed', err);
       wrap.remove();
     }
   }
@@ -3302,7 +3302,7 @@
         button.textContent = originalLabel;
       }
     } catch (err) {
-      console.error('[Makon3D] scan session create failed', err);
+      console.error('[Makonix] scan session create failed', err);
       if (button) {
         button.disabled = false;
         button.textContent = originalLabel;
@@ -3387,7 +3387,7 @@
         await attachScanToProjectTarget(target, makon3dScanId);
       } catch (err) {
         // The scan still exists as a loose gallery item — don't block on it.
-        console.error('[Makon3D] attaching scan to project failed', err);
+        console.error('[Makonix] attaching scan to project failed', err);
       }
     }
     await openCompletedScan(makon3dScanId, target?.projectId || null);
@@ -3581,7 +3581,7 @@
   // it's ever called for this user; once answered (granted or denied), later
   // calls resolve/reject silently with no repeat prompt. The resolved position
   // is reported to the same backend endpoint as UyDosh's map view, which
-  // verifies this app's initData against the Makon 3D bot token.
+  // verifies this app's initData against the Makonix bot token.
 
   function initTelegramLocationManager() {
     const loc = window.Telegram?.WebApp?.LocationManager;
@@ -3624,7 +3624,7 @@
         }),
       });
     } catch (err) {
-      console.warn('[Makon3D] location request failed', err);
+      console.warn('[Makonix] location request failed', err);
     }
   }
 
