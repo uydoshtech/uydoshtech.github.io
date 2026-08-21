@@ -649,7 +649,7 @@
     clearShareOgTags();
   }
 
-  /** Home: the projects list with ungrouped scans below (see renderHome). */
+  /** Home: published projects, plus this account's own (see renderHome). */
   function showListView() {
     teardownViewer();
     openProjectId = null;
@@ -2311,23 +2311,15 @@
     );
   }
 
-  /** Scans that belong to no project — shown as single-scan cards on home. */
-  function ungroupedScans() {
-    const grouped = new Set();
-    for (const project of [...myProjectsCache, ...projectsCache]) {
-      for (const scan of project.scans) grouped.add(Number(scan.id));
-    }
-    return scansCache.filter((scan) => !grouped.has(Number(scan.id)));
-  }
-
-  /** Home is a list of projects: this account's own first, then the public
-   * feed. Scans outside any project trail as single-scan cards. */
+  /** Home lists projects only — matching the Flutter Projects tab. This
+   * account's own first (drafts included, so a just-created project stays
+   * reachable), then the public feed of published contractor jobs. Loose
+   * scans from the old gallery are not shown. */
   function renderHome() {
     if (fabEl) fabEl.hidden = !projectAccountReady;
     const mineIds = new Set(myProjectsCache.map((p) => p.projectId));
     const publicProjects = projectsCache.filter((p) => !mineIds.has(p.projectId));
-    const looseScans = ungroupedScans();
-    if (!myProjectsCache.length && !publicProjects.length && !looseScans.length) {
+    if (!myProjectsCache.length && !publicProjects.length) {
       showStatusKey('list.empty');
       return;
     }
@@ -2338,12 +2330,11 @@
       parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.myProjects'))}</li>`);
       for (const project of myProjectsCache) parts.push(projectItemHtml(project));
     }
-    if (publicProjects.length || looseScans.length) {
+    if (publicProjects.length) {
       if (myProjectsCache.length) {
         parts.push(`<li class="m3d-section-title">${escapeHtml(t('list.projects'))}</li>`);
       }
       for (const project of publicProjects) parts.push(projectItemHtml(project));
-      for (const scan of looseScans) parts.push(scanItemHtml(scan));
     }
     listEl.innerHTML = parts.join('');
   }
@@ -2648,9 +2639,9 @@
     }
   }
 
-  /** Fetches the public feeds plus this browser's own projects. Throws only
-   * when the scans feed fails — the rest is additive and must never blank
-   * the whole gallery. */
+  /** Fetches the published-projects feed plus this account's own projects.
+   * Throws only when the scans feed fails — the rest is additive and must
+   * never blank the whole gallery. Scan payloads still hydrate project rooms. */
   async function fetchFeeds() {
     projectAccountReady = await ensureProjectAccountSession();
     const [scansRes, projectsRes, mineRes] = await Promise.all([
