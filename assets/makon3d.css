@@ -243,6 +243,21 @@ body {
   text-align: center;
 }
 
+/* Home-screen loader: center in the visible Mini App viewport. The status
+   block otherwise sizes to the spinner and sits under the header, leaving
+   the rest of the screen empty (Telegram iOS WebKit also does not stretch
+   flex:1 children of a min-height column). Empty/error copy stays in flow. */
+.m3d-status.is-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  pointer-events: none;
+}
+
 /* Spinning Makon mark — the one loader used everywhere across the mini app
    (scan list, 3D viewer, 2D blueprint), like UyDosh's spinning "U" logo.
    Masked (rather than a background image) so background-color tints it to
@@ -1371,6 +1386,20 @@ body.m3d-has-scan-banner .m3d-list-panel {
   gap: 16px;
   padding: 11px 0;
   border-top: 1px solid var(--m3d-stroke);
+}
+
+.m3d-inventory-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.m3d-inventory-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--m3d-muted);
 }
 
 .m3d-inventory-row strong { color: var(--m3d-fg); }

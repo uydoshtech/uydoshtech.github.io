@@ -602,6 +602,7 @@
 
   function showStatus(message, isError = false) {
     lastStatusKey = null;
+    statusEl.classList.remove('is-loading');
     statusEl.hidden = false;
     statusEl.dataset.error = isError ? '1' : '';
     statusEl.removeAttribute('aria-label');
@@ -622,6 +623,7 @@
 
   function showLoadingStatus(label) {
     lastStatusKey = null;
+    statusEl.classList.add('is-loading');
     statusEl.hidden = false;
     statusEl.dataset.error = '';
     statusEl.setAttribute('aria-label', label);
@@ -1377,6 +1379,34 @@
     uz: { window: 'Derazalar', door: 'Eshiklar', opening: 'Ochiq joylar', storage: 'Saqlash joylari', cabinet: 'Shkaflar', bed: 'Karavotlar', sofa: 'Divanlar', table: 'Stollar', chair: 'Stullar', television: 'Televizorlar', refrigerator: 'Muzlatgichlar', sink: 'Rakovinalar', toilet: 'Unitazlar', bathtub: 'Vannalar', shower: 'Dushlar', oven: 'Pechlar', stove: 'Plitalar', dishwasher: 'Idish yuvish mashinalari', washerDryer: 'Kir yuvish mashinalari', fireplace: 'Kaminlar', stairs: 'Zinapoyalar' },
   };
 
+  /** Stroke icons matching Flutter DetectedObjectsSection (Material outlined). */
+  function objectTypeIconHtml(type) {
+    const inner = {
+      window: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 12h18M12 4v16"/>',
+      door: '<path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M5 21h14"/><circle cx="15" cy="12" r="1"/>',
+      opening: '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
+      storage: '<path d="M4 8h16v12H4z"/><path d="M4 8l2-4h12l2 4"/><path d="M10 13h4"/>',
+      cabinet: '<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M12 3v18"/><circle cx="8.5" cy="12" r="1"/><circle cx="15.5" cy="12" r="1"/>',
+      bed: '<path d="M3 18V9a2 2 0 0 1 2-2h7a3 3 0 0 1 3 3v8"/><path d="M3 14h18v4H3z"/><path d="M3 18v2M21 18v2"/>',
+      sofa: '<path d="M4 12V9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v3"/><path d="M3 14a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4H3z"/><path d="M5 18v2M19 18v2"/>',
+      table: '<ellipse cx="12" cy="8" rx="9" ry="3"/><path d="M12 11v6"/><path d="M6 21l2-6M18 21l-2-6"/>',
+      chair: '<path d="M7 10V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M5 13a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4H5z"/><path d="M7 17v3M17 17v3"/>',
+      television: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+      refrigerator: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M6 10h12"/><path d="M9 6v1M9 14v3"/>',
+      sink: '<path d="M3 10h18v3H3z"/><path d="M5 13v4a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-4"/><path d="M12 7v3M10 7h4"/>',
+      toilet: '<path d="M8 4h6a3 3 0 0 1 3 3v4H8z"/><path d="M7 11h12a4 4 0 0 1-4 6H11a4 4 0 0 1-4-6z"/><path d="M10 21h4"/>',
+      bathtub: '<path d="M4 13h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M4 13V8a3 3 0 0 1 3-3h1"/><path d="M6 20v1M18 20v1"/>',
+      shower: '<circle cx="8" cy="5" r="1.5"/><path d="M8 7v2M4 11h10"/><path d="M6 14v1M9 14v2M12 14v1M6 18v1M9 19v1M12 18v1"/>',
+      oven: '<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="6" y="8" width="8" height="8" rx="1"/><circle cx="17" cy="10" r="1"/><circle cx="17" cy="14" r="1"/>',
+      stove: '<path d="M4 11h16v9H4z"/><circle cx="8" cy="7" r="1.5"/><circle cx="12" cy="7" r="1.5"/><circle cx="16" cy="7" r="1.5"/><path d="M8 11v2M12 11v2M16 11v2"/>',
+      dishwasher: '<path d="M9 3h6l1 3H8z"/><rect x="7" y="6" width="10" height="15" rx="2"/><path d="M10 12h4M10 16h4"/>',
+      washerDryer: '<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="13" r="5"/><circle cx="12" cy="13" r="2"/><circle cx="8" cy="5.5" r="0.8"/><circle cx="11" cy="5.5" r="0.8"/>',
+      fireplace: '<path d="M4 21h16"/><path d="M6 21V9h12v12"/><path d="M9 21v-5a3 3 0 0 1 6 0v5"/><path d="M12 9V6"/>',
+      stairs: '<path d="M3 20h5v-5h5v-5h5V5h3"/>',
+    }[type] || '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>';
+    return `<svg class="m3d-inventory-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+  }
+
   function renderObjectInventory(scan) {
     if (!inventoryEl) return;
     const counts = scan?.objectCounts;
@@ -1397,7 +1427,7 @@
         <span>${escapeHtml(title)}</span><span class="m3d-mat-toggle-chevron" aria-hidden="true">›</span>
       </button>
       <div class="m3d-mat-body" aria-hidden="true" inert><div class="m3d-mat-body-inner m3d-inventory-list">
-        ${entries.map(([type, count]) => `<div class="m3d-inventory-row"><span>${escapeHtml(labels[type] || type)}</span><strong>× ${Number(count)}</strong></div>`).join('')}
+        ${entries.map(([type, count]) => `<div class="m3d-inventory-row"><span class="m3d-inventory-label">${objectTypeIconHtml(type)}<span>${escapeHtml(labels[type] || type)}</span></span><strong>× ${Number(count)}</strong></div>`).join('')}
       </div></div>`;
     const toggle = inventoryEl.querySelector('.m3d-mat-toggle');
     const body = inventoryEl.querySelector('.m3d-mat-body');
@@ -2323,6 +2353,7 @@
       showStatusKey('list.empty');
       return;
     }
+    statusEl.classList.remove('is-loading');
     statusEl.hidden = true;
     listEl.hidden = false;
     const parts = [];
@@ -2400,6 +2431,7 @@
       return;
     }
 
+    statusEl.classList.remove('is-loading');
     statusEl.hidden = true;
     listEl.hidden = false;
     const parts = project.isMine
@@ -2828,10 +2860,16 @@
   }
 
   /** Upserts a project's raw MakonProject JSON through the same backup
-   * endpoint the app syncs through (owned by the signed-in Telegram user). */
+   * endpoint the app syncs through (owned by the signed-in Telegram user).
+   * Always stamps `updatedAt` so the backend's conflict check accepts the
+   * write (an untimestamped blob is treated as stale once any client has
+   * written a timestamp). */
   async function pushProjectData(projectId, data) {
     const deviceId = webDeviceId();
     if (!deviceId) throw new Error('device id unavailable');
+    if (data && typeof data === 'object') {
+      data.updatedAt = new Date().toISOString();
+    }
     const res = await projectApiFetch(`/makon3d/projects/${encodeURIComponent(projectId)}`, {
       method: 'PUT',
       body: { device_id: deviceId, data },
@@ -3130,8 +3168,9 @@
   // uploads, the backend feeds the result into makon3d_scans, and the clip
   // deep-links back here with a `scan_<token>` start_param (handled by
   // restoreScanSessionFromStartParam). The project/room the session belongs
-  // to is remembered in localStorage (survives the App Clip round trip) and
-  // written into the project's JSON once the scan completes.
+  // to is stored on the scan session itself (and mirrored in localStorage);
+  // the backend writes the scan into the project's JSON on complete so the
+  // 3D model is not lost when Telegram drops Mini App storage on return.
 
   const scanCtaEl = document.getElementById('m3d-scan-cta');
   const SCAN_SESSION_STORAGE_KEY = 'makon3d:activeScanSession';
@@ -3233,23 +3272,42 @@
     return /iPhone|iPad|iPod/.test(navigator.userAgent || '');
   }
 
-  async function createScanSession() {
-    const res = await fetch(`${API_BASE}/makon3d/scan-sessions`, {
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    let payload = null;
+  async function createScanSession(target) {
+    const body = {
+      device_id: webDeviceId() || undefined,
+      project_id: target?.projectId || undefined,
+      room_id: target?.roomId || undefined,
+      room_type: target?.roomType || undefined,
+    };
+    const parsePayload = async (res) => {
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch { /* ignore */ }
+      if (!res.ok) {
+        const err = new Error(payload?.error || `HTTP ${res.status}`);
+        err.status = res.status;
+        err.payload = payload;
+        throw err;
+      }
+      return payload;
+    };
+    // Prefer the signed-in account so completion can attach the scan to this
+    // user's project even after Telegram opens a fresh Mini App instance.
     try {
-      payload = await res.json();
-    } catch { /* ignore */ }
-    if (!res.ok) {
-      const err = new Error(payload?.error || `HTTP ${res.status}`);
-      err.status = res.status;
-      err.payload = payload;
-      throw err;
+      return await parsePayload(await projectApiFetch('/makon3d/scan-sessions', {
+        method: 'POST',
+        body,
+      }));
+    } catch (err) {
+      if (err?.status && err.status !== 401) throw err;
+      const res = await fetch(`${API_BASE}/makon3d/scan-sessions`, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return parsePayload(res);
     }
-    return payload;
   }
 
   async function fetchScanSession(token) {
@@ -3363,7 +3421,7 @@
     }
     haptic();
     try {
-      const session = await createScanSession();
+      const session = await createScanSession(target);
       saveScanTarget(session.scanSessionId, target);
       try {
         sessionStorage.setItem(
@@ -3420,6 +3478,9 @@
       doorwayAreaM2: scan.doorwayAreaM2 ?? null,
       windowAreaM2: scan.windowAreaM2 ?? null,
       worldPlusXBearingDeg: scan.worldPlusXBearingDeg ?? null,
+      roomTypes: Array.isArray(scan.roomTypes) ? scan.roomTypes : [],
+      objectCounts:
+        scan.objectCounts && typeof scan.objectCounts === 'object' ? scan.objectCounts : {},
       capturedAt: scan.createdAt || new Date().toISOString(),
     };
   }
@@ -3431,8 +3492,9 @@
    * the in-memory caches may not be populated yet.
    */
   async function attachScanToProjectTarget(target, makon3dScanId) {
+    if (!target?.projectId) return;
     const deviceId = webDeviceId();
-    if (!deviceId || !target?.projectId) return;
+    if (!deviceId) return;
     const rowsRes = await projectApiFetch('/makon3d/projects');
     if (!rowsRes.ok) throw new Error(`HTTP ${rowsRes.status}`);
     const rows = (await rowsRes.json())?.projects || [];
@@ -3467,14 +3529,27 @@
   }
 
   /** Terminal "completed" handler shared by the poller and the App Clip
-   * return leg: attach to the target project, refresh, open the scan. */
-  async function handleScanSessionCompleted(token, makon3dScanId) {
-    const target = takeScanTarget(token);
+   * return leg: attach to the target project, refresh, open the scan.
+   * Prefers the localStorage target, then the project id stored on the
+   * session (survives a fresh Telegram WebView). */
+  async function handleScanSessionCompleted(token, session) {
+    const makon3dScanId = Number(session?.makon3dScanId);
+    const stored = takeScanTarget(token);
+    const target = stored?.projectId
+      ? stored
+      : session?.makon3dProjectId
+        ? {
+            projectId: session.makon3dProjectId,
+            roomId: session.makon3dRoomId || undefined,
+            roomType: session.makon3dRoomType || undefined,
+          }
+        : null;
     if (target?.projectId) {
       try {
         await attachScanToProjectTarget(target, makon3dScanId);
       } catch (err) {
-        // The scan still exists as a loose gallery item — don't block on it.
+        // The scan still exists as a loose gallery item — and the backend
+        // may already have attached it during complete.
         console.error('[Makonix] attaching scan to project failed', err);
       }
     }
@@ -3538,7 +3613,7 @@
         document.getElementById('m3d-scan-cta-qr')?.remove();
         hideScanBanner();
         haptic();
-        await handleScanSessionCompleted(token, Number(session.makon3dScanId));
+        await handleScanSessionCompleted(token, session);
       } else if (session.status === 'failed' || session.status === 'expired') {
         stop();
         clearStored();
@@ -3635,7 +3710,7 @@
       if (session.status === 'completed') {
         finish();
         haptic();
-        await handleScanSessionCompleted(token, Number(session.makon3dScanId));
+        await handleScanSessionCompleted(token, session);
         return true;
       }
       if (session.status === 'failed') {
