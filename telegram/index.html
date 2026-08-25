@@ -15,32 +15,32 @@
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260714-1" />
     <link rel="stylesheet" href="../assets/telegram-index.css?v=20260714-3" />
   </head>
-  <body>
+  <body class="view-map">
     <div class="wrap">
       <header data-uydosh-mini-app-header></header>
 
       <div class="feed-sticky">
-        <section class="filters" id="filters" aria-label="Filters"></section>
+        <section class="filters filters--map-view" id="filters" aria-label="Filters"></section>
       </div>
 
       <div class="view-tabs" role="tablist" aria-label="View">
-        <button type="button" class="view-tab" role="tab" data-view="list" data-haptic="selection" aria-selected="true">
+        <button type="button" class="view-tab" role="tab" data-view="list" data-haptic="selection" aria-selected="false">
           <span class="view-tab-icon" aria-hidden="true" data-icon="list"></span>
           <span data-i18n="view.list">Список</span>
         </button>
-        <button type="button" class="view-tab" role="tab" data-view="map" data-haptic="selection" aria-selected="false">
+        <button type="button" class="view-tab" role="tab" data-view="map" data-haptic="selection" aria-selected="true">
           <span class="view-tab-icon" aria-hidden="true" data-icon="mapPin"></span>
           <span data-i18n="view.map">Карта</span>
         </button>
       </div>
 
       <main>
-        <div class="feed-list-panel" id="feed-list-panel">
+        <div class="feed-list-panel hidden" id="feed-list-panel">
           <div class="grid" id="grid" aria-live="polite"></div>
           <div class="status" id="status" role="status"></div>
           <div id="sentinel" aria-hidden="true"></div>
         </div>
-        <div class="feed-map-panel" id="feed-map-panel" aria-label="Map">
+        <div class="feed-map-panel active" id="feed-map-panel" aria-label="Map">
           <div class="map-container" id="feed-map"></div>
           <button
             type="button"
@@ -64,6 +64,7 @@
       data-i18n="create.postListing"
       data-i18n-attr="aria-label"
       data-icon="plus"
+      hidden
     ></a>
 
     <button
@@ -84,6 +85,6 @@
     <script src="../assets/uydosh-badges.js?v=20260714-69" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260714-1" defer></script>
     <script src="../assets/telegram-feed-map.js?v=20260723-1" defer></script>
-    <script src="../assets/telegram-feed.js?v=20260714-115" defer></script>
+    <script src="../assets/telegram-feed.js?v=20260714-116" defer></script>
   </body>
 </html>
