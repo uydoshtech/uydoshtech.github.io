@@ -525,7 +525,7 @@ function listingTypeCycleChipHtml(typeOptions, lang, { compact = false } = {}) {
   const label = selected?.label ?? UyDosh.t('filter.type.all', lang);
   const glyphs = typeOptions.map((opt) => {
     const active = selected?.value === opt.value;
-    return `<span class="chip-type-glyph${active ? ' is-active' : ''}" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.value, { pressed: false })}</span>`;
+    return `<span class="chip-type-glyph${active ? ' is-active' : ''}" data-type="${opt.value}" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.value, { pressed: false })}</span>`;
   }).join('');
   const typeAttr = selected ? ` data-listing-type="${selected.value}"` : '';
   const className = compact

@@ -331,12 +331,6 @@ header {
 .chip-type-cycle[data-listing-type="3"][aria-pressed="true"] {
   border-color: #0288D1;
 }
-.chips-compact .chip-type-icons {
-  gap: 3px;
-}
-.chips-compact .chip-type-glyph.is-active {
-  transform: scale(1.08);
-}
 .chip-gender .chip-icon {
   width: 16px;
   height: 16px;
@@ -378,25 +372,57 @@ header {
 }
 .chip-type-cycle {
   gap: 8px;
+  padding: 4px 12px 4px 4px;
 }
 .chip-type-icons {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.14);
 }
 .chip-type-glyph {
   display: inline-flex;
-  opacity: 0.28;
-  transform: scale(0.92);
-  transition: opacity 140ms ease, transform 140ms ease;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 32px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  opacity: 0.5;
+  background: transparent;
+  transform: none;
+  transition: opacity 140ms ease, border-color 140ms ease, background-color 140ms ease;
 }
+.chip-type-glyph .chip-icon,
+.chip-type-glyph .chip-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.chip-type-glyph[data-type="1"] { --type-color: #64B5F6; }
+.chip-type-glyph[data-type="2"] { --type-color: #FF9800; }
+.chip-type-glyph[data-type="3"] { --type-color: #0288D1; }
 .chip-type-glyph.is-active {
   opacity: 1;
-  transform: scale(1.12);
+  border-color: var(--type-color, var(--brand2));
+  background: color-mix(in srgb, var(--type-color, var(--brand2)) 22%, transparent);
 }
 .chip-type-cycle[aria-pressed="false"] .chip-type-glyph {
-  opacity: 0.42;
-  transform: scale(1);
+  opacity: 0.62;
+}
+.chips-compact .chip-type-cycle {
+  padding: 3px 8px 3px 3px;
+}
+.chips-compact .chip-type-glyph {
+  width: 26px;
+  height: 24px;
+}
+.chips-compact .chip-type-glyph .chip-icon,
+.chips-compact .chip-type-glyph .chip-icon svg {
+  width: 15px;
+  height: 15px;
 }
 .chips-type .chip:not([aria-pressed="true"]) {
   color: var(--fg);
