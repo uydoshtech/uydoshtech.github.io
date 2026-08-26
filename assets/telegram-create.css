@@ -128,26 +128,21 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
   width: 14px;
   height: 14px;
 }
-/* "Для кого" gender picker (step 1) — bigger than the default chip density
-   since these are the only two options in their row, not a dense filter
-   list, so they read better as larger, more tappable buttons. */
+/* "Для кого" gender picker (step 1) — same density as amenity chips, still
+   a pill so the two options read as a compact pair rather than huge buttons. */
 .gender-chip {
-  font-size: 15px;
-  font-weight: 700;
-  padding: 9px 22px;
-  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  gap: 6px;
 }
 .gender-chip .chip-icon {
-  width: 28px;
-  height: 28px;
+  width: 16px;
+  height: 16px;
 }
-/* The shared `.chip .chip-icon svg` rule (telegram-shared.css) hardcodes a
-   14px glyph regardless of the icon box's own size — override it here so
-   the larger 28px box above actually renders a bigger icon instead of a
-   small glyph floating in extra whitespace. */
 .gender-chip .chip-icon svg {
-  width: 28px;
-  height: 28px;
+  width: 16px;
+  height: 16px;
 }
 select, input[type="text"], input[type="number"], input[type="date"], input[type="tel"], textarea {
   width: 100%;

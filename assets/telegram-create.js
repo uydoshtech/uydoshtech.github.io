@@ -257,6 +257,7 @@ const state = {
     amenityIds: new Set(),
     moveInDate: '',
     privateRoom: false,
+    groupSizeTarget: 3,
     title: '',
     description: '',
     photos: [],
@@ -284,6 +285,18 @@ function stepTitles(lang) {
  * range, no street address — mirrors Flutter's listing-type branching. */
 function isDemandSideType(typeId = state.form.listingTypeId) {
   return typeId === LISTING_TYPE_ROOM_NEEDED || typeId === LISTING_TYPE_GROUP_FORMING;
+}
+
+function isGroupForming(typeId = state.form.listingTypeId) {
+  return typeId === LISTING_TYPE_GROUP_FORMING;
+}
+
+const GROUP_SIZE_MIN = 2;
+const GROUP_SIZE_MAX = 6;
+
+function isValidGroupSize(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= GROUP_SIZE_MIN && n <= GROUP_SIZE_MAX;
 }
 
 /// Both listing types can be tagged with several metro stations: a
@@ -406,6 +419,8 @@ function hydrateFormFromListing(listing) {
   if (Number.isFinite(p) && p > 0) state.form.price = p;
 
   state.form.gender = Number(listing.gender) || 1;
+  const groupSize = Number(listing.group_size_target);
+  state.form.groupSizeTarget = isValidGroupSize(groupSize) ? groupSize : 3;
   state.form.amenityIds = new Set(
     (Array.isArray(listing.amenities) ? listing.amenities : []).map((a) => Number(a.id)),
   );
@@ -1691,6 +1706,19 @@ function renderStep1(lang) {
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.gender', lang))}</div>
         <div class="chips">${genderChips}</div>
       </div>
+      ${isGroupForming() ? `
+      <div class="field${fieldErrorAttrs('groupSize').className}" data-validation-anchor="groupSize">
+        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.groupSize', lang))}</div>
+        <div class="chips">${Array.from({ length: GROUP_SIZE_MAX - GROUP_SIZE_MIN + 1 }, (_, i) => {
+          const size = GROUP_SIZE_MIN + i;
+          return UyDosh.chipButtonHtml({
+            attrs: { 'data-group-size': size },
+            pressed: state.form.groupSizeTarget === size,
+            label: String(size),
+            ariaLabel: UyDosh.t('create.groupSizePeople', lang).replace('{count}', String(size)),
+          });
+        }).join('')}</div>
+      </div>` : ''}
       <div class="field">
         <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.amenities', lang))}</div>
         <div class="amenity-grid">${amenityChips}</div>
@@ -1817,6 +1845,12 @@ function renderStep3(lang) {
       valueHtml: genderReviewBadgeHtml(lang),
       badges: true,
     },
+    ...(isGroupForming()
+      ? [{
+        label: UyDosh.t('create.reviewGroupSize', lang),
+        value: UyDosh.t('create.groupSizePeople', lang).replace('{count}', String(state.form.groupSizeTarget)),
+      }]
+      : []),
     { label: UyDosh.t('create.titleLabel', lang), value: state.form.title, clip: true },
     { label: UyDosh.t('create.descriptionLabel', lang), value: state.form.description, clip: true },
     ...(!isDemandSideType() && state.form.addressText.trim()
@@ -3035,6 +3069,16 @@ function bindStepEvents() {
     });
   });
 
+  stepPanelsEl.querySelectorAll('[data-group-size]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const size = Number(btn.getAttribute('data-group-size'));
+      if (!isValidGroupSize(size)) return;
+      state.form.groupSizeTarget = size;
+      showFormError('');
+      renderStep();
+    });
+  });
+
   stepPanelsEl.querySelectorAll('[data-amenity-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = Number(btn.getAttribute('data-amenity-id'));
@@ -3200,6 +3244,12 @@ function validateStep(step) {
         anchor: 'gender',
       };
     }
+    if (isGroupForming() && !isValidGroupSize(state.form.groupSizeTarget)) {
+      return {
+        message: UyDosh.t('create.errorGroupSizeRequired', lang),
+        anchor: 'groupSize',
+      };
+    }
     const bounds = priceBoundsForRequest();
     if (bounds.min < PRICE_MIN) {
       return {
@@ -3262,6 +3312,7 @@ async function submitListing() {
       maxPrice: isDemandSideType() ? bounds.max : undefined,
       description: state.form.description.trim(),
       gender: state.form.gender,
+      groupSizeTarget: isGroupForming() ? state.form.groupSizeTarget : undefined,
       amenityIds: [...state.form.amenityIds],
       moveInDate: state.form.moveInDate || undefined,
       privateRoom: !isDemandSideType() ? state.form.privateRoom : undefined,
