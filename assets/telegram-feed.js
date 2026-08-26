@@ -525,7 +525,7 @@ function renderFilters() {
   const typeOptions = [
     { value: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
     { value: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
-    // { value: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
+    { value: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
   ];
   const genderOptions = [
     { value: GENDER_MALE, label: UyDosh.t('filter.gender.male', lang) },

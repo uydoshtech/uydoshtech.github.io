@@ -274,6 +274,11 @@ function isRoomNeededListing(listing) {
     || listingTypeCodeFromListing(listing) === 'room_needed';
 }
 
+function isGroupFormingListing(listing) {
+  return listingTypeIdFromListing(listing) === 3
+    || listingTypeCodeFromListing(listing) === 'group_forming';
+}
+
 // Branded artwork shown instead of the plain "UyDosh" placeholder for listings
 // with no photo (Telegram Mini App only), keyed by listing type + gender.
 // Add an entry here whenever a new type/gender illustration is provided; any
@@ -310,6 +315,9 @@ function listingTypeBadgeLabel(listing, lang = getLang()) {
     return gender === 2
       ? t('card.type.roommateNeededFemale', lang)
       : t('card.type.roommateNeededMale', lang);
+  }
+  if (isGroupFormingListing(listing)) {
+    return t('filter.type.groupForming', lang);
   }
   return localized(listing.listing_type, lang);
 }

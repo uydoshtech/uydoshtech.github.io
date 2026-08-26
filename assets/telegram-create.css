@@ -98,6 +98,23 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
 .listing-type-field {
   margin-bottom: 10px;
 }
+.listing-type-field .chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.listing-type-field .chip {
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding-left: 6px;
+  padding-right: 6px;
+  text-align: center;
+}
+.listing-type-field .chip .chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 /* Base `.chips`/`.chip` and metro-line ribbon styles (`.chip-line`,
    `.metro-m-badge`, `.chip-label-collapse` reveal animation) live in
    telegram-shared.css — shared with the feed filter ribbon. This page

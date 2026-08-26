@@ -280,8 +280,10 @@ function stepTitles(lang) {
   ];
 }
 
-function isRoomNeeded() {
-  return state.form.listingTypeId === LISTING_TYPE_ROOM_NEEDED;
+/** Demand-side types (room-needed + group-forming): search area, budget
+ * range, no street address — mirrors Flutter's listing-type branching. */
+function isDemandSideType(typeId = state.form.listingTypeId) {
+  return typeId === LISTING_TYPE_ROOM_NEEDED || typeId === LISTING_TYPE_GROUP_FORMING;
 }
 
 /// Both listing types can be tagged with several metro stations: a
@@ -293,22 +295,22 @@ function supportsMultiStation() {
   return true;
 }
 
-/// Only demand-side (room-needed) listings can span several districts;
-/// roommate-needed listings describe one apartment (mirrors mobile's
-/// `_supportsMultiLocation`).
+/// Only demand-side listings (room-needed / group-forming) can span several
+/// districts; roommate-needed listings describe one apartment (mirrors
+/// mobile's `_supportsMultiLocation`).
 function supportsMultiLocation() {
-  return isRoomNeeded();
+  return isDemandSideType();
 }
 
 function priceForRequest() {
-  if (isRoomNeeded()) {
+  if (isDemandSideType()) {
     return Math.round((state.form.priceMin + state.form.priceMax) / 2);
   }
   return Math.round(state.form.price);
 }
 
 function priceBoundsForRequest() {
-  if (isRoomNeeded()) {
+  if (isDemandSideType()) {
     return {
       min: Math.round(Math.min(state.form.priceMin, state.form.priceMax)),
       max: Math.round(Math.max(state.form.priceMin, state.form.priceMax)),
@@ -330,6 +332,7 @@ function formatPriceReviewHtml(lang) {
 
 function listingTypeLabel(typeId, lang) {
   if (typeId === LISTING_TYPE_ROOM_NEEDED) return UyDosh.t('filter.type.roomNeeded', lang);
+  if (typeId === LISTING_TYPE_GROUP_FORMING) return UyDosh.t('filter.type.groupForming', lang);
   return UyDosh.t('filter.type.roommateNeeded', lang);
 }
 
@@ -364,8 +367,9 @@ function updateDefaultTitle(lang = UyDosh.getLang()) {
 /** Populate `state.form` from an existing listing (edit mode). */
 function hydrateFormFromListing(listing) {
   const typeId = Number(listing.listing_type_id);
-  state.form.listingTypeId =
-    typeId === LISTING_TYPE_ROOM_NEEDED ? LISTING_TYPE_ROOM_NEEDED : LISTING_TYPE_ROOMMATE_NEEDED;
+  state.form.listingTypeId = isDemandSideType(typeId)
+    ? typeId
+    : LISTING_TYPE_ROOMMATE_NEEDED;
 
   const searchStations = Array.isArray(listing.search_subway_stations)
     ? listing.search_subway_stations
@@ -431,7 +435,7 @@ function hydrateFormFromListing(listing) {
   // highlighted instead of a blank "type an address" hint: prefer the
   // listing's own saved coordinates, falling back to its district's
   // centroid for the (legacy, district-mode) listings that never had one.
-  if (typeId !== LISTING_TYPE_ROOM_NEEDED) {
+  if (!isDemandSideType(typeId)) {
     const wasDistrictMode = state.form.locationMode === LOCATION_MODE_DISTRICT;
     state.form.locationMode = LOCATION_MODE_METRO;
     let seedLat = state.form.addressLatitude;
@@ -575,11 +579,14 @@ function reviewListingForBadges() {
     listing_type_id: typeId,
     gender: state.form.gender,
   };
-  if (typeId === LISTING_TYPE_ROOM_NEEDED) {
+  if (typeId === LISTING_TYPE_ROOM_NEEDED || typeId === LISTING_TYPE_GROUP_FORMING) {
+    const key = typeId === LISTING_TYPE_GROUP_FORMING
+      ? 'filter.type.groupForming'
+      : 'filter.type.roomNeeded';
     listing.listing_type = {
-      name_uz: UyDosh.t('filter.type.roomNeeded', 'uz'),
-      name_ru: UyDosh.t('filter.type.roomNeeded', 'ru'),
-      name_en: UyDosh.t('filter.type.roomNeeded', 'en'),
+      name_uz: UyDosh.t(key, 'uz'),
+      name_ru: UyDosh.t(key, 'ru'),
+      name_en: UyDosh.t(key, 'en'),
     };
   }
   return listing;
@@ -1323,6 +1330,7 @@ function renderStep0(lang) {
   const typeOptions = [
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
+    { id: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
   ];
   const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
     attrs: { 'data-listing-type': opt.id },
@@ -1331,7 +1339,7 @@ function renderStep0(lang) {
     label: opt.label,
   })).join('');
 
-  const locationSection = isRoomNeeded()
+  const locationSection = isDemandSideType()
     ? legacyLocationTabsHtml(lang)
     : roommateLocationSectionHtml(lang);
 
@@ -1477,7 +1485,7 @@ async function fetchAddressSuggestions(query) {
  * `handleAddressInputChange`) without stealing that focus. No-op for
  * room-needed listings, which never render this field. */
 function renderNearbyMetroPanel() {
-  if (isRoomNeeded()) return;
+  if (isDemandSideType()) return;
   // `.nearby-metro-field` (not `[data-validation-anchor="location"]`, which
   // the address field above it now also carries) — see `fieldErrorAttrs`.
   const field = stepPanelsEl.querySelector('.nearby-metro-field');
@@ -1567,7 +1575,7 @@ function selectAddressSuggestion(index) {
  * away. A no-op for room-needed listings, which never show this field.
  */
 async function resolveAddressLocation(text) {
-  if (isRoomNeeded()) return;
+  if (isDemandSideType()) return;
   const query = text.trim();
 
   if (!query) {
@@ -1631,7 +1639,7 @@ function bindAddressAutocomplete() {
 }
 
 function renderStep1(lang) {
-  const singlePrice = !isRoomNeeded();
+  const singlePrice = !isDemandSideType();
   const priceField = fieldErrorAttrs('price');
   const priceBlock = singlePrice
     ? `
@@ -1702,7 +1710,7 @@ function renderStep1(lang) {
           </span>
         </div>
       </div>
-      ${!isRoomNeeded() ? `
+      ${!isDemandSideType() ? `
       <div class="toggle-row">
         <span class="toggle-row-label">${UyDosh.escapeHtml(UyDosh.t('create.privateRoom', lang))}</span>
         <button
@@ -1811,7 +1819,7 @@ function renderStep3(lang) {
     },
     { label: UyDosh.t('create.titleLabel', lang), value: state.form.title, clip: true },
     { label: UyDosh.t('create.descriptionLabel', lang), value: state.form.description, clip: true },
-    ...(!isRoomNeeded() && state.form.addressText.trim()
+    ...(!isDemandSideType() && state.form.addressText.trim()
       ? [{ label: UyDosh.t('create.address', lang), value: UyDosh.formatAddressText(state.form.addressText.trim()), clip: true }]
       : []),
     {
@@ -1832,7 +1840,7 @@ function renderStep3(lang) {
     { label: UyDosh.t('create.reviewMoveIn', lang), value: moveIn, labelIcon: UyDosh.iconCalendar() },
   ];
 
-  if (!isRoomNeeded()) {
+  if (!isDemandSideType()) {
     rows.push({
       label: UyDosh.t('create.reviewPrivateRoom', lang),
       value: state.form.privateRoom ? UyDosh.t('create.reviewYes', lang) : UyDosh.t('create.reviewNo', lang),
@@ -2826,14 +2834,14 @@ function bindStepEvents() {
       // Roommate-needed only ever uses the merged address+nearby-metro step
       // (see roommateLocationSectionHtml) — switching into it from
       // room-needed's district tab must not carry district mode along.
-      if (!isRoomNeeded()) {
+      if (!isDemandSideType()) {
         state.form.locationMode = LOCATION_MODE_METRO;
       }
       updateDefaultTitle();
       // Roommate-needed's nearby stations depend on the address already
       // typed — recompute them fresh now that stale picks were cleared,
       // instead of leaving the panel empty until the address is re-edited.
-      if (!isRoomNeeded() && state.form.addressLatitude != null && state.form.addressLongitude != null) {
+      if (!isDemandSideType() && state.form.addressLatitude != null && state.form.addressLongitude != null) {
         applyNearbyStations(
           state.form.addressLatitude,
           state.form.addressLongitude,
@@ -3162,7 +3170,7 @@ function bindStepEvents() {
 function validateStep(step) {
   const lang = UyDosh.getLang();
   if (step === 0) {
-    if (isRoomNeeded()) {
+    if (isDemandSideType()) {
       if (state.form.locationMode === LOCATION_MODE_METRO && state.form.selectedStationIds.length === 0) {
         return {
           message: UyDosh.t('create.errorLocationRequired', lang),
@@ -3250,23 +3258,23 @@ async function submitListing() {
       title: state.form.title.trim(),
       listingTypeId: state.form.listingTypeId,
       price: priceForRequest(),
-      minPrice: isRoomNeeded() ? bounds.min : undefined,
-      maxPrice: isRoomNeeded() ? bounds.max : undefined,
+      minPrice: isDemandSideType() ? bounds.min : undefined,
+      maxPrice: isDemandSideType() ? bounds.max : undefined,
       description: state.form.description.trim(),
       gender: state.form.gender,
       amenityIds: [...state.form.amenityIds],
       moveInDate: state.form.moveInDate || undefined,
-      privateRoom: !isRoomNeeded() ? state.form.privateRoom : undefined,
+      privateRoom: !isDemandSideType() ? state.form.privateRoom : undefined,
       // Omitted entirely for room-needed listings (no address concept there).
       // For roommate-needed listings, sent even when empty so clearing the
       // field during an edit actually clears the saved address — the backend
       // only ever persists it for roommate-needed listings anyway (see
       // `shouldPersistAddress` in listingService).
-      addressText: !isRoomNeeded() ? state.form.addressText.trim() : undefined,
-      addressLatitude: !isRoomNeeded() && state.form.addressLatitude != null
+      addressText: !isDemandSideType() ? state.form.addressText.trim() : undefined,
+      addressLatitude: !isDemandSideType() && state.form.addressLatitude != null
         ? state.form.addressLatitude
         : undefined,
-      addressLongitude: !isRoomNeeded() && state.form.addressLongitude != null
+      addressLongitude: !isDemandSideType() && state.form.addressLongitude != null
         ? state.form.addressLongitude
         : undefined,
     };
@@ -3377,7 +3385,7 @@ async function submitListing() {
     successRoot.classList.add('active');
     // 3D room-scan upsell: optional, only for freshly created "room offered"
     // listings (nothing to scan for "looking for a room" posts).
-    if (!isEdit && listingId && !isRoomNeeded()) {
+    if (!isEdit && listingId && !isDemandSideType()) {
       renderScanUpsell(listingId);
     }
   } catch (err) {
