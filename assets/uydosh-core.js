@@ -292,6 +292,10 @@ const NO_PHOTO_PLACEHOLDER_IMAGES = {
     1: '/images/no-photo-roommate-needed-male.jpg',
     2: '/images/no-photo-roommate-needed-female.jpg',
   },
+  group_forming: {
+    1: '/images/no-photo-group-forming-male.jpg',
+    2: '/images/no-photo-group-forming-female.jpg',
+  },
 };
 
 /** Works with both full listing objects and map pin objects (both expose gender + listing type). */
@@ -301,7 +305,9 @@ function noPhotoPlaceholderImageUrl(listingOrPin) {
     ? 'room_needed'
     : isRoommateNeededListing(listingOrPin)
       ? 'roommate_needed'
-      : '';
+      : isGroupFormingListing(listingOrPin)
+        ? 'group_forming'
+        : '';
   if (!typeCode) return '';
   const gender = Number(listingOrPin.gender);
   return NO_PHOTO_PLACEHOLDER_IMAGES[typeCode]?.[gender] ?? '';
