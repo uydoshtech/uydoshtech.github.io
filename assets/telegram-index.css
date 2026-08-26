@@ -322,17 +322,20 @@ header {
 /* Listing-type cycle chip: border matches the selected type's glyph color
    (LISTING_TYPE_COLORS in uydosh-map-pins.js), same treatment as the gender
    chip above so both cycling chips signal their state the same way. */
-.chips-compact .chip-type[data-listing-type="1"][aria-pressed="true"] {
-  color: #64B5F6;
+.chip-type-cycle[data-listing-type="1"][aria-pressed="true"] {
   border-color: #64B5F6;
 }
-.chips-compact .chip-type[data-listing-type="2"][aria-pressed="true"] {
-  color: #FF9800;
+.chip-type-cycle[data-listing-type="2"][aria-pressed="true"] {
   border-color: #FF9800;
 }
-.chips-compact .chip-type[data-listing-type="3"][aria-pressed="true"] {
-  color: #0288D1;
+.chip-type-cycle[data-listing-type="3"][aria-pressed="true"] {
   border-color: #0288D1;
+}
+.chips-compact .chip-type-icons {
+  gap: 3px;
+}
+.chips-compact .chip-type-glyph.is-active {
+  transform: scale(1.08);
 }
 .chip-gender .chip-icon {
   width: 16px;
@@ -372,6 +375,28 @@ header {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
+}
+.chip-type-cycle {
+  gap: 8px;
+}
+.chip-type-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip-type-glyph {
+  display: inline-flex;
+  opacity: 0.28;
+  transform: scale(0.92);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.chip-type-glyph.is-active {
+  opacity: 1;
+  transform: scale(1.12);
+}
+.chip-type-cycle[aria-pressed="false"] .chip-type-glyph {
+  opacity: 0.42;
+  transform: scale(1);
 }
 .chips-type .chip:not([aria-pressed="true"]) {
   color: var(--fg);
@@ -1307,8 +1332,7 @@ header {
   justify-content: center;
   text-decoration: none;
 }
-.fab-create[hidden],
-body.view-map .fab-create {
+.fab-create[hidden] {
   display: none !important;
   pointer-events: none;
 }

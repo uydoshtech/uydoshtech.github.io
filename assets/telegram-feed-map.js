@@ -174,7 +174,6 @@
       feedListPanel?.classList.toggle('hidden', isMap);
       feedMapPanel?.classList.toggle('active', isMap);
       document.body.classList.toggle('view-map', isMap);
-      if (fabCreateEl) fabCreateEl.hidden = isMap;
       if (isMap) scheduleSyncFeedMapPanelHeight();
     }
 

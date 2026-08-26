@@ -150,7 +150,7 @@
           hasRoomScan &&
           UyDosh.isMiniApp?.() &&
           UyDosh.shouldShowRoomScanClipCta?.() &&
-          (isAdmin || UyDosh.isListingEligibleForRoomScan?.(state.listing ?? { id: listingId }));
+          UyDosh.isListingEligibleForRoomScan?.(state.listing ?? { id: listingId });
         const replaceScanItem = showReplaceScan
           ? `<button type="button" class="owner-menu-item" data-owner-menu-replace-scan>
                   ${UyDosh.iconCube()}

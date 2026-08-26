@@ -520,6 +520,32 @@ function switchView(nextView) {
   }
 }
 
+function listingTypeCycleChipHtml(typeOptions, lang, { compact = false } = {}) {
+  const selected = typeOptions.find((opt) => opt.value === state.filters.listingTypeId);
+  const label = selected?.label ?? UyDosh.t('filter.type.all', lang);
+  const glyphs = typeOptions.map((opt) => {
+    const active = selected?.value === opt.value;
+    return `<span class="chip-type-glyph${active ? ' is-active' : ''}" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.value, { pressed: false })}</span>`;
+  }).join('');
+  const typeAttr = selected ? ` data-listing-type="${selected.value}"` : '';
+  const className = compact
+    ? 'chip chip-icon-only chip-type chip-type-cycle'
+    : 'chip chip-type chip-type-cycle';
+  return `
+    <button
+      type="button"
+      class="${className}"
+      data-listing-type-cycle
+      data-haptic="selection"${typeAttr}
+      aria-pressed="${selected != null ? 'true' : 'false'}"
+      aria-label="${UyDosh.escapeHtml(`${UyDosh.t('filter.type.aria', lang)}: ${label}`)}"
+    >
+      <span class="chip-type-icons">${glyphs}</span>
+      <span class="chip-label">${UyDosh.escapeHtml(label)}</span>
+    </button>
+  `;
+}
+
 function renderFilters() {
   const lang = UyDosh.getLang();
   const typeOptions = [
@@ -542,41 +568,9 @@ function renderFilters() {
     ? UyDosh.t('filter.expand.aria', lang)
     : UyDosh.t('filter.collapse.aria', lang);
 
-  const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
-    attrs: { 'data-listing-type': opt.value },
-    pressed: state.filters.listingTypeId === opt.value,
-    icon: UyDosh.filterListingTypeIcon(opt.value, { pressed: false }),
-    label: opt.label,
-  })).join('');
-
-  // Compact-row listing-type control: a single cycling chip (all -> home ->
-  // roommate -> all) instead of one chip per type — same single-button cycle
-  // pattern as the gender chip below and the district/metro-line chips. The
-  // expanded row keeps its labeled per-type chips. Icon-only in every state:
-  // the type glyph colors (blue home / orange people) read at a glance, and
-  // the neutral "all" grid glyph marks the off state. The cycle order follows
-  // `typeOptions`, so re-enabling group_forming there adds it automatically.
-  const selectedTypeOption = typeOptions.find(
-    (opt) => opt.value === state.filters.listingTypeId,
-  );
-  const typeCycleLabel = selectedTypeOption?.label ?? UyDosh.t('filter.type.all', lang);
-  const typeChipCompact = UyDosh.chipButtonHtml({
-    className: 'chip chip-icon-only chip-type',
-    attrs: {
-      'data-listing-type-cycle': true,
-      // Set only while a type is picked so the
-      // `.chips-compact .chip-type[data-listing-type="…"][aria-pressed="true"]`
-      // color rules in telegram-index.css apply. The `[data-listing-type]`
-      // click handler below skips this chip via :not([data-listing-type-cycle]).
-      'data-listing-type': selectedTypeOption ? state.filters.listingTypeId : false,
-    },
-    pressed: selectedTypeOption != null,
-    icon: UyDosh.filterListingTypeIcon(
-      selectedTypeOption ? state.filters.listingTypeId : 0,
-      { pressed: false },
-    ),
-    ariaLabel: `${UyDosh.t('filter.type.aria', lang)}: ${typeCycleLabel}`,
-  });
+  const typeChips = listingTypeCycleChipHtml(typeOptions, lang);
+  // Compact twin: same 3-icon cycle, label hidden (icon-only ribbon).
+  const typeChipCompact = listingTypeCycleChipHtml(typeOptions, lang, { compact: true });
 
   const selectedGender = state.filters.gender;
   const genderSegments = genderOptions.map((opt) => UyDosh.chipButtonHtml({
@@ -836,9 +830,9 @@ function renderFilters() {
     });
   });
 
-  // Expanded-row per-type chips only — the compact cycle chip also carries a
-  // `data-listing-type` attribute (for the pressed-state color CSS) and must
-  // not get this toggle handler on top of its cycle handler below.
+  // Expanded-row leftover: per-type chips were replaced by the cycle button
+  // (`data-listing-type-cycle`). Keep skipping that button here in case any
+  // extra `data-listing-type` node is added later.
   filtersEl.querySelectorAll('[data-listing-type]:not([data-listing-type-cycle])').forEach((btn) => {
     btn.addEventListener('click', () => {
       const next = Number(btn.getAttribute('data-listing-type'));

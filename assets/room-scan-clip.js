@@ -54,13 +54,18 @@
     return !NON_LIDAR_IPHONE_SCREENS.has(`${shortSide}x${longSide}`);
   }
 
-  /** Supply-side listings only — demand types have nothing physical to scan. */
+  /** Supply-side listings only — demand types (room-needed, group-forming)
+   *  have no apartment to scan. */
   function isListingEligibleForRoomScan(listing) {
     const typeId = Number(listing?.listing_type_id ?? listing?.listing_type?.id);
-    if (!Number.isFinite(typeId)) return true;
+    const code = String(listing?.listing_type?.code ?? listing?.listing_type_code ?? '')
+      .trim()
+      .toLowerCase();
     const roomNeeded = Number(UyDosh.LISTING_TYPE_ROOM_NEEDED) || 1;
     const groupForming = Number(UyDosh.LISTING_TYPE_GROUP_FORMING) || 3;
-    return typeId !== roomNeeded && typeId !== groupForming;
+    if (typeId === roomNeeded || typeId === groupForming) return false;
+    if (code === 'room_needed' || code === 'group_forming') return false;
+    return true;
   }
 
   /**
