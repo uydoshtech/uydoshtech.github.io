@@ -375,6 +375,58 @@
         return raw.split(/\s+/)[0];
       }
 
+      function groupMemberMatchPercent(viewer, member) {
+        if (!viewer || !member) return null;
+        if (Number(viewer.user_id) === Number(member.user_id)) return null;
+        const analysis = UyDosh.computeProfileCompatibility?.(viewer, member);
+        if (!analysis?.scoredFieldCount) return null;
+        return analysis.percent;
+      }
+
+      function groupMemberPercentsByUserId(viewer, members) {
+        const percents = new Map();
+        if (!viewer) return percents;
+        for (const member of members) {
+          const percent = groupMemberMatchPercent(viewer, member);
+          if (percent != null) percents.set(Number(member.user_id), percent);
+        }
+        return percents;
+      }
+
+      function orderGroupMatrixMembers(members, viewerId, percentsByUserId) {
+        const viewer = Number(viewerId);
+        const others = members.filter((m) => Number(m.user_id) !== viewer);
+        others.sort((a, b) => {
+          const pa = percentsByUserId.get(Number(a.user_id));
+          const pb = percentsByUserId.get(Number(b.user_id));
+          if (pa == null && pb == null) return 0;
+          if (pa == null) return 1;
+          if (pb == null) return -1;
+          return pb - pa;
+        });
+        const self = Number.isFinite(viewer)
+          ? members.find((m) => Number(m.user_id) === viewer)
+          : null;
+        return self ? [self, ...others] : others;
+      }
+
+      function reorderGroupMatrixCells(matrix, orderedUserIds) {
+        return matrix.map((row) => ({
+          ...row,
+          cells: orderedUserIds.map((id) => {
+            const cell = row.cells.find((c) => Number(c.userId) === Number(id));
+            return cell || { userId: id, value: '', status: 'missing' };
+          }),
+        }));
+      }
+
+      function matrixMemberPercentHtml(percent) {
+        if (percent == null) {
+          return '<span class="compat-matrix-user-percent is-empty" aria-hidden="true">&nbsp;</span>';
+        }
+        return `<span class="compat-matrix-user-percent ${compatPercentClass(percent)}">${percent}%</span>`;
+      }
+
       function renderGroupAvatars(members) {
         const wrap = rootEl.querySelector('[data-compat-avatars]');
         if (!wrap) return;
@@ -397,6 +449,13 @@
           case 'conflict': return 'is-conflict';
           default: return 'is-missing';
         }
+      }
+
+      function groupMatrixCellHtml(cell) {
+        const alert = cell.status === 'conflict'
+          ? `<span class="compat-matrix-cell-alert" aria-hidden="true">${UyDosh.iconChrome('alertCircle')}</span>`
+          : '';
+        return `<div class="compat-matrix-cell ${groupMatrixCellClass(cell.status)}">${alert}<span>${UyDosh.escapeHtml(cell.value)}</span></div>`;
       }
 
       function splitCompatReportSentences(text) {
@@ -486,15 +545,20 @@
         return true;
       }
 
-      function renderGroupCompatibilityBody(bodyEl, { members, result, matrix, report }) {
+      function renderGroupCompatibilityBody(bodyEl, { members, result, matrix, report, percentsByUserId = new Map() }) {
         const header = `
           <div class="compat-matrix-users" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
-            ${members.map((m) => `
+            ${members.map((m) => {
+              const percent = percentsByUserId.get(Number(m.user_id));
+              const avatarClass = percent == null ? '' : ` ${compatPercentClass(percent)}`;
+              return `
               <div class="compat-matrix-user">
-                <span class="compat-matrix-user-avatar" data-matrix-avatar="${m.user_id}"></span>
+                <span class="compat-matrix-user-avatar${avatarClass}" data-matrix-avatar="${m.user_id}"></span>
                 <span class="compat-matrix-user-name">${UyDosh.escapeHtml(firstName(m.name))}</span>
+                ${matrixMemberPercentHtml(percent)}
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         `;
         const rows = matrix.map((row) => `
@@ -504,9 +568,7 @@
               <span>${UyDosh.escapeHtml(row.label)}</span>
             </div>
             <div class="compat-matrix-cells" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
-              ${row.cells.map((cell) => `
-                <div class="compat-matrix-cell ${groupMatrixCellClass(cell.status)}">${UyDosh.escapeHtml(cell.value)}</div>
-              `).join('')}
+              ${row.cells.map((cell) => groupMatrixCellHtml(cell)).join('')}
             </div>
           </div>
         `).join('');
@@ -593,14 +655,27 @@
             };
           }));
 
+          const viewerId = UyDosh.getSessionUserId();
+          let viewerProfile = profiles.find((p) => Number(p.user_id) === Number(viewerId));
+          if (!viewerProfile && viewerId != null) {
+            const fetched = await fetchProfileOrEmpty(viewerId);
+            viewerProfile = { ...fetched, user_id: viewerId };
+          }
+          const percentsByUserId = groupMemberPercentsByUserId(viewerProfile, profiles);
+          const orderedMembers = orderGroupMatrixMembers(profiles, viewerId, percentsByUserId);
+          const orderedIds = orderedMembers.map((m) => Number(m.user_id));
+
           sectionEl.hidden = false;
           sectionEl.setAttribute('aria-expanded', 'true');
           const toggle = rootEl.querySelector('[data-compat-toggle]');
           if (toggle) toggle.setAttribute('aria-expanded', 'true');
           bodyEl.hidden = false;
-          renderGroupAvatars(profiles);
+          renderGroupAvatars(orderedMembers);
           const result = UyDosh.calculateGroupCompatibility(profiles);
-          const matrix = UyDosh.buildGroupPreferenceMatrix(profiles);
+          const matrix = reorderGroupMatrixCells(
+            UyDosh.buildGroupPreferenceMatrix(profiles),
+            orderedIds,
+          );
           if (percentEl) {
             if (result.percent == null) {
               percentEl.textContent = UyDosh.t('compat.notAvailable');
@@ -612,10 +687,11 @@
           }
           const report = String(listing.group_compatibility_report || '').trim();
           renderGroupCompatibilityBody(bodyEl, {
-            members: profiles,
+            members: orderedMembers,
             result,
             matrix,
             report,
+            percentsByUserId,
           });
           if (!report) {
             void maybeRefreshGroupCompatReport(listing.id, bodyEl);

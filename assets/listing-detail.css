@@ -599,16 +599,25 @@
       .compat-matrix-users {
         display: grid; gap: 8px; padding: 4px 0 2px;
       }
-      .compat-matrix-user { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+      .compat-matrix-user { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
       .compat-matrix-user-avatar {
         width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
         background: rgba(127, 127, 127, 0.12); display: flex; align-items: center; justify-content: center;
         color: var(--muted); flex-shrink: 0;
       }
+      .compat-matrix-user-avatar.is-good { outline: 2px solid #22c55e; outline-offset: 1px; }
+      .compat-matrix-user-avatar.is-ok { outline: 2px solid #f59e0b; outline-offset: 1px; }
+      .compat-matrix-user-avatar.is-bad { outline: 2px solid #ef4444; outline-offset: 1px; }
       .compat-matrix-user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .compat-matrix-user-avatar svg { width: 18px; height: 18px; display: block; }
       .compat-matrix-user-name { font-size: 12px; font-weight: 700; text-align: center;
         max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .compat-matrix-user-percent { font-size: 12px; font-weight: 700; line-height: 1.2; text-align: center;
+        min-height: 1.2em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .compat-matrix-user-percent.is-good { color: #22c55e; }
+      .compat-matrix-user-percent.is-ok { color: #f59e0b; }
+      .compat-matrix-user-percent.is-bad { color: #ef4444; }
+      .compat-matrix-user-percent.is-empty { visibility: hidden; }
       .compat-matrix-row { display: flex; flex-direction: column; gap: 6px; }
       .compat-matrix-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
       .compat-matrix-label .icon { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
@@ -616,6 +625,7 @@
       .compat-matrix-label .icon svg * { stroke: currentColor; fill: none; }
       .compat-matrix-cells { display: grid; gap: 6px; }
       .compat-matrix-cell {
+        display: flex; align-items: center; justify-content: center; gap: 3px;
         font-size: 12px; line-height: 1.3; padding: 8px 6px; border-radius: 10px; text-align: center;
         background: rgba(127, 127, 127, 0.08); word-break: break-word;
       }
@@ -623,6 +633,12 @@
       .compat-matrix-cell.is-partial { color: #f59e0b; background: rgba(245, 158, 11, 0.12); }
       .compat-matrix-cell.is-conflict { color: #ef4444; background: rgba(239, 68, 68, 0.14); }
       .compat-matrix-cell.is-missing { color: var(--muted); }
+      .compat-matrix-cell-alert {
+        width: 12px; height: 12px; flex-shrink: 0; display: inline-flex;
+        color: inherit;
+      }
+      .compat-matrix-cell-alert svg { width: 12px; height: 12px; display: block; }
+      .compat-matrix-cell-alert svg * { stroke: currentColor; fill: none; }
       .compat-group-summary { margin: 12px 0 0; font-size: 13px; color: var(--muted); line-height: 1.35; }
       .compat-group-summary .is-match { color: #22c55e; font-weight: 800; }
       .compat-group-summary .is-partial { color: #f59e0b; font-weight: 800; }
