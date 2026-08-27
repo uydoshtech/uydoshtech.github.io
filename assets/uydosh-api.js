@@ -1293,7 +1293,10 @@ async function fetchListing(id) {
   const token = getSessionToken();
   const headers = { Accept: 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/listings/${encodeURIComponent(id)}`, { headers });
+  const lang = typeof getLang === 'function' ? getLang() : 'uz';
+  const url = new URL(`${API_BASE}/listings/${encodeURIComponent(id)}`);
+  url.searchParams.set('language', lang);
+  const res = await fetch(url.toString(), { headers });
   if (!res.ok) {
     const err = new Error(`HTTP ${res.status}`);
     err.status = res.status;

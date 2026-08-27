@@ -400,6 +400,75 @@
         }
       }
 
+      function splitCompatReportSentences(text) {
+        const sentences = [];
+        let start = 0;
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (char !== '.' && char !== '!' && char !== '?') continue;
+          const next = i + 1;
+          if (next < text.length && text[next].trim()) continue;
+          const sentence = text.slice(start, next).trim();
+          if (sentence) sentences.push(sentence);
+          start = next;
+          while (start < text.length && !text[start].trim()) start += 1;
+          i = start - 1;
+        }
+        const trailing = text.slice(start).trim();
+        if (trailing) sentences.push(trailing);
+        return sentences;
+      }
+
+      function formatCompatReportForReadability(text) {
+        const normalized = String(text || '')
+          .replace(/\r\n?/g, '\n')
+          .replace(/[ \t]+\n/g, '\n')
+          .replace(/\n[ \t]+/g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        if (!normalized) return '';
+        if (/\n\s*\n/.test(normalized)) return normalized;
+        const sentences = splitCompatReportSentences(normalized);
+        return sentences.length <= 1 ? normalized : sentences.join('\n\n');
+      }
+
+      function formatCompatReportHtml(text) {
+        const readable = formatCompatReportForReadability(text);
+        if (!readable) return '';
+        const withBold = UyDosh.escapeHtml(readable).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+        return withBold
+          .split(/\n\s*\n/)
+          .filter(Boolean)
+          .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+          .join('');
+      }
+
+      function groupCompatReportInnerHtml(report) {
+        const body = formatCompatReportHtml(report);
+        if (!body) return '';
+        return `
+          <p class="compat-group-report-title">
+            <span class="icon" aria-hidden="true">${UyDosh.iconChrome('sparkles')}</span>
+            <span>${UyDosh.escapeHtml(UyDosh.t('compat.groupReportTitle'))}</span>
+          </p>
+          <div class="compat-group-report-body">${body}</div>
+        `;
+      }
+
+      function applyGroupCompatReport(bodyEl, report) {
+        const slot = bodyEl.querySelector('[data-compat-group-report]');
+        if (!slot) return false;
+        const inner = groupCompatReportInnerHtml(report);
+        if (!inner) {
+          slot.hidden = true;
+          slot.innerHTML = '';
+          return false;
+        }
+        slot.hidden = false;
+        slot.innerHTML = inner;
+        return true;
+      }
+
       function renderGroupCompatibilityBody(bodyEl, { members, result, matrix, report }) {
         const header = `
           <div class="compat-matrix-users" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
@@ -439,9 +508,7 @@
         const summary = summaryBits.length
           ? `<p class="compat-group-summary">${summaryBits.join(' · ')}</p>`
           : '';
-        const reportHtml = report
-          ? `<div class="compat-group-report"><p class="compat-group-title">${UyDosh.escapeHtml(UyDosh.t('compat.groupReportTitle'))}</p><p>${UyDosh.escapeHtml(report)}</p></div>`
-          : '';
+        const reportInner = groupCompatReportInnerHtml(report);
 
         bodyEl.innerHTML = `
           <p class="compat-matrix-title">${UyDosh.escapeHtml(UyDosh.t('compat.groupMatrixTitle'))}</p>
@@ -450,14 +517,32 @@
             ${header}
             ${rows}
           </div>
+          <div class="compat-group-report" data-compat-group-report${reportInner ? '' : ' hidden'}>${reportInner}</div>
           ${summary}
-          ${reportHtml}
         `;
         bodyEl.querySelectorAll('[data-matrix-avatar]').forEach((el) => {
           const id = Number(el.getAttribute('data-matrix-avatar'));
           const member = members.find((m) => Number(m.user_id) === id);
           setCompatAvatar(el, member);
         });
+      }
+
+      async function maybeRefreshGroupCompatReport(listingId, bodyEl) {
+        const delays = [2500, 4000];
+        for (const ms of delays) {
+          await new Promise((resolve) => setTimeout(resolve, ms));
+          if (!bodyEl.isConnected) return;
+          const slot = bodyEl.querySelector('[data-compat-group-report]');
+          if (!slot || !slot.hidden) return;
+          try {
+            const fresh = await UyDosh.fetchListing(listingId);
+            const report = String(fresh?.group_compatibility_report || '').trim();
+            if (report) {
+              applyGroupCompatReport(bodyEl, report);
+              return;
+            }
+          } catch { /* first GET still generating — try again */ }
+        }
       }
 
       async function loadGroupCompatibilityTile(listing) {
@@ -509,12 +594,16 @@
               percentEl.className = `compat-toggle-percent ${compatPercentClass(result.percent)}`;
             }
           }
+          const report = String(listing.group_compatibility_report || '').trim();
           renderGroupCompatibilityBody(bodyEl, {
             members: profiles,
             result,
             matrix,
-            report: listing.group_compatibility_report || '',
+            report,
           });
+          if (!report) {
+            void maybeRefreshGroupCompatReport(listing.id, bodyEl);
+          }
         } catch (err) {
           console.error('Failed to load group compatibility', err);
           sectionEl.hidden = true;
