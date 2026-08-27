@@ -17,6 +17,11 @@ header {
 .view-tabs {
   margin-top: 14px;
 }
+.view-tab {
+  padding: 0 6px;
+  font-size: 11px;
+  gap: 4px;
+}
 .status {
   text-align: center;
   color: var(--muted);

@@ -21,14 +21,22 @@ const listEl = document.getElementById('account-list');
 const tabButtons = Array.from(document.querySelectorAll('[data-account-tab]'));
 
 const TAB_MINE = 'mine';
+const TAB_GROUPS = 'groups';
 const TAB_FAVORITES = 'favorites';
 
-/** Deep-links from the header menu land here with `?tab=favorites` to open straight on that tab. */
+function listingLooksGroupForming(listing) {
+  const typeId = Number(listing?.listing_type_id ?? listing?.listing_type?.id);
+  const code = listing?.listing_type?.code;
+  return typeId === 3 || code === 'group_forming';
+}
+
+/** Deep-links from the header menu land here with `?tab=favorites` or `?tab=groups`. */
 function initialTabFromUrl() {
   try {
-    return new URLSearchParams(window.location.search).get('tab') === TAB_FAVORITES
-      ? TAB_FAVORITES
-      : TAB_MINE;
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab === TAB_FAVORITES) return TAB_FAVORITES;
+    if (tab === TAB_GROUPS) return TAB_GROUPS;
+    return TAB_MINE;
   } catch {
     return TAB_MINE;
   }
@@ -113,7 +121,12 @@ function listingRowHtml(listing) {
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
   const editHref = `/telegram/create.html?id=${encodeURIComponent(listing.id)}`;
-  const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, { backTo: UyDosh.MINI_APP_ACCOUNT_PATH }));
+  const groupsTab = state.activeTab === TAB_GROUPS;
+  const backTo = groupsTab ? UyDosh.MINI_APP_GROUPS_PATH : UyDosh.MINI_APP_ACCOUNT_PATH;
+  const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, {
+    backTo,
+    group: groupsTab ? 'requests' : undefined,
+  }));
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
   const visibilityIcon = listing.is_active ? UyDosh.iconEye() : UyDosh.iconEyeOff();
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
@@ -350,6 +363,14 @@ function bindFavoriteRemoveButtons() {
   }
 }
 
+function groupListings() {
+  return state.myListings.filter(listingLooksGroupForming);
+}
+
+function nonGroupListings() {
+  return state.myListings.filter((listing) => !listingLooksGroupForming(listing));
+}
+
 function renderMine() {
   const lang = UyDosh.getLang();
   if (state.authError) {
@@ -360,11 +381,34 @@ function renderMine() {
     showEmpty(UyDosh.t('feed.error', lang));
     return;
   }
-  if (!state.myListings.length) {
+  const rows = nonGroupListings();
+  if (!rows.length) {
     showEmpty(UyDosh.t('account.empty', lang), { showCreateCta: true });
     return;
   }
-  showList(state.myListings.map(listingRowHtml).join(''));
+  showList(rows.map(listingRowHtml).join(''));
+  bindVisibilityToggleButtons();
+  bindRenewButtons();
+  bindViewCounts();
+  bindDeleteButtons();
+}
+
+function renderGroups() {
+  const lang = UyDosh.getLang();
+  if (state.authError) {
+    showEmpty(UyDosh.t('create.errorAuth', lang));
+    return;
+  }
+  if (state.myListingsError) {
+    showEmpty(UyDosh.t('feed.error', lang));
+    return;
+  }
+  const rows = groupListings();
+  if (!rows.length) {
+    showEmpty(UyDosh.t('account.groupsEmpty', lang), { showCreateCta: true });
+    return;
+  }
+  showList(rows.map(listingRowHtml).join(''));
   bindVisibilityToggleButtons();
   bindRenewButtons();
   bindViewCounts();
@@ -391,6 +435,7 @@ function renderFavorites() {
 
 function renderActiveTab() {
   if (state.activeTab === TAB_FAVORITES) renderFavorites();
+  else if (state.activeTab === TAB_GROUPS) renderGroups();
   else renderMine();
 }
 
@@ -398,7 +443,11 @@ function renderActiveTab() {
 function updateHeaderSubtitle(tab) {
   const subtitleEl = document.querySelector('[data-uydosh-mini-app-header] .brand span[data-i18n]');
   if (!subtitleEl) return;
-  const key = tab === TAB_FAVORITES ? 'account.tabs.favorites' : 'account.subtitle';
+  const key = tab === TAB_FAVORITES
+    ? 'account.tabs.favorites'
+    : tab === TAB_GROUPS
+      ? 'account.tabs.groups'
+      : 'account.subtitle';
   subtitleEl.setAttribute('data-i18n', key);
   subtitleEl.textContent = UyDosh.t(key, UyDosh.getLang());
 }
@@ -422,11 +471,11 @@ for (const btn of tabButtons) {
 // The markup hardcodes "My listings" as selected; sync tab buttons + header
 // subtitle when a deep link (e.g. the header menu's "Favorites" item) opens
 // straight into the favorites tab instead.
-if (state.activeTab === TAB_FAVORITES) {
+if (state.activeTab !== TAB_MINE) {
   for (const btn of tabButtons) {
-    btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === TAB_FAVORITES ? 'true' : 'false');
+    btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === state.activeTab ? 'true' : 'false');
   }
-  updateHeaderSubtitle(TAB_FAVORITES);
+  updateHeaderSubtitle(state.activeTab);
 }
 
 async function loadMyListings() {

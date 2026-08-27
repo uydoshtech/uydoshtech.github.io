@@ -424,6 +424,7 @@ function parseMiniAppHeaderOptions(el) {
 }
 
 const MINI_APP_ACCOUNT_PATH = '/telegram/account.html';
+const MINI_APP_GROUPS_PATH = '/telegram/account.html?tab=groups';
 const MINI_APP_FAVORITES_PATH = '/telegram/account.html?tab=favorites';
 const MINI_APP_PROFILE_PATH = '/telegram/profile.html';
 const MINI_APP_PRIVACY_PATH = '/privacy-policy.html';
@@ -470,8 +471,9 @@ function accountMenuDisplayName() {
 function accountShortcutItemsHtml() {
   return `
     <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
-    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}" data-join-request-menu-item>
-      ${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span>
+    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
+    <a role="menuitem" href="${MINI_APP_GROUPS_PATH}" data-join-request-menu-item>
+      ${UyDosh.iconChrome('users')}<span data-i18n="account.tabs.groups"></span>
       <span class="account-menu-badge" data-join-request-menu-badge hidden aria-hidden="true"></span>
     </a>
     <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
@@ -1091,32 +1093,41 @@ function ensureMiniAppSafeAreaStyles() {
       inset: -10px;
     }
     html.mini-app .nav-menu-join-badge {
+      display: block;
       position: absolute;
-      top: -3px;
-      right: -3px;
-      width: 8px;
-      height: 8px;
+      top: -4px;
+      right: -4px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: #22c55e;
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), black 6%);
+      box-shadow: 0 0 0 2px rgba(6, 21, 37, 0.85);
       z-index: 2;
       pointer-events: none;
-      animation: nav-menu-join-pulse 1.15s ease-in-out infinite;
+      transform-origin: center;
+      animation: nav-menu-join-pulse 1s ease-in-out infinite;
+    }
+    html.mini-app .nav-menu-join-badge::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.85);
+      animation: nav-menu-join-ring 1.4s ease-out infinite;
     }
     html.mini-app-header-light header .nav-menu-join-badge {
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
     }
     html.mini-app .nav-menu-join-badge[hidden] {
       display: none;
     }
     @keyframes nav-menu-join-pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.25; transform: scale(0.72); }
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.45); }
     }
-    @media (prefers-reduced-motion: reduce) {
-      html.mini-app .nav-menu-join-badge {
-        animation: none;
-      }
+    @keyframes nav-menu-join-ring {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.8); opacity: 1; }
+      100% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); opacity: 0; }
     }
     html.mini-app .nav-menu-icon svg {
       width: 24px;
@@ -2117,6 +2128,7 @@ Object.assign(window.UyDosh, {
   mountAllMiniAppHeaders,
   miniAppHeaderHtml,
   MINI_APP_ACCOUNT_PATH,
+  MINI_APP_GROUPS_PATH,
   MINI_APP_FAVORITES_PATH,
   MINI_APP_CREATE_PATH,
   MINI_APP_PROFILE_PATH,
