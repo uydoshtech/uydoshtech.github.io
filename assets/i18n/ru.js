@@ -120,6 +120,8 @@ I18N.ru = {
     'detail.group.pending': 'Заявка ждёт решения организатора.',
     'detail.group.member': 'Вы в этой группе.',
     'detail.group.full': 'Группа уже набрана.',
+    'detail.group.formedTitle': 'Группа сформирована',
+    'detail.group.findHousing': 'Найти жильё для группы',
     'detail.group.closed': 'Группа закрыта.',
     'detail.group.messageLabel': 'Сообщение организатору (необязательно)',
     'detail.group.messagePlaceholder': 'Коротко о себе…',

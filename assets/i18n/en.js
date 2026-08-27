@@ -120,6 +120,8 @@ I18N.en = {
     'detail.group.pending': 'Your request is waiting for the organizer.',
     'detail.group.member': 'You are in this group.',
     'detail.group.full': 'This group is full.',
+    'detail.group.formedTitle': 'Group complete',
+    'detail.group.findHousing': 'Find housing',
     'detail.group.closed': 'This group is closed.',
     'detail.group.messageLabel': 'Note to organizer (optional)',
     'detail.group.messagePlaceholder': 'Short intro…',

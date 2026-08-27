@@ -641,8 +641,7 @@ function renderFilters() {
 
   // "3D View" mini filter — shown in both the expanded and collapsed
   // (compact) ribbons, matching the mobile app's 3D room-scan badge/icon
-  // (see Room3dIconBadge, Icons.view_in_ar). In the compact row it trails
-  // the district/metro chips.
+  // (see Room3dIconBadge, Icons.view_in_ar). In the compact row it is last.
   const threeDPressed = state.filters.has3dTour;
   const threeDChip = UyDosh.chipButtonHtml({
     className: 'chip chip-3d',
@@ -794,8 +793,8 @@ function renderFilters() {
                 ${districtChipCompact}
                 ${lineChipCompact}
                 ${photoChipCompact}
-                ${threeDChipCompact}
                 ${priceSortChipCompact}
+                ${threeDChipCompact}
               </div>
               ${filtersToggleHtml}
             </div>

@@ -121,6 +121,8 @@ I18N.uz = {
     'detail.group.pending': 'So‘rovingiz tashkilotchida ko‘rib chiqilmoqda.',
     'detail.group.member': 'Siz ushbu guruhdasiz.',
     'detail.group.full': 'Guruh to‘lgan.',
+    'detail.group.formedTitle': 'Guruh to‘ldi',
+    'detail.group.findHousing': 'Uy-joy qidirish',
     'detail.group.closed': 'Guruh yopilgan.',
     'detail.group.messageLabel': 'Tashkilotchiga izoh (ixtiyoriy)',
     'detail.group.messagePlaceholder': 'Qisqa tanishtirish…',

@@ -212,20 +212,6 @@ function groupCellStatus({ displayText, sortedClusters, largestCluster, hasDealb
   return 'mismatch';
 }
 
-function groupPreferenceAlignmentSummary(participants, spec) {
-  const active = participants.filter((p) => spec.displayText(p) != null);
-  if (active.length < 2) return null;
-  const clusters = groupBuildClusters(active, spec);
-  if (!clusters.length) return null;
-  const sorted = [...clusters].sort((a, b) => b.length - a.length);
-  const largest = sorted[0];
-  const prefix = `${largest.length}/${participants.length}`;
-  if (sorted.length === 1 && largest.length === active.length) {
-    return `${prefix} · ${groupDominantDisplay(largest, spec)}`;
-  }
-  return `${prefix} · ${groupClusterSummary(sorted, spec)}`;
-}
-
 function groupPreferenceMatrixCells(participants, spec) {
   const active = participants.filter((p) => spec.displayText(p) != null);
   const clusters = active.length < 2 ? [] : groupBuildClusters(active, spec);
@@ -254,7 +240,6 @@ function buildGroupPreferenceMatrix(participants) {
   return groupFieldSpecs().map((spec) => ({
     labelKey: spec.labelKey,
     label: groupFieldLabel(spec.labelKey),
-    alignmentSummary: groupPreferenceAlignmentSummary(participants, spec),
     cells: groupPreferenceMatrixCells(participants, spec),
   }));
 }

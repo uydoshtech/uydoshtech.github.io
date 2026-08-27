@@ -464,6 +464,8 @@
       .group-section-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); }
       .group-section-pending { color: var(--accent); font-weight: 700; }
       .group-section-status { margin: 0 0 10px; font-size: 14px; }
+      .group-section-status:last-child { margin-bottom: 0; }
+      .group-section > .btn.primary[data-group-find-housing] { margin-top: 2px; }
       .group-section-error { margin: 0 0 10px; font-size: 13px; color: #ef4444; }
       .group-section-error[hidden] { display: none !important; }
       .group-section-error a { color: inherit; font-weight: 700; }
@@ -474,6 +476,7 @@
         background: transparent; color: inherit; font: inherit;
       }
       .group-section > .btn { width: 100%; }
+      .group-section > .btn + .btn { margin-top: 8px; }
       .group-request-card {
         display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
         border-top: 1px solid var(--stroke);
@@ -611,8 +614,6 @@
       .compat-matrix-label .icon { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
       .compat-matrix-label .icon svg { width: 16px; height: 16px; display: block; }
       .compat-matrix-label .icon svg * { stroke: currentColor; fill: none; }
-      .compat-matrix-label small { margin-left: auto; font-weight: 500; color: var(--muted); text-align: right;
-        max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .compat-matrix-cells { display: grid; gap: 6px; }
       .compat-matrix-cell {
         font-size: 12px; line-height: 1.3; padding: 8px 6px; border-radius: 10px; text-align: center;

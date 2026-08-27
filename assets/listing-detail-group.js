@@ -42,6 +42,15 @@
         return code.includes(GROUP_JOIN_PROFILE_ERROR) || /complete your profile/i.test(code);
       }
 
+      function isGroupFormed(ctx) {
+        if (!ctx || ctx.group_forming_status === 'closed') return false;
+        if (ctx.group_forming_status === 'full') return true;
+        const memberCount = Number(ctx.group_member_count) || 0;
+        const target = Number(ctx.group_size_target) || 0;
+        if (target > 0 && memberCount >= target) return true;
+        return target > 0 && Number(ctx.group_spots_open) <= 0;
+      }
+
       function groupSectionHtml(listing) {
         const ctx = listingGroupContext(listing);
         if (!ctx) return '';
@@ -53,10 +62,35 @@
         const spots = groupI18n('detail.group.spots', { count: memberCount, target: target || '—' });
         const actions = groupActions(ctx);
         const status = ctx.group_forming_status;
+        const formed = isGroupFormed(ctx);
+        const showOwnerInbox = ctx.is_owner && (!formed || pendingCount > 0);
+
+        let titleKey = 'detail.group.title';
+        if (formed) titleKey = 'detail.group.formedTitle';
+        else if (ctx.is_owner) titleKey = 'detail.group.requestsTitle';
+
+        const findHousingCta = (isMiniApp && formed && (ctx.is_owner || ctx.is_member))
+          ? `<a class="btn primary" href="uydosh://listing/${encodeURIComponent(listing.id)}" data-group-find-housing>${UyDosh.escapeHtml(UyDosh.t('detail.group.findHousing', lang))}</a>`
+          : '';
+
+        const pendingWithdraw = (actions.includes('withdraw_join_request') || ctx.my_join_request_status === 'pending')
+          ? `<button type="button" class="btn" data-group-withdraw>${UyDosh.escapeHtml(UyDosh.t('detail.group.withdraw', lang))}</button>`
+          : '';
 
         let body = '';
         if (!isMiniApp) {
-          body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.openInApp', lang))}</p>`;
+          body = formed
+            ? `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.full', lang))}</p>`
+            : `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.openInApp', lang))}</p>`;
+        } else if (status === 'closed') {
+          body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.closed', lang))}</p>`;
+        } else if (formed) {
+          body = `
+            <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.full', lang))}</p>
+            ${findHousingCta}
+            ${pendingWithdraw}
+            ${showOwnerInbox ? '<div class="group-requests" data-group-requests></div>' : ''}
+          `;
         } else if (ctx.is_owner) {
           body = `
             <div class="group-requests" data-group-requests>
@@ -65,10 +99,6 @@
           `;
         } else if (ctx.is_member) {
           body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.member', lang))}</p>`;
-        } else if (status === 'closed') {
-          body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.closed', lang))}</p>`;
-        } else if (Number(ctx.group_spots_open) <= 0 || status === 'full') {
-          body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.full', lang))}</p>`;
         } else if (actions.includes('withdraw_join_request') || ctx.my_join_request_status === 'pending') {
           body = `
             <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.pending', lang))}</p>
@@ -87,9 +117,9 @@
           : '';
 
         return `
-          <section class="group-section" data-group-section id="group-section">
+          <section class="group-section" data-group-section id="group-section"${formed ? ' data-group-formed' : ''}>
             <div class="group-section-head">
-              <h2>${UyDosh.escapeHtml(UyDosh.t(ctx.is_owner ? 'detail.group.requestsTitle' : 'detail.group.title', lang))}</h2>
+              <h2>${UyDosh.escapeHtml(UyDosh.t(titleKey, lang))}</h2>
               <div class="group-section-meta">
                 <span>${UyDosh.escapeHtml(spots)}</span>
                 ${pendingHint}
@@ -112,12 +142,15 @@
         el.hidden = !message;
       }
 
-      function groupRequestCardHtml(request) {
+      function groupRequestCardHtml(request, { formed = false } = {}) {
         const name = request.applicant_name || UyDosh.t('complaints.anonymous');
         const note = typeof request.message === 'string' ? request.message.trim() : '';
         const avatar = request.applicant_avatar
           ? `<img src="${UyDosh.escapeHtml(request.applicant_avatar)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
           : UyDosh.iconChrome?.('person') || '';
+        const approveBtn = formed
+          ? ''
+          : `<button type="button" class="btn primary" data-group-approve>${UyDosh.escapeHtml(UyDosh.t('detail.group.accept'))}</button>`;
         return `
           <article class="group-request-card" data-group-request-id="${UyDosh.escapeHtml(String(request.id))}">
             <span class="group-request-avatar" aria-hidden="true">${avatar}</span>
@@ -125,7 +158,7 @@
               <div class="group-request-row">
                 <div class="group-request-name">${UyDosh.escapeHtml(name)}</div>
                 <div class="group-request-actions">
-                  <button type="button" class="btn primary" data-group-approve>${UyDosh.escapeHtml(UyDosh.t('detail.group.accept'))}</button>
+                  ${approveBtn}
                   <button type="button" class="btn" data-group-reject>${UyDosh.escapeHtml(UyDosh.t('detail.group.decline'))}</button>
                 </div>
               </div>
@@ -138,12 +171,20 @@
       function renderOwnerJoinRequests(requests) {
         const host = rootEl.querySelector('[data-group-requests]');
         if (!host) return;
+        const formed = Boolean(rootEl.querySelector('[data-group-section][data-group-formed]'));
         const rows = Array.isArray(requests) ? requests : [];
         if (!rows.length) {
+          if (formed) {
+            host.innerHTML = '';
+            host.hidden = true;
+            return;
+          }
+          host.hidden = false;
           host.innerHTML = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.requestsEmpty'))}</p>`;
           return;
         }
-        host.innerHTML = rows.map(groupRequestCardHtml).join('');
+        host.hidden = false;
+        host.innerHTML = rows.map((request) => groupRequestCardHtml(request, { formed })).join('');
         for (const card of host.querySelectorAll('[data-group-request-id]')) {
           const requestId = Number(card.getAttribute('data-group-request-id'));
           card.querySelector('[data-group-approve]')?.addEventListener('click', () => {
@@ -179,6 +220,13 @@
         if (rejectBtn) rejectBtn.disabled = true;
         try {
           if (action === 'approve') {
+            const formed = Boolean(rootEl.querySelector('[data-group-section][data-group-formed]'));
+            if (formed) {
+              showGroupError(UyDosh.t('detail.group.full'));
+              if (approveBtn) approveBtn.disabled = false;
+              if (rejectBtn) rejectBtn.disabled = false;
+              return;
+            }
             await UyDosh.approveListingGroupJoinRequest(listingId, requestId);
             UyDosh.haptic?.success?.();
           } else {
@@ -261,6 +309,7 @@
       async function loadGroupJoinRequests() {
         const ctx = listingGroupContext(state.listing);
         if (!ctx?.is_owner || !UyDosh.isMiniApp()) return;
+        if (isGroupFormed(ctx) && !(Number(ctx.pending_join_request_count) > 0)) return;
         try {
           const payload = await UyDosh.fetchListingGroupJoinRequests(listingId);
           const requests = payload?.data ?? payload?.requests ?? payload;

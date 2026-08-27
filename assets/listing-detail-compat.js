@@ -502,7 +502,6 @@
             <div class="compat-matrix-label">
               <span class="icon">${UyDosh.iconChrome(compatFieldIcon(row.labelKey) || 'list')}</span>
               <span>${UyDosh.escapeHtml(row.label)}</span>
-              ${row.alignmentSummary ? `<small>${UyDosh.escapeHtml(row.alignmentSummary)}</small>` : ''}
             </div>
             <div class="compat-matrix-cells" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
               ${row.cells.map((cell) => `
