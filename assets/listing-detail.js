@@ -9,7 +9,7 @@
 //   listing-detail-roomscan.js    3D room scan tile + fullscreen viewer
 //   listing-detail-complaints.js  report button, complaint sheet/list, claim banner
 //   listing-detail-actions.js     share button, owner toolbar, favorite button
-//   listing-detail-compat.js      lifestyle compatibility tile
+//   listing-detail-compat.js      lifestyle compatibility tile + group matrix
 //   listing-detail-group.js       group-forming join / owner accept
 //   listing-detail.js (this file) bootstrap, shared state, render()/load()
 //
@@ -341,8 +341,8 @@
               ${roomScanHtml}
               ${descHtml}
               ${mapHtml}
+              ${compatibilityTileHtml(l, isOwner)}
               ${metaHtml}
-              ${compatibilityTileHtml(isOwner)}
               <div class="cta-row app-cta-row">
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
                 <a class="btn" href="${APK_URL}" download="uydosh.apk" data-i18n="detail.downloadApk">${UyDosh.escapeHtml(UyDosh.t('detail.downloadApk'))}</a>
@@ -373,7 +373,7 @@
           bindOwnerAddRoomScan(l.id);
         }
         if (isMiniApp) loadComplaintsWarning(l);
-        if (isMiniApp && !isOwner) {
+        if (isMiniApp && (!isOwner || isGroupCompatListing(l))) {
           bindCompatibilitySection();
           loadCompatibilityTile(l, isOwner);
         }

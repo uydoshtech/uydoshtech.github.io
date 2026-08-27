@@ -464,4 +464,12 @@ I18N.en = {
     'compat.male': 'Male',
     'compat.female': 'Female',
     'compat.any': 'Any',
+    'compat.groupTitle': 'Group compatibility',
+    'compat.groupMatrixTitle': 'Lifestyle preference matrix',
+    'compat.groupMatrixSubtitle': 'Compare every member at a glance',
+    'compat.groupValueCount': '{count} — {value}',
+    'compat.groupSummaryFull': 'full',
+    'compat.groupSummaryPartial': 'partial',
+    'compat.groupSummaryDiscuss': 'discuss',
+    'compat.groupReportTitle': 'Group compatibility insight',
 };

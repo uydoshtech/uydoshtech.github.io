@@ -465,4 +465,12 @@ I18N.uz = {
     'compat.male': 'Yigit',
     'compat.female': 'Qiz',
     'compat.any': 'Har qanday',
+    'compat.groupTitle': 'Guruh mosligi',
+    'compat.groupMatrixTitle': 'Turmush tarzi afzalliklari jadvali',
+    'compat.groupMatrixSubtitle': 'Barcha ishtirokchilarni bir qarashda solishtiring',
+    'compat.groupValueCount': '{count} — {value}',
+    'compat.groupSummaryFull': 'to‘liq',
+    'compat.groupSummaryPartial': 'qisman',
+    'compat.groupSummaryDiscuss': 'muhokama',
+    'compat.groupReportTitle': 'Guruh moslik xulosasi',
 };

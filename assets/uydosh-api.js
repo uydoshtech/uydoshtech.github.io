@@ -1355,6 +1355,13 @@ function withdrawListingGroupJoinRequest(listingId) {
   });
 }
 
+function fetchListingGroupMembers(listingId) {
+  return fetchJson(listingGroupPath(listingId, '/members')).then((payload) => {
+    if (Array.isArray(payload?.data)) return payload.data;
+    return [];
+  });
+}
+
 function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -1446,6 +1453,7 @@ Object.assign(window.UyDosh, {
   approveListingGroupJoinRequest,
   rejectListingGroupJoinRequest,
   withdrawListingGroupJoinRequest,
+  fetchListingGroupMembers,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
   fetchSubwayStations,

@@ -464,4 +464,12 @@ I18N.ru = {
     'compat.male': 'Парень',
     'compat.female': 'Девушка',
     'compat.any': 'Любой',
+    'compat.groupTitle': 'Совместимость группы',
+    'compat.groupMatrixTitle': 'Матрица бытовых предпочтений',
+    'compat.groupMatrixSubtitle': 'Сравните всех участников одним взглядом',
+    'compat.groupValueCount': '{count} — {value}',
+    'compat.groupSummaryFull': 'полных',
+    'compat.groupSummaryPartial': 'частичных',
+    'compat.groupSummaryDiscuss': 'обсудить',
+    'compat.groupReportTitle': 'Сводка совместимости группы',
 };

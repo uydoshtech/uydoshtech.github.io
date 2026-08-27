@@ -7,26 +7,31 @@
 // modules and by listing-detail.js's render()/load(). See listing-detail.js
 // for the overall module map.
 //
-// This file: the 1-on-1 lifestyle compatibility tile shown to non-owner Mini App viewers.
-      // --- 1-on-1 lifestyle compatibility with the listing owner -----------
-      // Mirrors the mobile app's ListingDetailCompatibilitySection: scores
-      // the viewer's and owner's `/profiles/:userId` records with the ported
-      // algorithm (see assets/uydosh-profile-match.js) and shows either the
-      // match percentage + breakdown, or a prompt to complete the viewer's
-      // own profile when nothing could be scored. Mini App only, and never
-      // shown to the owner viewing their own listing.
+// This file: lifestyle compatibility on listing.html.
+// Pair mode: viewer vs owner (hidden from the owner).
+// Group mode: preference matrix for group_forming listings with 2+ members
+// (shown to owners too — same as the Flutter listing detail screen).
 
-      function compatibilityTileHtml(isOwner) {
-        if (!UyDosh.isMiniApp() || isOwner) return '';
+      function isGroupCompatListing(listing) {
+        const ctx = typeof listingGroupContext === 'function' ? listingGroupContext(listing) : listing?.group_context;
+        if (!ctx?.is_group_forming) return false;
+        return (Number(ctx.group_member_count) || 0) >= 2;
+      }
+
+      function compatibilityTileHtml(listing, isOwner) {
+        if (!UyDosh.isMiniApp()) return '';
+        const isGroup = isGroupCompatListing(listing);
+        if (isOwner && !isGroup) return '';
+        const label = isGroup ? UyDosh.t('compat.groupTitle') : UyDosh.t('compat.title');
         return `
-          <div class="compat-section" data-compat-section aria-expanded="false" hidden>
+          <div class="compat-section${isGroup ? ' is-group' : ''}" data-compat-section data-compat-mode="${isGroup ? 'group' : 'pair'}" aria-expanded="false" hidden>
             <button type="button" class="compat-toggle" data-compat-toggle aria-expanded="false">
-              <span class="compat-avatars" aria-hidden="true">
+              <span class="compat-avatars" aria-hidden="true" data-compat-avatars>
                 <span class="compat-avatar" data-compat-avatar-owner>${UyDosh.iconChrome('person')}</span>
                 <span class="compat-avatar" data-compat-avatar-current>${UyDosh.iconChrome('person')}</span>
               </span>
               <span class="compat-toggle-title">
-                <span class="compat-toggle-label">${UyDosh.escapeHtml(UyDosh.t('compat.title'))}</span>
+                <span class="compat-toggle-label">${UyDosh.escapeHtml(label)}</span>
                 <span class="compat-toggle-percent" data-compat-percent><span class="compat-spinner" aria-hidden="true"></span></span>
               </span>
               <span class="compat-chevron" aria-hidden="true">▾</span>
@@ -92,6 +97,8 @@
 
       function compatFieldLabel(labelKey) {
         switch (labelKey) {
+          case 'wakeup_time': return UyDosh.t('profile.lifestyle.wakeupTime');
+          case 'sleep_time': return UyDosh.t('profile.lifestyle.sleepTime');
           case 'smoking_preference': return UyDosh.t('profile.lifestyle.smokingPreference');
           case 'pets_preference': return UyDosh.t('profile.lifestyle.petsPreference');
           case 'cleanliness': return UyDosh.t('profile.lifestyle.cleanliness');
@@ -354,9 +361,173 @@
         bodyEl.innerHTML = `${groups}<p class="compat-based-on">${UyDosh.escapeHtml(basedOn)}</p>${cta}`;
       }
 
+      async function fetchProfileOrEmpty(id) {
+        try {
+          return await UyDosh.fetchProfile(id);
+        } catch (err) {
+          if (err?.status === 404) return {};
+          throw err;
+        }
+      }
+
+      function firstName(name) {
+        const raw = String(name || '').trim();
+        if (!raw) return UyDosh.t('complaints.anonymous');
+        return raw.split(/\s+/)[0];
+      }
+
+      function renderGroupAvatars(members) {
+        const wrap = rootEl.querySelector('[data-compat-avatars]');
+        if (!wrap) return;
+        const shown = members.slice(0, 4);
+        wrap.style.width = `${28 + Math.max(0, shown.length - 1) * 14}px`;
+        wrap.innerHTML = shown.map((member, idx) => {
+          const z = shown.length - idx;
+          return `<span class="compat-avatar" style="left:${idx * 14}px;z-index:${z}"></span>`;
+        }).join('');
+        [...wrap.querySelectorAll('.compat-avatar')].forEach((el, idx) => {
+          setCompatAvatar(el, members[idx]);
+        });
+      }
+
+      function groupMatrixCellClass(status) {
+        switch (status) {
+          case 'fullMatch':
+          case 'partialMatch': return 'is-match';
+          case 'mismatch': return 'is-partial';
+          case 'conflict': return 'is-conflict';
+          default: return 'is-missing';
+        }
+      }
+
+      function renderGroupCompatibilityBody(bodyEl, { members, result, matrix, report }) {
+        const header = `
+          <div class="compat-matrix-users" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
+            ${members.map((m) => `
+              <div class="compat-matrix-user">
+                <span class="compat-matrix-user-avatar" data-matrix-avatar="${m.user_id}"></span>
+                <span class="compat-matrix-user-name">${UyDosh.escapeHtml(firstName(m.name))}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        const rows = matrix.map((row) => `
+          <div class="compat-matrix-row">
+            <div class="compat-matrix-label">
+              <span class="icon">${UyDosh.iconChrome(compatFieldIcon(row.labelKey) || 'list')}</span>
+              <span>${UyDosh.escapeHtml(row.label)}</span>
+              ${row.alignmentSummary ? `<small>${UyDosh.escapeHtml(row.alignmentSummary)}</small>` : ''}
+            </div>
+            <div class="compat-matrix-cells" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
+              ${row.cells.map((cell) => `
+                <div class="compat-matrix-cell ${groupMatrixCellClass(cell.status)}">${UyDosh.escapeHtml(cell.value)}</div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+
+        const summaryBits = [];
+        if (result.fullMatches.length) {
+          summaryBits.push(`<span class="is-match">${result.fullMatches.length}</span> ${UyDosh.escapeHtml(UyDosh.t('compat.groupSummaryFull'))}`);
+        }
+        if (result.partialMatches.length) {
+          summaryBits.push(`<span class="is-partial">${result.partialMatches.length}</span> ${UyDosh.escapeHtml(UyDosh.t('compat.groupSummaryPartial'))}`);
+        }
+        if (result.discussItems.length) {
+          summaryBits.push(`<span class="is-conflict">${result.discussItems.length}</span> ${UyDosh.escapeHtml(UyDosh.t('compat.groupSummaryDiscuss'))}`);
+        }
+        const summary = summaryBits.length
+          ? `<p class="compat-group-summary">${summaryBits.join(' · ')}</p>`
+          : '';
+        const reportHtml = report
+          ? `<div class="compat-group-report"><p class="compat-group-title">${UyDosh.escapeHtml(UyDosh.t('compat.groupReportTitle'))}</p><p>${UyDosh.escapeHtml(report)}</p></div>`
+          : '';
+
+        bodyEl.innerHTML = `
+          <p class="compat-matrix-title">${UyDosh.escapeHtml(UyDosh.t('compat.groupMatrixTitle'))}</p>
+          <p class="compat-matrix-subtitle">${UyDosh.escapeHtml(UyDosh.t('compat.groupMatrixSubtitle'))}</p>
+          <div class="compat-matrix">
+            ${header}
+            ${rows}
+          </div>
+          ${summary}
+          ${reportHtml}
+        `;
+        bodyEl.querySelectorAll('[data-matrix-avatar]').forEach((el) => {
+          const id = Number(el.getAttribute('data-matrix-avatar'));
+          const member = members.find((m) => Number(m.user_id) === id);
+          setCompatAvatar(el, member);
+        });
+      }
+
+      async function loadGroupCompatibilityTile(listing) {
+        const sectionEl = rootEl.querySelector('[data-compat-section]');
+        const percentEl = rootEl.querySelector('[data-compat-percent]');
+        const bodyEl = rootEl.querySelector('[data-compat-body]');
+        if (!sectionEl || !bodyEl) return;
+
+        try {
+          const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+          if (!sessionReady) return;
+
+          const membersRaw = await UyDosh.fetchListingGroupMembers(listing.id);
+          const ownerId = Number(listing.user_id ?? listing.user?.id);
+          const members = [...membersRaw].sort((a, b) => {
+            if (Number(a.user_id) === ownerId) return -1;
+            if (Number(b.user_id) === ownerId) return 1;
+            return 0;
+          });
+          if (members.length < 2) {
+            sectionEl.hidden = true;
+            return;
+          }
+
+          const profiles = await Promise.all(members.map(async (member) => {
+            const profile = await fetchProfileOrEmpty(member.user_id);
+            return {
+              ...profile,
+              user_id: member.user_id,
+              avatar_url: profile.avatar_url || member.avatar_url,
+              name: profile.name || member.name,
+            };
+          }));
+
+          sectionEl.hidden = false;
+          sectionEl.setAttribute('aria-expanded', 'true');
+          const toggle = rootEl.querySelector('[data-compat-toggle]');
+          if (toggle) toggle.setAttribute('aria-expanded', 'true');
+          bodyEl.hidden = false;
+          renderGroupAvatars(profiles);
+          const result = UyDosh.calculateGroupCompatibility(profiles);
+          const matrix = UyDosh.buildGroupPreferenceMatrix(profiles);
+          if (percentEl) {
+            if (result.percent == null) {
+              percentEl.textContent = UyDosh.t('compat.notAvailable');
+              percentEl.className = 'compat-toggle-percent';
+            } else {
+              percentEl.textContent = `${result.percent}%`;
+              percentEl.className = `compat-toggle-percent ${compatPercentClass(result.percent)}`;
+            }
+          }
+          renderGroupCompatibilityBody(bodyEl, {
+            members: profiles,
+            result,
+            matrix,
+            report: listing.group_compatibility_report || '',
+          });
+        } catch (err) {
+          console.error('Failed to load group compatibility', err);
+          sectionEl.hidden = true;
+        }
+      }
+
       async function loadCompatibilityTile(listing, isOwner) {
         const sectionEl = rootEl.querySelector('[data-compat-section]');
-        if (!sectionEl || isOwner) return;
+        if (!sectionEl) return;
+        if (isGroupCompatListing(listing)) {
+          return loadGroupCompatibilityTile(listing);
+        }
+        if (isOwner) return;
         const percentEl = rootEl.querySelector('[data-compat-percent]');
         const bodyEl = rootEl.querySelector('[data-compat-body]');
         const avatarOwnerEl = rootEl.querySelector('[data-compat-avatar-owner]');
@@ -370,15 +541,6 @@
           if (viewerId == null || !Number.isFinite(ownerId)) return;
 
           sectionEl.hidden = false;
-
-          const fetchProfileOrEmpty = async (id) => {
-            try {
-              return await UyDosh.fetchProfile(id);
-            } catch (err) {
-              if (err?.status === 404) return {};
-              throw err;
-            }
-          };
 
           const [currentProfile, ownerProfile] = await Promise.all([
             fetchProfileOrEmpty(viewerId),
@@ -413,4 +575,5 @@
           sectionEl.hidden = true;
         }
       }
+
 
