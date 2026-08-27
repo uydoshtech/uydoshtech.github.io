@@ -247,6 +247,67 @@ function hideProfileMenuBadge() {
   document.querySelectorAll('[data-profile-menu-badge]').forEach((el) => { el.hidden = true; });
 }
 
+function hideJoinRequestNavBadge() {
+  document.querySelectorAll('[data-nav-join-badge], [data-join-request-menu-badge]').forEach((el) => {
+    el.hidden = true;
+  });
+}
+
+function listingLooksGroupForming(listing) {
+  const typeId = Number(listing?.listing_type_id ?? listing?.listing_type?.id);
+  const code = listing?.listing_type?.code;
+  return typeId === 3 || code === 'group_forming';
+}
+
+/**
+ * Green blinking dot on the header hamburger (and a matching dot on
+ * "My listings" in the drawer) when the signed-in owner has pending
+ * group join requests. Fire-and-forget from initTelegramMiniApp; never
+ * blocks the page.
+ */
+async function maybeShowJoinRequestNavBadge() {
+  if (!isMiniApp()) return;
+  try {
+    const sessionReady = await ensureTelegramMiniAppSession();
+    if (!sessionReady) return;
+    const payload = await fetchMyTelegramMiniAppListings();
+    const listings = Array.isArray(payload?.listings) ? payload.listings : [];
+    let total = 0;
+    const hasServerCount = listings.some((row) => row?.pending_join_request_count != null);
+    if (hasServerCount) {
+      total = listings.reduce((sum, row) => sum + (Number(row.pending_join_request_count) || 0), 0);
+    } else {
+      const groupListings = listings.filter(listingLooksGroupForming).slice(0, 10);
+      const counts = await Promise.all(groupListings.map(async (row) => {
+        try {
+          const result = await fetchListingGroupJoinRequests(row.id);
+          const rows = result?.data ?? result?.requests ?? result;
+          return Array.isArray(rows) ? rows.length : 0;
+        } catch {
+          return 0;
+        }
+      }));
+      total = counts.reduce((sum, n) => sum + n, 0);
+    }
+    if (total <= 0) {
+      hideJoinRequestNavBadge();
+      return;
+    }
+    const label = (typeof t === 'function' ? t : UyDosh.t)('nav.joinRequestsPending');
+    document.querySelectorAll('[data-nav-join-badge]').forEach((el) => {
+      el.hidden = false;
+    });
+    document.querySelectorAll('[data-nav-drawer-trigger]').forEach((el) => {
+      el.setAttribute('aria-label', label);
+    });
+    document.querySelectorAll('[data-join-request-menu-badge]').forEach((el) => {
+      el.hidden = false;
+    });
+  } catch (err) {
+    console.warn('[UyDosh] join-request nav badge skipped', err);
+  }
+}
+
 /**
  * Best-effort, non-blocking green dot on the header account menu's "Profile"
  * item, shown whenever the signed-in user hasn't filled in anything on their
@@ -409,7 +470,10 @@ function accountMenuDisplayName() {
 function accountShortcutItemsHtml() {
   return `
     <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
-    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
+    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}" data-join-request-menu-item>
+      ${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span>
+      <span class="account-menu-badge" data-join-request-menu-badge hidden aria-hidden="true"></span>
+    </a>
     <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
     <a role="menuitem" href="${MINI_APP_PROFILE_PATH}" data-profile-menu-item>
       ${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span>
@@ -467,6 +531,7 @@ function navMenuHtml() {
         data-i18n-attr="aria-label"
       >
         <span class="nav-menu-icon" aria-hidden="true">${UyDosh.iconChrome('menu')}</span>
+        <span class="nav-menu-join-badge" data-nav-join-badge hidden aria-hidden="true"></span>
       </button>
     </div>`;
 }
@@ -1024,6 +1089,34 @@ function ensureMiniAppSafeAreaStyles() {
       content: '';
       position: absolute;
       inset: -10px;
+    }
+    html.mini-app .nav-menu-join-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), black 6%);
+      z-index: 2;
+      pointer-events: none;
+      animation: nav-menu-join-pulse 1.15s ease-in-out infinite;
+    }
+    html.mini-app-header-light header .nav-menu-join-badge {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+    }
+    html.mini-app .nav-menu-join-badge[hidden] {
+      display: none;
+    }
+    @keyframes nav-menu-join-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(0.72); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html.mini-app .nav-menu-join-badge {
+        animation: none;
+      }
     }
     html.mini-app .nav-menu-icon svg {
       width: 24px;
@@ -1985,6 +2078,7 @@ function initTelegramMiniApp() {
   // Fire-and-forget: reveals a green dot on the account menu's "Profile" item
   // once the profile fetch resolves, if the user hasn't filled anything in yet.
   maybeShowProfileMenuBadge();
+  maybeShowJoinRequestNavBadge();
   for (const el of document.querySelectorAll('[data-hide-in-mini-app]')) {
     el.setAttribute('hidden', '');
   }
@@ -2029,6 +2123,8 @@ Object.assign(window.UyDosh, {
   maybeShowProfileNudge,
   dismissProfileNudge,
   maybeShowProfileMenuBadge,
+  maybeShowJoinRequestNavBadge,
+  hideJoinRequestNavBadge,
   hideProfileMenuBadge,
   isProfileEmpty,
   isProfileFullyPopulated,

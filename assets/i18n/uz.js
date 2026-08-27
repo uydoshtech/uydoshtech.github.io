@@ -12,6 +12,7 @@ I18N.uz = {
     'nav.delete': 'Akkauntni o‘chirish',
     'nav.contact': 'Aloqa',
     'nav.menuLabel': 'Menyu',
+    'nav.joinRequestsPending': 'Guruhga so‘rovlar kutmoqda',
     'nav.more': 'Yana',
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',

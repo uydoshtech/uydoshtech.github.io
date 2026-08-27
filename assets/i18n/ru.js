@@ -11,6 +11,7 @@ I18N.ru = {
     'nav.delete': 'Удалить аккаунт',
     'nav.contact': 'Контакты',
     'nav.menuLabel': 'Меню',
+    'nav.joinRequestsPending': 'Есть заявки в группу',
     'nav.more': 'Ещё',
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',

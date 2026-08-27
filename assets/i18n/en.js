@@ -11,6 +11,7 @@ I18N.en = {
     'nav.delete': 'Delete account',
     'nav.contact': 'Contact',
     'nav.menuLabel': 'Menu',
+    'nav.joinRequestsPending': 'Pending group join requests',
     'nav.more': 'More',
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
