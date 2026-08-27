@@ -25,6 +25,8 @@ function isMiniApp() {
  *   3D room scan viewer once the listing loads (see maybeAutoOpenRoomScanFullscreen
  *   in listing-detail-roomscan.js) — set by redirectFromMiniAppStartParam for a
  *   `listing_{id}_3d` share link (see buildListing3dShareUrl).
+ * @param {string} [options.group] When `'requests'`, listing.html scrolls to the
+ *   group join-request panel (owner inbox / applicant CTA).
  */
 function listingPageUrl(id, options = {}) {
   const lid = String(id ?? '').trim();
@@ -33,6 +35,7 @@ function listingPageUrl(id, options = {}) {
     const params = new URLSearchParams({ id: lid, mini: '1' });
     if (options.backTo) params.set('back', options.backTo);
     if (options.view) params.set('view', options.view);
+    if (options.group) params.set('group', options.group);
     return `/listing.html?${params.toString()}`;
   }
   return `/listing/${encodeURIComponent(lid)}`;
@@ -1535,13 +1538,16 @@ function redirectFromMiniAppStartParam() {
     return true;
   }
 
-  const match = /^listing_(\d+)(_3d)?$/.exec(trimmed);
+  const match = /^listing_(\d+)(_3d|_join)?$/.exec(trimmed);
   if (!match) return false;
   try {
     if (sessionStorage.getItem(sessionKey) === trimmed) return false;
     sessionStorage.setItem(sessionKey, trimmed);
   } catch { /* ignore — worst case this redirect fires again */ }
-  location.replace(listingPageUrl(match[1], match[2] ? { view: '3d' } : {}));
+  const extras = {};
+  if (match[2] === '_3d') extras.view = '3d';
+  if (match[2] === '_join') extras.group = 'requests';
+  location.replace(listingPageUrl(match[1], extras));
   return true;
 }
 

@@ -449,6 +449,48 @@
         .claim-banner-btn { width: 100%; }
       }
 
+      .group-section {
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin: 0 0 16px;
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+      }
+      .group-section-head {
+        display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+        margin-bottom: 10px;
+      }
+      .group-section-head h2 { font-size: 16px; margin: 0; }
+      .group-section-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); }
+      .group-section-pending { color: var(--accent); font-weight: 700; }
+      .group-section-status { margin: 0 0 10px; font-size: 14px; }
+      .group-section-error { margin: 0 0 10px; font-size: 13px; color: #ef4444; }
+      .group-section-error[hidden] { display: none !important; }
+      .group-section-error a { color: inherit; font-weight: 700; }
+      .group-message-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      .group-join-message {
+        width: 100%; min-height: 64px; resize: vertical; margin-bottom: 10px;
+        border-radius: 10px; border: 1px solid var(--stroke); padding: 8px 10px;
+        background: transparent; color: inherit; font: inherit;
+      }
+      .group-section .btn { width: 100%; }
+      .group-request-card {
+        display: flex; gap: 12px; padding: 10px 0;
+        border-top: 1px solid var(--stroke);
+      }
+      .group-request-card:first-child { border-top: 0; padding-top: 0; }
+      .group-request-avatar {
+        width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(127, 127, 127, 0.16);
+      }
+      .group-request-avatar img, .group-request-avatar svg { width: 40px; height: 40px; display: block; object-fit: cover; }
+      .group-request-body { flex: 1; min-width: 0; }
+      .group-request-name { font-weight: 700; font-size: 14px; }
+      .group-request-note { margin: 4px 0 8px; font-size: 13px; color: var(--muted); }
+      .group-request-actions { display: flex; gap: 8px; }
+      .group-request-actions .btn { width: auto; flex: 1; }
+
       /* Complaints warning button + grouped-by-user complaints sheet — mirrors
          the mobile app's "N complaints" banner and ListingComplaintsScreen.
          Shown whenever a listing has at least one complaint; the underlying

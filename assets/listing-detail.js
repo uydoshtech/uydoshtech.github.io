@@ -10,6 +10,7 @@
 //   listing-detail-complaints.js  report button, complaint sheet/list, claim banner
 //   listing-detail-actions.js     share button, owner toolbar, favorite button
 //   listing-detail-compat.js      lifestyle compatibility tile
+//   listing-detail-group.js       group-forming join / owner accept
 //   listing-detail.js (this file) bootstrap, shared state, render()/load()
 //
 // This file owns `state`/`rootEl`/`listingId` (read by every module above)
@@ -230,6 +231,12 @@
         if (Number.isFinite(rooms) && rooms > 0) {
           secondaryBadges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
+        const groupCtx = listingGroupContext(l);
+        if (groupCtx) {
+          const memberCount = Number(groupCtx.group_member_count) || 0;
+          const target = Number(groupCtx.group_size_target) || 0;
+          secondaryBadges.push(`<span class="badge">${UyDosh.escapeHtml(groupI18n('detail.group.spots', { count: memberCount, target: target || '—' }))}</span>`);
+        }
 
         const amenities = Array.isArray(l.amenities) ? l.amenities : [];
         const addressText = typeof l.address_text === 'string' ? l.address_text.trim() : '';
@@ -329,6 +336,7 @@
               <div class="title-row">
                 <h1>${title}</h1>
               </div>
+              ${groupSectionHtml(l)}
               ${isOwner ? '' : claimBannerHtml()}
               ${roomScanHtml}
               ${descHtml}
@@ -350,6 +358,7 @@
         bindShareButton(l);
         bindFavoriteButton(l);
         bindReportButton(l);
+        bindGroupSection();
         updateDetailContactBar(l);
         updateDetailAdminEditFab(l, { isAdminViewer });
         if (isOwner) {
@@ -368,6 +377,7 @@
           bindCompatibilitySection();
           loadCompatibilityTile(l, isOwner);
         }
+        if (isMiniApp) loadGroupJoinRequests();
       }
 
       async function load() {

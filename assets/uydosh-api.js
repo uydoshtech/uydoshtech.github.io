@@ -1317,6 +1317,44 @@ function recordListingView(listingId) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/record-view`, { method: 'POST' });
 }
 
+function listingGroupPath(listingId, suffix) {
+  return `/listings/${encodeURIComponent(listingId)}/group${suffix}`;
+}
+
+function createListingGroupJoinRequest(listingId, { message } = {}) {
+  const body = {};
+  const trimmed = typeof message === 'string' ? message.trim().slice(0, 500) : '';
+  if (trimmed) body.message = trimmed;
+  return fetchJsonAuth(listingGroupPath(listingId, '/join-requests'), {
+    method: 'POST',
+    body,
+  });
+}
+
+function fetchListingGroupJoinRequests(listingId) {
+  return fetchJsonAuth(listingGroupPath(listingId, '/join-requests'));
+}
+
+function approveListingGroupJoinRequest(listingId, requestId) {
+  return fetchJsonAuth(
+    listingGroupPath(listingId, `/join-requests/${encodeURIComponent(requestId)}/approve`),
+    { method: 'POST' },
+  );
+}
+
+function rejectListingGroupJoinRequest(listingId, requestId) {
+  return fetchJsonAuth(
+    listingGroupPath(listingId, `/join-requests/${encodeURIComponent(requestId)}/reject`),
+    { method: 'POST' },
+  );
+}
+
+function withdrawListingGroupJoinRequest(listingId) {
+  return fetchJsonAuth(listingGroupPath(listingId, '/join-requests/mine'), {
+    method: 'DELETE',
+  });
+}
+
 function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -1403,6 +1441,11 @@ Object.assign(window.UyDosh, {
   fetchListing,
   fetchListingViewCount,
   recordListingView,
+  createListingGroupJoinRequest,
+  fetchListingGroupJoinRequests,
+  approveListingGroupJoinRequest,
+  rejectListingGroupJoinRequest,
+  withdrawListingGroupJoinRequest,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
   fetchSubwayStations,
