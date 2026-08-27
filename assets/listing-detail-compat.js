@@ -146,8 +146,7 @@
       }
 
       function compatLanguageName(code) {
-        const names = { uz: 'O‘zbekcha', ru: 'Русский', en: 'English' };
-        return names[code] || UyDosh.t('profile.lifestyle.notSpecified');
+        return UyDosh.languageLabelWithFlag(code) || UyDosh.t('profile.lifestyle.notSpecified');
       }
 
       function compatGenderLabel(gender) {
@@ -435,12 +434,30 @@
       function formatCompatReportHtml(text) {
         const readable = formatCompatReportForReadability(text);
         if (!readable) return '';
-        const withBold = UyDosh.escapeHtml(readable).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+        const withBold = renderCompatReportBold(readable);
         return withBold
           .split(/\n\s*\n/)
           .filter(Boolean)
           .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
           .join('');
+      }
+
+      /** Turns `**Name**` (and the unicode asterisk variants models sometimes
+       *  emit) into `<strong>Name</strong>`. Parses the raw string first, then
+       *  HTML-escapes each span, so a failed regex never leaves literal
+       *  asterisks on screen. */
+      function renderCompatReportBold(text) {
+        const re = /[*∗＊]{2}\s*([^*∗＊]+?)\s*[*∗＊]{2}/g;
+        let out = '';
+        let cursor = 0;
+        let match;
+        while ((match = re.exec(text))) {
+          out += UyDosh.escapeHtml(text.slice(cursor, match.index));
+          out += `<strong>${UyDosh.escapeHtml(match[1].trim())}</strong>`;
+          cursor = match.index + match[0].length;
+        }
+        out += UyDosh.escapeHtml(text.slice(cursor));
+        return out.replace(/[*∗＊]{2}/g, '');
       }
 
       function groupCompatReportInnerHtml(report) {

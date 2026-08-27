@@ -53,9 +53,10 @@
        * One metro-station summary row: name + (when we can compute one) a
        * clock icon with walking distance/time from the listing's location
        * to that station — see `UyDosh.stationWalkInfo` in uydosh-core.js —
-       * plus a "draw route" button (when the station has coordinates) that
-       * plots a pedestrian route from the listing's pin to it on the map
-       * below (see `bindMetroStationRouteButtons` / `setPinGuideLines`).
+       * plus a "draw route" button when that walk ("metro proximity") exists.
+       * The nearest station's button starts enabled (`options.routeOn`) so
+       * it matches the auto-drawn map route (see
+       * `drawNearestMetroStationRoute` / `bindMetroStationRouteButtons`).
        *
        * The straight-line km/min shown here is only the *initial* number,
        * good enough for the collapsed summary that's visible before any map
@@ -65,7 +66,7 @@
        * `.map-section-walk-text` span so that later patch can target it
        * directly without a full re-render.
        */
-      function buildMetroStationRowHtml(station, lang, fallbackLine, refCoords) {
+      function buildMetroStationRowHtml(station, lang, fallbackLine, refCoords, options = {}) {
         const name = UyDosh.localized(station, lang);
         if (!name) return '';
         const line = Number(station.line) || fallbackLine;
@@ -83,8 +84,10 @@
         // `bindMetroStationRouteButtons` can key its on/off toggle Set off the
         // button itself without needing to walk up to the parent row.
         const stationIdAttr = Number.isFinite(stationId) ? ` data-station-id="${stationId}"` : '';
-        const routeBtn = Number.isFinite(stationLat) && Number.isFinite(stationLon)
-          ? `<span class="map-section-row-route-btn" data-station-route${stationIdAttr} data-lat="${stationLat}" data-lon="${stationLon}" data-color="${UyDosh.escapeHtml(UyDosh.metroLineColor(line) || '')}" role="button" tabindex="0" aria-pressed="false" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.showRouteToStation'))}">${UyDosh.iconRoute()}</span>`
+        const lineColor = UyDosh.metroLineColor(line) || '';
+        const routeOn = Boolean(options.routeOn);
+        const routeBtn = walk && Number.isFinite(stationLat) && Number.isFinite(stationLon)
+          ? `<span class="map-section-row-route-btn" data-station-route${stationIdAttr} data-lat="${stationLat}" data-lon="${stationLon}" data-color="${UyDosh.escapeHtml(lineColor)}" role="button" tabindex="0" aria-pressed="${routeOn ? 'true' : 'false'}" aria-label="${UyDosh.escapeHtml(UyDosh.t(routeOn ? 'detail.hideRouteToStation' : 'detail.showRouteToStation'))}"${routeOn && lineColor ? ` style="--route-btn-active-color:${UyDosh.escapeHtml(lineColor)}"` : ''}>${UyDosh.iconRoute()}</span>`
           : '';
         const idAttr = Number.isFinite(stationId) ? ` data-station-id="${stationId}"` : '';
         return `<div class="map-section-row map-section-row-metro"${idAttr}>${UyDosh.iconMetro(line)}<span class="map-section-row-metro-text"><span class="map-section-row-label">${UyDosh.escapeHtml(name)}</span>${walkHtml}</span>${routeBtn}</div>`;
@@ -158,8 +161,11 @@
         }
         if (hasMetro) {
           const refCoords = UyDosh.listingReferenceCoordinates(l);
+          const nearestId = Number(nearestMetroStation(l)?.id);
           const metroRows = stations
-            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords))
+            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords, {
+              routeOn: Number.isFinite(nearestId) && Number(station.id) === nearestId,
+            }))
             .filter(Boolean);
           // Same "stands apart from the rows above it" treatment as the
           // address row, but only on the first station row — multiple
@@ -396,6 +402,10 @@
         // `mountListingMap()` for the metro row "draw route" buttons below,
         // since `state.mapExpanded` is already true by the time those fire.
         state.mapExpanded = true;
+        const nearestId = Number(nearestMetroStation(state.listing)?.id);
+        if (Number.isFinite(nearestId) && state.activeMetroStationRouteIds.size === 0) {
+          state.activeMetroStationRouteIds.add(nearestId);
+        }
         mountListingMap();
 
         bindMetroStationRouteButtons();

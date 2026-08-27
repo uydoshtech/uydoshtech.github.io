@@ -1295,7 +1295,8 @@ function showEnd() {
   }
   feedListPanel?.classList.remove('is-empty');
   statusEl.className = 'status';
-  statusEl.textContent = UyDosh.t('feed.end');
+  statusEl.innerHTML = '';
+  statusEl.textContent = '';
 }
 
 function clearStatus() {

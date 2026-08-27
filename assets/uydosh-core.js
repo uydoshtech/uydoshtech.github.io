@@ -158,6 +158,13 @@ const LANG_META = {
   ru: { flag: '🇷🇺', label: 'Русский' },
   en: { flag: '🇬🇧', label: 'English' },
 };
+
+/** Flag + native name for a known language code (`uz`/`ru`/`en`), or '' when
+ *  the value is missing/unknown — callers keep their own "not specified" copy. */
+function languageLabelWithFlag(code) {
+  const meta = LANG_META[String(code || '').trim().toLowerCase()];
+  return meta ? `${meta.flag} ${meta.label}` : '';
+}
 const LANG_SWITCHER_STYLE_ID = 'uydosh-lang-switcher-styles';
 
 /** True on /telegram/, telegram.html redirect, or `?mini=1` listing pages. */
@@ -313,7 +320,9 @@ function noPhotoPlaceholderImageUrl(listingOrPin) {
   return NO_PHOTO_PLACEHOLDER_IMAGES[typeCode]?.[gender] ?? '';
 }
 
-/** Card/detail badge label; roommate_needed is gendered (ru: «Ищем соседа» / «Ищем соседку»). */
+/** Card/detail badge label; roommate_needed is gendered (ru: «Ищем соседа» / «Ищем соседку»).
+ *  Group-forming appends current members / target size ("Собираем группу 1/3")
+ *  when those counts are on the listing. */
 function listingTypeBadgeLabel(listing, lang = getLang()) {
   if (!listing) return '';
   if (isRoommateNeededListing(listing)) {
@@ -323,9 +332,25 @@ function listingTypeBadgeLabel(listing, lang = getLang()) {
       : t('card.type.roommateNeededMale', lang);
   }
   if (isGroupFormingListing(listing)) {
-    return t('filter.type.groupForming', lang);
+    const base = t('filter.type.groupForming', lang);
+    const occupancy = groupFormingOccupancyLabel(listing);
+    return occupancy ? `${base} ${occupancy}` : base;
   }
   return localized(listing.listing_type, lang);
+}
+
+/** `1/3`-style occupancy for group-forming pills: filled members / target size. */
+function groupFormingOccupancyLabel(listing) {
+  const target = Number(
+    listing?.group_context?.group_size_target ?? listing?.group_size_target,
+  );
+  if (!Number.isFinite(target) || target < 1) return '';
+  let filled = Number(
+    listing?.group_context?.group_member_count ?? listing?.group_member_count,
+  );
+  if (!Number.isFinite(filled) || filled < 1) filled = 1;
+  if (filled > target) filled = target;
+  return `${filled}/${target}`;
 }
 
 function localizedDescription(listing, lang) {
@@ -847,15 +872,18 @@ function estimatedWalkRadiusMeters(minutes) {
 
 /**
  * Best-known reference point for "where the listing actually is", used to
- * measure walking distance to the metro stations it names: the exact
- * address when the author gave one, else the primary subway station's own
- * coordinates, else the district centroid. Mirrors the fallback order of
+ * measure walking distance to the metro stations it names. Mirrors
  * `resolveListingMapCoordinates` in yandex-map.js (kept independent so this
- * doesn't force-load the lazy Maps module just to compute a distance).
+ * doesn't force-load the lazy Maps module just to compute a distance):
+ * `display_lat`/`display_lng` first (the jittered pin for approximate
+ * listings, or the real address for exact ones), then address, subway
+ * station, district centroid. `location_precision === 'unknown'` has no pin.
  */
 function listingReferenceCoordinates(listing) {
   if (!listing) return null;
+  if (listing.location_precision === 'unknown') return null;
   const candidates = [
+    [listing.display_lat, listing.display_lng],
     [listing.address_latitude, listing.address_longitude],
     [listing.subway_station?.latitude, listing.subway_station?.longitude],
     [listing.location?.latitude, listing.location?.longitude],
@@ -919,6 +947,7 @@ Object.assign(window.UyDosh, {
   listingPinCoordinateKey,
   isFeatured,
   listingTypeBadgeLabel,
+  languageLabelWithFlag,
   formatAddressText,
   formatListingDetailAddressText,
   haversineMeters,

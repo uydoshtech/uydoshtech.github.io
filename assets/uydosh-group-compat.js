@@ -43,8 +43,7 @@ function groupBoolLabel(value, yesKey, noKey) {
 
 function groupLanguageLabel(code) {
   if (groupMissing(code)) return null;
-  const names = { uz: 'O‘zbekcha', ru: 'Русский', en: 'English' };
-  return names[code] || String(code);
+  return UyDosh.languageLabelWithFlag(code) || String(code);
 }
 
 function groupFieldSpecs() {

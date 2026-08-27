@@ -27,7 +27,6 @@ I18N.uz = {
     'feed.empty': 'Hozircha e’lonlar yo‘q.',
     'feed.error': 'Ma’lumotlarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring.',
     'feed.retry': 'Qayta urinish',
-    'feed.end': 'Hammasi shu. Yangilari uchun ilovamizni oching.',
     'feed.scrollToTop': 'Yuqoriga',
     'card.featured': 'Yuqoriga chiqarilgan',
     'card.threeDTour.aria': '3D xona skani',

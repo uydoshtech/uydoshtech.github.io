@@ -643,7 +643,8 @@
       .compat-group-report-title .icon svg * { stroke: currentColor; fill: none; }
       .compat-group-report-body p { margin: 0 0 8px; }
       .compat-group-report-body p:last-child { margin: 0; }
-      .compat-group-report-body b { font-weight: 700; color: var(--fg); }
+      .compat-group-report-body strong,
+      .compat-group-report-body b { font-weight: 800; color: var(--fg); }
 
       /* Owner "Add 3D scan" card — same App Clip flow as the post-publish
          upsell, shown on detail when the owner has no GLB yet. */

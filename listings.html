@@ -339,7 +339,8 @@
           statusEl.innerHTML = UyDosh.feedEmptyStateHtml();
         } else {
           statusEl.className = 'status';
-          statusEl.textContent = UyDosh.t('feed.end');
+          statusEl.innerHTML = '';
+          statusEl.textContent = '';
         }
       }
 

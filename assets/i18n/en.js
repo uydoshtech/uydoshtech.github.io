@@ -26,7 +26,6 @@ I18N.en = {
     'feed.empty': 'No listings yet.',
     'feed.error': 'Could not load listings. Please try again later.',
     'feed.retry': 'Try again',
-    'feed.end': 'That’s everything. Get the app for alerts on new ones.',
     'feed.scrollToTop': 'Scroll to top',
     'card.featured': 'Featured',
     'card.threeDTour.aria': '3D room scan',

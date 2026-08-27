@@ -4,13 +4,14 @@
 // Depends on uydosh-icons.js (listing type colors/consts). Load after it.
 
 /** Match mobile app listing-type badge colors (dark theme), except
- *  `group_forming`: mobile uses its purple brand color there, but the web map
- *  intentionally sticks to a blue/orange palette (no purple) across every pin
- *  state — see MAP_PIN_FILL.selected below. */
+ *  `group_forming`: mobile uses its purple brand color there, but the Mini
+ *  App uses accent green so the occupancy pill ("Собираем группу 1/3")
+ *  reads as an open/available group rather than overlapping the
+ *  `room_needed` blue. */
 const LISTING_TYPE_COLORS = {
   1: '#64B5F6', // room_needed
   2: '#FF9800', // roommate_needed
-  3: '#0288D1', // group_forming
+  3: '#22c55e', // group_forming
 };
 
 /** Material-style SVG paths for listing-type map pin glyphs (viewBox 0 0 24 24). */

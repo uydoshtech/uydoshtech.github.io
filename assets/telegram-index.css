@@ -329,7 +329,7 @@ header {
   border-color: #FF9800;
 }
 .chip-type-cycle[data-listing-type="3"][aria-pressed="true"] {
-  border-color: #0288D1;
+  border-color: #22c55e;
 }
 .chip-gender .chip-icon {
   width: 16px;
@@ -403,7 +403,7 @@ header {
 }
 .chip-type-glyph[data-type="1"] { --type-color: #64B5F6; }
 .chip-type-glyph[data-type="2"] { --type-color: #FF9800; }
-.chip-type-glyph[data-type="3"] { --type-color: #0288D1; }
+.chip-type-glyph[data-type="3"] { --type-color: #22c55e; }
 .chip-type-glyph.is-active {
   opacity: 1;
   border-color: var(--type-color, var(--brand2));
