@@ -231,12 +231,6 @@
         if (Number.isFinite(rooms) && rooms > 0) {
           secondaryBadges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
-        const groupCtx = listingGroupContext(l);
-        if (groupCtx) {
-          const memberCount = Number(groupCtx.group_member_count) || 0;
-          const target = Number(groupCtx.group_size_target) || 0;
-          secondaryBadges.push(`<span class="badge">${UyDosh.escapeHtml(groupI18n('detail.group.spots', { count: memberCount, target: target || '—' }))}</span>`);
-        }
 
         const amenities = Array.isArray(l.amenities) ? l.amenities : [];
         const addressText = typeof l.address_text === 'string' ? l.address_text.trim() : '';
