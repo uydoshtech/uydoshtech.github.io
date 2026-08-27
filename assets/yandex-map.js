@@ -1960,11 +1960,11 @@
   }
 
   /**
-   * Floating round buttons (bottom-right of the map) to toggle the district-boundaries
+   * Floating round buttons (bottom-left of the map) to toggle the district-boundaries
    * layer and cycle the metro-stations layer — mirrors the mobile app's map layer
-   * buttons. Mini app only; rendered as a plain DOM overlay. Kept above the feed's
-   * add-listing FAB (same viewport corner as list view) so the two don't overlap;
-   * still clear of the results-count tile (top-right) and the geolocation control
+   * buttons. Mini app only; rendered as a plain DOM overlay. Sit in a horizontal
+   * row so the feed's add-listing FAB can own the bottom-right corner; still
+   * clear of the results-count tile (top-right) and the geolocation control
    * (top-left). Yandex's own copyright/logo bar is hidden entirely (see
    * `ensureCopyrightControlStyles`).
    */
@@ -1975,9 +1975,6 @@
   const LAYER_CONTROL_MUTED_COLOR = '#94a3b8';
   const LAYER_CONTROL_ACTIVE_COLOR = '#60a5fa';
   const LAYER_CONTROLS_BOTTOM_GUTTER = 10;
-  // Feed add-listing FAB is 48px, 14px from the viewport bottom, plus an 8px
-  // gap — lift this stack by that amount so it sits directly above the FAB.
-  const LAYER_CONTROLS_FAB_CLEARANCE = 48 + 14 + 8;
   // 20% larger than the shared `RESULTS_COUNT_CONTROL_SIZE`/icon size these
   // buttons used to just borrow — kept as their own constants (rather than
   // scaling that shared one) so the top-right results-count tile stays its
@@ -2005,11 +2002,11 @@
     style.textContent = `
       .${LAYER_CONTROLS_CLASS} {
         position: absolute;
-        bottom: calc(${LAYER_CONTROLS_BOTTOM_GUTTER + LAYER_CONTROLS_FAB_CLEARANCE}px + env(safe-area-inset-bottom, 0px));
-        right: ${RESULTS_COUNT_CONTROL_GUTTER}px;
+        bottom: ${LAYER_CONTROLS_BOTTOM_GUTTER}px;
+        left: ${RESULTS_COUNT_CONTROL_GUTTER}px;
         z-index: 20;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         gap: 8px;
       }
       .${LAYER_CONTROL_BTN_CLASS} {
