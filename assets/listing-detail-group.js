@@ -122,12 +122,14 @@
           <article class="group-request-card" data-group-request-id="${UyDosh.escapeHtml(String(request.id))}">
             <span class="group-request-avatar" aria-hidden="true">${avatar}</span>
             <div class="group-request-body">
-              <div class="group-request-name">${UyDosh.escapeHtml(name)}</div>
-              ${note ? `<p class="group-request-note">${UyDosh.escapeHtml(note)}</p>` : ''}
-              <div class="group-request-actions">
-                <button type="button" class="btn primary" data-group-approve>${UyDosh.escapeHtml(UyDosh.t('detail.group.accept'))}</button>
-                <button type="button" class="btn" data-group-reject>${UyDosh.escapeHtml(UyDosh.t('detail.group.decline'))}</button>
+              <div class="group-request-row">
+                <div class="group-request-name">${UyDosh.escapeHtml(name)}</div>
+                <div class="group-request-actions">
+                  <button type="button" class="btn primary" data-group-approve>${UyDosh.escapeHtml(UyDosh.t('detail.group.accept'))}</button>
+                  <button type="button" class="btn" data-group-reject>${UyDosh.escapeHtml(UyDosh.t('detail.group.decline'))}</button>
+                </div>
               </div>
+              ${note ? `<p class="group-request-note">${UyDosh.escapeHtml(note)}</p>` : ''}
             </div>
           </article>
         `;
