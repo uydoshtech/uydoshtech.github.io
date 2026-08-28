@@ -315,6 +315,7 @@
           ${ownerToolbarHtml(isOwner, l.id, {
             hasRoomScan: Boolean(l.room_scan_glb_url),
             isAdmin,
+            isActive: l.is_active !== false,
           })}
           <div class="layout">
             <div class="gallery-col">
@@ -333,9 +334,9 @@
               ${groupSectionHtml(l)}
               ${isOwner ? '' : claimBannerHtml()}
               ${roomScanHtml}
+              ${compatibilityTileHtml(l, isOwner)}
               ${descHtml}
               ${mapHtml}
-              ${compatibilityTileHtml(l, isOwner)}
               ${metaHtml}
               <div class="cta-row app-cta-row">
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>

@@ -140,7 +140,7 @@
        * `ListingDetailScreen._buildActionMenuItems`, and the edit/delete row actions
        * in `telegram-account.js`) sits in the same row, pinned to the far right corner.
        */
-      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false, isAdmin = false } = {}) {
+      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false, isAdmin = false, isActive = true } = {}) {
         if (!isOwner) return '';
         const editHref = `/telegram/create.html?id=${encodeURIComponent(listingId)}`;
         // Replace scan only when a GLB already exists; the empty-state add card
@@ -179,6 +179,10 @@
                   ${UyDosh.iconPencil()}
                   <span>${UyDosh.escapeHtml(UyDosh.t('account.edit'))}</span>
                 </a>
+                <button type="button" class="owner-menu-item" data-owner-menu-visibility>
+                  ${isActive ? UyDosh.iconEye() : UyDosh.iconEyeOff()}
+                  <span>${UyDosh.escapeHtml(UyDosh.t(isActive ? 'account.deactivate' : 'account.activate'))}</span>
+                </button>
                 ${replaceScanItem}
                 <button type="button" class="owner-menu-item owner-menu-item-danger" data-owner-menu-delete>
                   ${UyDosh.iconTrash()}
@@ -216,6 +220,7 @@
         const toggleBtn = rootEl.querySelector('[data-owner-menu-toggle]');
         const dropdownEl = rootEl.querySelector('[data-owner-menu-dropdown]');
         const deleteBtn = rootEl.querySelector('[data-owner-menu-delete]');
+        const visibilityBtn = rootEl.querySelector('[data-owner-menu-visibility]');
         const replaceScanBtn = rootEl.querySelector('[data-owner-menu-replace-scan]');
         if (!menuEl || !toggleBtn || !dropdownEl) return;
 
@@ -275,6 +280,29 @@
               location.replace(`${location.pathname}?${params}`);
             },
           });
+        });
+
+        visibilityBtn?.addEventListener('click', async () => {
+          closeOwnerMenu();
+          const listing = state.listing;
+          if (!listing) return;
+          const lang = UyDosh.getLang();
+          const currentlyActive = listing.is_active !== false;
+          const confirmed = await confirmTelegramAction(
+            UyDosh.t(currentlyActive ? 'account.hideConfirm' : 'account.showConfirm', lang),
+          );
+          if (!confirmed) return;
+          visibilityBtn.disabled = true;
+          try {
+            const data = await UyDosh.toggleListingActiveFromTelegramMiniApp(listingId);
+            const updated = data?.listing;
+            listing.is_active = updated ? !!updated.is_active : !currentlyActive;
+            render();
+          } catch (err) {
+            console.error('Failed to toggle listing visibility', err);
+            visibilityBtn.disabled = false;
+            showTelegramAlert(UyDosh.t('account.visibilityError', lang));
+          }
         });
 
         deleteBtn?.addEventListener('click', async () => {

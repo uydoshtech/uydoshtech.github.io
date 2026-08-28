@@ -74,6 +74,7 @@
         const target = Number(ctx.group_size_target) || 0;
         const pendingCount = Number(ctx.pending_join_request_count) || 0;
         const spots = groupI18n('detail.group.spots', { count: memberCount, target: target || '—' });
+        const showSpots = memberCount >= 2;
         const actions = groupActions(ctx);
         const status = ctx.group_forming_status;
         const formed = isGroupFormed(ctx);
@@ -136,7 +137,7 @@
             <div class="group-section-head">
               <h2>${UyDosh.escapeHtml(UyDosh.t(titleKey, lang))}</h2>
               <div class="group-section-meta">
-                <span class="group-section-spots">${UyDosh.escapeHtml(spots)}</span>
+                ${showSpots ? `<span class="group-section-spots">${UyDosh.escapeHtml(spots)}</span>` : ''}
                 ${pendingHint}
               </div>
             </div>
