@@ -41,6 +41,7 @@ I18N.en = {
     'card.perMonth': '/mo',
     'card.type.roommateNeededMale': 'Roommate needed',
     'card.type.roommateNeededFemale': 'Female roommate needed',
+    'card.type.groupOccupancy': 'Group {n}/{m}',
     'card.genderBadge.male': 'Guy',
     'card.genderBadge.female': 'Girl',
     'detail.back': '← Listings',

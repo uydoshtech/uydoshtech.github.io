@@ -42,6 +42,7 @@ I18N.uz = {
     'card.perMonth': '/oy',
     'card.type.roommateNeededMale': 'Hamkor kerak',
     'card.type.roommateNeededFemale': 'Ayol hamkor kerak',
+    'card.type.groupOccupancy': 'Guruh {n}/{m}',
     'card.genderBadge.male': 'Yigit',
     'card.genderBadge.female': 'Qiz',
     'detail.back': '← E’lonlar',

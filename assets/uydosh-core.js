@@ -321,8 +321,7 @@ function noPhotoPlaceholderImageUrl(listingOrPin) {
 }
 
 /** Card/detail badge label; roommate_needed is gendered (ru: «Ищем соседа» / «Ищем соседку»).
- *  Group-forming appends current members / target size ("Собираем группу 1/3")
- *  when those counts are on the listing. */
+ *  Group-forming uses "Group n/m" when occupancy counts are on the listing. */
 function listingTypeBadgeLabel(listing, lang = getLang()) {
   if (!listing) return '';
   if (isRoommateNeededListing(listing)) {
@@ -332,25 +331,29 @@ function listingTypeBadgeLabel(listing, lang = getLang()) {
       : t('card.type.roommateNeededMale', lang);
   }
   if (isGroupFormingListing(listing)) {
-    const base = t('filter.type.groupForming', lang);
     const occupancy = groupFormingOccupancyLabel(listing);
-    return occupancy ? `${base} ${occupancy}` : base;
+    if (occupancy) {
+      return t('card.type.groupOccupancy', lang)
+        .replace('{n}', occupancy.n)
+        .replace('{m}', occupancy.m);
+    }
+    return t('filter.type.groupForming', lang);
   }
   return localized(listing.listing_type, lang);
 }
 
-/** `1/3`-style occupancy for group-forming pills: filled members / target size. */
+/** Occupancy numbers for group-forming pills: filled members / target size. */
 function groupFormingOccupancyLabel(listing) {
   const target = Number(
     listing?.group_context?.group_size_target ?? listing?.group_size_target,
   );
-  if (!Number.isFinite(target) || target < 1) return '';
+  if (!Number.isFinite(target) || target < 1) return null;
   let filled = Number(
     listing?.group_context?.group_member_count ?? listing?.group_member_count,
   );
   if (!Number.isFinite(filled) || filled < 1) filled = 1;
   if (filled > target) filled = target;
-  return `${filled}/${target}`;
+  return { n: String(filled), m: String(target) };
 }
 
 function localizedDescription(listing, lang) {

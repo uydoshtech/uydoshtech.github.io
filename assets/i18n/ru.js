@@ -41,6 +41,7 @@ I18N.ru = {
     'card.perMonth': '/мес',
     'card.type.roommateNeededMale': 'Ищем соседа',
     'card.type.roommateNeededFemale': 'Ищем соседку',
+    'card.type.groupOccupancy': 'Группа {n}/{m}',
     'card.genderBadge.male': 'Парни',
     'card.genderBadge.female': 'Девушку',
     'detail.back': '← Объявления',
