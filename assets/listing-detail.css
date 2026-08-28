@@ -478,6 +478,37 @@
       }
       .group-section > .btn { width: 100%; }
       .group-section > .btn + .btn { margin-top: 8px; }
+      .group-avatar-stack {
+        display: flex;
+        align-items: center;
+        margin: 2px 0 12px;
+        min-height: 40px;
+      }
+      .group-avatar-stack[hidden] { display: none !important; }
+      .group-avatar-stack-item {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        margin-left: -12px;
+        border: 2px solid color-mix(in srgb, var(--bg, #061525) 70%, #061525);
+        background: rgba(127, 127, 127, 0.18);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+      }
+      .group-avatar-stack-item:first-child { margin-left: 0; }
+      .group-avatar-stack-item img,
+      .group-avatar-stack-item svg { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .group-avatar-stack-more {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--fg);
+        background: color-mix(in srgb, var(--accent) 28%, transparent);
+      }
       .group-request-card {
         display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
         border-top: 1px solid var(--stroke);

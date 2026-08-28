@@ -96,7 +96,6 @@
           body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.closed', lang))}</p>`;
         } else if (formed) {
           body = `
-            <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.full', lang))}</p>
             ${chatCta}
             ${pendingWithdraw}
             ${showOwnerInbox ? '<div class="group-requests" data-group-requests></div>' : ''}
@@ -140,6 +139,7 @@
               </div>
             </div>
             <p class="group-section-error" data-group-error hidden></p>
+            <div class="group-avatar-stack" data-group-avatars hidden></div>
             ${body}
           </section>
         `;
@@ -221,7 +221,7 @@
           rootEl.querySelector('.title-row')?.insertAdjacentHTML('afterend', html);
         }
         bindGroupSection();
-        await loadGroupJoinRequests();
+        await Promise.all([loadGroupJoinRequests(), loadGroupMemberAvatars()]);
       }
 
       async function handleOwnerJoinDecision(requestId, action, card) {
@@ -318,6 +318,53 @@
         rootEl.querySelector('[data-group-withdraw]')?.addEventListener('click', () => {
           handleGroupWithdraw();
         });
+      }
+
+      function groupMemberAvatarHtml(member, index, total) {
+        const name = member?.name || '';
+        const url = member?.avatar_url || '';
+        const z = total - index;
+        const inner = url
+          ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+          : (UyDosh.iconChrome?.('person') || '');
+        return `<span class="group-avatar-stack-item" style="z-index:${z}" title="${UyDosh.escapeHtml(name)}" aria-hidden="true">${inner}</span>`;
+      }
+
+      function renderGroupMemberAvatars(members) {
+        const host = rootEl.querySelector('[data-group-avatars]');
+        if (!host) return;
+        const rows = Array.isArray(members) ? members : [];
+        if (!rows.length) {
+          host.hidden = true;
+          host.innerHTML = '';
+          return;
+        }
+        const maxShown = 5;
+        const shown = rows.slice(0, maxShown);
+        const extra = rows.length - shown.length;
+        host.hidden = false;
+        host.innerHTML = shown.map((member, idx) => groupMemberAvatarHtml(member, idx, shown.length + (extra > 0 ? 1 : 0))).join('')
+          + (extra > 0
+            ? `<span class="group-avatar-stack-item group-avatar-stack-more" style="z-index:0" aria-hidden="true">+${extra}</span>`
+            : '');
+      }
+
+      async function loadGroupMemberAvatars() {
+        const ctx = listingGroupContext(state.listing);
+        if (!ctx) return;
+        try {
+          const members = await UyDosh.fetchListingGroupMembers(listingId);
+          const ownerId = Number(state.listing?.user_id ?? state.listing?.user?.id);
+          const rows = Array.isArray(members) ? [...members] : [];
+          rows.sort((a, b) => {
+            if (Number(a.user_id) === ownerId) return -1;
+            if (Number(b.user_id) === ownerId) return 1;
+            return 0;
+          });
+          renderGroupMemberAvatars(rows);
+        } catch (err) {
+          console.error('Failed to load group members', err);
+        }
       }
 
       async function loadGroupJoinRequests() {

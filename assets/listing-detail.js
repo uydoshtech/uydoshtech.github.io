@@ -353,6 +353,7 @@
         bindFavoriteButton(l);
         bindReportButton(l);
         bindGroupSection();
+        loadGroupMemberAvatars();
         updateDetailContactBar(l);
         updateDetailAdminEditFab(l, { isAdminViewer });
         if (isOwner) {
