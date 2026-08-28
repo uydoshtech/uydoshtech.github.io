@@ -773,7 +773,7 @@ function ensureMiniAppTabbarStyles() {
   style.id = MINI_APP_TABBAR_STYLE_ID;
   style.textContent = `
     html.mini-app-has-tabbar {
-      --uydosh-tabbar-height: 64px;
+      --uydosh-tabbar-height: 58px;
       --uydosh-fixed-footer-height: calc(var(--uydosh-tabbar-height) + 8px);
     }
     html.mini-app-has-tabbar .fab-create { display: none !important; }
@@ -788,35 +788,26 @@ function ensureMiniAppTabbarStyles() {
       z-index: 40;
       height: calc(var(--uydosh-tabbar-height) + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
       padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px));
-      color: #0b1a2b;
+      background: #0b1a2b;
     }
-    html.mini-app-header-light .mini-app-tabbar { color: #e8eef6; }
-    .mini-app-tabbar-notch {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      pointer-events: none;
-    }
+    html.mini-app-header-light .mini-app-tabbar { background: #e8eef6; }
     .mini-app-tabbar-items {
-      position: relative;
-      z-index: 1;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
       height: var(--uydosh-tabbar-height);
-      align-items: end;
+      align-items: center;
       padding: 0 6px;
     }
     .mini-app-tab {
       appearance: none;
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 3px;
-      padding: 0 4px 10px;
-      color: rgba(255, 255, 255, 0.92);
+      padding: 6px 4px;
+      color: rgba(255, 255, 255, 0.88);
       text-decoration: none;
       font-size: 11px;
       font-weight: 600;
@@ -824,34 +815,13 @@ function ensureMiniAppTabbarStyles() {
       min-width: 0;
     }
     .mini-app-tab svg { width: 22px; height: 22px; display: block; }
-    .mini-app-tab.is-active { color: #fff; }
-    html.mini-app-header-light .mini-app-tab { color: rgba(15, 23, 42, 0.78); }
-    html.mini-app-header-light .mini-app-tab.is-active { color: #0f172a; }
-    .mini-app-tab-community {
-      justify-content: flex-start;
-      padding-bottom: 8px;
-      transform: translateY(-18px);
-    }
-    .mini-app-tab-community-btn {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, #7dd3fc, #38bdf8);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 6px 16px rgba(56, 189, 248, 0.45);
-    }
-    .mini-app-tab-community.is-active .mini-app-tab-community-btn {
-      background: linear-gradient(180deg, #bae6fd, #38bdf8);
-    }
-    .mini-app-tab-community-btn svg { width: 26px; height: 26px; }
-    .mini-app-tab-community span[data-i18n] { display: none; }
+    .mini-app-tab.is-active { color: #38bdf8; }
+    html.mini-app-header-light .mini-app-tab { color: rgba(15, 23, 42, 0.72); }
+    html.mini-app-header-light .mini-app-tab.is-active { color: #0284c7; }
     .mini-app-tab-badge {
       position: absolute;
-      top: 6px;
-      margin-left: 18px;
+      top: 4px;
+      margin-left: 16px;
       min-width: 16px;
       height: 16px;
       padding: 0 4px;
@@ -865,30 +835,23 @@ function ensureMiniAppTabbarStyles() {
       justify-content: center;
     }
     .mini-app-tab-badge[hidden] { display: none !important; }
-    .mini-app-tab { position: relative; }
   `;
   document.head.appendChild(style);
 }
 
 function miniAppTabbarHtml(activeId) {
-  const item = (id, href, icon, labelKey, extraClass = '') => {
+  const item = (id, href, icon, labelKey) => {
     const active = id === activeId ? ' is-active' : '';
-      const iconHtml = id === 'community'
-      ? `<span class="mini-app-tab-community-btn">${UyDosh.iconChrome(icon)}</span>`
-      : UyDosh.iconChrome(icon);
     const badge = id === 'messages'
       ? '<span class="mini-app-tab-badge" data-tabbar-unread hidden></span>'
       : '';
-    return `<a class="mini-app-tab ${extraClass}${active}" href="${href}" data-tabbar-id="${id}">${badge}${iconHtml}<span data-i18n="${labelKey}"></span></a>`;
+    return `<a class="mini-app-tab${active}" href="${href}" data-tabbar-id="${id}">${badge}${UyDosh.iconChrome(icon)}<span data-i18n="${labelKey}"></span></a>`;
   };
   return `
     <nav class="mini-app-tabbar" aria-label="Main">
-      <svg class="mini-app-tabbar-notch" viewBox="0 0 400 80" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="currentColor" d="M0 28 H118 C130 28 136 4 150 4 C164 4 170 28 182 28 H400 V80 H0 Z"></path>
-      </svg>
       <div class="mini-app-tabbar-items">
         ${item('housing', MINI_APP_HOUSING_PATH, 'house', 'tabbar.housing')}
-        ${item('community', MINI_APP_COMMUNITY_PATH, 'users', 'tabbar.community', 'mini-app-tab-community')}
+        ${item('community', MINI_APP_COMMUNITY_PATH, 'users', 'tabbar.community')}
         ${item('messages', MINI_APP_CHATS_PATH, 'chatBubbles', 'tabbar.messages')}
         ${item('create', MINI_APP_CREATE_PATH, 'plus', 'tabbar.create')}
       </div>
