@@ -98,24 +98,67 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
 .listing-type-field {
   margin-bottom: 10px;
 }
-.listing-type-field .chips {
+.listing-type-picker {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-.listing-type-field .chip {
-  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  min-width: 0;
-  padding-left: 12px;
-  padding-right: 12px;
-  text-align: left;
+  box-sizing: border-box;
+  padding: 4px 14px 4px 4px;
+  border: 1px solid var(--type-color, var(--brand2));
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.06);
 }
-.listing-type-field .chip .chip-label {
-  overflow: visible;
-  text-overflow: unset;
-  white-space: normal;
+.listing-type-picker[data-listing-type="1"] { --type-color: #64B5F6; }
+.listing-type-picker[data-listing-type="2"] { --type-color: #FF9800; }
+.listing-type-picker[data-listing-type="3"] { --type-color: #22c55e; }
+.listing-type-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+.listing-type-glyph {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--stroke);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.55;
+}
+.listing-type-glyph .chip-icon,
+.listing-type-glyph .chip-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.listing-type-glyph[data-listing-type="1"] { --type-color: #64B5F6; }
+.listing-type-glyph[data-listing-type="2"] { --type-color: #FF9800; }
+.listing-type-glyph[data-listing-type="3"] { --type-color: #22c55e; }
+.listing-type-glyph.is-active {
+  opacity: 1;
+  border-color: var(--type-color, var(--brand2));
+  background: color-mix(in srgb, var(--type-color, var(--brand2)) 18%, transparent);
+}
+.listing-type-glyph:active {
+  opacity: 0.88;
+}
+.listing-type-label {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* Base `.chips`/`.chip` and metro-line ribbon styles (`.chip-line`,
    `.metro-m-badge`, `.chip-label-collapse` reveal animation) live in

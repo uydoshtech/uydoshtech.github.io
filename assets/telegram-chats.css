@@ -112,6 +112,9 @@
   font-size: 13px;
   color: var(--fg);
 }
+.inbox-card-top + .inbox-meta-row {
+  margin-top: 8px;
+}
 .inbox-meta-row .icon {
   display: inline-flex;
   flex-shrink: 0;

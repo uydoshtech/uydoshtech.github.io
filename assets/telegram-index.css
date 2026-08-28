@@ -1188,8 +1188,6 @@ header {
   width: 13px;
   height: 13px;
   display: inline-block;
-  color: var(--muted);
-  opacity: 0.95;
   flex: 0 0 auto;
 }
 .card .meta .icon svg { width: 13px; height: 13px; display: block; }

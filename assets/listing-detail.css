@@ -1472,6 +1472,7 @@
         height: 18px;
         display: inline-flex;
         flex: 0 0 auto;
+        color: #F44336;
       }
       /* One row per metro station the publisher tagged (see
          buildMetroStationRowHtml) — name on top, optional walking

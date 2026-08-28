@@ -1343,16 +1343,23 @@ function roommateLocationSectionHtml(lang) {
 
 function renderStep0(lang) {
   const typeOptions = [
-    { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
+    { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { id: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
   ];
-  const typeChips = typeOptions.map((opt) => UyDosh.chipButtonHtml({
-    attrs: { 'data-listing-type': opt.id },
-    pressed: state.form.listingTypeId === opt.id,
-    icon: UyDosh.filterListingTypeIcon(opt.id, { pressed: false }),
-    label: opt.label,
-  })).join('');
+  const selected = typeOptions.find((opt) => opt.id === state.form.listingTypeId) || typeOptions[0];
+  const glyphs = typeOptions.map((opt) => {
+    const active = opt.id === selected.id;
+    return `
+      <button
+        type="button"
+        class="listing-type-glyph${active ? ' is-active' : ''}"
+        data-listing-type="${opt.id}"
+        data-haptic="selection"
+        aria-pressed="${active ? 'true' : 'false'}"
+        aria-label="${UyDosh.escapeHtml(opt.label)}"
+      >${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</button>`;
+  }).join('');
 
   const locationSection = isDemandSideType()
     ? legacyLocationTabsHtml(lang)
@@ -1361,7 +1368,15 @@ function renderStep0(lang) {
   return `
     <section class="panel active" data-step="0">
       <div class="field listing-type-field">
-        <div class="chips" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}">${typeChips}</div>
+        <div
+          class="listing-type-picker"
+          data-listing-type="${selected.id}"
+          role="group"
+          aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}"
+        >
+          <div class="listing-type-icons">${glyphs}</div>
+          <span class="listing-type-label">${UyDosh.escapeHtml(selected.label)}</span>
+        </div>
       </div>
       ${locationSection}
     </section>`;
