@@ -465,7 +465,8 @@
       .group-section-pending { color: var(--accent); font-weight: 700; }
       .group-section-status { margin: 0 0 10px; font-size: 14px; }
       .group-section-status:last-child { margin-bottom: 0; }
-      .group-section > .btn.primary[data-group-find-housing] { margin-top: 2px; }
+      .group-section > .btn.primary[data-group-find-housing],
+      .group-section > .btn.primary[data-group-open-chat] { margin-top: 2px; text-align: center; }
       .group-section-error { margin: 0 0 10px; font-size: 13px; color: #ef4444; }
       .group-section-error[hidden] { display: none !important; }
       .group-section-error a { color: inherit; font-weight: 700; }

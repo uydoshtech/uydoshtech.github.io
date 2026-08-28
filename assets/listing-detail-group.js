@@ -51,6 +51,18 @@
         return target > 0 && Number(ctx.group_spots_open) <= 0;
       }
 
+      function groupChatButtonHtml(listing, ctx, lang) {
+        if (!UyDosh.isMiniApp() || !ctx) return '';
+        const conversationId = ctx.group_conversation_id;
+        const canOpen = Boolean(ctx.group_progress?.can_open_group_chat)
+          || groupActions(ctx).includes('open_group_chat');
+        if (!conversationId || !canOpen) return '';
+        const href = UyDosh.escapeHtml(UyDosh.chatPageUrl(conversationId, {
+          backTo: UyDosh.listingPageUrl(listing.id),
+        }));
+        return `<a class="btn primary" href="${href}" data-group-open-chat>${UyDosh.escapeHtml(UyDosh.t('detail.group.openChat', lang))}</a>`;
+      }
+
       function groupSectionHtml(listing) {
         const ctx = listingGroupContext(listing);
         if (!ctx) return '';
@@ -72,6 +84,7 @@
         const findHousingCta = (isMiniApp && formed && (ctx.is_owner || ctx.is_member))
           ? `<a class="btn primary" href="uydosh://listing/${encodeURIComponent(listing.id)}" data-group-find-housing>${UyDosh.escapeHtml(UyDosh.t('detail.group.findHousing', lang))}</a>`
           : '';
+        const chatCta = groupChatButtonHtml(listing, ctx, lang);
 
         const pendingWithdraw = (actions.includes('withdraw_join_request') || ctx.my_join_request_status === 'pending')
           ? `<button type="button" class="btn" data-group-withdraw>${UyDosh.escapeHtml(UyDosh.t('detail.group.withdraw', lang))}</button>`
@@ -87,18 +100,23 @@
         } else if (formed) {
           body = `
             <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.full', lang))}</p>
+            ${chatCta}
             ${findHousingCta}
             ${pendingWithdraw}
             ${showOwnerInbox ? '<div class="group-requests" data-group-requests></div>' : ''}
           `;
         } else if (ctx.is_owner) {
           body = `
+            ${chatCta}
             <div class="group-requests" data-group-requests>
               <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.requestsEmpty', lang))}</p>
             </div>
           `;
         } else if (ctx.is_member) {
-          body = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.member', lang))}</p>`;
+          body = `
+            ${chatCta}
+            <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.member', lang))}</p>
+          `;
         } else if (actions.includes('withdraw_join_request') || ctx.my_join_request_status === 'pending') {
           body = `
             <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.pending', lang))}</p>

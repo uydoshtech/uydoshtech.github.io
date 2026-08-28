@@ -55,6 +55,8 @@ const state = {
   // Cache of listingId -> view count, so re-rendering "My Listings" after a
   // renew/toggle/delete doesn't re-request every row's owner-only view count.
   viewCounts: {},
+  groupChats: [],
+  groupChatsError: false,
 };
 
 function statusBadgeHtml(listing, lang) {
@@ -363,6 +365,32 @@ function bindFavoriteRemoveButtons() {
   }
 }
 
+function groupChatRowHtml(conversation) {
+  const lang = UyDosh.getLang();
+  const title = UyDosh.escapeHtml(conversation.listing_title || UyDosh.t('chat.title', lang));
+  const preview = UyDosh.escapeHtml(conversation.last_message_content
+    ? String(conversation.last_message_content).replace(/^\[\[uydosh:listing_share\]\].*/, UyDosh.t('chat.listingCard', lang))
+    : UyDosh.t('account.groupChatPreview', lang));
+  const unread = Number(conversation.unread_count) || 0;
+  const href = UyDosh.escapeHtml(UyDosh.chatPageUrl(conversation.id, { backTo: UyDosh.MINI_APP_GROUPS_PATH }));
+  const members = Array.isArray(conversation.members) ? conversation.members : [];
+  const avatars = members.slice(0, 3).map((member) => {
+    if (member.avatar_url) {
+      return `<img src="${UyDosh.escapeHtml(member.avatar_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
+    }
+    return '';
+  }).join('');
+  return `
+    <a class="account-row account-chat-row" href="${href}">
+      <div class="account-chat-avatars" aria-hidden="true">${avatars || UyDosh.iconChrome('chatBubble')}</div>
+      <div class="account-row-body">
+        <div class="account-row-title">${title}</div>
+        <div class="account-row-meta"><span class="account-chat-preview">${preview}</span></div>
+      </div>
+      ${unread > 0 ? `<span class="account-chat-unread">${unread}</span>` : ''}
+    </a>`;
+}
+
 function groupListings() {
   return state.myListings.filter(listingLooksGroupForming);
 }
@@ -399,16 +427,25 @@ function renderGroups() {
     showEmpty(UyDosh.t('create.errorAuth', lang));
     return;
   }
-  if (state.myListingsError) {
+  if (state.myListingsError && state.groupChatsError) {
     showEmpty(UyDosh.t('feed.error', lang));
     return;
   }
+  const chats = (state.groupChats || []).filter((c) => c.conversation_type === 'listing_group');
   const rows = groupListings();
-  if (!rows.length) {
+  if (!chats.length && !rows.length) {
     showEmpty(UyDosh.t('account.groupsEmpty', lang), { showCreateCta: true });
     return;
   }
-  showList(rows.map(listingRowHtml).join(''));
+  const parts = [];
+  if (chats.length) {
+    parts.push(`<h2 class="account-section-title">${UyDosh.escapeHtml(UyDosh.t('account.groupChats', lang))}</h2>`);
+    parts.push(chats.map(groupChatRowHtml).join(''));
+  }
+  if (rows.length) {
+    parts.push(rows.map(listingRowHtml).join(''));
+  }
+  showList(parts.join(''));
   bindVisibilityToggleButtons();
   bindRenewButtons();
   bindViewCounts();
@@ -505,6 +542,21 @@ async function loadFavorites() {
   }
 }
 
+async function loadGroupChats() {
+  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+  if (!sessionReady) return;
+  try {
+    const data = await UyDosh.fetchUserConversations({ page: 1, limit: 50 });
+    const list = data?.data?.conversations || data?.conversations || [];
+    state.groupChats = Array.isArray(list)
+      ? list.filter((c) => c.conversation_type === 'listing_group')
+      : [];
+  } catch (err) {
+    console.error('Failed to load group chats', err);
+    state.groupChatsError = true;
+  }
+}
+
 async function boot() {
   UyDosh.applyI18n();
   document.addEventListener('uydosh:langchange', () => {
@@ -522,7 +574,7 @@ async function boot() {
   // initData directly — so it still degrades to its own `myListingsError`
   // state in that case, independent of Favorites.)
 
-  await Promise.all([loadMyListings(), loadFavorites()]);
+  await Promise.all([loadMyListings(), loadFavorites(), loadGroupChats()]);
   loadingEl.hidden = true;
   renderActiveTab();
 }

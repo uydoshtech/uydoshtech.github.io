@@ -26,7 +26,7 @@
   var base = thisScript && thisScript.src
     ? thisScript.src.replace(/uydosh-i18n\.js.*$/, 'i18n/')
     : 'assets/i18n/';
-  var version = '20260827-8';
+  var version = '20260828-1';
   var canWrite = document.readyState === 'loading';
   langs.forEach(function (code) {
     var src = base + code + '.js?v=' + version;

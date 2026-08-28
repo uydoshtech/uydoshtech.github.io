@@ -63,6 +63,14 @@ function createPageUrl() {
   return MINI_APP_CREATE_PATH;
 }
 
+function chatPageUrl(id, options = {}) {
+  const cid = String(id ?? '').trim();
+  if (!cid) return MINI_APP_GROUPS_PATH;
+  const params = new URLSearchParams({ id: cid, mini: '1' });
+  if (options.backTo) params.set('back', options.backTo);
+  return `/telegram/chat.html?${params.toString()}`;
+}
+
 function applyTelegramTheme(tg) {
   const p = tg?.themeParams;
   if (!p) return;
@@ -2105,6 +2113,8 @@ function initTelegramMiniApp() {
     const path = location.pathname || '';
     if (/create\.html/i.test(path) || /\/telegram\/create\/?$/i.test(path)) {
       logMiniAppScreen('telegram_create_listing');
+    } else if (/chat\.html/i.test(path)) {
+      logMiniAppScreen('telegram_group_chat');
     } else if (!/listing\.html/i.test(path)) {
       logMiniAppScreen('telegram_feed');
     }
@@ -2117,6 +2127,7 @@ Object.assign(window.UyDosh, {
   isTelegramMobile,
   isTelegramDesktop,
   listingPageUrl,
+  chatPageUrl,
   miniAppBackTargetFromUrl,
   feedPageUrl,
   createPageUrl,

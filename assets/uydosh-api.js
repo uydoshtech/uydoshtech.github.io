@@ -1365,6 +1365,68 @@ function fetchListingGroupMembers(listingId) {
   });
 }
 
+function fetchUserConversations({ page = 1, limit = 50 } = {}) {
+  return fetchJsonAuth('/conversations', { params: { page, limit } });
+}
+
+function fetchConversation(conversationId) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}`);
+}
+
+function fetchConversationMembers(conversationId) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/members`);
+}
+
+function fetchConversationMessages(conversationId, { page = 1, limit = 50 } = {}) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    params: { page, limit },
+  });
+}
+
+function sendConversationMessage(conversationId, content) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    method: 'POST',
+    body: { content: String(content || '').trim(), message_type: 'text' },
+  });
+}
+
+function markConversationRead(conversationId) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/read`, {
+    method: 'PUT',
+  });
+}
+
+function fetchUserConversations({ page = 1, limit = 50 } = {}) {
+  return fetchJsonAuth('/conversations', { params: { page, limit } });
+}
+
+function fetchConversation(conversationId) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}`);
+}
+
+function fetchConversationMembers(conversationId) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/members`);
+}
+
+function fetchConversationMessages(conversationId, { page = 1, limit = 50 } = {}) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    params: { page, limit },
+  });
+}
+
+function sendConversationMessage(conversationId, { content, message_type = 'text' } = {}) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    method: 'POST',
+    body: { content, message_type },
+  });
+}
+
+function markConversationRead(conversationId) {
+  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/read`, {
+    method: 'PUT',
+  });
+}
+
 function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -1457,6 +1519,12 @@ Object.assign(window.UyDosh, {
   rejectListingGroupJoinRequest,
   withdrawListingGroupJoinRequest,
   fetchListingGroupMembers,
+  fetchUserConversations,
+  fetchConversation,
+  fetchConversationMembers,
+  fetchConversationMessages,
+  sendConversationMessage,
+  markConversationRead,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
   fetchSubwayStations,
