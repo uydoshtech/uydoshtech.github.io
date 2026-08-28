@@ -68,7 +68,7 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
 .progress-seg.done span,
 .progress-seg.active span { width: 100%; }
 .step-head {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 .step-head h1 {
   margin: 0;
@@ -593,10 +593,8 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  /* Fallback before JS measures the real row height (see sizeLocationList
-     in telegram-create.js), which then caps the metro list to exactly
-     STATION_LIST_VISIBLE_ROWS rows and the district grid to its content,
-     both with a max-height cap. */
+  /* Fallback before JS measures remaining space above the wizard footer
+     (see sizeLocationList in telegram-create.js). */
   height: 200px;
   overflow: auto;
   border: 1px solid var(--stroke);

@@ -2018,14 +2018,10 @@ function renderStep3(lang) {
 /** Mirrors `.panel { gap: … }` in create.html — see the trailing-siblings loop below. */
 const STEP_PANEL_GAP_PX = 14;
 
-/** How many metro station rows are visible at once before the list scrolls (see `sizeLocationList`). */
-const STATION_LIST_VISIBLE_ROWS = 5;
-
 /**
- * The district grid (`.station-list-grid`) is short (two columns of ~12
- * items). Size it to its content, capped by the real remaining space down
- * to the fixed wizard footer so it still scrolls rather than overlapping
- * it (mirrors syncFeedMapPanelHeight in telegram-feed-map.js).
+ * Size the metro/district picker to the real remaining space down to the
+ * fixed wizard footer (mirrors syncFeedMapPanelHeight in telegram-feed-map.js)
+ * so the list grows with the device instead of stopping after a few rows.
  *
  * Step 0 (roommate-needed listings) also renders an address field + "use my
  * location" button *after* this list — without reserving room for those,
@@ -2033,55 +2029,36 @@ const STATION_LIST_VISIBLE_ROWS = 5;
  * whole block underneath it, clipped and barely reachable by scrolling.
  * Measure and reserve whatever height the list's trailing siblings (within
  * the same step) actually need first.
- *
- * The metro station list is a single scrolling column that can hold 50+
- * stations, so instead of stretching to fill the viewport (which used to
- * leave a large empty box for short lines) it's capped to exactly
- * `STATION_LIST_VISIBLE_ROWS` full rows — the rest only appear once the user
- * scrolls the list itself. If a station on the current line is already
- * selected, the list scrolls so that row lands in the middle of the (now
- * compact) viewport.
  */
 function sizeLocationList() {
   const list = stepPanelsEl.querySelector('.station-list');
   if (!list) return;
 
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
+  const top = list.getBoundingClientRect().top;
+  if (!Number.isFinite(top)) return;
+  const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
+  let trailingHeight = 0;
+  for (let sib = list.closest('.field')?.nextElementSibling; sib; sib = sib.nextElementSibling) {
+    trailingHeight += sib.getBoundingClientRect().height + STEP_PANEL_GAP_PX;
+  }
+  const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - trailingHeight - 10));
+
   if (list.classList.contains('station-list-grid')) {
-    const viewportHeight = window.visualViewport?.height || window.innerHeight;
-    if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
-    const top = list.getBoundingClientRect().top;
-    if (!Number.isFinite(top)) return;
-    const footerHeight = wizardFooterEl.hidden ? 0 : wizardFooterEl.getBoundingClientRect().height;
-    let trailingHeight = 0;
-    for (let sib = list.closest('.field')?.nextElementSibling; sib; sib = sib.nextElementSibling) {
-      trailingHeight += sib.getBoundingClientRect().height + STEP_PANEL_GAP_PX;
-    }
-    const available = Math.max(160, Math.round(viewportHeight - top - footerHeight - trailingHeight - 10));
     list.style.height = 'auto';
     list.style.maxHeight = `${available}px`;
     return;
   }
 
-  const row = list.querySelector('.station-item');
-  if (row) {
-    const rowHeight = row.getBoundingClientRect().height;
-    const styles = getComputedStyle(list);
-    const gap = parseFloat(styles.rowGap || styles.gap) || 0;
-    const paddingY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
-    const maxHeight =
-      paddingY + rowHeight * STATION_LIST_VISIBLE_ROWS + gap * (STATION_LIST_VISIBLE_ROWS - 1);
-    list.style.height = 'auto';
-    list.style.maxHeight = `${Math.round(maxHeight)}px`;
-  } else {
-    list.style.height = '';
-    list.style.maxHeight = '';
-  }
+  list.style.height = `${available}px`;
+  list.style.maxHeight = `${available}px`;
   scrollSelectedStationIntoView(list);
 }
 
 /** Centers an already-selected station row in the metro list's visible
  * viewport — e.g. when editing a listing, or switching back to a line with
- * a prior selection — so the compact 5-row list doesn't hide it off-screen. */
+ * a prior selection — so a selection isn't hidden off-screen. */
 function scrollSelectedStationIntoView(list) {
   const selectedBtn = list.querySelector('[data-station-id][aria-pressed="true"]');
   if (!selectedBtn) return;
