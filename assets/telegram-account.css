@@ -82,6 +82,72 @@ header {
 /* Favorites rows: thumb + body are a link to the listing; the row itself
    stays a plain container so the unfavorite button isn't nested inside
    an <a> (invalid — interactive content can't nest interactive content). */
+.account-row-main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+.account-row-listing {
+  flex-direction: column;
+  align-items: stretch;
+}
+.account-row-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.account-row-head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+.account-row-head .account-row-title {
+  flex: 1;
+  min-width: 0;
+}
+.account-row-head .account-row-meta {
+  flex: 0 0 auto;
+}
+.account-row-lower {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.account-row-lower .account-row-link {
+  flex: 1;
+  min-width: 0;
+}
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  border-radius: 16px;
+}
+.account-chat-row-nested {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 8px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  text-decoration: none;
+  color: inherit;
+}
 .account-row-link {
   flex: 1;
   min-width: 0;

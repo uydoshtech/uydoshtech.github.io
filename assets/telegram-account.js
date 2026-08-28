@@ -123,7 +123,7 @@ function renewLabelHtml(listing, lang) {
   return UyDosh.escapeHtml(UyDosh.t(key, lang).replace('{days}', String(days)));
 }
 
-function listingRowHtml(listing) {
+function listingRowMainHtml(listing) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
@@ -138,43 +138,63 @@ function listingRowHtml(listing) {
   const visibilityIcon = listing.is_active ? UyDosh.iconEye() : UyDosh.iconEyeOff();
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
   return `
-    <div class="account-row" data-listing-row="${listing.id}">
-      <a class="account-row-link" href="${detailHref}">
-        <div class="account-thumb-col">
-          ${viewCountHtml(listing)}
-          ${accountThumbHtml(listing)}
-          ${amenitiesRowHtml(listing, lang)}
-        </div>
-        <div class="account-row-body">
+      <div class="account-row-stack">
+        <a class="account-row-head" href="${detailHref}">
           <div class="account-row-title">${title}</div>
           <div class="account-row-meta">
             ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
             ${statusBadgeHtml(listing, lang)}
           </div>
+        </a>
+        <div class="account-row-lower">
+          <a class="account-row-link" href="${detailHref}">
+            <div class="account-thumb-col">
+              ${viewCountHtml(listing)}
+              ${accountThumbHtml(listing)}
+              ${amenitiesRowHtml(listing, lang)}
+            </div>
+          </a>
+          <div class="account-row-actions">
+            <a class="account-edit-btn" href="${editHref}">${UyDosh.iconPencil()}<span data-i18n="account.edit"></span></a>
+            <button
+              type="button"
+              class="account-visibility-btn"
+              data-toggle-visibility="${listing.id}"
+              aria-pressed="${listing.is_active ? 'true' : 'false'}"
+            >${visibilityIcon}<span data-i18n="${visibilityLabelKey}"></span></button>
+            <button
+              type="button"
+              class="account-renew-btn"
+              data-renew-listing="${listing.id}"
+              ${canRenew ? '' : 'disabled'}
+            >${UyDosh.iconArrowUp()}<span>${renewLabelHtml(listing, lang)}</span></button>
+            <button
+              type="button"
+              class="account-delete-btn"
+              data-delete-listing="${listing.id}"
+              data-haptic="heavy"
+            >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
+          </div>
         </div>
-      </a>
-      <div class="account-row-actions">
-        <a class="account-edit-btn" href="${editHref}">${UyDosh.iconPencil()}<span data-i18n="account.edit"></span></a>
-        <button
-          type="button"
-          class="account-visibility-btn"
-          data-toggle-visibility="${listing.id}"
-          aria-pressed="${listing.is_active ? 'true' : 'false'}"
-        >${visibilityIcon}<span data-i18n="${visibilityLabelKey}"></span></button>
-        <button
-          type="button"
-          class="account-renew-btn"
-          data-renew-listing="${listing.id}"
-          ${canRenew ? '' : 'disabled'}
-        >${UyDosh.iconArrowUp()}<span>${renewLabelHtml(listing, lang)}</span></button>
-        <button
-          type="button"
-          class="account-delete-btn"
-          data-delete-listing="${listing.id}"
-          data-haptic="heavy"
-        >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
-      </div>
+      </div>`;
+}
+
+function listingRowHtml(listing) {
+  return `
+    <div class="account-row account-row-listing" data-listing-row="${listing.id}">
+      ${listingRowMainHtml(listing)}
     </div>`;
+}
+
+function groupListingCardHtml(listing, conversation) {
+  const chat = conversation ? groupChatRowHtml(conversation, { nested: true }) : '';
+  return `
+    <article class="account-card" data-listing-row="${listing.id}">
+      <div class="account-row-main">
+        ${listingRowMainHtml(listing)}
+      </div>
+      ${chat}
+    </article>`;
 }
 
 /** Favorites rows link to the listing (not editable — it may not be the viewer's own) and offer a heart to unfavorite. */
@@ -218,6 +238,7 @@ function showList(html) {
   listEl.hidden = false;
   listEl.innerHTML = html;
   UyDosh.applyI18n(listEl);
+  if (typeof UyDosh.hydrateIcons === 'function') UyDosh.hydrateIcons(listEl);
 }
 
 function bindVisibilityToggleButtons() {
@@ -232,7 +253,7 @@ function bindVisibilityToggleButtons() {
         const data = await UyDosh.toggleListingActiveFromTelegramMiniApp(id);
         const updated = data?.listing;
         listing.is_active = updated ? !!updated.is_active : !listing.is_active;
-        renderMine();
+        renderActiveTab();
       } catch (err) {
         console.error('Failed to toggle listing visibility', err);
         btn.disabled = false;
@@ -276,14 +297,14 @@ function bindRenewButtons() {
         const data = await UyDosh.renewListingFromTelegramMiniApp(id);
         if (data?.listing) Object.assign(listing, data.listing);
         UyDosh.haptic.success();
-        renderMine();
+        renderActiveTab();
       } catch (err) {
         console.error('Failed to renew listing', err);
         const nextRenewalAt = err?.payload?.nextRenewalAt;
         if (nextRenewalAt) {
           // Cooldown still active (e.g. stale client state) — sync from the server's answer.
           listing.next_renewal_at = nextRenewalAt;
-          renderMine();
+          renderActiveTab();
         } else {
           btn.disabled = false;
         }
@@ -342,7 +363,7 @@ function bindDeleteButtons() {
       try {
         await UyDosh.deleteListingFromTelegramMiniApp(id);
         state.myListings = state.myListings.filter((l) => l?.id !== id);
-        renderMine();
+        renderActiveTab();
       } catch (err) {
         console.error('Failed to delete listing', err);
         btn.disabled = false;
@@ -370,7 +391,7 @@ function bindFavoriteRemoveButtons() {
   }
 }
 
-function groupChatRowHtml(conversation) {
+function groupChatRowHtml(conversation, { nested = false } = {}) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(conversation.listing_title || UyDosh.t('chat.title', lang));
   const preview = UyDosh.escapeHtml(conversation.last_message_content
@@ -385,8 +406,11 @@ function groupChatRowHtml(conversation) {
     }
     return '';
   }).join('');
+  const rowClass = nested
+    ? 'account-chat-row account-chat-row-nested'
+    : 'account-row account-chat-row';
   return `
-    <a class="account-row account-chat-row" href="${href}">
+    <a class="${rowClass}" href="${href}">
       <div class="account-chat-avatars" aria-hidden="true">${avatars || UyDosh.iconChrome('chatBubble')}</div>
       <div class="account-row-body">
         <div class="account-row-title">${title}</div>
@@ -394,6 +418,24 @@ function groupChatRowHtml(conversation) {
       </div>
       ${unread > 0 ? `<span class="account-chat-unread">${unread}</span>` : ''}
     </a>`;
+}
+
+function conversationListingId(conversation) {
+  const id = Number(conversation?.listing_id ?? conversation?.listing?.id);
+  return Number.isFinite(id) && id > 0 ? id : 0;
+}
+
+function chatForListing(listing, chats) {
+  const listingId = Number(listing?.id);
+  const conversationId = Number(listing?.group_conversation_id);
+  if (Number.isFinite(conversationId) && conversationId > 0) {
+    const byId = chats.find((c) => Number(c.id) === conversationId);
+    if (byId) return byId;
+  }
+  if (Number.isFinite(listingId) && listingId > 0) {
+    return chats.find((c) => conversationListingId(c) === listingId) || null;
+  }
+  return null;
 }
 
 function groupListings() {
@@ -442,13 +484,18 @@ function renderGroups() {
     showEmpty(UyDosh.t('account.groupsEmpty', lang), { showCreateCta: true });
     return;
   }
+  const usedChatIds = new Set();
   const parts = [];
-  if (chats.length) {
+  if (chats.length || rows.length) {
     parts.push(`<h2 class="account-section-title">${UyDosh.escapeHtml(UyDosh.t('account.groupChats', lang))}</h2>`);
-    parts.push(chats.map(groupChatRowHtml).join(''));
   }
-  if (rows.length) {
-    parts.push(rows.map(listingRowHtml).join(''));
+  for (const listing of rows) {
+    const chat = chatForListing(listing, chats);
+    if (chat?.id != null) usedChatIds.add(Number(chat.id));
+    parts.push(groupListingCardHtml(listing, chat));
+  }
+  for (const chat of chats) {
+    if (!usedChatIds.has(Number(chat.id))) parts.push(groupChatRowHtml(chat));
   }
   showList(parts.join(''));
   bindVisibilityToggleButtons();
