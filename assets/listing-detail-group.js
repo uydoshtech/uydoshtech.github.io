@@ -81,9 +81,6 @@
         if (formed) titleKey = 'detail.group.formedTitle';
         else if (ctx.is_owner) titleKey = 'detail.group.requestsTitle';
 
-        const findHousingCta = (isMiniApp && formed && (ctx.is_owner || ctx.is_member))
-          ? `<a class="btn primary" href="uydosh://listing/${encodeURIComponent(listing.id)}" data-group-find-housing>${UyDosh.escapeHtml(UyDosh.t('detail.group.findHousing', lang))}</a>`
-          : '';
         const chatCta = groupChatButtonHtml(listing, ctx, lang);
 
         const pendingWithdraw = (actions.includes('withdraw_join_request') || ctx.my_join_request_status === 'pending')
@@ -101,7 +98,6 @@
           body = `
             <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.full', lang))}</p>
             ${chatCta}
-            ${findHousingCta}
             ${pendingWithdraw}
             ${showOwnerInbox ? '<div class="group-requests" data-group-requests></div>' : ''}
           `;

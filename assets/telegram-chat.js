@@ -98,8 +98,13 @@ function senderName(message) {
 }
 
 function senderAvatar(message) {
-  const url = message?.sender?.profile?.avatar_url
-    || state.membersById.get(Number(message?.sender_id))?.avatar_url
+  const profile = message?.sender?.profile;
+  const member = state.membersById.get(Number(message?.sender_id));
+  const isMine = Number(message?.sender_id) === myUserId();
+  const url = profile?.avatar_url
+    || profile?.telegram_avatar_url
+    || member?.avatar_url
+    || (isMine && (window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || ''))
     || '';
   if (url) {
     return `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
@@ -140,7 +145,7 @@ function messageHtml(message, { showDay }) {
   return `
     ${showDay ? `<div class="chat-day">${UyDosh.escapeHtml(formatDay(message.created_at))}</div>` : ''}
     <div class="chat-bubble-row${mine ? ' mine' : ''}" data-message-id="${UyDosh.escapeHtml(String(message.id))}">
-      ${mine ? '' : `<span class="chat-avatar" aria-hidden="true">${senderAvatar(message)}</span>`}
+      <span class="chat-avatar" aria-hidden="true">${senderAvatar(message)}</span>
       <div class="chat-bubble">
         ${!mine && name ? `<div class="chat-sender">${UyDosh.escapeHtml(name)}</div>` : ''}
         ${body}
