@@ -136,7 +136,7 @@
             <div class="group-section-head">
               <h2>${UyDosh.escapeHtml(UyDosh.t(titleKey, lang))}</h2>
               <div class="group-section-meta">
-                <span>${UyDosh.escapeHtml(spots)}</span>
+                <span class="group-section-spots">${UyDosh.escapeHtml(spots)}</span>
                 ${pendingHint}
               </div>
             </div>
