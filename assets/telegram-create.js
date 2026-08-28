@@ -940,14 +940,23 @@ function stationListHtml(lang) {
     multi &&
     lineStationIds.length > 0 &&
     lineStationIds.every((id) => state.form.selectedStationIds.includes(id));
+  const selectedCount = state.form.selectedStationIds.length;
   const selectAllRow =
     multi && lineStationIds.length > 0
       ? `
-      <button type="button" class="station-item station-item-select-all" data-select-all-stations data-haptic="selection" aria-pressed="${allOnLineSelected ? 'true' : 'false'}">
-        ${UyDosh.iconCheckboxPair()}
-        ${UyDosh.iconMetro(state.form.subwayLineId)}
-        <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllStations', lang).replace('{count}', String(stationsForLine.length)))}</span>
-      </button>`
+      <div class="station-select-all-bar">
+        <button type="button" class="station-item station-item-select-all" data-select-all-stations data-haptic="selection" aria-pressed="${allOnLineSelected ? 'true' : 'false'}">
+          ${UyDosh.iconCheckboxPair()}
+          ${UyDosh.iconMetro(state.form.subwayLineId)}
+          <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllStations', lang).replace('{count}', String(stationsForLine.length)))}</span>
+        </button>
+        <div class="station-selection-meta"${selectedCount > 0 ? '' : ' hidden'}>
+          <span class="station-selection-count" data-station-selection-count>${selectedCount}</span>
+          <button type="button" class="station-selection-clear" data-clear-stations data-haptic="selection" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.clearStationSelection', lang))}">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+          </button>
+        </div>
+      </div>`
       : '';
   const stationItems = stationsForLine.map((st) => {
     const id = Number(st.id);
@@ -2746,6 +2755,15 @@ function updateStationSelectionUi() {
   });
   const selectAllBtn = stepPanelsEl.querySelector('[data-select-all-stations]');
   selectAllBtn?.setAttribute('aria-pressed', allOnLineSelected ? 'true' : 'false');
+  stepPanelsEl.querySelectorAll('[data-nearby-station-id]').forEach((btn) => {
+    const id = Number(btn.getAttribute('data-nearby-station-id'));
+    btn.setAttribute('aria-pressed', selected.has(id) ? 'true' : 'false');
+  });
+  const count = state.form.selectedStationIds.length;
+  const meta = stepPanelsEl.querySelector('.station-selection-meta');
+  const countEl = stepPanelsEl.querySelector('[data-station-selection-count]');
+  if (countEl) countEl.textContent = String(count);
+  if (meta) meta.hidden = count === 0;
 }
 
 function updateLocationSelectionUi() {
@@ -2823,6 +2841,14 @@ function bindStationListEvents() {
       showFormError('');
     }
     renderStep();
+  });
+
+  stepPanelsEl.querySelector('[data-clear-stations]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const cleared = state.form.selectedStationIds.map(Number);
+    state.form.selectedStationIds = [];
+    state.dismissedNearbyStationIds = [...new Set([...state.dismissedNearbyStationIds, ...cleared])];
+    updateStationSelectionUi();
   });
 }
 

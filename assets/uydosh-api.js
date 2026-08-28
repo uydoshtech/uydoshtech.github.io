@@ -1365,6 +1365,20 @@ function fetchListingGroupMembers(listingId) {
   });
 }
 
+function leaveListingGroup(listingId) {
+  return fetchJsonAuth(listingGroupPath(listingId, '/members/me'), { method: 'DELETE' });
+}
+
+function removeListingGroupMember(listingId, memberUserId, { reason } = {}) {
+  const body = {};
+  const trimmed = typeof reason === 'string' ? reason.trim().slice(0, 160) : '';
+  if (trimmed) body.reason = trimmed;
+  return fetchJsonAuth(
+    listingGroupPath(listingId, `/members/${encodeURIComponent(memberUserId)}`),
+    { method: 'DELETE', body },
+  );
+}
+
 function fetchUserConversations({ page = 1, limit = 50 } = {}) {
   return fetchJsonAuth('/conversations', { params: { page, limit } });
 }
@@ -1495,6 +1509,8 @@ Object.assign(window.UyDosh, {
   rejectListingGroupJoinRequest,
   withdrawListingGroupJoinRequest,
   fetchListingGroupMembers,
+  leaveListingGroup,
+  removeListingGroupMember,
   fetchUserConversations,
   fetchConversation,
   fetchConversationMembers,

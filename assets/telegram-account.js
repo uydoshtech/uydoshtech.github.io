@@ -184,9 +184,36 @@ function groupListingCardHtml(listing, conversation) {
     <article class="account-card" data-listing-row="${listing.id}">
       <div class="account-row-main">
         ${listingRowMainHtml(listing, { hidePhoto: true })}
+        ${participantsPillHtml(listing, conversation)}
       </div>
       ${chat}
     </article>`;
+}
+
+function participantsFromConversation(conversation) {
+  const members = Array.isArray(conversation?.members) ? conversation.members : [];
+  return members.filter((m) => m && (m.name || m.avatar_url || m.user_id));
+}
+
+function participantAvatarHtml(person, index) {
+  const url = person?.avatar_url || '';
+  const inner = url
+    ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+    : (UyDosh.iconChrome?.('person') || '');
+  return `<span class="account-participants-avatar" style="z-index:${index + 1}" aria-hidden="true">${inner}</span>`;
+}
+
+function participantsPillHtml(listing, conversation) {
+  const lang = UyDosh.getLang();
+  const people = participantsFromConversation(conversation).slice(0, 3);
+  const avatars = people.length
+    ? people.map((person, index) => participantAvatarHtml(person, index)).join('')
+    : participantAvatarHtml({}, 0);
+  return `
+        <button type="button" class="account-participants-pill" data-open-participants="${listing.id}" data-haptic="selection">
+          <span class="account-participants-avatars">${avatars}</span>
+          <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))}</span>
+        </button>`;
 }
 
 /** Favorites rows link to the listing (not editable — it may not be the viewer's own) and offer a heart to unfavorite. */
@@ -487,6 +514,7 @@ function renderGroups() {
   bindVisibilityToggleButtons();
   bindRenewButtons();
   bindDeleteButtons();
+  bindParticipantsPills();
 }
 
 function renderFavorites() {
@@ -612,3 +640,373 @@ async function boot() {
 }
 
 boot();
+
+const REMOVE_REASON_KEYS = ['inactive', 'rules', 'notFit', 'requested', 'other'];
+
+const participantsRoot = document.getElementById('group-participants-root');
+const participantsSheetState = {
+  listingId: 0,
+  listing: null,
+  members: [],
+  profilesById: {},
+  myProfile: null,
+  isOwner: false,
+  busy: false,
+};
+
+function currentUserId() {
+  return Number(UyDosh.getSessionUserId?.() || 0);
+}
+
+function bindParticipantsPills() {
+  for (const btn of listEl.querySelectorAll('[data-open-participants]')) {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.getAttribute('data-open-participants'));
+      if (Number.isFinite(id) && id > 0) openParticipantsSheet(id);
+    });
+  }
+}
+
+function closeParticipantsSheet() {
+  if (!participantsRoot) return;
+  participantsRoot.classList.remove('is-open');
+  participantsRoot.hidden = true;
+  participantsRoot.innerHTML = '';
+  participantsSheetState.listingId = 0;
+  participantsSheetState.listing = null;
+  participantsSheetState.members = [];
+}
+
+function memberRoleKey(member, listing, me) {
+  const userId = Number(member.user_id);
+  const ownerId = Number(listing?.user_id ?? listing?.user?.id);
+  if (userId === me) return 'you';
+  if (member.role === 'owner' || userId === ownerId) return 'organizer';
+  return 'participant';
+}
+
+function memberRoleLabel(roleKey, lang) {
+  if (roleKey === 'you') return UyDosh.t('account.roleYou', lang);
+  if (roleKey === 'organizer') return UyDosh.t('account.roleOrganizer', lang);
+  return UyDosh.t('account.roleParticipant', lang);
+}
+
+function canOwnerRemoveMember(member, listing, me) {
+  if (!participantsSheetState.isOwner) return false;
+  const userId = Number(member.user_id);
+  const ownerId = Number(listing?.user_id ?? listing?.user?.id);
+  if (userId === me || userId === ownerId) return false;
+  if (member.role === 'owner' || member.role === 'landlord_guest') return false;
+  return true;
+}
+
+function matchPercentHtml(member, me, lang) {
+  const myProfile = participantsSheetState.myProfile;
+  const theirs = participantsSheetState.profilesById[Number(member.user_id)];
+  if (!myProfile || !theirs || Number(member.user_id) === me) return '';
+  const analysis = UyDosh.computeProfileCompatibility?.(myProfile, theirs);
+  const percent = Number(analysis?.percent);
+  if (!Number.isFinite(percent) || !(Number(analysis?.scoredFieldCount) > 0)) return '';
+  const cls = percent >= 80 ? 'is-good' : percent < 60 ? 'is-bad' : 'is-ok';
+  return `<span class="gp-match ${cls}">${Math.round(percent)}%</span>`;
+}
+
+function memberLifestyleHtml(member, me) {
+  const profile = participantsSheetState.profilesById[Number(member.user_id)];
+  if (!profile) return '';
+  const mine = participantsSheetState.myProfile;
+  const chips = [];
+  const add = (icon, mineVal, theirVal) => {
+    if (theirVal == null || theirVal === '') return;
+    let tone = '';
+    if (mine && mineVal != null && mineVal !== '') {
+      tone = mineVal === theirVal ? 'is-match' : 'is-mismatch';
+    }
+    chips.push(`<span class="gp-life-icon ${tone}" aria-hidden="true">${UyDosh.iconChrome?.(icon) || ''}</span>`);
+  };
+  add('moon', mine?.sleep_time, profile.sleep_time);
+  add('cigarette', mine?.smoking_preference, profile.smoking_preference);
+  add('sparkles', mine?.cleanliness, profile.cleanliness);
+  add('wineGlass', mine?.alcohol_preference, profile.alcohol_preference);
+  add('cat', mine?.pets_preference, profile.pets_preference);
+  if (!chips.length) return '';
+  return `<div class="gp-life">${chips.join('')}</div>`;
+}
+
+function memberCardHtml(member, listing, lang) {
+  const me = currentUserId();
+  const userId = Number(member.user_id);
+  const roleKey = memberRoleKey(member, listing, me);
+  const removable = canOwnerRemoveMember(member, listing, me);
+  const name = member.name || UyDosh.t('complaints.anonymous', lang);
+  const avatar = participantAvatarHtml(member, 0);
+  const leave = roleKey === 'you' && !participantsSheetState.isOwner
+    ? `<button type="button" class="gp-leave" data-leave-group><span>${UyDosh.escapeHtml(UyDosh.t('account.leaveGroup', lang))}</span></button>`
+    : '';
+  const front = `
+    <div class="gp-member-front">
+      ${avatar}
+      <div class="gp-member-body">
+        <div class="gp-member-row">
+          <span class="gp-member-name">${UyDosh.escapeHtml(name)}</span>
+          <span class="gp-role gp-role-${roleKey}">${UyDosh.escapeHtml(memberRoleLabel(roleKey, lang))}</span>
+          ${matchPercentHtml(member, me, lang)}
+          <span class="gp-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
+        </div>
+        ${memberLifestyleHtml(member, me)}
+        ${leave}
+      </div>
+    </div>`;
+  if (!removable) {
+    return `<article class="gp-member" data-member-id="${userId}">${front}</article>`;
+  }
+  return `
+    <article class="gp-member gp-member-swipeable" data-member-id="${userId}" data-member-name="${UyDosh.escapeHtml(name)}">
+      <button type="button" class="gp-swipe-remove" data-remove-member="${userId}" data-haptic="heavy">
+        ${UyDosh.iconTrash()}
+        <span>${UyDosh.escapeHtml(UyDosh.t('account.removeFromGroup', lang))}</span>
+      </button>
+      ${front}
+    </article>`;
+}
+
+function participantsSheetHtml(listing, members, lang) {
+  const names = members.map((m) => String(m.name || '').trim()).filter(Boolean).join(', ');
+  const count = members.length;
+  const avatars = members.slice(0, 3).map((person, index) => participantAvatarHtml(person, index)).join('');
+  const cards = members.map((member) => memberCardHtml(member, listing, lang)).join('');
+  return `
+    <div class="gp-backdrop" data-gp-close></div>
+    <div class="gp-sheet" role="dialog" aria-modal="true" aria-labelledby="gp-sheet-title">
+      <div class="gp-handle" aria-hidden="true"></div>
+      <div class="gp-sheet-head">
+        <h2 id="gp-sheet-title">${UyDosh.escapeHtml(UyDosh.t('account.participantProfiles', lang))}</h2>
+        <span class="gp-status-pill">${UyDosh.escapeHtml(UyDosh.t('account.lookingForRoommates', lang))}</span>
+        <div class="gp-summary">
+          <span class="account-participants-avatars">${avatars}</span>
+          <div class="gp-summary-text">
+            <div class="gp-summary-names">${UyDosh.escapeHtml(names)}</div>
+            <div class="gp-summary-count">${UyDosh.escapeHtml(UyDosh.t('account.groupOfPeople', lang).replace('{count}', String(count)))}</div>
+          </div>
+        </div>
+      </div>
+      <div class="gp-list">${cards || `<p class="gp-empty">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))}</p>`}</div>
+    </div>
+    <div class="gp-confirm" data-gp-confirm hidden></div>`;
+}
+
+function renderParticipantsSheet() {
+  if (!participantsRoot || !participantsSheetState.listing) return;
+  const lang = UyDosh.getLang();
+  participantsRoot.innerHTML = participantsSheetHtml(
+    participantsSheetState.listing,
+    participantsSheetState.members,
+    lang,
+  );
+  if (typeof UyDosh.hydrateIcons === 'function') UyDosh.hydrateIcons(participantsRoot);
+  bindParticipantsSheetEvents();
+}
+
+async function openParticipantsSheet(listingId) {
+  const listing = state.myListings.find((l) => Number(l?.id) === listingId);
+  if (!listing || !participantsRoot) return;
+  UyDosh.haptic?.light?.();
+  const me = currentUserId();
+  const ownerId = Number(listing.user_id ?? listing.user?.id);
+  participantsSheetState.listingId = listingId;
+  participantsSheetState.listing = listing;
+  participantsSheetState.isOwner = me > 0 && me === ownerId;
+  participantsSheetState.members = [];
+  participantsRoot.hidden = false;
+  participantsRoot.classList.add('is-open');
+  participantsRoot.innerHTML = `
+    <div class="gp-backdrop" data-gp-close></div>
+    <div class="gp-sheet" role="dialog" aria-modal="true">
+      <div class="gp-handle" aria-hidden="true"></div>
+      <div class="gp-sheet-head">
+        <h2>${UyDosh.escapeHtml(UyDosh.t('account.participantProfiles'))}</h2>
+      </div>
+      <div class="gp-list"><div class="gp-loading" aria-busy="true"><span class="loading-spinner" aria-hidden="true"></span></div></div>
+    </div>`;
+  participantsRoot.querySelector('[data-gp-close]')?.addEventListener('click', closeParticipantsSheet);
+  try {
+    const members = await UyDosh.fetchListingGroupMembers(listingId);
+    const rows = Array.isArray(members) ? [...members] : [];
+    rows.sort((a, b) => {
+      if (Number(a.user_id) === ownerId) return -1;
+      if (Number(b.user_id) === ownerId) return 1;
+      return 0;
+    });
+    participantsSheetState.members = rows;
+    const ids = [...new Set(rows.map((m) => Number(m.user_id)).filter((id) => id > 0))];
+    const profileIds = me > 0 ? [...new Set([me, ...ids])] : ids;
+    const profiles = await Promise.all(profileIds.map((id) => UyDosh.fetchProfile(id).catch(() => null)));
+    participantsSheetState.profilesById = {};
+    profileIds.forEach((id, i) => {
+      const profile = profiles[i];
+      if (profile) participantsSheetState.profilesById[id] = profile;
+    });
+    participantsSheetState.myProfile = me > 0 ? participantsSheetState.profilesById[me] || null : null;
+    renderParticipantsSheet();
+  } catch (err) {
+    console.error('Failed to load group members', err);
+    closeParticipantsSheet();
+  }
+}
+
+function bindMemberSwipe(card) {
+  const front = card.querySelector('.gp-member-front');
+  if (!front) return;
+  const max = 132;
+  let startX = 0;
+  let startY = 0;
+  let dx = 0;
+  let tracking = false;
+  let open = false;
+
+  const setX = (x) => {
+    dx = Math.min(0, Math.max(-max, x));
+    front.style.transform = `translateX(${dx}px)`;
+  };
+
+  card.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('[data-remove-member], [data-leave-group]')) return;
+    tracking = true;
+    startX = event.clientX;
+    startY = event.clientY;
+    front.style.transition = 'none';
+    card.setPointerCapture?.(event.pointerId);
+  });
+  card.addEventListener('pointermove', (event) => {
+    if (!tracking) return;
+    const moveX = event.clientX - startX;
+    const moveY = event.clientY - startY;
+    if (Math.abs(moveY) > Math.abs(moveX) && Math.abs(moveX) < 8) return;
+    setX((open ? -max : 0) + moveX);
+  });
+  const end = () => {
+    if (!tracking) return;
+    tracking = false;
+    front.style.transition = 'transform 0.18s ease';
+    open = dx < -56;
+    setX(open ? -max : 0);
+  };
+  card.addEventListener('pointerup', end);
+  card.addEventListener('pointercancel', end);
+}
+
+function bindParticipantsSheetEvents() {
+  participantsRoot.querySelector('[data-gp-close]')?.addEventListener('click', closeParticipantsSheet);
+  for (const card of participantsRoot.querySelectorAll('.gp-member-swipeable')) {
+    bindMemberSwipe(card);
+  }
+  for (const btn of participantsRoot.querySelectorAll('[data-remove-member]')) {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('[data-member-id]');
+      const userId = Number(btn.getAttribute('data-remove-member'));
+      const name = card?.getAttribute('data-member-name') || '';
+      openRemoveConfirm(userId, name);
+    });
+  }
+  participantsRoot.querySelector('[data-leave-group]')?.addEventListener('click', async () => {
+    if (participantsSheetState.busy) return;
+    participantsSheetState.busy = true;
+    try {
+      await UyDosh.leaveListingGroup(participantsSheetState.listingId);
+      UyDosh.haptic?.success?.();
+      closeParticipantsSheet();
+      await loadGroupChats();
+      renderActiveTab();
+    } catch (err) {
+      console.error('Failed to leave group', err);
+      showTelegramAlert(UyDosh.t('account.removeError'));
+    } finally {
+      participantsSheetState.busy = false;
+    }
+  });
+}
+
+function removeReasonIcon(key) {
+  if (key === 'inactive') return UyDosh.iconClock?.() || '';
+  if (key === 'rules') return UyDosh.iconChrome?.('alertCircle') || '';
+  if (key === 'notFit') return UyDosh.iconChrome?.('person') || '';
+  if (key === 'requested') return UyDosh.iconChrome?.('chevronLeft') || '';
+  return UyDosh.iconChrome?.('moreHorizontal') || '';
+}
+
+function openRemoveConfirm(memberUserId, name) {
+  const lang = UyDosh.getLang();
+  const host = participantsRoot.querySelector('[data-gp-confirm]');
+  if (!host) return;
+  const member = participantsSheetState.members.find((m) => Number(m.user_id) === memberUserId);
+  const reasons = REMOVE_REASON_KEYS.map((key) => `
+    <button type="button" class="gp-reason" data-reason-key="${key}" data-haptic="selection">
+      <span class="icon" aria-hidden="true">${removeReasonIcon(key)}</span>
+      <span>${UyDosh.escapeHtml(UyDosh.t(`account.removeReason.${key}`, lang))}</span>
+    </button>`).join('');
+  host.hidden = false;
+  host.innerHTML = `
+    <div class="gp-confirm-card" role="alertdialog" aria-labelledby="gp-confirm-title">
+      <h3 id="gp-confirm-title">${UyDosh.escapeHtml(UyDosh.t('account.removeFromGroupTitle', lang))}</h3>
+      <div class="gp-confirm-user">
+        ${participantAvatarHtml(member || { name }, 0)}
+        <p>${UyDosh.escapeHtml(UyDosh.t('account.removeFromGroupBody', lang).replace('{name}', name))}</p>
+      </div>
+      <div class="gp-reason-label">${UyDosh.escapeHtml(UyDosh.t('account.removeReasonLabel', lang))}</div>
+      <div class="gp-reasons">${reasons}</div>
+      <div class="gp-confirm-actions">
+        <button type="button" class="gp-confirm-cancel" data-gp-confirm-cancel>${UyDosh.escapeHtml(UyDosh.t('account.removeCancel', lang))}</button>
+        <button type="button" class="gp-confirm-remove" data-gp-confirm-ok data-haptic="heavy">${UyDosh.escapeHtml(UyDosh.t('account.removeConfirm', lang))}</button>
+      </div>
+    </div>`;
+  if (typeof UyDosh.hydrateIcons === 'function') UyDosh.hydrateIcons(host);
+  let reasonText = '';
+  for (const btn of host.querySelectorAll('[data-reason-key]')) {
+    btn.addEventListener('click', () => {
+      for (const other of host.querySelectorAll('[data-reason-key]')) {
+        other.setAttribute('aria-pressed', other === btn ? 'true' : 'false');
+      }
+      reasonText = UyDosh.t(`account.removeReason.${btn.getAttribute('data-reason-key')}`, lang);
+    });
+  }
+  host.querySelector('[data-gp-confirm-cancel]')?.addEventListener('click', () => {
+    host.hidden = true;
+    host.innerHTML = '';
+  });
+  host.querySelector('[data-gp-confirm-ok]')?.addEventListener('click', async () => {
+    if (participantsSheetState.busy) return;
+    participantsSheetState.busy = true;
+    const okBtn = host.querySelector('[data-gp-confirm-ok]');
+    if (okBtn) okBtn.disabled = true;
+    try {
+      await UyDosh.removeListingGroupMember(participantsSheetState.listingId, memberUserId, {
+        reason: reasonText,
+      });
+      UyDosh.haptic?.success?.();
+      host.hidden = true;
+      host.innerHTML = '';
+      participantsSheetState.members = participantsSheetState.members.filter(
+        (m) => Number(m.user_id) !== memberUserId,
+      );
+      renderParticipantsSheet();
+    } catch (err) {
+      console.error('Failed to remove member', err);
+      showTelegramAlert(UyDosh.t('account.removeError', lang));
+      if (okBtn) okBtn.disabled = false;
+    } finally {
+      participantsSheetState.busy = false;
+    }
+  });
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && participantsRoot && !participantsRoot.hidden) {
+    const confirm = participantsRoot.querySelector('[data-gp-confirm]');
+    if (confirm && !confirm.hidden) {
+      confirm.hidden = true;
+      confirm.innerHTML = '';
+      return;
+    }
+    closeParticipantsSheet();
+  }
+});

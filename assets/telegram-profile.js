@@ -31,6 +31,9 @@ const tabLifestyleEl = document.getElementById('tab-lifestyle');
 
 const genderMaleBtn = document.getElementById('gender-male');
 const genderFemaleBtn = document.getElementById('gender-female');
+const profileLangSelectEl = document.getElementById('profile-lang-select');
+const profileLangFlagEl = document.getElementById('profile-lang-flag');
+const profileLangNameEl = document.getElementById('profile-lang-name');
 const regionListEl = document.getElementById('region-list');
 const studentYesBtn = document.getElementById('student-yes');
 const studentNoBtn = document.getElementById('student-no');
@@ -50,6 +53,29 @@ let successTimer = null;
 
 const TAB_BASIC = 'basic';
 const TAB_LIFESTYLE = 'lifestyle';
+
+const PROFILE_LANGS = [
+  { id: 'uz', flag: '🇺🇿', native: "O'zbekcha" },
+  { id: 'ru', flag: '🇷🇺', native: 'Русский' },
+  { id: 'en', flag: '🇺🇸', native: 'English' },
+];
+
+function normalizeProfileLang(code) {
+  const id = String(code || '').trim().toLowerCase();
+  return PROFILE_LANGS.some((l) => l.id === id) ? id : UyDosh.getLang();
+}
+
+function profileLangMeta(code) {
+  const id = normalizeProfileLang(code);
+  return PROFILE_LANGS.find((l) => l.id === id) || PROFILE_LANGS[1];
+}
+
+function renderLanguageRow() {
+  const meta = profileLangMeta(state.preferredLanguage);
+  if (profileLangSelectEl) profileLangSelectEl.value = meta.id;
+  if (profileLangFlagEl) profileLangFlagEl.textContent = meta.flag;
+  if (profileLangNameEl) profileLangNameEl.textContent = meta.native;
+}
 
 // Mirrors the lifestyle fields on the Flutter app's edit-profile screen
 // (`user_profiles` columns) — kept here as data so adding another field is
@@ -195,6 +221,7 @@ const state = {
   // truth once the user starts typing (see `bindEvents`), so re-rendering it
   // on every state change would reset the cursor position mid-edit.
   aboutMe: '',
+  preferredLanguage: 'ru',
   universities: [],
   universitiesError: false,
   // null = not answered yet, true/false once the user (or existing data) answers.
@@ -428,6 +455,8 @@ function render() {
 
   if (state.activeTab === TAB_LIFESTYLE) renderLifestyleFields();
 
+  renderLanguageRow();
+
   saveBtn.disabled = state.saving;
   saveBtnLabel.textContent = state.saving ? UyDosh.t('profile.saving') : UyDosh.t('profile.save');
   saveBtnSpinner.hidden = !state.saving;
@@ -498,6 +527,15 @@ function bindEvents() {
   aboutMeInputEl.addEventListener('input', () => {
     state.aboutMe = aboutMeInputEl.value;
     showFormError('');
+  });
+
+  profileLangSelectEl?.addEventListener('change', () => {
+    const next = normalizeProfileLang(profileLangSelectEl.value);
+    if (next === state.preferredLanguage) return;
+    state.preferredLanguage = next;
+    UyDosh.setLang(next);
+    showFormError('');
+    renderLanguageRow();
   });
 
   studentYesBtn.addEventListener('click', () => {
@@ -571,6 +609,7 @@ async function onSave() {
     ...(state.gender != null ? { gender: state.gender } : {}),
     ...(state.selectedRegionId != null ? { region_id: state.selectedRegionId } : {}),
     about_me: state.aboutMe.trim(),
+    preferred_language: normalizeProfileLang(state.preferredLanguage),
     ...state.lifestyle,
   };
 
@@ -627,6 +666,7 @@ async function loadProfile() {
     state.gender = profile?.gender === 1 || profile?.gender === 2 ? profile.gender : null;
     state.selectedRegionId = profile?.region_id != null ? Number(profile.region_id) : null;
     state.aboutMe = profile?.about_me ?? '';
+    state.preferredLanguage = normalizeProfileLang(profile?.preferred_language || UyDosh.getLang());
     for (const field of LIFESTYLE_FIELDS) {
       const raw = profile?.[field.key];
       state.lifestyle[field.key] = raw === undefined ? null : raw;
