@@ -1,0 +1,283 @@
+/*
+ * Messages inbox — Flutter-style listing cards + nested chat rows.
+ * Shared spinner/empty styles come from telegram-account.css.
+ */
+.inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-bottom: 12px;
+}
+.inbox-day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.inbox-day::before,
+.inbox-day::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--stroke);
+}
+.inbox-day span {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  border: 1px solid var(--stroke);
+}
+.inbox-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 8px;
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.inbox-card-head {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.inbox-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.inbox-type {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.inbox-type svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.inbox-type-group { background: #7c5cbf; }
+.inbox-type-seek { background: #e08a3c; }
+.inbox-type-housing { background: #2aa8a0; }
+.inbox-card-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inbox-avatars {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+.inbox-avatars img,
+.inbox-avatars .inbox-avatar-fallback {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--card);
+  margin-left: -8px;
+  background: color-mix(in srgb, var(--brand2) 22%, transparent);
+}
+.inbox-avatars img:first-child,
+.inbox-avatars .inbox-avatar-fallback:first-child {
+  margin-left: 0;
+}
+.inbox-count {
+  margin: 8px 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.inbox-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--fg);
+}
+.inbox-meta-row .icon,
+.inbox-meta-row svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: #e11d2e;
+}
+.inbox-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--price-green);
+  font-size: 14px;
+  font-weight: 800;
+}
+.inbox-price-row .icon,
+.inbox-price-row svg {
+  width: 16px;
+  height: 16px;
+  color: var(--price-green);
+}
+.inbox-toggle {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+.inbox-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+.inbox-card[data-expanded="true"] .inbox-chevron-down,
+.inbox-card[data-expanded="false"] .inbox-chevron-up {
+  display: none;
+}
+.inbox-card[data-expanded="false"] .inbox-chats {
+  display: none;
+}
+.inbox-chats {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.inbox-you {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 0 2px 2px;
+}
+.inbox-chat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 6px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 12px;
+}
+.inbox-chat:active {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+.inbox-chat-avatar {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--brand2) 18%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+.inbox-chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.inbox-chat-avatar svg {
+  width: 20px;
+  height: 20px;
+}
+.inbox-chat-body {
+  flex: 1;
+  min-width: 0;
+}
+.inbox-chat-preview {
+  font-size: 14px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inbox-chat-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.inbox-chat-time svg {
+  width: 12px;
+  height: 12px;
+}
+.inbox-chat-go {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.inbox-chat-go svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.inbox-unread {
+  flex: 0 0 auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--brand2);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.inbox-direct {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 2px;
+  text-decoration: none;
+  color: inherit;
+}
+.inbox-direct-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.inbox-direct-title {
+  font-size: 15px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inbox-direct-preview {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

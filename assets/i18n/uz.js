@@ -22,6 +22,7 @@ I18N.uz = {
     'tabbar.create': 'Yaratish',
     'chat.inboxTitle': 'Xabarlar',
     'chat.inboxEmpty': 'Hali chatlar yo‘q.',
+    'chat.you': 'Siz',
     'session.revokedTitle': 'Sessiya tugatildi',
     'session.revokedMessage': 'Ilova boshqa oynada yoki qurilmada ochildi. Davom etish uchun uni qayta oching.',
     'session.revokedDeviceLine': 'Yangi sessiya: {info}',

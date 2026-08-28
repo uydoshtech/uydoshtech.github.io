@@ -21,6 +21,7 @@ I18N.ru = {
     'tabbar.create': 'Создать',
     'chat.inboxTitle': 'Сообщения',
     'chat.inboxEmpty': 'Пока нет чатов.',
+    'chat.you': 'Вы',
     'session.revokedTitle': 'Сессия завершена',
     'session.revokedMessage': 'Приложение было открыто в другом окне или на другом устройстве. Откройте его заново, чтобы продолжить.',
     'session.revokedDeviceLine': 'Новая сессия: {info}',

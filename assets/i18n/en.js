@@ -21,6 +21,7 @@ I18N.en = {
     'tabbar.create': 'Create',
     'chat.inboxTitle': 'Messages',
     'chat.inboxEmpty': 'No chats yet.',
+    'chat.you': 'You',
     'session.revokedTitle': 'Session ended',
     'session.revokedMessage': 'This app was opened in another window or device. Reopen it to continue.',
     'session.revokedDeviceLine': 'New session: {info}',
