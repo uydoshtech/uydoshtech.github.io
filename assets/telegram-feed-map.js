@@ -72,7 +72,8 @@
      * tooltip anchored to its bottom) then extends past the actual bottom of
      * the screen. Measure the real remaining space instead and pin the panel
      * height to it, so the map — and anything anchored to its bottom edge —
-     * always stays within the visible viewport.
+     * always stays within the visible viewport (including above the Mini App
+     * tab bar when that bar is mounted).
      */
     function syncFeedMapPanelHeight() {
       if (!feedMapPanel || !feedMapPanel.classList.contains('active')) return;
@@ -83,7 +84,11 @@
       const insetBottom = parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue('--uydosh-tg-inset-bottom'),
       ) || 0;
-      const bottomGap = Math.max(16, insetBottom + 12);
+      const tabbar = document.querySelector('.mini-app-tabbar');
+      const tabbarHeight = tabbar ? tabbar.getBoundingClientRect().height : 0;
+      const bottomGap = tabbarHeight > 0
+        ? tabbarHeight + 8
+        : Math.max(16, insetBottom + 12);
       const available = viewportHeight - top - bottomGap;
       if (!Number.isFinite(available) || available <= 0) return;
       feedMapPanel.style.height = `${available}px`;
