@@ -243,6 +243,7 @@ async function handleSend(event) {
   const content = String(inputEl?.value || '').trim();
   if (!content || state.sending) return;
   state.sending = true;
+  errorEl.hidden = true;
   if (sendBtn) sendBtn.disabled = true;
   try {
     const payload = await UyDosh.sendConversationMessage(conversationId, content);
