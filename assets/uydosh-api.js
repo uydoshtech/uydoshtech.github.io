@@ -1399,6 +1399,10 @@ function markConversationRead(conversationId) {
   });
 }
 
+function fetchUnreadMessageCount() {
+  return fetchJsonAuth('/messages/unread-count');
+}
+
 function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
   const params = { page, limit, isActive: 'true' };
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -1497,6 +1501,7 @@ Object.assign(window.UyDosh, {
   fetchConversationMessages,
   sendConversationMessage,
   markConversationRead,
+  fetchUnreadMessageCount,
   fetchListingsForMap,
   fetchSubwayStationsByLine,
   fetchSubwayStations,

@@ -4,6 +4,9 @@
 
 const MINI_APP_FEED_PATH = '/telegram/';
 const MINI_APP_CREATE_PATH = '/telegram/create.html';
+const MINI_APP_CHATS_PATH = '/telegram/chats.html';
+const MINI_APP_HOUSING_PATH = '/telegram/?listingTypeId=0';
+const MINI_APP_COMMUNITY_PATH = '/telegram/?listingTypeId=3';
 
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
@@ -736,6 +739,191 @@ function mountAllMiniAppHeaders() {
   for (const el of document.querySelectorAll('[data-uydosh-mini-app-header]')) {
     if (el.dataset.uydoshHeaderMounted === '1') continue;
     mountMiniAppHeader(el, parseMiniAppHeaderOptions(el));
+  }
+}
+
+const MINI_APP_TABBAR_STYLE_ID = 'uydosh-mini-app-tabbar-styles';
+
+function shouldMountMiniAppTabbar() {
+  if (!isMiniApp()) return false;
+  const path = location.pathname || '';
+  if (/listing\.html/i.test(path)) return false;
+  if (/chat\.html/i.test(path)) return false;
+  if (/create\.html/i.test(path)) return false;
+  if (/profile\.html/i.test(path)) return false;
+  if (/delete-account/i.test(path)) return false;
+  return /\/telegram(\/|$)/i.test(path) || /telegram\.html$/i.test(path);
+}
+
+function miniAppTabbarActiveId() {
+  const path = location.pathname || '';
+  const params = new URLSearchParams(location.search);
+  if (/chats\.html/i.test(path)) return 'messages';
+  if (/create\.html/i.test(path)) return 'create';
+  if (/account\.html/i.test(path) && params.get('tab') === 'groups') return 'community';
+  if (/\/telegram\/?$/i.test(path) || /\/telegram\/index\.html$/i.test(path)) {
+    return Number(params.get('listingTypeId')) === 3 ? 'community' : 'housing';
+  }
+  return '';
+}
+
+function ensureMiniAppTabbarStyles() {
+  if (document.getElementById(MINI_APP_TABBAR_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = MINI_APP_TABBAR_STYLE_ID;
+  style.textContent = `
+    html.mini-app-has-tabbar {
+      --uydosh-tabbar-height: 64px;
+      --uydosh-fixed-footer-height: calc(var(--uydosh-tabbar-height) + 8px);
+    }
+    html.mini-app-has-tabbar .fab-create { display: none !important; }
+    html.mini-app-has-tabbar .scroll-top-btn {
+      bottom: calc(var(--uydosh-tabbar-height) + 18px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+    }
+    .mini-app-tabbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      height: calc(var(--uydosh-tabbar-height) + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px));
+      color: #0b1a2b;
+    }
+    html.mini-app-header-light .mini-app-tabbar { color: #e8eef6; }
+    .mini-app-tabbar-notch {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+    .mini-app-tabbar-items {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      height: var(--uydosh-tabbar-height);
+      align-items: end;
+      padding: 0 6px;
+    }
+    .mini-app-tab {
+      appearance: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 3px;
+      padding: 0 4px 10px;
+      color: rgba(255, 255, 255, 0.92);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.1;
+      min-width: 0;
+    }
+    .mini-app-tab svg { width: 22px; height: 22px; display: block; }
+    .mini-app-tab.is-active { color: #fff; }
+    html.mini-app-header-light .mini-app-tab { color: rgba(15, 23, 42, 0.78); }
+    html.mini-app-header-light .mini-app-tab.is-active { color: #0f172a; }
+    .mini-app-tab-community {
+      justify-content: flex-start;
+      padding-bottom: 8px;
+      transform: translateY(-18px);
+    }
+    .mini-app-tab-community-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #7dd3fc, #38bdf8);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(56, 189, 248, 0.45);
+    }
+    .mini-app-tab-community.is-active .mini-app-tab-community-btn {
+      background: linear-gradient(180deg, #bae6fd, #38bdf8);
+    }
+    .mini-app-tab-community-btn svg { width: 26px; height: 26px; }
+    .mini-app-tab-community span[data-i18n] { display: none; }
+    .mini-app-tab-badge {
+      position: absolute;
+      top: 6px;
+      margin-left: 18px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mini-app-tab-badge[hidden] { display: none !important; }
+    .mini-app-tab { position: relative; }
+  `;
+  document.head.appendChild(style);
+}
+
+function miniAppTabbarHtml(activeId) {
+  const item = (id, href, icon, labelKey, extraClass = '') => {
+    const active = id === activeId ? ' is-active' : '';
+      const iconHtml = id === 'community'
+      ? `<span class="mini-app-tab-community-btn">${UyDosh.iconChrome(icon)}</span>`
+      : UyDosh.iconChrome(icon);
+    const badge = id === 'messages'
+      ? '<span class="mini-app-tab-badge" data-tabbar-unread hidden></span>'
+      : '';
+    return `<a class="mini-app-tab ${extraClass}${active}" href="${href}" data-tabbar-id="${id}">${badge}${iconHtml}<span data-i18n="${labelKey}"></span></a>`;
+  };
+  return `
+    <nav class="mini-app-tabbar" aria-label="Main">
+      <svg class="mini-app-tabbar-notch" viewBox="0 0 400 80" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="currentColor" d="M0 28 H118 C130 28 136 4 150 4 C164 4 170 28 182 28 H400 V80 H0 Z"></path>
+      </svg>
+      <div class="mini-app-tabbar-items">
+        ${item('housing', MINI_APP_HOUSING_PATH, 'house', 'tabbar.housing')}
+        ${item('community', MINI_APP_COMMUNITY_PATH, 'users', 'tabbar.community', 'mini-app-tab-community')}
+        ${item('messages', MINI_APP_CHATS_PATH, 'chatBubbles', 'tabbar.messages')}
+        ${item('create', MINI_APP_CREATE_PATH, 'plus', 'tabbar.create')}
+      </div>
+    </nav>`;
+}
+
+function mountMiniAppTabbar() {
+  if (!shouldMountMiniAppTabbar()) return null;
+  if (document.querySelector('.mini-app-tabbar')) return document.querySelector('.mini-app-tabbar');
+  ensureMiniAppTabbarStyles();
+  document.documentElement.classList.add('mini-app-has-tabbar');
+  document.body.insertAdjacentHTML('beforeend', miniAppTabbarHtml(miniAppTabbarActiveId()));
+  const bar = document.querySelector('.mini-app-tabbar');
+  applyI18n(bar);
+  if (typeof hydrateIcons === 'function') hydrateIcons(bar);
+  refreshMiniAppTabbarUnread();
+  return bar;
+}
+
+async function refreshMiniAppTabbarUnread() {
+  const badge = document.querySelector('[data-tabbar-unread]');
+  if (!badge || typeof fetchUnreadMessageCount !== 'function') return;
+  try {
+    const sessionReady = await ensureTelegramMiniAppSession();
+    if (!sessionReady) return;
+    const payload = await fetchUnreadMessageCount();
+    const count = Number(payload?.data?.unread_count ?? payload?.unread_count) || 0;
+    if (count > 0) {
+      badge.hidden = false;
+      badge.textContent = count > 99 ? '99+' : String(count);
+    } else {
+      badge.hidden = true;
+    }
+  } catch {
+    /* ignore */
   }
 }
 
@@ -2093,6 +2281,7 @@ function initTelegramMiniApp() {
   bindMiniAppInternalNav();
   bindMiniAppHapticFeedback();
   mountAllMiniAppHeaders();
+  mountMiniAppTabbar();
   syncMobileHeaderLayout();
   // Fire-and-forget: reveals a green dot on the account menu's "Profile" item
   // once the profile fetch resolves, if the user hasn't filled anything in yet.
@@ -2142,6 +2331,7 @@ Object.assign(window.UyDosh, {
   MINI_APP_GROUPS_PATH,
   MINI_APP_FAVORITES_PATH,
   MINI_APP_CREATE_PATH,
+  MINI_APP_CHATS_PATH,
   MINI_APP_PROFILE_PATH,
   maybeShowProfileNudge,
   dismissProfileNudge,

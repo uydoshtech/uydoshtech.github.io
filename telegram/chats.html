@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>UyDosh — Account</title>
-    <meta name="description" content="Your own listings on UyDosh — Telegram Mini App." />
+    <title>UyDosh — Messages</title>
+    <meta name="description" content="UyDosh chats — Telegram Mini App." />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <script src="../assets/theme-init.js?v=20260711-1"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -18,34 +18,16 @@
     <div class="wrap">
       <header
         data-uydosh-mini-app-header
-        data-uydosh-header-subtitle="account.subtitle"
+        data-uydosh-header-subtitle="chat.inboxTitle"
       ></header>
-
-      <div class="view-tabs" role="tablist" aria-label="Account">
-        <button type="button" class="view-tab" role="tab" data-account-tab="mine" data-haptic="selection" aria-selected="true">
-          <span class="view-tab-icon" aria-hidden="true" data-icon="house"></span>
-          <span data-i18n="account.tabs.mine">Мои объявления</span>
-        </button>
-        <button type="button" class="view-tab" role="tab" data-account-tab="groups" data-haptic="selection" aria-selected="false">
-          <span class="view-tab-icon" aria-hidden="true" data-icon="users"></span>
-          <span data-i18n="account.tabs.groups">Мои группы</span>
-        </button>
-        <button type="button" class="view-tab" role="tab" data-account-tab="favorites" data-haptic="selection" aria-selected="false">
-          <span class="view-tab-icon" aria-hidden="true" data-icon="heartOutline"></span>
-          <span data-i18n="account.tabs.favorites">Избранное</span>
-        </button>
-      </div>
 
       <div id="loading" class="status" aria-busy="true" aria-live="polite">
         <span class="loading-spinner" aria-hidden="true"></span>
       </div>
-
-      <div id="account-empty" class="account-empty" hidden>
-        <p id="account-empty-text"></p>
-        <a id="account-empty-cta" class="btn-link" href="/telegram/create.html" data-i18n="create.postListing" hidden></a>
+      <div id="chats-empty" class="account-empty" hidden>
+        <p id="chats-empty-text"></p>
       </div>
-
-      <div id="account-list" class="account-list content-gutter" hidden></div>
+      <div id="chats-list" class="account-list content-gutter" hidden></div>
     </div>
 
     <script src="../assets/uydosh-core.js?v=20260827-3"></script>
@@ -55,6 +37,6 @@
     <script src="../assets/uydosh-map-pins.js?v=20260723-3" defer></script>
     <script src="../assets/uydosh-badges.js?v=20260714-69" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260828-2" defer></script>
-    <script src="../assets/telegram-account.js?v=20260828-1" defer></script>
+    <script src="../assets/telegram-chats.js?v=20260828-1" defer></script>
   </body>
 </html>

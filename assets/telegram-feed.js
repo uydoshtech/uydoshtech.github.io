@@ -228,6 +228,7 @@ function readUrlListingTypeId() {
     if (raw == null) return null;
     const id = Number(raw);
     if (
+      id === LISTING_TYPE_ALL ||
       id === LISTING_TYPE_ROOM_NEEDED ||
       id === LISTING_TYPE_ROOMMATE_NEEDED ||
       id === LISTING_TYPE_GROUP_FORMING
