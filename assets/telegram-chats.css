@@ -104,11 +104,6 @@
 .inbox-avatars .inbox-avatar-fallback:first-child {
   margin-left: 0;
 }
-.inbox-count {
-  margin: 8px 0 6px;
-  font-size: 12px;
-  color: var(--muted);
-}
 .inbox-meta-row {
   display: flex;
   align-items: center;
@@ -136,14 +131,10 @@
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  color: var(--price-green);
   font-size: 14px;
   font-weight: 800;
 }
-.inbox-price-row .icon,
-.inbox-price-row svg {
-  width: 16px;
-  height: 16px;
+.inbox-price-row > span:not(.inbox-toggle) {
   color: var(--price-green);
 }
 .inbox-toggle {
@@ -158,6 +149,7 @@
 .inbox-toggle svg {
   width: 18px;
   height: 18px;
+  color: var(--muted);
 }
 .inbox-card[data-expanded="true"] .inbox-chevron-down,
 .inbox-card[data-expanded="false"] .inbox-chevron-up {

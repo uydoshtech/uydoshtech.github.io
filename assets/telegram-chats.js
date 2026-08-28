@@ -38,18 +38,6 @@ function formatTime(ms) {
   return `${hh}:${mm}`;
 }
 
-function conversationsCountText(n, lang) {
-  if (lang === 'ru') {
-    const mod10 = n % 10;
-    const mod100 = n % 100;
-    if (mod10 === 1 && mod100 !== 11) return `${n} разговор`;
-    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return `${n} разговора`;
-    return `${n} разговоров`;
-  }
-  if (lang === 'uz') return n === 1 ? '1 suhbat' : `${n} suhbat`;
-  return n === 1 ? '1 conversation' : `${n} conversations`;
-}
-
 function stationsCountText(n, lang) {
   if (lang === 'ru') return `${n} станций`;
   if (lang === 'uz') return `${n} stansiya`;
@@ -182,7 +170,6 @@ function listingCardHtml(group, lang) {
           <span class="inbox-card-title">${title}</span>
           ${avatars ? `<span class="inbox-avatars" aria-hidden="true">${avatars}</span>` : ''}
         </div>
-        <div class="inbox-count">${UyDosh.escapeHtml(conversationsCountText(group.conversations.length, lang))}</div>
         ${metro ? `<div class="inbox-meta-row">${UyDosh.iconMetro(metroLine)}<span>${metro}</span></div>` : ''}
         ${district ? `<div class="inbox-meta-row">${UyDosh.iconPin()}<span>${district}</span></div>` : ''}
         <div class="inbox-price-row">
