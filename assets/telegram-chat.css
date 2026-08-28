@@ -54,6 +54,13 @@ html.mini-app body.chat-page {
   min-height: 40vh;
   padding: 0;
 }
+#loading[hidden],
+#chat-error[hidden],
+#chat-thread[hidden],
+#chat-meta[hidden],
+#chat-composer[hidden] {
+  display: none !important;
+}
 .loading-spinner {
   width: 64px;
   height: 64px;
