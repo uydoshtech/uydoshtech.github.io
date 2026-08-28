@@ -404,27 +404,62 @@ function bindFavoriteRemoveButtons() {
   }
 }
 
-function groupChatRowHtml(conversation, { nested = false } = {}) {
-  const lang = UyDosh.getLang();
-  const title = UyDosh.escapeHtml(conversation.listing_title || UyDosh.t('chat.title', lang));
-  const preview = UyDosh.escapeHtml(conversation.last_message_content
+const CLOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v5l3 2"></path></svg>';
+
+function conversationAt(conversation) {
+  const raw = conversation.last_message_at || conversation.updated_at || conversation.created_at;
+  const t = raw ? new Date(raw).getTime() : 0;
+  return Number.isFinite(t) ? t : 0;
+}
+
+function formatChatTime(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function groupChatAvatarInner(conversation) {
+  const members = Array.isArray(conversation.members) ? conversation.members : [];
+  const img = members.find((m) => m.avatar_url)?.avatar_url;
+  if (img) {
+    return `<img src="${UyDosh.escapeHtml(img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
+  }
+  return UyDosh.iconChrome('chatBubble');
+}
+
+function groupChatPreview(conversation, lang) {
+  return UyDosh.escapeHtml(conversation.last_message_content
     ? String(conversation.last_message_content).replace(/^\[\[uydosh:listing_share\]\].*/, UyDosh.t('chat.listingCard', lang))
     : UyDosh.t('account.groupChatPreview', lang));
+}
+
+function groupChatRowHtml(conversation, { nested = false } = {}) {
+  const lang = UyDosh.getLang();
+  const preview = groupChatPreview(conversation, lang);
   const unread = Number(conversation.unread_count) || 0;
   const href = UyDosh.escapeHtml(UyDosh.chatPageUrl(conversation.id, { backTo: UyDosh.MINI_APP_GROUPS_PATH }));
-  const members = Array.isArray(conversation.members) ? conversation.members : [];
-  const avatars = members.slice(0, 3).map((member) => {
-    if (member.avatar_url) {
-      return `<img src="${UyDosh.escapeHtml(member.avatar_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
-    }
-    return '';
-  }).join('');
-  const rowClass = nested
-    ? 'account-chat-row account-chat-row-nested'
-    : 'account-row account-chat-row';
+  const when = formatChatTime(conversationAt(conversation));
+  if (nested) {
+    return `
+    <div class="account-nested-chat-wrap">
+      <div class="account-nested-you">${UyDosh.escapeHtml(UyDosh.t('chat.you', lang))}</div>
+      <a class="account-nested-chat" href="${href}">
+        <div class="account-chat-avatars" aria-hidden="true">${groupChatAvatarInner(conversation)}</div>
+        <div class="account-nested-chat-body">
+          <div class="account-chat-preview">${preview}</div>
+          ${when ? `<div class="account-nested-time">${CLOCK_ICON}<span>${when}</span></div>` : ''}
+        </div>
+        ${unread > 0 ? `<span class="account-chat-unread">${unread}</span>` : ''}
+        <span class="account-nested-go" aria-hidden="true">${UyDosh.iconChrome('chevronRight')}</span>
+      </a>
+    </div>`;
+  }
+  const title = UyDosh.escapeHtml(conversation.listing_title || UyDosh.t('chat.title', lang));
   return `
-    <a class="${rowClass}" href="${href}">
-      <div class="account-chat-avatars" aria-hidden="true">${avatars || UyDosh.iconChrome('chatBubble')}</div>
+    <a class="account-row account-chat-row" href="${href}">
+      <div class="account-chat-avatars" aria-hidden="true">${groupChatAvatarInner(conversation)}</div>
       <div class="account-row-body">
         <div class="account-row-title">${title}</div>
         <div class="account-row-meta"><span class="account-chat-preview">${preview}</span></div>
@@ -499,9 +534,6 @@ function renderGroups() {
   }
   const usedChatIds = new Set();
   const parts = [];
-  if (chats.length || rows.length) {
-    parts.push(`<h2 class="account-section-title">${UyDosh.escapeHtml(UyDosh.t('account.groupChats', lang))}</h2>`);
-  }
   for (const listing of rows) {
     const chat = chatForListing(listing, chats);
     if (chat?.id != null) usedChatIds.add(Number(chat.id));
