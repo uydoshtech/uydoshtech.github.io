@@ -1361,8 +1361,7 @@ function renderStep0(lang) {
   return `
     <section class="panel active" data-step="0">
       <div class="field listing-type-field">
-        <div class="field-label">${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}</div>
-        <div class="chips">${typeChips}</div>
+        <div class="chips" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}">${typeChips}</div>
       </div>
       ${locationSection}
     </section>`;
