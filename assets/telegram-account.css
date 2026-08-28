@@ -132,9 +132,6 @@ header {
 .account-row-strip .account-row-amenities {
   width: auto;
 }
-.account-row-strip .account-row-views[hidden] {
-  display: none;
-}
 .account-row-lower .account-row-link {
   flex: 1;
   min-width: 0;
@@ -274,7 +271,7 @@ header {
   justify-content: flex-start;
   gap: 6px;
   color: var(--muted);
-  width: 64px;
+  width: auto;
 }
 .account-row-amenities .amenity-inline {
   display: inline-flex;
@@ -286,20 +283,6 @@ header {
   font-weight: 700;
   color: var(--muted);
 }
-/* Shown above the thumbnail (see `listingRowHtml`) — icon + raw count only,
-   no "views" word, styled like the muted amenity/meta text below the photo. */
-.account-row-views {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--muted);
-}
-.account-row-views .icon { width: 12px; height: 12px; display: inline-flex; }
-.account-row-views .icon svg { width: 12px; height: 12px; display: block; }
-.account-row-views .icon svg * { stroke: currentColor; fill: none; }
 .account-status {
   display: inline-flex;
   align-items: center;

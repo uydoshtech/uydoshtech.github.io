@@ -57,9 +57,6 @@ const state = {
   // No usable session for the Bearer-token-based favorites API (distinct from
   // `authError`, which means there's no Telegram identity at all).
   favoritesUnavailable: false,
-  // Cache of listingId -> view count, so re-rendering "My Listings" after a
-  // renew/toggle/delete doesn't re-request every row's owner-only view count.
-  viewCounts: {},
   groupChats: [],
   groupChatsError: false,
 };
@@ -76,24 +73,8 @@ function statusBadgeHtml(listing, lang) {
 
 /** Amenity icons row shown under the listing thumbnail photo. */
 function amenitiesRowHtml(listing, lang) {
-  const icons = UyDosh.amenityIconsRowHtml(listing.amenities, lang);
+  const icons = UyDosh.amenityIconsRowHtml(listing.amenities, lang, { showAll: true });
   return icons ? `<div class="account-row-amenities">${icons}</div>` : '';
-}
-
-/**
- * Eye icon + raw view count, shown above the thumbnail (see `listingRowHtml`).
- * Starts hidden — filled in and revealed by `bindViewCounts` once the
- * owner-only `/listings/:id/view-count` request resolves (see also the
- * listing detail page's owner toolbar, which reuses the same endpoint/helpers).
- * Intentionally just the icon + number (no "views" word) to stay legible in
- * the narrow My Listings column.
- */
-function viewCountHtml(listing) {
-  return `
-    <span class="account-row-views" data-view-count="${listing.id}" hidden>
-      ${UyDosh.iconEye()}<span data-view-count-text></span>
-    </span>
-  `;
 }
 
 function accountThumbHtml(listing) {
@@ -142,13 +123,11 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
   const photoBlock = hidePhoto ? '' : `
           <a class="account-row-link" href="${detailHref}">
             <div class="account-thumb-col">
-              ${viewCountHtml(listing)}
               ${accountThumbHtml(listing)}
             </div>
           </a>`;
   const metaStrip = `
         <div class="account-row-strip">
-          ${hidePhoto ? viewCountHtml(listing) : ''}
           ${amenitiesRowHtml(listing, lang)}
         </div>`;
   return `
@@ -327,43 +306,6 @@ function bindRenewButtons() {
   }
 }
 
-function applyViewCountToRow(id, count) {
-  const el = listEl.querySelector(`[data-view-count="${id}"]`);
-  if (!el) return;
-  const textEl = el.querySelector('[data-view-count-text]');
-  // Icon-only badge — just the raw number, no "views" word (see `viewCountHtml`).
-  if (textEl) textEl.textContent = String(Math.max(0, Math.trunc(Number(count) || 0)));
-  el.hidden = false;
-}
-
-/**
- * Reveals each listing's view count next to its price/status (mirrors the mobile
- * ListingTile's owner-only footer status and the listing detail page's owner
- * toolbar) — reuses the same owner-only `/listings/:id/view-count` endpoint, caching
- * results so re-renders after a renew/toggle/delete don't re-request every row.
- */
-async function bindViewCounts() {
-  const ids = state.myListings.map((l) => l?.id).filter((id) => Number.isFinite(id));
-  if (!ids.length) return;
-  for (const id of ids) {
-    if (state.viewCounts[id] != null) applyViewCountToRow(id, state.viewCounts[id]);
-  }
-  const pending = ids.filter((id) => state.viewCounts[id] == null);
-  if (!pending.length) return;
-  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
-  if (!sessionReady) return;
-  await Promise.all(pending.map(async (id) => {
-    try {
-      const data = await UyDosh.fetchListingViewCount(id);
-      const count = Number(data?.viewCount) || 0;
-      state.viewCounts[id] = count;
-      applyViewCountToRow(id, count);
-    } catch (err) {
-      console.error('Failed to load listing view count', id, err);
-    }
-  }));
-}
-
 function bindDeleteButtons() {
   for (const btn of listEl.querySelectorAll('[data-delete-listing]')) {
     btn.addEventListener('click', async () => {
@@ -512,7 +454,6 @@ function renderMine() {
   showList(rows.map(listingRowHtml).join(''));
   bindVisibilityToggleButtons();
   bindRenewButtons();
-  bindViewCounts();
   bindDeleteButtons();
 }
 
@@ -545,7 +486,6 @@ function renderGroups() {
   showList(parts.join(''));
   bindVisibilityToggleButtons();
   bindRenewButtons();
-  bindViewCounts();
   bindDeleteButtons();
 }
 
