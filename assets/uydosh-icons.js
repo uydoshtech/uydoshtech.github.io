@@ -76,6 +76,7 @@ const CHROME_ICONS = {
   users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8" r="3"></circle><path d="M2.5 19c.8-3 3-4.8 6-4.8s5.2 1.8 6 4.8"></path><path d="M15 8.2a3 3 0 1 1 3.6 2.9"></path><path d="M15.5 14.5c2.3.4 3.9 1.9 4.5 4.4"></path></svg>',
   volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3.5L12 17.5v-11L7.5 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10"></path></svg>',
   chatBubble: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-4 3.5V16H4V5Z"></path></svg>',
+  paperPlane: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.2 11.05 20.4 3.7a1 1 0 0 1 1.35 1.2L14.9 21.4a1.1 1.1 0 0 1-2.08.08l-2.7-6.55-6.55-2.7a1.1 1.1 0 0 1 .08-2.08l-.45-.1Zm5.7 3.15 1.85 4.5 4.95-12.05-6.8 7.55Z"></path></svg>',
   // Compatibility breakdown row icons (listing.html + uydosh-profile-match.js)
   // for the "language" / "age" / "budget" matching dimensions — no existing
   // chrome icon fit these, so kept minimal and consistent with the set above.
