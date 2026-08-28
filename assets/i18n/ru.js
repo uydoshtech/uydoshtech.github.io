@@ -16,7 +16,7 @@ I18N.ru = {
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
     'tabbar.housing': 'Жильё',
-    'tabbar.community': 'Сообщество',
+    'tabbar.community': 'Моё',
     'tabbar.messages': 'Сообщения',
     'tabbar.create': 'Создать',
     'chat.inboxTitle': 'Сообщения',

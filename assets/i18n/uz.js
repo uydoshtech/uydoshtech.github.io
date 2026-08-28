@@ -17,7 +17,7 @@ I18N.uz = {
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
     'tabbar.housing': 'Uy-joy',
-    'tabbar.community': 'Jamiyat',
+    'tabbar.community': 'Mening',
     'tabbar.messages': 'Xabarlar',
     'tabbar.create': 'Yaratish',
     'chat.inboxTitle': 'Xabarlar',

@@ -139,10 +139,6 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
   const visibilityIcon = listing.is_active ? UyDosh.iconEye() : UyDosh.iconEyeOff();
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
   const renewFull = renewLabelHtml(listing, lang);
-  const days = daysUntil(listing.next_renewal_at);
-  const renewShort = days <= 0
-    ? UyDosh.escapeHtml(UyDosh.t('account.renew', lang))
-    : UyDosh.escapeHtml(String(days));
   const photoBlock = hidePhoto ? '' : `
           <a class="account-row-link" href="${detailHref}">
             <div class="account-thumb-col">
@@ -167,7 +163,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
         ${photoBlock}
         ${metaStrip}
         <div class="account-row-actions">
-          <a class="account-edit-btn" href="${editHref}" title="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}">${UyDosh.iconPencil()}<span data-i18n="account.edit"></span></a>
+          <a class="account-edit-btn" href="${editHref}" title="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}">${UyDosh.iconPencil()}</a>
           <button
             type="button"
             class="account-visibility-btn"
@@ -175,7 +171,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
             aria-pressed="${listing.is_active ? 'true' : 'false'}"
             title="${UyDosh.escapeHtml(visibilityLabel)}"
             aria-label="${UyDosh.escapeHtml(visibilityLabel)}"
-          >${visibilityIcon}<span data-i18n="${visibilityLabelKey}"></span></button>
+          >${visibilityIcon}</button>
           <button
             type="button"
             class="account-renew-btn"
@@ -183,7 +179,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
             title="${renewFull}"
             aria-label="${renewFull}"
             ${canRenew ? '' : 'disabled'}
-          >${UyDosh.iconArrowUp()}<span>${renewShort}</span></button>
+          >${UyDosh.iconArrowUp()}</button>
           <button
             type="button"
             class="account-delete-btn"
@@ -191,7 +187,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
             data-haptic="heavy"
             title="${UyDosh.escapeHtml(UyDosh.t('account.delete', lang))}"
             aria-label="${UyDosh.escapeHtml(UyDosh.t('account.delete', lang))}"
-          >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
+          >${UyDosh.iconTrash()}</button>
         </div>
       </div>`;
 }

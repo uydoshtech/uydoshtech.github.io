@@ -16,7 +16,7 @@ I18N.en = {
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
     'tabbar.housing': 'Housing',
-    'tabbar.community': 'Community',
+    'tabbar.community': 'My',
     'tabbar.messages': 'Messages',
     'tabbar.create': 'Create',
     'chat.inboxTitle': 'Messages',
