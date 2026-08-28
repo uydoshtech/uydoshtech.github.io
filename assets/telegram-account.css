@@ -123,6 +123,18 @@ header {
   align-items: flex-start;
   gap: 12px;
 }
+.account-row-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.account-row-strip .account-row-amenities {
+  width: auto;
+}
+.account-row-strip .account-row-views[hidden] {
+  display: none;
+}
 .account-row-lower .account-row-link {
   flex: 1;
   min-width: 0;
@@ -270,48 +282,51 @@ header {
   background: rgba(127, 127, 127, 0.1);
 }
 .account-row-actions {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
+  width: 100%;
 }
-.account-edit-btn {
+.account-edit-btn,
+.account-visibility-btn,
+.account-renew-btn,
+.account-delete-btn {
   appearance: none;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, #f97316 55%, var(--stroke));
-  background: rgba(127, 127, 127, 0.1);
-  color: var(--fg);
-  font-weight: 700;
-  font-size: 12px;
+  gap: 4px;
+  min-height: 52px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: transparent;
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 1.15;
   text-decoration: none;
+  text-align: center;
   white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+.account-edit-btn span,
+.account-visibility-btn span,
+.account-renew-btn span,
+.account-delete-btn span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-edit-btn {
+  border: 1px solid color-mix(in srgb, #f97316 55%, var(--stroke));
+  color: var(--fg);
 }
 .account-edit-btn:active { opacity: 0.88; }
 .account-visibility-btn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.85);
-  background: transparent;
   color: var(--muted);
-  font-weight: 600;
-  font-size: 12px;
-  white-space: nowrap;
-  cursor: pointer;
 }
-/* Pressed (aria-pressed="true") means the listing is currently visible/active —
-   white border; the "hide" affordance switches to a black border once the
-   listing has actually been hidden. */
 .account-visibility-btn[aria-pressed="false"] {
   border-color: rgba(0, 0, 0, 0.85);
   color: #f59e0b;
@@ -319,24 +334,12 @@ header {
 .account-visibility-btn:active { opacity: 0.88; }
 .account-visibility-btn:disabled { opacity: 0.6; cursor: default; }
 .account-renew-btn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 10px;
   border: 1px solid color-mix(in srgb, #22c55e 55%, var(--stroke));
   background: color-mix(in srgb, var(--brand2) 10%, transparent);
   color: var(--brand2);
-  font-weight: 700;
-  font-size: 12px;
-  white-space: nowrap;
-  cursor: pointer;
 }
 .account-renew-btn:active { opacity: 0.88; }
 .account-renew-btn:disabled {
-  border-color: color-mix(in srgb, #22c55e 55%, var(--stroke));
   background: transparent;
   color: var(--muted);
   font-weight: 600;
@@ -344,20 +347,8 @@ header {
   opacity: 1;
 }
 .account-delete-btn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--error, #f87171) 70%, transparent);
-  background: transparent;
   color: var(--error, #f87171);
-  font-weight: 700;
-  font-size: 12px;
-  white-space: nowrap;
-  cursor: pointer;
 }
 .account-delete-btn:active { opacity: 0.88; }
 .account-delete-btn:disabled { opacity: 0.6; cursor: default; }

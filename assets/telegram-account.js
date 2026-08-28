@@ -123,7 +123,7 @@ function renewLabelHtml(listing, lang) {
   return UyDosh.escapeHtml(UyDosh.t(key, lang).replace('{days}', String(days)));
 }
 
-function listingRowMainHtml(listing) {
+function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
@@ -135,8 +135,26 @@ function listingRowMainHtml(listing) {
     group: groupsTab ? 'requests' : undefined,
   }));
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
+  const visibilityLabel = UyDosh.t(visibilityLabelKey, lang);
   const visibilityIcon = listing.is_active ? UyDosh.iconEye() : UyDosh.iconEyeOff();
   const canRenew = daysUntil(listing.next_renewal_at) <= 0;
+  const renewFull = renewLabelHtml(listing, lang);
+  const days = daysUntil(listing.next_renewal_at);
+  const renewShort = days <= 0
+    ? UyDosh.escapeHtml(UyDosh.t('account.renew', lang))
+    : UyDosh.escapeHtml(String(days));
+  const photoBlock = hidePhoto ? '' : `
+          <a class="account-row-link" href="${detailHref}">
+            <div class="account-thumb-col">
+              ${viewCountHtml(listing)}
+              ${accountThumbHtml(listing)}
+            </div>
+          </a>`;
+  const metaStrip = `
+        <div class="account-row-strip">
+          ${hidePhoto ? viewCountHtml(listing) : ''}
+          ${amenitiesRowHtml(listing, lang)}
+        </div>`;
   return `
       <div class="account-row-stack">
         <a class="account-row-head" href="${detailHref}">
@@ -146,35 +164,34 @@ function listingRowMainHtml(listing) {
             ${statusBadgeHtml(listing, lang)}
           </div>
         </a>
-        <div class="account-row-lower">
-          <a class="account-row-link" href="${detailHref}">
-            <div class="account-thumb-col">
-              ${viewCountHtml(listing)}
-              ${accountThumbHtml(listing)}
-              ${amenitiesRowHtml(listing, lang)}
-            </div>
-          </a>
-          <div class="account-row-actions">
-            <a class="account-edit-btn" href="${editHref}">${UyDosh.iconPencil()}<span data-i18n="account.edit"></span></a>
-            <button
-              type="button"
-              class="account-visibility-btn"
-              data-toggle-visibility="${listing.id}"
-              aria-pressed="${listing.is_active ? 'true' : 'false'}"
-            >${visibilityIcon}<span data-i18n="${visibilityLabelKey}"></span></button>
-            <button
-              type="button"
-              class="account-renew-btn"
-              data-renew-listing="${listing.id}"
-              ${canRenew ? '' : 'disabled'}
-            >${UyDosh.iconArrowUp()}<span>${renewLabelHtml(listing, lang)}</span></button>
-            <button
-              type="button"
-              class="account-delete-btn"
-              data-delete-listing="${listing.id}"
-              data-haptic="heavy"
-            >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
-          </div>
+        ${photoBlock}
+        ${metaStrip}
+        <div class="account-row-actions">
+          <a class="account-edit-btn" href="${editHref}" title="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}">${UyDosh.iconPencil()}<span data-i18n="account.edit"></span></a>
+          <button
+            type="button"
+            class="account-visibility-btn"
+            data-toggle-visibility="${listing.id}"
+            aria-pressed="${listing.is_active ? 'true' : 'false'}"
+            title="${UyDosh.escapeHtml(visibilityLabel)}"
+            aria-label="${UyDosh.escapeHtml(visibilityLabel)}"
+          >${visibilityIcon}<span data-i18n="${visibilityLabelKey}"></span></button>
+          <button
+            type="button"
+            class="account-renew-btn"
+            data-renew-listing="${listing.id}"
+            title="${renewFull}"
+            aria-label="${renewFull}"
+            ${canRenew ? '' : 'disabled'}
+          >${UyDosh.iconArrowUp()}<span>${renewShort}</span></button>
+          <button
+            type="button"
+            class="account-delete-btn"
+            data-delete-listing="${listing.id}"
+            data-haptic="heavy"
+            title="${UyDosh.escapeHtml(UyDosh.t('account.delete', lang))}"
+            aria-label="${UyDosh.escapeHtml(UyDosh.t('account.delete', lang))}"
+          >${UyDosh.iconTrash()}<span data-i18n="account.delete"></span></button>
         </div>
       </div>`;
 }
@@ -191,7 +208,7 @@ function groupListingCardHtml(listing, conversation) {
   return `
     <article class="account-card" data-listing-row="${listing.id}">
       <div class="account-row-main">
-        ${listingRowMainHtml(listing)}
+        ${listingRowMainHtml(listing, { hidePhoto: true })}
       </div>
       ${chat}
     </article>`;
