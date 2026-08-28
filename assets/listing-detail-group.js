@@ -53,6 +53,8 @@
 
       function groupChatButtonHtml(listing, ctx, lang) {
         if (!UyDosh.isMiniApp() || !ctx) return '';
+        const memberCount = Number(ctx.group_member_count) || 0;
+        if (memberCount < 2) return '';
         const conversationId = ctx.group_conversation_id;
         const canOpen = Boolean(ctx.group_progress?.can_open_group_chat)
           || groupActions(ctx).includes('open_group_chat');

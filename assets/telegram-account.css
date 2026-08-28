@@ -319,9 +319,10 @@ header {
   background: rgba(127, 127, 127, 0.1);
 }
 .account-row-actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   width: 100%;
 }
 .account-edit-btn,
@@ -332,10 +333,12 @@ header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  min-height: 40px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 6px;
   background: transparent;
   text-decoration: none;
   cursor: pointer;
@@ -378,8 +381,8 @@ header {
 .account-visibility-btn .icon svg,
 .account-renew-btn .icon svg,
 .account-delete-btn .icon svg {
-  width: 18px;
-  height: 18px;
+  width: 10px;
+  height: 10px;
   display: block;
 }
 .account-edit-btn .icon svg *,

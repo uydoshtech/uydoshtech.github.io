@@ -117,12 +117,19 @@
   font-size: 13px;
   color: var(--fg);
 }
-.inbox-meta-row .icon,
-.inbox-meta-row svg {
+.inbox-meta-row .icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #e11d2e;
+}
+.inbox-meta-row .icon svg {
   width: 16px;
   height: 16px;
-  flex: 0 0 auto;
-  color: #e11d2e;
+  display: block;
+}
+.inbox-meta-row .icon svg * {
+  stroke: currentColor;
+  fill: none;
 }
 .inbox-price-row {
   display: flex;
