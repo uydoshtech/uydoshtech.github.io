@@ -186,7 +186,7 @@ function listingCardHtml(group, lang) {
         ${metro ? `<div class="inbox-meta-row">${UyDosh.iconMetro(metroLine)}<span>${metro}</span></div>` : ''}
         ${district ? `<div class="inbox-meta-row">${UyDosh.iconPin()}<span>${district}</span></div>` : ''}
         <div class="inbox-price-row">
-          ${price ? `${UyDosh.iconChrome('wallet')}<span>${UyDosh.escapeHtml(price)}</span>` : ''}
+          ${price ? `<span>${UyDosh.escapeHtml(price)}</span>` : ''}
           <span class="inbox-toggle" aria-hidden="true">
             <span class="inbox-chevron-up">${UyDosh.iconChrome('chevronUp')}</span>
             <span class="inbox-chevron-down">${UyDosh.iconChrome('chevronDown')}</span>

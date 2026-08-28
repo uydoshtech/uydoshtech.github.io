@@ -24,14 +24,68 @@ html.mini-app body.chat-page {
   padding-bottom: 0;
 }
 
-.chat-meta {
+.chat-peer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
-  margin: 10px 0 0;
-  font-size: 12px;
+  padding: 6px 0 10px;
+  min-height: 48px;
+}
+.chat-peer-header[hidden] {
+  display: none !important;
+}
+.chat-peer-avatars {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.chat-peer-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-left: -10px;
+  border: 2px solid var(--bg, #061525);
+  background: color-mix(in srgb, var(--brand2, #2a6) 22%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
+}
+.chat-peer-avatar:first-child {
+  margin-left: 0;
+}
+.chat-peer-avatar img,
+.chat-peer-avatar svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.chat-peer-text {
+  min-width: 0;
+  flex: 1;
+}
+.chat-peer-names {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-peer-sub {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-thread {
@@ -61,7 +115,6 @@ html.mini-app body.chat-page {
 #loading[hidden],
 #chat-error[hidden],
 #chat-thread[hidden],
-#chat-meta[hidden],
 #chat-composer[hidden] {
   display: none !important;
 }

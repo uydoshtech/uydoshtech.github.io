@@ -16,7 +16,7 @@ const POLL_MS = 4000;
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('chat-error');
 const threadEl = document.getElementById('chat-thread');
-const metaEl = document.getElementById('chat-meta');
+const peerHeaderEl = document.querySelector('[data-chat-peer-header]');
 const composerEl = document.getElementById('chat-composer');
 const inputEl = document.getElementById('chat-input');
 const sendBtn = composerEl?.querySelector('.chat-send');
@@ -31,6 +31,7 @@ const state = {
   sending: false,
   pollTimer: null,
   membersById: new Map(),
+  members: [],
   conversation: null,
 };
 
@@ -202,20 +203,40 @@ function unwrapMessages(payload) {
   };
 }
 
+function headerPeople(conversation, members) {
+  const rows = Array.isArray(members) ? members.filter((m) => m && (m.name || m.avatar_url)) : [];
+  if (rows.length) return rows;
+  const name = conversation?.other_user_name || '';
+  const avatar = conversation?.other_user_avatar || '';
+  if (name || avatar) return [{ name, avatar_url: avatar }];
+  return [];
+}
+
+function headerAvatarHtml(person, index) {
+  const url = person?.avatar_url || '';
+  const inner = url
+    ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+    : (UyDosh.iconChrome?.('person') || '');
+  return `<span class="chat-peer-avatar" style="z-index:${index + 1}">${inner}</span>`;
+}
+
 function updateHeader(conversation, members) {
-  const title = conversation?.listing?.title
-    || conversation?.listing_title
+  if (!peerHeaderEl) return;
+  const people = headerPeople(conversation, members);
+  const names = people.map((p) => String(p.name || '').trim()).filter(Boolean).join(', ')
     || UyDosh.t('chat.title');
-  const subtitleEl = document.querySelector('[data-uydosh-mini-app-header] .brand span[data-i18n]');
-  if (subtitleEl) {
-    subtitleEl.removeAttribute('data-i18n');
-    subtitleEl.textContent = title;
-  }
-  const count = Array.isArray(members) ? members.length : 0;
-  if (count > 0) {
-    metaEl.hidden = false;
-    metaEl.textContent = UyDosh.t('chat.members').replace('{count}', String(count));
-  }
+  const subtitle = conversation?.listing?.title
+    || conversation?.listing_title
+    || '';
+  const avatars = people.slice(0, 3).map((person, index) => headerAvatarHtml(person, index)).join('');
+  peerHeaderEl.hidden = false;
+  peerHeaderEl.innerHTML = `
+    <div class="chat-peer-avatars" aria-hidden="true">${avatars}</div>
+    <div class="chat-peer-text">
+      <div class="chat-peer-names">${UyDosh.escapeHtml(names)}</div>
+      ${subtitle ? `<div class="chat-peer-sub">${UyDosh.escapeHtml(subtitle)}</div>` : ''}
+    </div>
+  `;
 }
 
 async function loadPage(page, { prepend = false } = {}) {
@@ -310,12 +331,11 @@ async function boot() {
     ]);
     state.conversation = conversationPayload?.data || conversationPayload;
     const members = membersPayload?.data || membersPayload || [];
-    if (Array.isArray(members)) {
-      for (const member of members) {
-        state.membersById.set(Number(member.user_id), member);
-      }
+    state.members = Array.isArray(members) ? members : [];
+    for (const member of state.members) {
+      state.membersById.set(Number(member.user_id), member);
     }
-    updateHeader(state.conversation, members);
+    updateHeader(state.conversation, state.members);
     await loadPage(1);
     loadingEl.hidden = true;
     composerEl.hidden = false;
@@ -345,6 +365,7 @@ document.addEventListener('visibilitychange', () => {
 });
 document.addEventListener('uydosh:langchange', () => {
   UyDosh.applyI18n();
+  updateHeader(state.conversation, state.members);
   renderThread();
 });
 
