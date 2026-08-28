@@ -6,11 +6,16 @@ UyDosh.initTelegramMiniApp();
 // the feed (same pattern as listing.html).
 if (UyDosh.isMiniApp()) {
   const webApp = window.Telegram?.WebApp;
-  webApp?.BackButton?.show();
-  webApp?.BackButton?.onClick(() => {
-    UyDosh.haptic.light();
-    location.href = UyDosh.miniAppBackTargetFromUrl();
-  });
+  const hasBack = Boolean(new URLSearchParams(location.search).get('back'));
+  if (hasBack) {
+    webApp?.BackButton?.show();
+    webApp?.BackButton?.onClick(() => {
+      UyDosh.haptic.light();
+      location.href = UyDosh.miniAppBackTargetFromUrl();
+    });
+  } else {
+    webApp?.BackButton?.hide();
+  }
 }
 
 const loadingEl = document.getElementById('loading');
@@ -35,10 +40,10 @@ function initialTabFromUrl() {
   try {
     const tab = new URLSearchParams(window.location.search).get('tab');
     if (tab === TAB_FAVORITES) return TAB_FAVORITES;
-    if (tab === TAB_GROUPS) return TAB_GROUPS;
-    return TAB_MINE;
+    if (tab === TAB_MINE) return TAB_MINE;
+    return TAB_GROUPS;
   } catch {
-    return TAB_MINE;
+    return TAB_GROUPS;
   }
 }
 
@@ -505,15 +510,10 @@ for (const btn of tabButtons) {
   });
 }
 
-// The markup hardcodes "My listings" as selected; sync tab buttons + header
-// subtitle when a deep link (e.g. the header menu's "Favorites" item) opens
-// straight into the favorites tab instead.
-if (state.activeTab !== TAB_MINE) {
-  for (const btn of tabButtons) {
-    btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === state.activeTab ? 'true' : 'false');
-  }
-  updateHeaderSubtitle(state.activeTab);
+for (const btn of tabButtons) {
+  btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === state.activeTab ? 'true' : 'false');
 }
+updateHeaderSubtitle(state.activeTab);
 
 async function loadMyListings() {
   try {

@@ -369,7 +369,7 @@ I18N.uz = {
     'account.title': 'Mening e’lonlarim',
     'account.subtitle': 'Mening e’lonlarim',
     'account.tabs.mine': 'Mening e’lonlarim',
-    'account.tabs.groups': 'Mening guruhlarim',
+    'account.tabs.groups': 'Guruhlar',
     'account.tabs.favorites': 'Sevimlilar',
     'account.empty': 'Sizda hali e’lonlar yo‘q.',
     'account.groupsEmpty': 'Sizda hali guruh e’lonlari yo‘q.',

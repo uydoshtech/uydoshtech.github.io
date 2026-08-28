@@ -368,7 +368,7 @@ I18N.ru = {
     'account.title': 'Мои объявления',
     'account.subtitle': 'Мои объявления',
     'account.tabs.mine': 'Мои объявления',
-    'account.tabs.groups': 'Мои группы',
+    'account.tabs.groups': 'Группы',
     'account.tabs.favorites': 'Избранное',
     'account.empty': 'У вас пока нет объявлений.',
     'account.groupsEmpty': 'У вас пока нет групп.',

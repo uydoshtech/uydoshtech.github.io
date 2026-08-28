@@ -6,7 +6,7 @@ const MINI_APP_FEED_PATH = '/telegram/';
 const MINI_APP_CREATE_PATH = '/telegram/create.html';
 const MINI_APP_CHATS_PATH = '/telegram/chats.html';
 const MINI_APP_HOUSING_PATH = '/telegram/?listingTypeId=0';
-const MINI_APP_COMMUNITY_PATH = '/telegram/?listingTypeId=3';
+const MINI_APP_COMMUNITY_PATH = '/telegram/account.html?tab=groups';
 
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
@@ -760,10 +760,8 @@ function miniAppTabbarActiveId() {
   const params = new URLSearchParams(location.search);
   if (/chats\.html/i.test(path)) return 'messages';
   if (/create\.html/i.test(path)) return 'create';
-  if (/account\.html/i.test(path) && params.get('tab') === 'groups') return 'community';
-  if (/\/telegram\/?$/i.test(path) || /\/telegram\/index\.html$/i.test(path)) {
-    return Number(params.get('listingTypeId')) === 3 ? 'community' : 'housing';
-  }
+  if (/account\.html/i.test(path)) return 'community';
+  if (/\/telegram\/?$/i.test(path) || /\/telegram\/index\.html$/i.test(path)) return 'housing';
   return '';
 }
 

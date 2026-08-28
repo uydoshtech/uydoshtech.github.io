@@ -368,7 +368,7 @@ I18N.en = {
     'account.title': 'My listings',
     'account.subtitle': 'My listings',
     'account.tabs.mine': 'My listings',
-    'account.tabs.groups': 'My groups',
+    'account.tabs.groups': 'Groups',
     'account.tabs.favorites': 'Favorites',
     'account.empty': "You don't have any listings yet.",
     'account.groupsEmpty': "You don't have any group listings yet.",
