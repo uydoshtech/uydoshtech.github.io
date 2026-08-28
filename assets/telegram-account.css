@@ -320,9 +320,9 @@ header {
 }
 .account-row-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 .account-edit-btn,
@@ -333,12 +333,12 @@ header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  min-height: 20px;
+  width: 25px;
+  height: 25px;
+  min-width: 25px;
+  min-height: 25px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   text-decoration: none;
   cursor: pointer;
@@ -381,8 +381,8 @@ header {
 .account-visibility-btn .icon svg,
 .account-renew-btn .icon svg,
 .account-delete-btn .icon svg {
-  width: 10px;
-  height: 10px;
+  width: 13px;
+  height: 13px;
   display: block;
 }
 .account-edit-btn .icon svg *,
