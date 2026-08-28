@@ -931,8 +931,11 @@ function stationListHtml(lang) {
         <span class="station-list-spinner" aria-hidden="true"></span>
       </div>`;
   }
+  const stationsForLine = state.stations.filter(
+    (st) => Number(st.line) === Number(state.form.subwayLineId),
+  );
   const multi = supportsMultiStation();
-  const lineStationIds = state.stations.map((st) => Number(st.id));
+  const lineStationIds = stationsForLine.map((st) => Number(st.id));
   const allOnLineSelected =
     multi &&
     lineStationIds.length > 0 &&
@@ -943,10 +946,10 @@ function stationListHtml(lang) {
       <button type="button" class="station-item station-item-select-all" data-select-all-stations data-haptic="selection" aria-pressed="${allOnLineSelected ? 'true' : 'false'}">
         ${UyDosh.iconCheckboxPair()}
         ${UyDosh.iconMetro(state.form.subwayLineId)}
-        <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllStations', lang).replace('{count}', String(state.stations.length)))}</span>
+        <span>${UyDosh.escapeHtml(UyDosh.t('create.selectAllStations', lang).replace('{count}', String(stationsForLine.length)))}</span>
       </button>`
       : '';
-  const stationItems = state.stations.map((st) => {
+  const stationItems = stationsForLine.map((st) => {
     const id = Number(st.id);
     const pressed = state.form.selectedStationIds.includes(id);
     const lineId = Number(st.line) || state.form.subwayLineId;
@@ -2217,16 +2220,19 @@ async function loadLocations() {
  * same as manual line browsing.
  */
 async function selectSubwayLine(lineId) {
-  state.form.subwayLineId = lineId;
+  const id = Number(lineId);
+  if (!Number.isFinite(id) || id <= 0) return;
+  state.form.subwayLineId = id;
+  syncSubwayLineChipPressedState();
   state.stationsLoading = true;
   renderStationList();
   try {
-    await loadStationsForLine(lineId);
+    await loadStationsForLine(id);
   } catch (err) {
     console.error(err);
-    if (lineId === state.form.subwayLineId) state.stations = [];
+    if (id === state.form.subwayLineId) state.stations = [];
   } finally {
-    if (lineId === state.form.subwayLineId) {
+    if (id === state.form.subwayLineId) {
       state.stationsLoading = false;
       renderStationList();
     }
@@ -2966,12 +2972,11 @@ function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-subway-line]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const nextLineId = Number(btn.getAttribute('data-subway-line'));
-      if (nextLineId === state.form.subwayLineId && !state.stationsLoading) return;
-      // Flip aria-pressed on the existing chip buttons (instead of letting a
-      // full renderStep() replace them) so the CSS transition that expands
-      // the tapped chip into its name actually gets to play, matching the
-      // reveal animation the feed filter ribbon's cycling button uses too.
-      syncSubwayLineChipPressedState();
+      if (!Number.isFinite(nextLineId) || nextLineId <= 0) return;
+      if (nextLineId === state.form.subwayLineId && !state.stationsLoading) {
+        syncSubwayLineChipPressedState();
+        return;
+      }
       await selectSubwayLine(nextLineId);
     });
   });
