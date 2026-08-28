@@ -343,6 +343,43 @@ function formatPriceReviewHtml(lang) {
   return `$${nf.format(bounds.min)}–$${nf.format(bounds.max)}${perMonth}`;
 }
 
+function listingTypeCycleOrder() {
+  return [LISTING_TYPE_ROOM_NEEDED, LISTING_TYPE_ROOMMATE_NEEDED, LISTING_TYPE_GROUP_FORMING];
+}
+
+function applyListingTypeId(nextTypeId) {
+  const id = Number(nextTypeId);
+  if (!Number.isFinite(id) || id === state.form.listingTypeId) return;
+  state.form.listingTypeId = id;
+  if (!supportsMultiLocation()) {
+    state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
+  }
+  state.form.selectedStationIds = [];
+  state.nearbyStations = [];
+  state.nearbyStationsChecked = false;
+  state.nearbyStationsIsFallback = false;
+  state.nearbyStationsBeyondMaxRadius = false;
+  if (!isDemandSideType()) {
+    state.form.locationMode = LOCATION_MODE_METRO;
+  }
+  updateDefaultTitle();
+  if (!isDemandSideType() && state.form.addressLatitude != null && state.form.addressLongitude != null) {
+    applyNearbyStations(
+      state.form.addressLatitude,
+      state.form.addressLongitude,
+      state.nearbyStationsRadiusMinutes,
+    );
+  }
+  renderStep();
+}
+
+function cycleListingTypeId() {
+  const order = listingTypeCycleOrder();
+  const idx = order.indexOf(state.form.listingTypeId);
+  const next = order[(idx < 0 ? 0 : idx + 1) % order.length];
+  applyListingTypeId(next);
+}
+
 function listingTypeLabel(typeId, lang) {
   if (typeId === LISTING_TYPE_ROOM_NEEDED) return UyDosh.t('filter.type.roomNeeded', lang);
   if (typeId === LISTING_TYPE_GROUP_FORMING) return UyDosh.t('filter.type.groupForming', lang);
@@ -1351,14 +1388,11 @@ function renderStep0(lang) {
   const glyphs = typeOptions.map((opt) => {
     const active = opt.id === selected.id;
     return `
-      <button
-        type="button"
+      <span
         class="listing-type-glyph${active ? ' is-active' : ''}"
         data-listing-type="${opt.id}"
-        data-haptic="selection"
-        aria-pressed="${active ? 'true' : 'false'}"
-        aria-label="${UyDosh.escapeHtml(opt.label)}"
-      >${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</button>`;
+        aria-hidden="true"
+      >${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>`;
   }).join('');
 
   const locationSection = isDemandSideType()
@@ -1368,15 +1402,17 @@ function renderStep0(lang) {
   return `
     <section class="panel active" data-step="0">
       <div class="field listing-type-field">
-        <div
+        <button
+          type="button"
           class="listing-type-picker"
-          data-listing-type="${selected.id}"
-          role="group"
-          aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}"
+          data-listing-type-cycle
+          data-selected-type="${selected.id}"
+          data-haptic="selection"
+          aria-label="${UyDosh.escapeHtml(`${UyDosh.t('create.listingType', lang)}: ${selected.label}`)}"
         >
-          <div class="listing-type-icons">${glyphs}</div>
+          <span class="listing-type-icons">${glyphs}</span>
           <span class="listing-type-label">${UyDosh.escapeHtml(selected.label)}</span>
-        </div>
+        </button>
       </div>
       ${locationSection}
     </section>`;
@@ -2859,45 +2895,14 @@ function bindNearbyMetroEvents() {
 }
 
 function bindStepEvents() {
-  stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const nextTypeId = Number(btn.getAttribute('data-listing-type'));
-      if (nextTypeId === state.form.listingTypeId) return;
-      state.form.listingTypeId = nextTypeId;
-      if (!supportsMultiLocation()) {
-        state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
-      }
-      // Room-needed's metro step lets an author tag dozens of stations
-      // across every line, while roommate-needed's merged step only ever
-      // shows/preselects stations within walking distance of the typed
-      // address. Carrying the former's picks into the latter (or vice
-      // versa) silently attached every room-needed station to a
-      // roommate-needed listing — clear them so each type starts its own
-      // selection from scratch.
-      state.form.selectedStationIds = [];
-      state.nearbyStations = [];
-      state.nearbyStationsChecked = false;
-      state.nearbyStationsIsFallback = false;
-      state.nearbyStationsBeyondMaxRadius = false;
-      // Roommate-needed only ever uses the merged address+nearby-metro step
-      // (see roommateLocationSectionHtml) — switching into it from
-      // room-needed's district tab must not carry district mode along.
-      if (!isDemandSideType()) {
-        state.form.locationMode = LOCATION_MODE_METRO;
-      }
-      updateDefaultTitle();
-      // Roommate-needed's nearby stations depend on the address already
-      // typed — recompute them fresh now that stale picks were cleared,
-      // instead of leaving the panel empty until the address is re-edited.
-      if (!isDemandSideType() && state.form.addressLatitude != null && state.form.addressLongitude != null) {
-        applyNearbyStations(
-          state.form.addressLatitude,
-          state.form.addressLongitude,
-          state.nearbyStationsRadiusMinutes,
-        );
-      }
-      renderStep();
-    });
+  const typePicker = stepPanelsEl.querySelector('[data-listing-type-cycle]');
+  typePicker?.addEventListener('click', (event) => {
+    const glyph = event.target.closest('[data-listing-type]');
+    if (glyph && typePicker.contains(glyph)) {
+      applyListingTypeId(glyph.getAttribute('data-listing-type'));
+      return;
+    }
+    cycleListingTypeId();
   });
 
   stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {

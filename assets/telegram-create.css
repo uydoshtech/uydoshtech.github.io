@@ -99,19 +99,27 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
   margin-bottom: 10px;
 }
 .listing-type-picker {
+  appearance: none;
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   box-sizing: border-box;
+  margin: 0;
   padding: 4px 14px 4px 4px;
   border: 1px solid var(--type-color, var(--brand2));
   border-radius: 999px;
   background: rgba(127, 127, 127, 0.06);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.listing-type-picker[data-listing-type="1"] { --type-color: #64B5F6; }
-.listing-type-picker[data-listing-type="2"] { --type-color: #FF9800; }
-.listing-type-picker[data-listing-type="3"] { --type-color: #22c55e; }
+.listing-type-picker[data-selected-type="1"] { --type-color: #64B5F6; }
+.listing-type-picker[data-selected-type="2"] { --type-color: #FF9800; }
+.listing-type-picker:active {
+  opacity: 0.92;
+}
 .listing-type-icons {
   display: inline-flex;
   align-items: center;
