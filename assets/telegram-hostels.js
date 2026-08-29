@@ -96,16 +96,22 @@ async function detailHostel() {
     root.innerHTML = '<div class="status">Не удалось загрузить хостел</div>';
   }
 }
+function selectHostelFilter(pill) {
+  const filter = hostelFilters.find(
+    (item) => item.gender === pill.dataset.gender,
+  );
+  if (!filter || pill.classList.contains("active")) return;
+  applyHostelFilter(filter);
+  UyDosh.haptic?.selection?.();
+  listHostels();
+}
+
 document.querySelectorAll(".hostel-filter-pill").forEach((pill) => {
-  pill.addEventListener("click", () => {
-    const filter = hostelFilters.find(
-      (item) => item.gender === pill.dataset.gender,
-    );
-    if (!filter || pill.classList.contains("active")) return;
-    applyHostelFilter(filter);
-    UyDosh.haptic?.selection?.();
-    listHostels();
-  });
+  // The global Mini App zoom guard can cancel the synthetic `click` generated
+  // after touchend. Handle pointerup as well, so pill selection remains
+  // responsive on every Telegram WebView.
+  pill.addEventListener("pointerup", () => selectHostelFilter(pill));
+  pill.addEventListener("click", () => selectHostelFilter(pill));
 });
 listHostels();
 detailHostel();

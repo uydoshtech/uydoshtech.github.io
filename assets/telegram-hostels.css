@@ -34,6 +34,7 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  touch-action: manipulation;
 }
 .hostel-filter-pill--male {
   color: #60a5fa;
