@@ -92,6 +92,10 @@
   line-height: 1.2;
   padding: 6px 12px;
 }
+#gender-female[aria-pressed="true"] {
+  border-color: #f48fb1;
+  background: color-mix(in srgb, #f48fb1 16%, transparent);
+}
 input[type="text"],
 textarea {
   width: 100%;
