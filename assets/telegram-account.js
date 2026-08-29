@@ -680,9 +680,50 @@ function closeParticipantsSheet() {
 function memberRoleKey(member, listing, me) {
   const userId = Number(member.user_id);
   const ownerId = Number(listing?.user_id ?? listing?.user?.id);
-  if (userId === me) return 'you';
   if (member.role === 'owner' || userId === ownerId) return 'organizer';
+  if (userId === me) return 'you';
   return 'participant';
+}
+
+function groupStatusLabel(listing, lang) {
+  const ctx = listing?.group_context;
+  const landlord = ctx?.group_progress?.landlord_invite_status || ctx?.landlord_invite_status;
+  if (landlord === 'landlord_outreach' || landlord === 'landlord_joined') {
+    return UyDosh.t('account.waitingLandlord', lang);
+  }
+  return UyDosh.t('account.lookingForRoommates', lang);
+}
+
+function lifestyleValuesClose(a, b) {
+  if (a == null || b == null || a === '') return null;
+  if (typeof a === 'number' || typeof b === 'number') {
+    return Math.abs(Number(a) - Number(b)) <= 1;
+  }
+  return String(a) === String(b);
+}
+
+function memberLifestyleHtml(member, roleKey) {
+  if (roleKey === 'organizer') return '';
+  const profile = participantsSheetState.profilesById[Number(member.user_id)];
+  if (!profile) return '';
+  const mine = participantsSheetState.myProfile;
+  const chips = [];
+  const add = (icon, mineVal, theirVal) => {
+    if (theirVal == null || theirVal === '') return;
+    const close = mine ? lifestyleValuesClose(mineVal, theirVal) : null;
+    const tone = close == null ? '' : close ? 'is-match' : 'is-mismatch';
+    chips.push(`<span class="gp-life-icon ${tone}" aria-hidden="true">${UyDosh.iconChrome?.(icon) || ''}</span>`);
+  };
+  const smokeIcon = (profile.smoking_preference === 'no' || profile.smoking_preference === 'never' || profile.smoking_preference === 'false')
+    ? 'smokeFree'
+    : 'cigarette';
+  add('moon', mine?.sleep_time, profile.sleep_time);
+  add(smokeIcon, mine?.smoking_preference, profile.smoking_preference);
+  add('sparkles', mine?.cleanliness, profile.cleanliness);
+  add('wineGlass', mine?.alcohol_preference, profile.alcohol_preference);
+  add('cat', mine?.pets_preference, profile.pets_preference);
+  if (!chips.length) return '';
+  return `<div class="gp-life">${chips.join('')}</div>`;
 }
 
 function memberRoleLabel(roleKey, lang) {
@@ -703,34 +744,14 @@ function canOwnerRemoveMember(member, listing, me) {
 function matchPercentHtml(member, me, lang) {
   const myProfile = participantsSheetState.myProfile;
   const theirs = participantsSheetState.profilesById[Number(member.user_id)];
+  const ownerId = Number(participantsSheetState.listing?.user_id ?? participantsSheetState.listing?.user?.id);
   if (!myProfile || !theirs || Number(member.user_id) === me) return '';
+  if (Number(member.user_id) === ownerId || member.role === 'owner') return '';
   const analysis = UyDosh.computeProfileCompatibility?.(myProfile, theirs);
   const percent = Number(analysis?.percent);
   if (!Number.isFinite(percent) || !(Number(analysis?.scoredFieldCount) > 0)) return '';
   const cls = percent >= 80 ? 'is-good' : percent < 60 ? 'is-bad' : 'is-ok';
   return `<span class="gp-match ${cls}">${Math.round(percent)}%</span>`;
-}
-
-function memberLifestyleHtml(member, me) {
-  const profile = participantsSheetState.profilesById[Number(member.user_id)];
-  if (!profile) return '';
-  const mine = participantsSheetState.myProfile;
-  const chips = [];
-  const add = (icon, mineVal, theirVal) => {
-    if (theirVal == null || theirVal === '') return;
-    let tone = '';
-    if (mine && mineVal != null && mineVal !== '') {
-      tone = mineVal === theirVal ? 'is-match' : 'is-mismatch';
-    }
-    chips.push(`<span class="gp-life-icon ${tone}" aria-hidden="true">${UyDosh.iconChrome?.(icon) || ''}</span>`);
-  };
-  add('moon', mine?.sleep_time, profile.sleep_time);
-  add('cigarette', mine?.smoking_preference, profile.smoking_preference);
-  add('sparkles', mine?.cleanliness, profile.cleanliness);
-  add('wineGlass', mine?.alcohol_preference, profile.alcohol_preference);
-  add('cat', mine?.pets_preference, profile.pets_preference);
-  if (!chips.length) return '';
-  return `<div class="gp-life">${chips.join('')}</div>`;
 }
 
 function memberCardHtml(member, listing, lang) {
@@ -739,10 +760,11 @@ function memberCardHtml(member, listing, lang) {
   const roleKey = memberRoleKey(member, listing, me);
   const removable = canOwnerRemoveMember(member, listing, me);
   const name = member.name || UyDosh.t('complaints.anonymous', lang);
-  const avatar = participantAvatarHtml(member, 0);
+  const avatar = `<span class="gp-card-avatar">${participantAvatarHtml(member, 0)}</span>`;
   const leave = roleKey === 'you' && !participantsSheetState.isOwner
     ? `<button type="button" class="gp-leave" data-leave-group><span>${UyDosh.escapeHtml(UyDosh.t('account.leaveGroup', lang))}</span></button>`
     : '';
+  const match = matchPercentHtml(member, me, lang);
   const front = `
     <div class="gp-member-front">
       ${avatar}
@@ -750,10 +772,12 @@ function memberCardHtml(member, listing, lang) {
         <div class="gp-member-row">
           <span class="gp-member-name">${UyDosh.escapeHtml(name)}</span>
           <span class="gp-role gp-role-${roleKey}">${UyDosh.escapeHtml(memberRoleLabel(roleKey, lang))}</span>
-          ${matchPercentHtml(member, me, lang)}
-          <span class="gp-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
+          <span class="gp-member-trail">
+            ${match}
+            <span class="gp-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
+          </span>
         </div>
-        ${memberLifestyleHtml(member, me)}
+        ${memberLifestyleHtml(member, roleKey)}
         ${leave}
       </div>
     </div>`;
@@ -781,9 +805,9 @@ function participantsSheetHtml(listing, members, lang) {
       <div class="gp-handle" aria-hidden="true"></div>
       <div class="gp-sheet-head">
         <h2 id="gp-sheet-title">${UyDosh.escapeHtml(UyDosh.t('account.participantProfiles', lang))}</h2>
-        <span class="gp-status-pill">${UyDosh.escapeHtml(UyDosh.t('account.lookingForRoommates', lang))}</span>
+        <span class="gp-status-pill">${UyDosh.escapeHtml(groupStatusLabel(listing, lang))}</span>
         <div class="gp-summary">
-          <span class="account-participants-avatars">${avatars}</span>
+          <span class="account-participants-avatars gp-summary-avatars">${avatars}</span>
           <div class="gp-summary-text">
             <div class="gp-summary-names">${UyDosh.escapeHtml(names)}</div>
             <div class="gp-summary-count">${UyDosh.escapeHtml(UyDosh.t('account.groupOfPeople', lang).replace('{count}', String(count)))}</div>
