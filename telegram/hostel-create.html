@@ -21,7 +21,7 @@
       <header data-uydosh-mini-app-header></header>
       <main class="hostel-create">
         <button type="button" class="page-back" id="page-back">
-          ← Хостелы
+          <span aria-hidden="true">‹</span> Назад
         </button>
         <h1>Добавить хостел</h1>
         <div id="access" class="status">Проверяем доступ…</div>
@@ -51,7 +51,10 @@
                 placeholder="(90)-123-45-67"
               /></div></label
           ><label
-            >Telegram<input name="telegram_username" placeholder="username"
+            >Telegram ID<input
+              name="telegram_username"
+              inputmode="numeric"
+              placeholder="Telegram user ID"
           /></label>
           <fieldset class="gender-policy">
             <legend>Политика размещения</legend>
@@ -146,6 +149,7 @@
     <script src="../assets/uydosh-i18n.js"></script>
     <script src="../assets/uydosh-api.js" defer></script>
     <script src="../assets/uydosh-icons.js" defer></script>
+    <script src="../assets/uydosh-map-pins.js?v=20260830-1" defer></script>
     <script src="../assets/uydosh-mini-app.js" defer></script>
     <script
       src="../assets/telegram-hostel-create.js?v=20260830-1"

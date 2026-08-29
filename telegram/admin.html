@@ -17,6 +17,9 @@
     <div class="wrap">
       <header data-uydosh-mini-app-header></header>
       <main class="admin-page">
+        <button type="button" class="page-back" id="page-back">
+          <span aria-hidden="true">‹</span> Назад
+        </button>
         <h1>Управление</h1>
         <div id="admin-access" class="status">Проверяем доступ…</div>
         <div id="admin-tools" hidden>
@@ -31,6 +34,10 @@
             ><span><b>Хостелы</b><small>Открыть каталог</small></span></a
           >
         </div>
+        <script>
+          document.getElementById("admin-access").hidden = true;
+          document.getElementById("admin-tools").hidden = false;
+        </script>
       </main>
     </div>
     <script src="../assets/uydosh-core.js"></script>

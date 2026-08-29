@@ -6,14 +6,23 @@
   font-size: 24px;
 }
 .page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 0;
-  background: transparent;
-  color: var(--brand2);
-  padding: 0;
-  margin: 0 0 14px;
+  border-radius: 999px;
+  background: #1d334c;
+  color: var(--fg);
+  padding: 9px 17px 9px 13px;
+  margin: 0 0 16px;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
+}
+.page-back span {
+  font-size: 35px;
+  line-height: 18px;
+  font-weight: 400;
 }
 .intro {
   color: var(--muted);

@@ -4,6 +4,25 @@ const form = document.getElementById("form"),
   units = document.getElementById("units"),
   template = document.getElementById("unit"),
   error = document.getElementById("error");
+let hostelCoordinates = null;
+function telegramUserId() {
+  const direct = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  if (direct) return String(direct);
+  try {
+    const raw = UyDosh.getTelegramInitData?.() || "";
+    const user = new URLSearchParams(raw).get("user");
+    const id = user ? JSON.parse(user)?.id : null;
+    return id ? String(id) : "";
+  } catch (_) {
+    return "";
+  }
+}
+function prefillTelegramUserId() {
+  const field = form.elements.telegram_username;
+  const id = telegramUserId();
+  if (id && !field.value) field.value = id;
+  return Boolean(id);
+}
 function addUnit({ reveal = false } = {}) {
   const item = template.content.cloneNode(true);
   item
@@ -28,10 +47,7 @@ async function boot() {
   // POST /admin/hostels.
   access.hidden = true;
   form.hidden = false;
-  const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  if (telegramUserId && !form.elements.telegram_username.value) {
-    form.elements.telegram_username.value = String(telegramUserId);
-  }
+  prefillTelegramUserId();
   UyDosh.ensureTelegramMiniAppSession().then((ready) => {
     if (ready && UyDosh.isAdmin()) {
       document
@@ -41,29 +57,49 @@ async function boot() {
   });
 }
 boot();
+// Telegram's WebApp object may arrive slightly after this deferred script.
+// Retry briefly without overwriting an ID the operator has edited manually.
+let telegramIdPrefillAttempts = 0;
+const telegramIdPrefillTimer = setInterval(() => {
+  telegramIdPrefillAttempts += 1;
+  if (prefillTelegramUserId() || telegramIdPrefillAttempts >= 20) {
+    clearInterval(telegramIdPrefillTimer);
+  }
+}, 250);
 document.getElementById("page-back").addEventListener("click", () => {
-  location.href = "/telegram/hostels.html";
+  if (window.history.length > 1) window.history.back();
+  else location.href = "/telegram/hostels.html";
 });
-if (UyDosh.isMiniApp()) {
-  const back = window.Telegram?.WebApp?.BackButton;
-  back?.show();
-  back?.onClick(() => {
-    location.href = "/telegram/hostels.html";
-  });
-}
 document.getElementById("use-location").addEventListener("click", async () => {
   const button = document.getElementById("use-location");
   button.disabled = true;
   button.textContent = "Определяем…";
   try {
     const { latitude, longitude } = await UyDosh.requestUserLocation();
-    const result = await UyDosh.fetchReverseGeocodeAddress(
-      latitude,
-      longitude,
-      UyDosh.getLang(),
-    );
-    if (!result?.addressText) throw new Error("Address not found");
-    form.elements.address.value = result.addressText;
+    hostelCoordinates = { latitude, longitude };
+    // The address lookup needs a session; location itself remains useful and
+    // is persisted even if reverse geocoding is temporarily unavailable.
+    const sessionReady = await Promise.race([
+      UyDosh.ensureTelegramMiniAppSession(),
+      new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
+    ]);
+    if (sessionReady) {
+      const result = await UyDosh.fetchReverseGeocodeAddress(
+        latitude,
+        longitude,
+        UyDosh.getLang(),
+      );
+      if (result?.addressText) form.elements.address.value = result.addressText;
+      else {
+        error.textContent =
+          "Местоположение определено, но адрес не удалось получить.";
+        error.hidden = false;
+      }
+    } else {
+      error.textContent =
+        "Местоположение определено, но адрес не удалось получить.";
+      error.hidden = false;
+    }
   } catch (_) {
     error.textContent =
       "Не удалось определить адрес. Проверьте доступ к геолокации.";
@@ -97,6 +133,8 @@ form.addEventListener("submit", async (e) => {
   const payload = {
     name: data.get("name"),
     address: data.get("address"),
+    latitude: hostelCoordinates?.latitude ?? null,
+    longitude: hostelCoordinates?.longitude ?? null,
     phone: phoneInput.value.replace(/\D/g, "")
       ? `+998${phoneInput.value.replace(/\D/g, "")}`
       : null,

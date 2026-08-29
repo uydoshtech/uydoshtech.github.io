@@ -1,4 +1,8 @@
 UyDosh.initTelegramMiniApp();
+document.getElementById("page-back")?.addEventListener("click", () => {
+  if (window.history.length > 1) window.history.back();
+  else location.href = "/telegram/";
+});
 const money = (n) =>
   new Intl.NumberFormat("ru-RU").format(Number(n || 0)) + " сум/мес";
 const escape = (v) => UyDosh.escapeHtml(String(v ?? ""));
@@ -67,13 +71,6 @@ async function detailHostel() {
   } catch (_) {
     root.innerHTML = '<div class="status">Не удалось загрузить хостел</div>';
   }
-}
-if (UyDosh.isMiniApp()) {
-  const back = window.Telegram?.WebApp?.BackButton;
-  back?.show();
-  back?.onClick(() => {
-    location.href = "/telegram/";
-  });
 }
 document.querySelectorAll(".hostel-filter-pill").forEach((button) => {
   button.addEventListener("click", () => {
