@@ -945,8 +945,20 @@ function miniAppTabbarHtml(activeId) {
 
 function mountMiniAppTabbar() {
   if (!shouldMountMiniAppTabbar()) return null;
-  if (document.querySelector(".mini-app-tabbar"))
-    return document.querySelector(".mini-app-tabbar");
+  const existing = document.querySelector(".mini-app-tabbar");
+  if (existing) {
+    ensureMiniAppTabbarStyles();
+    document.documentElement.classList.add("mini-app-has-tabbar");
+    if (existing.dataset.staticTabbar !== undefined) {
+      existing.outerHTML = miniAppTabbarHtml(miniAppTabbarActiveId());
+      const hydrated = document.querySelector(".mini-app-tabbar");
+      applyI18n(hydrated);
+      if (typeof hydrateIcons === "function") hydrateIcons(hydrated);
+      refreshMiniAppTabbarUnread();
+      return hydrated;
+    }
+    return existing;
+  }
   ensureMiniAppTabbarStyles();
   document.documentElement.classList.add("mini-app-has-tabbar");
   document.body.insertAdjacentHTML(
