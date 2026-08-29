@@ -424,6 +424,7 @@ I18N.uz = {
     'profile.genderMale': 'Yigit',
     'profile.genderFemale': 'Qiz',
     'profile.imFrom': 'Men:',
+    'profile.regionPlaceholder': 'Hududni tanlang',
     'profile.regionNotFound': 'Hech narsa topilmadi',
     'profile.aboutMe': 'Men haqimda',
     'profile.aboutMePlaceholder': 'O‘zingiz haqingizda bir necha so‘z…',

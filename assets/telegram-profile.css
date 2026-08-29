@@ -163,6 +163,10 @@ textarea:focus {
   margin-left: auto;
   min-width: 0;
 }
+.profile-lang-value.is-placeholder {
+  color: var(--muted);
+  font-weight: 600;
+}
 .profile-lang-chevron {
   flex-shrink: 0;
   opacity: 0.7;

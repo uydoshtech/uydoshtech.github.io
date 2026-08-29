@@ -423,6 +423,7 @@ I18N.en = {
     'profile.genderMale': 'Guy',
     'profile.genderFemale': 'Girl',
     'profile.imFrom': "I'm from:",
+    'profile.regionPlaceholder': 'Select region',
     'profile.regionNotFound': 'Nothing found',
     'profile.aboutMe': 'About Me',
     'profile.aboutMePlaceholder': 'A few words about yourself…',

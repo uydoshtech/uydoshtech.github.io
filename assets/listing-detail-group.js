@@ -81,14 +81,14 @@
       function groupSectionHtml(listing) {
         const ctx = listingGroupContext(listing);
         if (!ctx) return '';
-        // Join-request inbox is owner-only. Members already belong; they
-        // open the group chat from the sticky bar instead.
+        const pendingCount = Number(ctx.pending_join_request_count) || 0;
+        // Organizer inbox only when someone is waiting. Members never see it.
+        if (ctx.is_owner && pendingCount <= 0) return '';
         if (ctx.is_member && !ctx.is_owner) return '';
         const lang = UyDosh.getLang();
         const isMiniApp = UyDosh.isMiniApp();
         const memberCount = Number(ctx.group_member_count) || 0;
         const target = Number(ctx.group_size_target) || 0;
-        const pendingCount = Number(ctx.pending_join_request_count) || 0;
         const spots = groupI18n('detail.group.spots', { count: memberCount, target: target || '—' });
         const showSpots = memberCount >= 2;
         const actions = groupActions(ctx);
@@ -156,7 +156,7 @@
               </div>
             </div>
             <p class="group-section-error" data-group-error hidden></p>
-            <div class="group-avatar-stack" data-group-avatars hidden></div>
+            ${ctx.is_owner ? '' : '<div class="group-avatar-stack" data-group-avatars hidden></div>'}
             ${body}
           </section>
         `;

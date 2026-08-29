@@ -35,7 +35,8 @@ const genderFemaleBtn = document.getElementById('gender-female');
 const profileLangSelectEl = document.getElementById('profile-lang-select');
 const profileLangFlagEl = document.getElementById('profile-lang-flag');
 const profileLangNameEl = document.getElementById('profile-lang-name');
-const regionListEl = document.getElementById('region-list');
+const regionSelectEl = document.getElementById('profile-region-select');
+const regionNameEl = document.getElementById('profile-region-name');
 const studentYesBtn = document.getElementById('student-yes');
 const studentNoBtn = document.getElementById('student-no');
 const universityFieldEl = document.getElementById('university-field');
@@ -277,12 +278,10 @@ function universityById(id) {
   return state.universities.find((u) => Number(u.id) === Number(id)) || null;
 }
 
-// Regions are a short static list (Uzbekistan's ~14 provinces/republic/capital),
-// so — unlike the university field — they render as one always-visible chip
-// grid instead of a type-to-filter autosuggest.
-//
-// Tashkent City (id 1) is pinned first as the capital, ahead of the
-// alphabetical ordering used for the rest.
+// Regions are a short static list (Uzbekistan's ~14 provinces/republic/capital).
+// One native <select> (same overlay-row pattern as language) instead of a
+// chip grid, so the basic tab stays compact.
+
 const CAPITAL_REGION_ID = 1;
 
 function sortedRegions(lang) {
@@ -295,20 +294,35 @@ function sortedRegions(lang) {
 }
 
 function renderRegionList() {
+  if (!regionSelectEl || !regionNameEl) return;
+  const lang = UyDosh.getLang();
+  const placeholder = UyDosh.t('profile.regionPlaceholder');
   if (state.regionsError) {
-    regionListEl.innerHTML = `<div class="station-list-empty">${UyDosh.escapeHtml(UyDosh.t('profile.errorLoad'))}</div>`;
+    regionNameEl.textContent = UyDosh.t('profile.errorLoad');
+    regionNameEl.classList.add('is-placeholder');
+    regionSelectEl.innerHTML = '';
+    regionSelectEl.disabled = true;
     return;
   }
-  const lang = UyDosh.getLang();
-  regionListEl.innerHTML = sortedRegions(lang).map((r) => {
-    const id = Number(r.id);
-    return UyDosh.chipButtonHtml({
-      attrs: { 'data-region-id': id },
-      pressed: Number(state.selectedRegionId) === id,
-      label: UyDosh.titleCaseWords(UyDosh.localizedShort(r, lang)),
-      labelWrap: false,
-    });
-  }).join('');
+  regionSelectEl.disabled = false;
+  const options = [`<option value="">${UyDosh.escapeHtml(placeholder)}</option>`]
+    .concat(sortedRegions(lang).map((r) => {
+      const id = Number(r.id);
+      const label = UyDosh.titleCaseWords(UyDosh.localizedShort(r, lang));
+      return `<option value="${id}">${UyDosh.escapeHtml(label)}</option>`;
+    }));
+  regionSelectEl.innerHTML = options.join('');
+  const selected = state.selectedRegionId != null
+    ? state.regions.find((r) => Number(r.id) === Number(state.selectedRegionId))
+    : null;
+  regionSelectEl.value = selected ? String(Number(selected.id)) : '';
+  if (selected) {
+    regionNameEl.textContent = UyDosh.titleCaseWords(UyDosh.localizedShort(selected, lang));
+    regionNameEl.classList.remove('is-placeholder');
+  } else {
+    regionNameEl.textContent = placeholder;
+    regionNameEl.classList.add('is-placeholder');
+  }
 }
 
 function renderUniversityList() {
@@ -514,10 +528,10 @@ function bindEvents() {
     render();
   });
 
-  regionListEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-region-id]');
-    if (!btn) return;
-    const id = Number(btn.getAttribute('data-region-id'));
+  regionSelectEl?.addEventListener('change', () => {
+    const raw = regionSelectEl.value;
+    const id = raw === '' ? null : Number(raw);
+    if (id != null && !Number.isFinite(id)) return;
     if (state.selectedRegionId === id) return;
     state.selectedRegionId = id;
     showFormError('');

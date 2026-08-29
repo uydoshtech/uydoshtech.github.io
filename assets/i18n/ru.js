@@ -423,6 +423,7 @@ I18N.ru = {
     'profile.genderMale': 'Парень',
     'profile.genderFemale': 'Девушка',
     'profile.imFrom': 'Я из:',
+    'profile.regionPlaceholder': 'Выберите регион',
     'profile.regionNotFound': 'Ничего не найдено',
     'profile.aboutMe': 'Обо мне',
     'profile.aboutMePlaceholder': 'Пара слов о себе…',
