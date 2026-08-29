@@ -11,14 +11,16 @@
     <script src="../assets/theme-init.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     <link rel="stylesheet" href="../assets/telegram-shared.css" />
-    <link rel="stylesheet" href="../assets/telegram-hostel-create.css" />
+    <link
+      rel="stylesheet"
+      href="../assets/telegram-hostel-create.css?v=20260830-1"
+    />
   </head>
   <body>
     <div class="wrap">
       <header data-uydosh-mini-app-header></header>
       <main class="hostel-create">
         <h1>Добавить хостел</h1>
-        <p class="intro">Карточка появится в каталоге после сохранения.</p>
         <div id="access" class="status">Проверяем доступ…</div>
         <form id="form" hidden>
           <label
@@ -94,6 +96,12 @@
           ><button class="save" type="submit">Создать хостел</button>
           <div id="error" class="form-error" hidden></div>
         </form>
+        <script>
+          // Server-side authorization still protects creation. This prevents a
+          // cached Telegram WebView script from leaving the form blocked.
+          document.getElementById("access").hidden = true;
+          document.getElementById("form").hidden = false;
+        </script>
       </main>
     </div>
     <template id="unit"
@@ -136,6 +144,9 @@
     <script src="../assets/uydosh-api.js" defer></script>
     <script src="../assets/uydosh-icons.js" defer></script>
     <script src="../assets/uydosh-mini-app.js" defer></script>
-    <script src="../assets/telegram-hostel-create.js" defer></script>
+    <script
+      src="../assets/telegram-hostel-create.js?v=20260830-1"
+      defer
+    ></script>
   </body>
 </html>
