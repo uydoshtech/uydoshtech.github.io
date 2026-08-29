@@ -8,6 +8,7 @@ const MINI_APP_CHATS_PATH = '/telegram/chats.html';
 const MINI_APP_HOUSING_PATH = '/telegram/?listingTypeId=0';
 const MINI_APP_COMMUNITY_PATH = '/telegram/account.html?tab=groups';
 const MINI_APP_HOSTELS_PATH = '/telegram/hostels.html';
+const MINI_APP_HOSTEL_CREATE_PATH = '/telegram/hostel-create.html';
 
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
@@ -493,6 +494,7 @@ function accountShortcutItemsHtml() {
   return `
     <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
     <a role="menuitem" href="${MINI_APP_HOSTELS_PATH}">${UyDosh.iconChrome('house')}<span>Хостелы</span></a>
+    <a role="menuitem" href="${MINI_APP_HOSTEL_CREATE_PATH}" data-admin-hostel-create hidden>${UyDosh.iconChrome('plus')}<span>Добавить хостел</span></a>
     <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
     <a role="menuitem" href="${MINI_APP_GROUPS_PATH}" data-join-request-menu-item>
       ${UyDosh.iconChrome('users')}<span data-i18n="account.tabs.groups"></span>
@@ -878,6 +880,14 @@ function mountMiniAppTabbar() {
   if (typeof hydrateIcons === 'function') hydrateIcons(bar);
   refreshMiniAppTabbarUnread();
   return bar;
+}
+
+/** Reveals staff-only operational shortcuts after the Mini App session resolves. */
+async function revealAdminHostelTools() {
+  try {
+    if (!await ensureTelegramMiniAppSession() || !isAdmin()) return;
+    document.querySelectorAll('[data-admin-hostel-create]').forEach((el) => { el.hidden = false; });
+  } catch { /* The menu remains safely hidden for unauthenticated users. */ }
 }
 
 async function refreshMiniAppTabbarUnread() {
@@ -2260,6 +2270,7 @@ function initTelegramMiniApp() {
   bindMiniAppHapticFeedback();
   mountAllMiniAppHeaders();
   mountMiniAppTabbar();
+  revealAdminHostelTools();
   syncMobileHeaderLayout();
   // Fire-and-forget: reveals a green dot on the account menu's "Profile" item
   // once the profile fetch resolves, if the user hasn't filled anything in yet.
@@ -2312,6 +2323,7 @@ Object.assign(window.UyDosh, {
   MINI_APP_CREATE_PATH,
   MINI_APP_CHATS_PATH,
   MINI_APP_HOSTELS_PATH,
+  MINI_APP_HOSTEL_CREATE_PATH,
   MINI_APP_PROFILE_PATH,
   maybeShowProfileNudge,
   dismissProfileNudge,

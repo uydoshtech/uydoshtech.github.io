@@ -1291,6 +1291,9 @@ function requestHostelPlace(id, { hostelUnitId, message } = {}) {
     method: 'POST', body: { hostel_unit_id: hostelUnitId, message },
   });
 }
+function createHostel(hostel) {
+  return fetchJsonAuth('/admin/hostels', { method: 'POST', body: hostel });
+}
 
 /**
  * Fetches listing detail, attaching the Mini App session's Bearer token when one is
@@ -1517,6 +1520,7 @@ Object.assign(window.UyDosh, {
   fetchHostels,
   fetchHostel,
   requestHostelPlace,
+  createHostel,
   fetchListing,
   fetchListingViewCount,
   recordListingView,
