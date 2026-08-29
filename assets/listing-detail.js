@@ -88,13 +88,14 @@
         document.documentElement.classList.remove('has-detail-contact');
       }
 
-      function updateDetailContactBar(listing, { isOwner = false } = {}) {
+      function updateDetailContactBar(listing, { isOwner = false, isMember = false } = {}) {
         if (!detailContactBarEl || !UyDosh.isMiniApp()) {
           hideDetailContactBar();
           return;
         }
         const groupChat = typeof listingGroupChatCta === 'function' ? listingGroupChatCta(listing) : null;
-        if (isOwner && groupChat) {
+        const inGroup = isOwner || isMember;
+        if (inGroup && groupChat) {
           detailContactBarEl.innerHTML = `
             <div class="detail-contact-bar-inner">
               <a class="detail-contact-btn detail-contact-btn-group-chat" href="${UyDosh.escapeHtml(groupChat.href)}">${UyDosh.escapeHtml(groupChat.label)}</a>
@@ -104,7 +105,7 @@
           document.documentElement.classList.add('has-detail-contact');
           return;
         }
-        if (isOwner) {
+        if (inGroup) {
           hideDetailContactBar();
           return;
         }
@@ -370,7 +371,10 @@
         bindReportButton(l);
         bindGroupSection();
         loadGroupMemberAvatars();
-        updateDetailContactBar(l, { isOwner });
+        updateDetailContactBar(l, {
+          isOwner,
+          isMember: Boolean(listingGroupContext(l)?.is_member),
+        });
         updateDetailAdminEditFab(l, { isAdminViewer });
         if (isOwner) {
           loadOwnerViewCount(l.id);

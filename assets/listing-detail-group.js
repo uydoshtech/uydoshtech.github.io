@@ -81,6 +81,9 @@
       function groupSectionHtml(listing) {
         const ctx = listingGroupContext(listing);
         if (!ctx) return '';
+        // Join-request inbox is owner-only. Members already belong; they
+        // open the group chat from the sticky bar instead.
+        if (ctx.is_member && !ctx.is_owner) return '';
         const lang = UyDosh.getLang();
         const isMiniApp = UyDosh.isMiniApp();
         const memberCount = Number(ctx.group_member_count) || 0;
@@ -236,7 +239,10 @@
           const viewerId = UyDosh.getSessionUserId?.();
           const ownerId = Number(listing?.user_id ?? listing?.user?.id);
           const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
-          updateDetailContactBar(listing, { isOwner });
+          updateDetailContactBar(listing, {
+            isOwner,
+            isMember: Boolean(listingGroupContext(listing)?.is_member),
+          });
         }
       }
 
@@ -367,7 +373,7 @@
 
       async function loadGroupMemberAvatars() {
         const ctx = listingGroupContext(state.listing);
-        if (!ctx) return;
+        if (!ctx?.is_owner) return;
         try {
           const members = await UyDosh.fetchListingGroupMembers(listingId);
           const ownerId = Number(state.listing?.user_id ?? state.listing?.user?.id);
