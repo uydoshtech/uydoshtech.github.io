@@ -18,6 +18,7 @@ const errorEl = document.getElementById('chat-error');
 const threadEl = document.getElementById('chat-thread');
 const peerHeaderEl = document.querySelector('[data-chat-peer-header]');
 const composerEl = document.getElementById('chat-composer');
+const replyBarEl = document.getElementById('chat-reply-bar');
 const inputEl = document.getElementById('chat-input');
 const sendBtn = composerEl?.querySelector('.chat-send');
 
@@ -33,6 +34,26 @@ const state = {
   membersById: new Map(),
   members: [],
   conversation: null,
+  replyTo: null,
+};
+
+const REPLY_TRIGGER_PX = 54;
+const REPLY_MAX_PX = 82;
+const REPLY_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 17l-5-5 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h10.5A5.5 5.5 0 0 1 20 17.5V18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const REPLY_CLOSE_SVG = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>';
+
+const swipe = {
+  row: null,
+  inner: null,
+  hint: null,
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastT: 0,
+  offset: 0,
+  lock: null,
+  pointerId: null,
+  armed: false,
 };
 
 function myUserId() {
@@ -113,6 +134,77 @@ function senderAvatar(message) {
   return UyDosh.iconChrome?.('person') || '';
 }
 
+function messagePreviewText(message) {
+  const share = parseListingShare(message?.content);
+  const raw = share?.title || share?.intro || String(message?.content || '').replace(/\s+/g, ' ').trim();
+  if (!raw) return '…';
+  return raw.length > 90 ? `${raw.slice(0, 89)}…` : raw;
+}
+
+function quotedMessage(message) {
+  const nested = message?.reply_to_message;
+  if (nested && nested.id) return nested;
+  const id = Number(message?.reply_to_message_id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return state.messages.find((row) => Number(row.id) === id) || null;
+}
+
+function quoteHtml(message, mine) {
+  const quoted = quotedMessage(message);
+  if (!quoted) return '';
+  const name = Number(quoted.sender_id) === myUserId()
+    ? UyDosh.t('chat.you')
+    : (senderName(quoted) || UyDosh.t('chat.you'));
+  return `
+    <div class="chat-quote">
+      <div class="chat-quote-name">${UyDosh.escapeHtml(name)}</div>
+      <div class="chat-quote-text">${UyDosh.escapeHtml(messagePreviewText(quoted))}</div>
+    </div>
+  `;
+}
+
+function canSwipeReply(message, mine) {
+  if (mine) return false;
+  if (message?.is_deleted) return false;
+  const type = String(message?.message_type || 'text').toLowerCase();
+  return type !== 'system';
+}
+
+function renderReplyBar() {
+  if (!replyBarEl) return;
+  const target = state.replyTo;
+  if (!target) {
+    replyBarEl.hidden = true;
+    replyBarEl.innerHTML = '';
+    return;
+  }
+  const name = senderName(target) || UyDosh.t('chat.you');
+  const label = UyDosh.t('chat.replyingTo').replace('{name}', name);
+  replyBarEl.hidden = false;
+  replyBarEl.innerHTML = `
+    <span class="chat-reply-avatar" aria-hidden="true">${senderAvatar(target)}</span>
+    <div class="chat-reply-copy">
+      <div class="chat-reply-label">${REPLY_ICON_SVG}${UyDosh.escapeHtml(label)}</div>
+      <div class="chat-reply-preview">${UyDosh.escapeHtml(messagePreviewText(target))}</div>
+    </div>
+    <button type="button" class="chat-reply-cancel" data-reply-cancel aria-label="${UyDosh.escapeHtml(UyDosh.t('chat.replyCancel'))}">${REPLY_CLOSE_SVG}</button>
+  `;
+}
+
+function startReplyToMessage(message) {
+  if (!canSwipeReply(message, Number(message?.sender_id) === myUserId())) return;
+  state.replyTo = message;
+  renderReplyBar();
+  UyDosh.haptic?.light?.();
+  inputEl?.focus();
+}
+
+function clearReplyMode() {
+  if (!state.replyTo) return;
+  state.replyTo = null;
+  renderReplyBar();
+}
+
 function listingCardHtml(share) {
   const href = UyDosh.escapeHtml(UyDosh.listingPageUrl(share.listing_id, {
     backTo: location.pathname + location.search,
@@ -143,22 +235,41 @@ function messageHtml(message, { showDay }) {
   const body = share
     ? `${share.intro ? `<div class="chat-text">${UyDosh.escapeHtml(share.intro)}</div>` : ''}${listingCardHtml(share)}`
     : `<div class="chat-text">${UyDosh.escapeHtml(message.content || '')}</div>`;
-  return `
-    ${showDay ? `<div class="chat-day">${UyDosh.escapeHtml(formatDay(message.created_at))}</div>` : ''}
+  const row = `
     <div class="chat-bubble-row${mine ? ' mine' : ''}" data-message-id="${UyDosh.escapeHtml(String(message.id))}">
       <span class="chat-avatar" aria-hidden="true">${senderAvatar(message)}</span>
       <div class="chat-bubble">
         ${!mine && name ? `<div class="chat-sender">${UyDosh.escapeHtml(name)}</div>` : ''}
+        ${quoteHtml(message, mine)}
         ${body}
         <span class="chat-time">${UyDosh.escapeHtml(formatTime(message.created_at))}</span>
       </div>
     </div>
   `;
+  const swipeWrap = canSwipeReply(message, mine)
+    ? `<div class="chat-swipe" data-reply-id="${UyDosh.escapeHtml(String(message.id))}"><span class="chat-swipe-hint">${REPLY_ICON_SVG}</span>${row}</div>`
+    : row;
+  return `
+    ${showDay ? `<div class="chat-day">${UyDosh.escapeHtml(formatDay(message.created_at))}</div>` : ''}
+    ${swipeWrap}
+  `;
+}
+
+function threadScroller() {
+  return threadEl;
 }
 
 function nearBottom() {
+  const scroller = threadScroller();
+  if (!scroller) return true;
   const slack = 80;
-  return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - slack;
+  return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= slack;
+}
+
+function scrollThreadToBottom() {
+  const scroller = threadScroller();
+  if (!scroller) return;
+  scroller.scrollTop = scroller.scrollHeight;
 }
 
 function renderThread({ stick } = {}) {
@@ -177,7 +288,7 @@ function renderThread({ stick } = {}) {
   }
   threadEl.hidden = false;
   if (shouldStick) {
-    requestAnimationFrame(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    requestAnimationFrame(() => scrollThreadToBottom());
   }
 }
 
@@ -272,7 +383,9 @@ async function handleSend(event) {
   errorEl.hidden = true;
   if (sendBtn) sendBtn.disabled = true;
   try {
-    const payload = await UyDosh.sendConversationMessage(conversationId, content);
+    const payload = await UyDosh.sendConversationMessage(conversationId, content, {
+      replyToMessageId: state.replyTo?.id,
+    });
     const message = payload?.data || payload;
     if (message?.id) mergeMessages([message]);
     else await loadPage(1);
@@ -280,6 +393,7 @@ async function handleSend(event) {
       inputEl.value = '';
       resizeInput();
     }
+    clearReplyMode();
     renderThread({ stick: true });
     UyDosh.haptic?.success?.();
   } catch (err) {
@@ -296,16 +410,20 @@ async function handleSend(event) {
 
 async function maybeLoadOlder() {
   if (state.loadingOlder || state.page >= state.totalPages) return;
-  if (window.scrollY > 40) return;
+  const scroller = threadScroller();
+  if (scroller && scroller.scrollTop > 40) return;
   state.loadingOlder = true;
   const nextPage = state.page + 1;
-  const prevHeight = document.documentElement.scrollHeight;
+  const prevHeight = scroller ? scroller.scrollHeight : 0;
+  const prevTop = scroller ? scroller.scrollTop : 0;
   try {
     await loadPage(nextPage, { prepend: true });
     state.page = nextPage;
     renderThread({ stick: false });
-    const delta = document.documentElement.scrollHeight - prevHeight;
-    window.scrollTo(0, window.scrollY + delta);
+    if (scroller) {
+      const delta = scroller.scrollHeight - prevHeight;
+      scroller.scrollTop = prevTop + delta;
+    }
   } catch (err) {
     console.error('Failed to load older chat messages', err);
   } finally {
@@ -349,7 +467,98 @@ async function boot() {
   }
 }
 
+function swipeResetVisual() {
+  if (swipe.inner) swipe.inner.style.transform = '';
+  if (swipe.hint) {
+    swipe.hint.style.opacity = '0';
+    swipe.hint.classList.remove('is-start', 'is-end');
+  }
+}
+
+function swipeEnd(shouldReply) {
+  const row = swipe.row;
+  const messageId = Number(row?.getAttribute('data-reply-id'));
+  swipeResetVisual();
+  swipe.row = null;
+  swipe.inner = null;
+  swipe.hint = null;
+  swipe.lock = null;
+  swipe.pointerId = null;
+  swipe.offset = 0;
+  swipe.armed = false;
+  const message = state.messages.find((m) => Number(m.id) === messageId);
+  if (message) startReplyToMessage(message);
+}
+
+function applySwipeOffset(offset) {
+  swipe.offset = Math.max(-REPLY_MAX_PX, Math.min(REPLY_MAX_PX, offset));
+  if (swipe.inner) swipe.inner.style.transform = `translateX(${swipe.offset}px)`;
+  if (!swipe.hint) return;
+  const progress = Math.min(1, Math.abs(swipe.offset) / REPLY_TRIGGER_PX);
+  swipe.hint.style.opacity = String(progress);
+  swipe.hint.classList.toggle('is-end', swipe.offset < 0);
+  swipe.hint.classList.toggle('is-start', swipe.offset > 0);
+}
+
+function onThreadPointerDown(event) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  const row = event.target.closest('.chat-swipe');
+  if (!row || !threadEl.contains(row)) return;
+  swipe.row = row;
+  swipe.inner = row.querySelector('.chat-bubble-row');
+  swipe.hint = row.querySelector('.chat-swipe-hint');
+  swipe.startX = event.clientX;
+  swipe.startY = event.clientY;
+  swipe.lastX = event.clientX;
+  swipe.lastT = event.timeStamp;
+  swipe.offset = 0;
+  swipe.armed = false;
+  swipe.lock = null;
+  swipe.pointerId = event.pointerId;
+}
+
+function onThreadPointerMove(event) {
+  if (swipe.pointerId !== event.pointerId || !swipe.row) return;
+  const dx = event.clientX - swipe.startX;
+  const dy = event.clientY - swipe.startY;
+  if (!swipe.lock) {
+    if (Math.hypot(dx, dy) < 10) return;
+    swipe.lock = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'h' : 'v';
+    if (swipe.lock === 'h') {
+      try { swipe.row.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+    }
+  }
+  if (swipe.lock !== 'h') return;
+  event.preventDefault();
+  swipe.lastX = event.clientX;
+  swipe.lastT = event.timeStamp;
+  applySwipeOffset(dx);
+  const armed = Math.abs(swipe.offset) >= REPLY_TRIGGER_PX;
+  if (armed && !swipe.armed) UyDosh.haptic?.light?.();
+  swipe.armed = armed;
+}
+
+function onThreadPointerUp(event) {
+  if (swipe.pointerId !== event.pointerId || !swipe.row) return;
+  const dt = Math.max(16, event.timeStamp - swipe.lastT);
+  const velocity = (event.clientX - swipe.lastX) / dt * 1000;
+  const shouldReply = swipe.lock === 'h'
+    && (Math.abs(swipe.offset) >= REPLY_TRIGGER_PX || Math.abs(velocity) >= 650);
+  swipeEnd(shouldReply);
+}
+
+threadEl?.addEventListener('pointerdown', onThreadPointerDown);
+threadEl?.addEventListener('pointermove', onThreadPointerMove, { passive: false });
+threadEl?.addEventListener('pointerup', onThreadPointerUp);
+threadEl?.addEventListener('pointercancel', () => swipeEnd(false));
+
 composerEl?.addEventListener('submit', handleSend);
+composerEl?.addEventListener('click', (event) => {
+  if (event.target.closest('[data-reply-cancel]')) {
+    event.preventDefault();
+    clearReplyMode();
+  }
+});
 inputEl?.addEventListener('input', resizeInput);
 inputEl?.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
@@ -357,7 +566,7 @@ inputEl?.addEventListener('keydown', (event) => {
     composerEl?.requestSubmit();
   }
 });
-window.addEventListener('scroll', () => {
+threadEl?.addEventListener('scroll', () => {
   maybeLoadOlder();
 }, { passive: true });
 document.addEventListener('visibilitychange', () => {
@@ -366,6 +575,7 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('uydosh:langchange', () => {
   UyDosh.applyI18n();
   updateHeader(state.conversation, state.members);
+  renderReplyBar();
   renderThread();
 });
 

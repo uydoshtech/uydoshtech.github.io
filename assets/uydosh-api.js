@@ -1397,13 +1397,16 @@ function fetchConversationMessages(conversationId, { page = 1, limit = 50 } = {}
   });
 }
 
-function sendConversationMessage(conversationId, content, { messageType = 'text' } = {}) {
+function sendConversationMessage(conversationId, content, { messageType = 'text', replyToMessageId } = {}) {
   const text = typeof content === 'string'
     ? content.trim()
     : String(content?.content ?? '').trim();
+  const body = { content: text, message_type: messageType };
+  const replyId = Number(replyToMessageId);
+  if (Number.isFinite(replyId) && replyId > 0) body.reply_to_message_id = replyId;
   return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
     method: 'POST',
-    body: { content: text, message_type: messageType },
+    body,
   });
 }
 

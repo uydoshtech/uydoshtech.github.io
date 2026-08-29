@@ -21,6 +21,43 @@
       }
 
       /**
+       * Calendar days from local today to `move_in_date` (YYYY-MM-DD).
+       * Positive = still upcoming, 0 = today, negative = already passed.
+       */
+      function daysUntilMoveInDate(iso) {
+        const raw = String(iso || '').slice(0, 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+        let target;
+        if (m) {
+          target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        } else {
+          const parsed = new Date(iso);
+          if (!Number.isFinite(parsed.getTime())) return null;
+          target = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Math.round((target.getTime() - today.getTime()) / 86400000);
+      }
+
+      function ruDayWord(count) {
+        const n = Math.abs(count) % 100;
+        const d = n % 10;
+        if (n > 10 && n < 20) return 'дней';
+        if (d === 1) return 'день';
+        if (d >= 2 && d <= 4) return 'дня';
+        return 'дней';
+      }
+
+      function moveInCountdownValue(days, lang) {
+        if (days === 0) return UyDosh.t('detail.moveInToday', lang);
+        if (days < 0) return UyDosh.t('detail.moveInPast', lang);
+        if (days === 1) return UyDosh.t('detail.moveInOneDay', lang);
+        if (lang === 'ru') return `${days} ${ruDayWord(days)}`;
+        return UyDosh.t('detail.moveInDays', lang).replace('{count}', String(days));
+      }
+
+      /**
        * Move-in date + amenities, styled as extra rows inside the
        * description card (see `map-section-extra` / `map-section-static`)
        * so they sit directly under the listing description instead of
@@ -28,11 +65,19 @@
        */
       function buildMoveInExtraHtml(l, lang) {
         if (!l.move_in_date) return '';
+        const days = daysUntilMoveInDate(l.move_in_date);
+        const countdown = days == null
+          ? ''
+          : `
+              <dt>${UyDosh.iconClock()}${UyDosh.escapeHtml(UyDosh.t('detail.moveInLeft', lang))}</dt>
+              <dd>${UyDosh.escapeHtml(moveInCountdownValue(days, lang))}</dd>
+            `;
         return `
           <div class="map-section-extra map-section-move-in-extra">
             <dl class="meta-grid">
               <dt>${UyDosh.iconCalendar()}${UyDosh.escapeHtml(UyDosh.t('detail.moveIn'))}</dt>
               <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.move_in_date, lang))}</dd>
+              ${countdown}
             </dl>
           </div>
         `;
