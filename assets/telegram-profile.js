@@ -20,6 +20,7 @@ if (UyDosh.isMiniApp()) {
 }
 
 const viewRootEl = document.getElementById('view-root');
+const loadingEl = document.getElementById('loading');
 const formRootEl = document.getElementById('form-root');
 const footerEl = document.getElementById('profile-footer');
 const formErrorEl = document.getElementById('form-error');
@@ -695,7 +696,7 @@ function viewUserIdFromUrl() {
 }
 
 function lifestyleFieldValueLabel(field, value, lang) {
-  if (value == null || value === '') return '';
+  if (!field || value == null || value === '') return '';
   const match = field.options.find((opt) => opt.value === value
     || (typeof opt.value === 'number' && Number(value) === opt.value)
     || String(opt.value) === String(value));
@@ -853,6 +854,12 @@ async function boot() {
     return;
   }
 
+  if (!aboutMeInputEl) {
+    loadingEl.classList.add('error');
+    loadingEl.textContent = UyDosh.t('profile.errorLoad');
+    return;
+  }
+
   aboutMeInputEl.value = state.aboutMe;
 
   loadingEl.hidden = true;
@@ -862,4 +869,10 @@ async function boot() {
   render();
 }
 
-boot();
+boot().catch((err) => {
+  console.error('Profile page failed to start', err);
+  if (loadingEl) {
+    loadingEl.classList.add('error');
+    loadingEl.textContent = UyDosh.t('profile.errorLoad');
+  }
+});
