@@ -41,6 +41,9 @@ async function boot() {
   });
 }
 boot();
+document.getElementById("page-back").addEventListener("click", () => {
+  location.href = "/telegram/hostels.html";
+});
 if (UyDosh.isMiniApp()) {
   const back = window.Telegram?.WebApp?.BackButton;
   back?.show();
