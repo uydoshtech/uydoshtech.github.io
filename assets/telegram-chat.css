@@ -161,8 +161,10 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
 }
 .chat-swipe {
   position: relative;
-  align-self: flex-start;
+  align-self: stretch;
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
   touch-action: pan-y;
 }
 .chat-swipe-hint {
