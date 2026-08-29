@@ -1,24 +1,21 @@
 .hostel-heading {
   padding: 16px 8px 8px;
 }
-.page-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 999px;
-  background: #1d334c;
-  color: var(--fg);
-  padding: 9px 17px 9px 13px;
-  margin: 16px 8px 0;
-  font: inherit;
-  font-size: 16px;
-  font-weight: 700;
+.hostels-screen header .nav-menu {
+  display: none;
 }
-.page-back span {
-  font-size: 35px;
-  line-height: 18px;
-  font-weight: 400;
+.hostels-header-back {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  padding: 0 2px;
+  font: inherit;
+  font-size: 42px;
+  line-height: 1;
+}
+.hostels-header-back:active {
+  opacity: 0.65;
 }
 .hostel-heading h1 {
   margin: 0;
@@ -69,16 +66,23 @@
   border-color: #34d399;
 }
 .hostel-filter-pill--all.active {
-  background: rgba(127, 127, 127, 0.16);
+  background: rgba(127, 127, 127, 0.45);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.42);
 }
 .hostel-filter-pill--male.active {
-  background: rgba(96, 165, 250, 0.18);
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35);
 }
 .hostel-filter-pill--female.active {
-  background: rgba(244, 114, 182, 0.18);
+  background: #db2777;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(244, 114, 182, 0.35);
 }
 .hostel-filter-pill--mixed.active {
-  background: rgba(52, 211, 153, 0.18);
+  background: #059669;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.35);
 }
 .hostel-grid {
   display: grid;

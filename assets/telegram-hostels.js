@@ -1,5 +1,11 @@
 UyDosh.initTelegramMiniApp();
-document.getElementById("page-back")?.addEventListener("click", () => {
+const back = document.createElement("button");
+back.type = "button";
+back.className = "hostels-header-back";
+back.setAttribute("aria-label", "Назад");
+back.textContent = "←";
+document.querySelector("header.uydosh-mini-app-header .brand")?.before(back);
+back.addEventListener("click", () => {
   if (window.history.length > 1) window.history.back();
   else location.href = "/telegram/";
 });
@@ -74,10 +80,12 @@ async function detailHostel() {
 }
 document.querySelectorAll(".hostel-filter-pill").forEach((button) => {
   button.addEventListener("click", () => {
-    document
-      .querySelectorAll(".hostel-filter-pill")
-      .forEach((pill) => pill.classList.remove("active"));
+    document.querySelectorAll(".hostel-filter-pill").forEach((pill) => {
+      pill.classList.remove("active");
+      pill.setAttribute("aria-pressed", "false");
+    });
     button.classList.add("active");
+    button.setAttribute("aria-pressed", "true");
     UyDosh.haptic?.selection?.();
     listHostels();
   });

@@ -1,7 +1,13 @@
 UyDosh.initTelegramMiniApp();
 const access = document.getElementById("admin-access"),
   tools = document.getElementById("admin-tools");
-document.getElementById("page-back").addEventListener("click", () => {
+const back = document.createElement("button");
+back.type = "button";
+back.className = "admin-header-back";
+back.setAttribute("aria-label", "Назад");
+back.textContent = "←";
+document.querySelector("header.uydosh-mini-app-header .brand")?.before(back);
+back.addEventListener("click", () => {
   if (window.history.length > 1) window.history.back();
   else location.href = "/telegram/";
 });
