@@ -658,6 +658,15 @@ function currentUserId() {
   return Number(UyDosh.getSessionUserId?.() || 0);
 }
 
+function openMemberProfile(userId) {
+  const id = Number(userId);
+  if (!Number.isFinite(id) || id < 1) return;
+  const href = typeof UyDosh.profilePageUrl === 'function'
+    ? UyDosh.profilePageUrl(id, { backTo: UyDosh.MINI_APP_GROUPS_PATH })
+    : `${UyDosh.MINI_APP_PROFILE_PATH}?user=${encodeURIComponent(id)}&back=${encodeURIComponent(UyDosh.MINI_APP_GROUPS_PATH)}`;
+  location.href = href;
+}
+
 function bindParticipantsPills() {
   for (const btn of listEl.querySelectorAll('[data-open-participants]')) {
     btn.addEventListener('click', () => {
@@ -766,7 +775,7 @@ function memberCardHtml(member, listing, lang) {
     : '';
   const match = matchPercentHtml(member, me, lang);
   const front = `
-    <div class="gp-member-front">
+    <div class="gp-member-front" data-open-profile="${userId}" role="link">
       ${avatar}
       <div class="gp-member-body">
         <div class="gp-member-row">
@@ -887,6 +896,7 @@ function bindMemberSwipe(card) {
   let dx = 0;
   let tracking = false;
   let open = false;
+  let swiped = false;
 
   const setX = (x) => {
     dx = Math.min(0, Math.max(-max, x));
@@ -896,6 +906,7 @@ function bindMemberSwipe(card) {
   card.addEventListener('pointerdown', (event) => {
     if (event.target.closest('[data-remove-member], [data-leave-group]')) return;
     tracking = true;
+    swiped = false;
     startX = event.clientX;
     startY = event.clientY;
     front.style.transition = 'none';
@@ -906,6 +917,7 @@ function bindMemberSwipe(card) {
     const moveX = event.clientX - startX;
     const moveY = event.clientY - startY;
     if (Math.abs(moveY) > Math.abs(moveX) && Math.abs(moveX) < 8) return;
+    if (Math.abs(moveX) > 10) swiped = true;
     setX((open ? -max : 0) + moveX);
   });
   const end = () => {
@@ -917,12 +929,29 @@ function bindMemberSwipe(card) {
   };
   card.addEventListener('pointerup', end);
   card.addEventListener('pointercancel', end);
+  card.addEventListener('click', (event) => {
+    if (event.target.closest('[data-remove-member], [data-leave-group]')) return;
+    if (swiped || open) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    const userId = Number(card.getAttribute('data-member-id'));
+    openMemberProfile(userId);
+  });
 }
 
 function bindParticipantsSheetEvents() {
   participantsRoot.querySelector('[data-gp-close]')?.addEventListener('click', closeParticipantsSheet);
   for (const card of participantsRoot.querySelectorAll('.gp-member-swipeable')) {
     bindMemberSwipe(card);
+  }
+  for (const front of participantsRoot.querySelectorAll('[data-open-profile]')) {
+    if (front.closest('.gp-member-swipeable')) continue;
+    front.addEventListener('click', (event) => {
+      if (event.target.closest('[data-leave-group]')) return;
+      openMemberProfile(front.getAttribute('data-open-profile'));
+    });
   }
   for (const btn of participantsRoot.querySelectorAll('[data-remove-member]')) {
     btn.addEventListener('click', () => {

@@ -66,6 +66,15 @@ function createPageUrl() {
   return MINI_APP_CREATE_PATH;
 }
 
+function profilePageUrl(userId, options = {}) {
+  const params = new URLSearchParams();
+  const id = Number(userId);
+  if (Number.isFinite(id) && id > 0) params.set('user', String(id));
+  if (options.backTo) params.set('back', options.backTo);
+  const query = params.toString();
+  return query ? `${MINI_APP_PROFILE_PATH}?${query}` : MINI_APP_PROFILE_PATH;
+}
+
 function chatPageUrl(id, options = {}) {
   const cid = String(id ?? '').trim();
   if (!cid) return MINI_APP_GROUPS_PATH;
@@ -2278,6 +2287,7 @@ Object.assign(window.UyDosh, {
   isTelegramDesktop,
   listingPageUrl,
   chatPageUrl,
+  profilePageUrl,
   miniAppBackTargetFromUrl,
   feedPageUrl,
   createPageUrl,

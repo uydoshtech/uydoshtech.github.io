@@ -607,6 +607,7 @@ header {
   background: #121c2a;
   border-radius: 16px;
   touch-action: pan-y;
+  cursor: pointer;
 }
 .gp-card-avatar {
   flex-shrink: 0;

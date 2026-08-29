@@ -19,7 +19,7 @@ if (UyDosh.isMiniApp()) {
   });
 }
 
-const loadingEl = document.getElementById('loading');
+const viewRootEl = document.getElementById('view-root');
 const formRootEl = document.getElementById('form-root');
 const footerEl = document.getElementById('profile-footer');
 const formErrorEl = document.getElementById('form-error');
@@ -202,6 +202,8 @@ const LIFESTYLE_FIELDS = [
 
 const state = {
   userId: null,
+  readOnly: false,
+  profile: null,
   authError: false,
   loadError: false,
   // Distinct from loadError: the user is authenticated but has no
@@ -660,6 +662,7 @@ async function loadRegions() {
 async function loadProfile() {
   try {
     const profile = await UyDosh.fetchProfile(state.userId);
+    state.profile = profile;
     const universityId = profile?.university_id != null ? Number(profile.university_id) : null;
     state.isStudent = universityId != null ? true : null;
     state.selectedUniversityId = universityId;
@@ -681,6 +684,117 @@ async function loadProfile() {
   }
 }
 
+function viewUserIdFromUrl() {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('user');
+    const id = Number(raw);
+    return Number.isFinite(id) && id > 0 ? id : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function lifestyleFieldValueLabel(field, value, lang) {
+  if (value == null || value === '') return '';
+  const match = field.options.find((opt) => opt.value === value
+    || (typeof opt.value === 'number' && Number(value) === opt.value)
+    || String(opt.value) === String(value));
+  if (!match || match.value == null) return '';
+  return UyDosh.t(match.labelKey, lang);
+}
+
+function viewRowHtml({ icon, iconClass, label, value }) {
+  if (!value) return '';
+  return `
+    <div class="pv-row">
+      <span class="pv-icon${iconClass ? ` ${iconClass}` : ''}" aria-hidden="true">${UyDosh.iconChrome?.(icon) || ''}</span>
+      <div class="pv-text">
+        <div class="pv-label">${UyDosh.escapeHtml(label)}</div>
+        <div class="pv-value">${UyDosh.escapeHtml(value)}</div>
+      </div>
+    </div>`;
+}
+
+function renderReadOnlyProfile() {
+  const lang = UyDosh.getLang();
+  const profile = state.profile || {};
+  const name = String(profile.name || '').trim();
+  const avatarUrl = profile.avatar_url || profile.telegram_avatar_url || '';
+  const avatarInner = avatarUrl
+    ? `<img src="${UyDosh.escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+    : (UyDosh.iconChrome?.('person') || '');
+  const genderValue = profile.gender === 1
+    ? UyDosh.t('profile.genderMale', lang)
+    : profile.gender === 2
+      ? UyDosh.t('profile.genderFemale', lang)
+      : '';
+  const genderIconClass = profile.gender === 1 ? 'is-male' : profile.gender === 2 ? 'is-female' : '';
+  const region = state.regions.find((r) => Number(r.id) === Number(profile.region_id));
+  const regionName = region ? (UyDosh.localized(region, lang) || region.name || '') : '';
+  const university = state.universities.find((u) => Number(u.id) === Number(profile.university_id));
+  const universityName = university ? (UyDosh.localized(university, lang) || university.name || '') : '';
+  const langMeta = profileLangMeta(profile.preferred_language);
+  const langValue = `${langMeta.flag} ${langMeta.native}`;
+  const about = String(profile.about_me || '').trim();
+
+  const employedField = LIFESTYLE_FIELDS.find((f) => f.key === 'employed');
+  const wakeField = LIFESTYLE_FIELDS.find((f) => f.key === 'wakeup_time');
+  const sleepField = LIFESTYLE_FIELDS.find((f) => f.key === 'sleep_time');
+  const cleanField = LIFESTYLE_FIELDS.find((f) => f.key === 'cleanliness');
+  const employedLabel = lifestyleFieldValueLabel(employedField, profile.employed, lang);
+  const employedShort = profile.employed === true
+    ? UyDosh.t('profile.studentYes', lang)
+    : profile.employed === false
+      ? UyDosh.t('profile.studentNo', lang)
+      : employedLabel;
+  const wakeLabel = lifestyleFieldValueLabel(wakeField, profile.wakeup_time, lang);
+  const sleepLabel = lifestyleFieldValueLabel(sleepField, profile.sleep_time, lang);
+  const cleanLabel = lifestyleFieldValueLabel(cleanField, profile.cleanliness, lang);
+
+  const basicRows = [
+    viewRowHtml({ icon: 'person', label: UyDosh.t('profile.nameOrNickname', lang), value: name }),
+    viewRowHtml({
+      icon: 'person',
+      iconClass: genderIconClass,
+      label: UyDosh.t('profile.gender', lang),
+      value: genderValue,
+    }),
+    viewRowHtml({
+      icon: 'mapPin',
+      iconClass: 'is-pin',
+      label: UyDosh.t('profile.district', lang),
+      value: regionName,
+    }),
+    viewRowHtml({ icon: 'graduationCap', label: UyDosh.t('profile.universityLabel', lang), value: universityName }),
+    viewRowHtml({ icon: 'globe', label: UyDosh.t('profile.language', lang), value: langValue }),
+    viewRowHtml({ icon: 'alertCircle', label: UyDosh.t('profile.aboutMe', lang), value: about }),
+  ].join('');
+
+  const lifeRows = [
+    viewRowHtml({ icon: 'checkCircle', label: UyDosh.t('profile.work', lang), value: employedShort }),
+    `<div class="pv-grid">${
+      viewRowHtml({ icon: 'sun', label: UyDosh.t('profile.lifestyle.wakeupTime', lang), value: wakeLabel })
+      + viewRowHtml({ icon: 'moon', label: UyDosh.t('profile.lifestyle.sleepTime', lang), value: sleepLabel })
+    }</div>`,
+    viewRowHtml({ icon: 'sparkles', label: UyDosh.t('profile.lifestyle.cleanliness', lang), value: cleanLabel }),
+  ].join('');
+
+  viewRootEl.innerHTML = `
+    <div class="pv-avatar-wrap"><div class="pv-avatar">${avatarInner}</div></div>
+    <div class="pv-card">${basicRows}</div>
+    <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.tabs.lifestyle', lang))}</div>
+    <div class="pv-card">${lifeRows}</div>`;
+}
+
+function showReadOnlyProfile() {
+  document.body.classList.add('profile-readonly');
+  loadingEl.hidden = true;
+  formRootEl.hidden = true;
+  footerEl.hidden = true;
+  viewRootEl.hidden = false;
+  renderReadOnlyProfile();
+}
+
 function renderNoProfileState() {
   const lang = UyDosh.getLang();
   loadingEl.innerHTML = `
@@ -694,32 +808,31 @@ async function boot() {
   UyDosh.applyI18n();
   document.addEventListener('uydosh:langchange', () => {
     UyDosh.applyI18n();
-    render();
+    if (state.readOnly) renderReadOnlyProfile();
+    else render();
   });
 
-  // Deliberately no separate `getTelegramInitData()` pre-check here —
-  // `ensureTelegramMiniAppSession()` already tries a cached session token
-  // first and only falls back to initData if there isn't one. Gating on
-  // initData up front would wrongly fail a still-valid cached session: the
-  // Mini App's own initData is only fresh on the entry page (Telegram
-  // passes it via the URL hash, which internal navigation to this page
-  // doesn't carry over) and the sessionStorage fallback copy of it expires
-  // after 24h — but a previously-issued session token has its own,
-  // separate backend expiry and can easily still be good past that point.
-  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
-  if (!sessionReady) {
-    state.authError = true;
-    loadingEl.classList.add('error');
-    loadingEl.textContent = UyDosh.t('profile.errorAuth');
-    return;
-  }
+  const viewUserId = viewUserIdFromUrl();
+  state.readOnly = viewUserId > 0;
 
-  state.userId = UyDosh.getSessionUserId();
-  if (!state.userId) {
-    state.authError = true;
-    loadingEl.classList.add('error');
-    loadingEl.textContent = UyDosh.t('profile.errorAuth');
-    return;
+  if (!state.readOnly) {
+    const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+    if (!sessionReady) {
+      state.authError = true;
+      loadingEl.classList.add('error');
+      loadingEl.textContent = UyDosh.t('profile.errorAuth');
+      return;
+    }
+    state.userId = UyDosh.getSessionUserId();
+    if (!state.userId) {
+      state.authError = true;
+      loadingEl.classList.add('error');
+      loadingEl.textContent = UyDosh.t('profile.errorAuth');
+      return;
+    }
+  } else {
+    state.userId = viewUserId;
+    await UyDosh.ensureTelegramMiniAppSession();
   }
 
   await Promise.all([loadProfile(), loadUniversities(), loadRegions()]);
@@ -735,7 +848,11 @@ async function boot() {
     return;
   }
 
-  // Set once here rather than in `render()` — see `state.aboutMe` comment.
+  if (state.readOnly) {
+    showReadOnlyProfile();
+    return;
+  }
+
   aboutMeInputEl.value = state.aboutMe;
 
   loadingEl.hidden = true;
