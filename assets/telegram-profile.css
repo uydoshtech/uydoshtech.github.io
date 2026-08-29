@@ -360,6 +360,10 @@ textarea:focus {
 .looking-for-hint {
   margin: 0 0 8px;
 }
+.looking-dealbreakers .field-label,
+.looking-dealbreakers .looking-for-hint {
+  color: var(--error);
+}
 .profile-range-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
