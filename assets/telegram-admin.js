@@ -1,4 +1,7 @@
 UyDosh.initTelegramMiniApp();
+// Admin HTML includes a visual tab-bar fallback so it is available even while
+// a Telegram WebView is still serving a cached mini-app bootstrap script.
+UyDosh.hydrateIcons?.(document.querySelector(".mini-app-tabbar"));
 const access = document.getElementById("admin-access"),
   tools = document.getElementById("admin-tools");
 const back = document.createElement("button");

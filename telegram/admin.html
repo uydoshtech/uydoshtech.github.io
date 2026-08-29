@@ -39,20 +39,40 @@
     </div>
     <nav class="mini-app-tabbar" data-static-tabbar aria-label="Main">
       <div class="mini-app-tabbar-items has-admin">
-        <a class="mini-app-tab" href="/telegram/"
-          ><span aria-hidden="true">⌂</span><span>Жильё</span></a
+        <a
+          class="mini-app-tab"
+          href="/telegram/?listingTypeId=0"
+          data-tabbar-id="housing"
+          ><span data-icon="house" aria-hidden="true"></span
+          ><span data-i18n="tabbar.housing">Жильё</span></a
         >
-        <a class="mini-app-tab" href="/telegram/account.html?tab=groups"
-          ><span aria-hidden="true">♧</span><span>Сообщество</span></a
+        <a
+          class="mini-app-tab"
+          href="/telegram/account.html?tab=groups"
+          data-tabbar-id="community"
+          ><span data-icon="users" aria-hidden="true"></span
+          ><span data-i18n="tabbar.community">Моё</span></a
         >
-        <a class="mini-app-tab" href="/telegram/chats.html"
-          ><span aria-hidden="true">◌</span><span>Сообщения</span></a
+        <a
+          class="mini-app-tab"
+          href="/telegram/chats.html"
+          data-tabbar-id="messages"
+          ><span data-icon="chatBubbles" aria-hidden="true"></span
+          ><span data-i18n="tabbar.messages">Сообщения</span></a
         >
-        <a class="mini-app-tab" href="/telegram/create.html"
-          ><span aria-hidden="true">＋</span><span>Создать</span></a
+        <a
+          class="mini-app-tab"
+          href="/telegram/create.html"
+          data-tabbar-id="create"
+          ><span data-icon="plus" aria-hidden="true"></span
+          ><span data-i18n="tabbar.create">Создать</span></a
         >
-        <a class="mini-app-tab is-active" href="/telegram/admin.html"
-          ><span aria-hidden="true">♜</span><span>Управление</span></a
+        <a
+          class="mini-app-tab is-active"
+          href="/telegram/admin.html"
+          data-tabbar-id="admin"
+          ><span data-icon="shield" aria-hidden="true"></span
+          ><span>Управление</span></a
         >
       </div>
     </nav>
@@ -61,6 +81,6 @@
     <script src="../assets/uydosh-api.js" defer></script>
     <script src="../assets/uydosh-icons.js" defer></script>
     <script src="../assets/uydosh-mini-app.js" defer></script>
-    <script src="../assets/telegram-admin.js" defer></script>
+    <script src="../assets/telegram-admin.js?v=20260830-2" defer></script>
   </body>
 </html>
