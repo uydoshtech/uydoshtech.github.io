@@ -24,7 +24,20 @@ function addUnit({ reveal = false } = {}) {
 addUnit();
 async function boot() {
   try {
-    await UyDosh.ensureTelegramMiniAppSession();
+    // Never leave the operator staring at a permanent loading state if the
+    // Telegram-auth request is stalled by a transient WebView/network issue.
+    const sessionReady = await Promise.race([
+      UyDosh.ensureTelegramMiniAppSession(),
+      new Promise((resolve) => setTimeout(() => resolve(false), 8000)),
+    ]);
+    if (!sessionReady) {
+      access.innerHTML =
+        'Не удалось проверить доступ. <button type="button" id="retry-access">Повторить</button>';
+      document
+        .getElementById("retry-access")
+        ?.addEventListener("click", () => location.reload());
+      return;
+    }
     if (!UyDosh.isAdmin()) {
       access.textContent = "Этот экран доступен только администраторам UyDosh.";
       return;
