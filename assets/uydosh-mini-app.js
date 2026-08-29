@@ -2,13 +2,14 @@
 // handling, the mini-app header, and Firebase Analytics wiring.
 // Depends on all other uydosh-*.js modules. Load last.
 
-const MINI_APP_FEED_PATH = '/telegram/';
-const MINI_APP_CREATE_PATH = '/telegram/create.html';
-const MINI_APP_CHATS_PATH = '/telegram/chats.html';
-const MINI_APP_HOUSING_PATH = '/telegram/?listingTypeId=0';
-const MINI_APP_COMMUNITY_PATH = '/telegram/account.html?tab=groups';
-const MINI_APP_HOSTELS_PATH = '/telegram/hostels.html';
-const MINI_APP_HOSTEL_CREATE_PATH = '/telegram/hostel-create.html';
+const MINI_APP_FEED_PATH = "/telegram/";
+const MINI_APP_CREATE_PATH = "/telegram/create.html";
+const MINI_APP_CHATS_PATH = "/telegram/chats.html";
+const MINI_APP_HOUSING_PATH = "/telegram/?listingTypeId=0";
+const MINI_APP_COMMUNITY_PATH = "/telegram/account.html?tab=groups";
+const MINI_APP_HOSTELS_PATH = "/telegram/hostels.html";
+const MINI_APP_HOSTEL_CREATE_PATH = "/telegram/hostel-create.html";
+const MINI_APP_ADMIN_PATH = "/telegram/admin.html";
 
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
@@ -16,8 +17,10 @@ function isMiniApp() {
   try {
     const tg = window.Telegram?.WebApp;
     if (tg?.initData && String(tg.initData).length > 0) return true;
-    if (tg?.platform && tg.platform !== 'unknown') return true;
-  } catch { /* ignore */ }
+    if (tg?.platform && tg.platform !== "unknown") return true;
+  } catch {
+    /* ignore */
+  }
   return false;
 }
 
@@ -34,13 +37,13 @@ function isMiniApp() {
  *   group join-request panel (owner inbox / applicant CTA).
  */
 function listingPageUrl(id, options = {}) {
-  const lid = String(id ?? '').trim();
+  const lid = String(id ?? "").trim();
   if (!lid) return MINI_APP_FEED_PATH;
   if (isMiniApp()) {
-    const params = new URLSearchParams({ id: lid, mini: '1' });
-    if (options.backTo) params.set('back', options.backTo);
-    if (options.view) params.set('view', options.view);
-    if (options.group) params.set('group', options.group);
+    const params = new URLSearchParams({ id: lid, mini: "1" });
+    if (options.backTo) params.set("back", options.backTo);
+    if (options.view) params.set("view", options.view);
+    if (options.group) params.set("group", options.group);
     return `/listing.html?${params.toString()}`;
   }
   return `/listing/${encodeURIComponent(lid)}`;
@@ -53,15 +56,19 @@ function listingPageUrl(id, options = {}) {
  * open-redirect via a crafted `back=` value (e.g. `//evil.com`).
  */
 function miniAppBackTargetFromUrl() {
-  let back = '';
+  let back = "";
   try {
-    back = new URLSearchParams(location.search).get('back') || '';
-  } catch { /* ignore */ }
-  return back.startsWith('/') && !back.startsWith('//') ? back : MINI_APP_FEED_PATH;
+    back = new URLSearchParams(location.search).get("back") || "";
+  } catch {
+    /* ignore */
+  }
+  return back.startsWith("/") && !back.startsWith("//")
+    ? back
+    : MINI_APP_FEED_PATH;
 }
 
 function feedPageUrl() {
-  return isMiniApp() ? MINI_APP_FEED_PATH : 'listings.html';
+  return isMiniApp() ? MINI_APP_FEED_PATH : "listings.html";
 }
 
 function createPageUrl() {
@@ -71,17 +78,17 @@ function createPageUrl() {
 function profilePageUrl(userId, options = {}) {
   const params = new URLSearchParams();
   const id = Number(userId);
-  if (Number.isFinite(id) && id > 0) params.set('user', String(id));
-  if (options.backTo) params.set('back', options.backTo);
+  if (Number.isFinite(id) && id > 0) params.set("user", String(id));
+  if (options.backTo) params.set("back", options.backTo);
   const query = params.toString();
   return query ? `${MINI_APP_PROFILE_PATH}?${query}` : MINI_APP_PROFILE_PATH;
 }
 
 function chatPageUrl(id, options = {}) {
-  const cid = String(id ?? '').trim();
+  const cid = String(id ?? "").trim();
   if (!cid) return MINI_APP_GROUPS_PATH;
-  const params = new URLSearchParams({ id: cid, mini: '1' });
-  if (options.backTo) params.set('back', options.backTo);
+  const params = new URLSearchParams({ id: cid, mini: "1" });
+  if (options.backTo) params.set("back", options.backTo);
   return `/telegram/chat.html?${params.toString()}`;
 }
 
@@ -89,11 +96,12 @@ function applyTelegramTheme(tg) {
   const p = tg?.themeParams;
   if (!p) return;
   const root = document.documentElement;
-  if (p.bg_color) root.style.setProperty('--tg-bg', p.bg_color);
-  if (p.text_color) root.style.setProperty('--tg-fg', p.text_color);
-  if (p.hint_color) root.style.setProperty('--tg-muted', p.hint_color);
-  if (p.button_color) root.style.setProperty('--tg-btn', p.button_color);
-  if (p.secondary_bg_color) root.style.setProperty('--tg-card', p.secondary_bg_color);
+  if (p.bg_color) root.style.setProperty("--tg-bg", p.bg_color);
+  if (p.text_color) root.style.setProperty("--tg-fg", p.text_color);
+  if (p.hint_color) root.style.setProperty("--tg-muted", p.hint_color);
+  if (p.button_color) root.style.setProperty("--tg-btn", p.button_color);
+  if (p.secondary_bg_color)
+    root.style.setProperty("--tg-card", p.secondary_bg_color);
 }
 
 /** Swaps the mini-app header's skyline photo to the light variant when the
@@ -101,10 +109,13 @@ function applyTelegramTheme(tg) {
  * kept in sync on manual toggle + Telegram theme changes via the
  * 'uydosh:themechange' event (dispatched by both). */
 function applyHeaderBgTheme() {
-  document.documentElement.classList.toggle('mini-app-header-light', currentUiTheme() === 'light');
+  document.documentElement.classList.toggle(
+    "mini-app-header-light",
+    currentUiTheme() === "light",
+  );
 }
-if (typeof document !== 'undefined') {
-  document.addEventListener('uydosh:themechange', applyHeaderBgTheme);
+if (typeof document !== "undefined") {
+  document.addEventListener("uydosh:themechange", applyHeaderBgTheme);
 }
 
 /**
@@ -114,12 +125,12 @@ if (typeof document !== 'undefined') {
  * since `user_profiles.university_id` alone can't distinguish "never asked"
  * from "answered — not a student" (both are `null`).
  */
-const PROFILE_NUDGE_DISMISSED_KEY = 'uydosh_profile_nudge_dismissed';
-const PROFILE_NUDGE_STYLE_ID = 'uydosh-profile-nudge-styles';
+const PROFILE_NUDGE_DISMISSED_KEY = "uydosh_profile_nudge_dismissed";
+const PROFILE_NUDGE_STYLE_ID = "uydosh-profile-nudge-styles";
 
 function isProfileNudgeDismissed() {
   try {
-    return localStorage.getItem(PROFILE_NUDGE_DISMISSED_KEY) === '1';
+    return localStorage.getItem(PROFILE_NUDGE_DISMISSED_KEY) === "1";
   } catch {
     return false;
   }
@@ -127,14 +138,16 @@ function isProfileNudgeDismissed() {
 
 function dismissProfileNudge() {
   try {
-    localStorage.setItem(PROFILE_NUDGE_DISMISSED_KEY, '1');
-  } catch { /* ignore */ }
-  document.querySelector('.profile-nudge')?.remove();
+    localStorage.setItem(PROFILE_NUDGE_DISMISSED_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+  document.querySelector(".profile-nudge")?.remove();
 }
 
 function ensureProfileNudgeStyles() {
   if (document.getElementById(PROFILE_NUDGE_STYLE_ID)) return;
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = PROFILE_NUDGE_STYLE_ID;
   style.textContent = `
     .profile-nudge {
@@ -198,10 +211,10 @@ function ensureProfileNudgeStyles() {
 function profileNudgeHtml() {
   return `
     <div class="profile-nudge" data-profile-nudge>
-      <span class="profile-nudge-icon" aria-hidden="true">${UyDosh.iconChrome('graduationCap')}</span>
+      <span class="profile-nudge-icon" aria-hidden="true">${UyDosh.iconChrome("graduationCap")}</span>
       <span class="profile-nudge-text" data-i18n="profile.nudgeText"></span>
       <a class="profile-nudge-cta" href="${MINI_APP_PROFILE_PATH}" data-i18n="profile.nudgeCta"></a>
-      <button type="button" class="profile-nudge-close" data-profile-nudge-close aria-label="${escapeHtml(t('profile.nudgeDismiss', getLang()))}">×</button>
+      <button type="button" class="profile-nudge-close" data-profile-nudge-close aria-label="${escapeHtml(t("profile.nudgeDismiss", getLang()))}">×</button>
     </div>`;
 }
 
@@ -214,8 +227,9 @@ function profileNudgeHtml() {
  */
 async function maybeShowProfileNudge(anchorEl) {
   if (!isMiniApp() || isProfileNudgeDismissed()) return;
-  const anchor = anchorEl || document.querySelector('header.uydosh-mini-app-header');
-  if (!anchor || anchor.parentElement?.querySelector('.profile-nudge')) return;
+  const anchor =
+    anchorEl || document.querySelector("header.uydosh-mini-app-header");
+  if (!anchor || anchor.parentElement?.querySelector(".profile-nudge")) return;
   try {
     const sessionReady = await ensureTelegramMiniAppSession();
     if (!sessionReady) return;
@@ -225,13 +239,15 @@ async function maybeShowProfileNudge(anchorEl) {
     if (profile?.university_id != null) return;
     if (isProfileNudgeDismissed()) return; // re-check: user may have dismissed while this was in flight
     ensureProfileNudgeStyles();
-    anchor.insertAdjacentHTML('afterend', profileNudgeHtml());
-    const banner = anchor.parentElement?.querySelector('.profile-nudge');
+    anchor.insertAdjacentHTML("afterend", profileNudgeHtml());
+    const banner = anchor.parentElement?.querySelector(".profile-nudge");
     if (!banner) return;
     applyI18n(banner);
-    banner.querySelector('[data-profile-nudge-close]')?.addEventListener('click', dismissProfileNudge);
+    banner
+      .querySelector("[data-profile-nudge-close]")
+      ?.addEventListener("click", dismissProfileNudge);
   } catch (err) {
-    console.warn('[UyDosh] profile nudge skipped', err);
+    console.warn("[UyDosh] profile nudge skipped", err);
   }
 }
 
@@ -241,9 +257,18 @@ async function maybeShowProfileNudge(anchorEl) {
  * green dot (below) should show, not tied to that page's own field list.
  */
 const PROFILE_COMPLETENESS_FIELDS = [
-  'university_id', 'employed', 'wakeup_time', 'sleep_time', 'cleanliness',
-  'noise_level', 'sociability', 'guests_allowed', 'smoking_preference',
-  'alcohol_preference', 'cooking_habits', 'pets_preference',
+  "university_id",
+  "employed",
+  "wakeup_time",
+  "sleep_time",
+  "cleanliness",
+  "noise_level",
+  "sociability",
+  "guests_allowed",
+  "smoking_preference",
+  "alcohol_preference",
+  "cooking_habits",
+  "pets_preference",
 ];
 
 /** True when every field the profile page can edit is still unset. */
@@ -266,19 +291,23 @@ function isProfileFullyPopulated(profile) {
 
 /** Hides the green "profile not populated" dot on every account menu on the page. */
 function hideProfileMenuBadge() {
-  document.querySelectorAll('[data-profile-menu-badge]').forEach((el) => { el.hidden = true; });
+  document.querySelectorAll("[data-profile-menu-badge]").forEach((el) => {
+    el.hidden = true;
+  });
 }
 
 function hideJoinRequestNavBadge() {
-  document.querySelectorAll('[data-nav-join-badge], [data-join-request-menu-badge]').forEach((el) => {
-    el.hidden = true;
-  });
+  document
+    .querySelectorAll("[data-nav-join-badge], [data-join-request-menu-badge]")
+    .forEach((el) => {
+      el.hidden = true;
+    });
 }
 
 function listingLooksGroupForming(listing) {
   const typeId = Number(listing?.listing_type_id ?? listing?.listing_type?.id);
   const code = listing?.listing_type?.code;
-  return typeId === 3 || code === 'group_forming';
+  return typeId === 3 || code === "group_forming";
 }
 
 /**
@@ -295,38 +324,51 @@ async function maybeShowJoinRequestNavBadge() {
     const payload = await fetchMyTelegramMiniAppListings();
     const listings = Array.isArray(payload?.listings) ? payload.listings : [];
     let total = 0;
-    const hasServerCount = listings.some((row) => row?.pending_join_request_count != null);
+    const hasServerCount = listings.some(
+      (row) => row?.pending_join_request_count != null,
+    );
     if (hasServerCount) {
-      total = listings.reduce((sum, row) => sum + (Number(row.pending_join_request_count) || 0), 0);
+      total = listings.reduce(
+        (sum, row) => sum + (Number(row.pending_join_request_count) || 0),
+        0,
+      );
     } else {
-      const groupListings = listings.filter(listingLooksGroupForming).slice(0, 10);
-      const counts = await Promise.all(groupListings.map(async (row) => {
-        try {
-          const result = await fetchListingGroupJoinRequests(row.id);
-          const rows = result?.data ?? result?.requests ?? result;
-          return Array.isArray(rows) ? rows.length : 0;
-        } catch {
-          return 0;
-        }
-      }));
+      const groupListings = listings
+        .filter(listingLooksGroupForming)
+        .slice(0, 10);
+      const counts = await Promise.all(
+        groupListings.map(async (row) => {
+          try {
+            const result = await fetchListingGroupJoinRequests(row.id);
+            const rows = result?.data ?? result?.requests ?? result;
+            return Array.isArray(rows) ? rows.length : 0;
+          } catch {
+            return 0;
+          }
+        }),
+      );
       total = counts.reduce((sum, n) => sum + n, 0);
     }
     if (total <= 0) {
       hideJoinRequestNavBadge();
       return;
     }
-    const label = (typeof t === 'function' ? t : UyDosh.t)('nav.joinRequestsPending');
-    document.querySelectorAll('[data-nav-join-badge]').forEach((el) => {
+    const label = (typeof t === "function" ? t : UyDosh.t)(
+      "nav.joinRequestsPending",
+    );
+    document.querySelectorAll("[data-nav-join-badge]").forEach((el) => {
       el.hidden = false;
     });
-    document.querySelectorAll('[data-nav-drawer-trigger]').forEach((el) => {
-      el.setAttribute('aria-label', label);
+    document.querySelectorAll("[data-nav-drawer-trigger]").forEach((el) => {
+      el.setAttribute("aria-label", label);
     });
-    document.querySelectorAll('[data-join-request-menu-badge]').forEach((el) => {
-      el.hidden = false;
-    });
+    document
+      .querySelectorAll("[data-join-request-menu-badge]")
+      .forEach((el) => {
+        el.hidden = false;
+      });
   } catch (err) {
-    console.warn('[UyDosh] join-request nav badge skipped', err);
+    console.warn("[UyDosh] join-request nav badge skipped", err);
   }
 }
 
@@ -352,21 +394,29 @@ async function maybeShowProfileMenuBadge() {
       if (err?.status !== 404) throw err; // 404 = no profile row yet, i.e. definitely empty
     }
     if (!isProfileEmpty(profile)) return;
-    document.querySelectorAll('[data-profile-menu-badge]').forEach((el) => { el.hidden = false; });
+    document.querySelectorAll("[data-profile-menu-badge]").forEach((el) => {
+      el.hidden = false;
+    });
   } catch (err) {
-    console.warn('[UyDosh] profile menu badge skipped', err);
+    console.warn("[UyDosh] profile menu badge skipped", err);
   }
 }
 
-const MINI_APP_SAFE_AREA_STYLE_ID = 'uydosh-mini-app-safe-area-v2';
-const MINI_APP_ZOOM_GUARD_STYLE_ID = 'uydosh-mini-app-zoom-guard';
+const MINI_APP_SAFE_AREA_STYLE_ID = "uydosh-mini-app-safe-area-v2";
+const MINI_APP_ZOOM_GUARD_STYLE_ID = "uydosh-mini-app-zoom-guard";
 // Max gap (ms) between two touchend events for the second one to count as a
 // double-tap for `preventMiniAppDoubleTapZoom`'s purposes — long enough to
 // cover a deliberate-but-quick double-tap, short enough to never eat two
 // genuinely separate taps (e.g. tapping two different buttons in a hurry).
 const MINI_APP_DOUBLE_TAP_WINDOW_MS = 350;
-const TELEGRAM_MOBILE_PLATFORMS = new Set(['ios', 'android', 'android_x']);
-const TELEGRAM_DESKTOP_PLATFORMS = new Set(['tdesktop', 'macos', 'unigram', 'weba', 'webk']);
+const TELEGRAM_MOBILE_PLATFORMS = new Set(["ios", "android", "android_x"]);
+const TELEGRAM_DESKTOP_PLATFORMS = new Set([
+  "tdesktop",
+  "macos",
+  "unigram",
+  "weba",
+  "webk",
+]);
 /** Minimum space below Telegram mobile header chrome (Close + title bar). */
 const TELEGRAM_MOBILE_HEADER_MIN_TOP = 72;
 /** Minimum left inset so brand/logo clears the floating Close control. */
@@ -375,7 +425,7 @@ const TELEGRAM_MOBILE_HEADER_MIN_LEFT = 100;
 const TELEGRAM_MOBILE_HEADER_MIN_RIGHT = 60;
 
 function normalizeTelegramPlatform(tg) {
-  return String(tg?.platform || 'unknown').toLowerCase();
+  return String(tg?.platform || "unknown").toLowerCase();
 }
 
 /** True when the Mini App runs inside Telegram iOS/Android. */
@@ -390,12 +440,12 @@ function isTelegramDesktop(tg = window.Telegram?.WebApp) {
 
 function applyTelegramPlatformClass(tg) {
   const root = document.documentElement;
-  root.classList.remove('mini-app-mobile', 'mini-app-desktop');
+  root.classList.remove("mini-app-mobile", "mini-app-desktop");
   if (!tg) return;
   if (isTelegramMobile(tg)) {
-    root.classList.add('mini-app-mobile');
+    root.classList.add("mini-app-mobile");
   } else if (isTelegramDesktop(tg)) {
-    root.classList.add('mini-app-desktop');
+    root.classList.add("mini-app-desktop");
   }
 }
 
@@ -425,47 +475,49 @@ function applyTelegramSafeAreaInsets(tg) {
     right = Math.max(right, TELEGRAM_MOBILE_HEADER_MIN_RIGHT);
   }
   applyTelegramPlatformClass(tg);
-  root.style.setProperty('--uydosh-tg-inset-top', `${top}px`);
-  root.style.setProperty('--uydosh-tg-sticky-top', `${top}px`);
-  root.style.setProperty('--uydosh-tg-filters-sticky-top', `${top}px`);
-  root.style.setProperty('--uydosh-tg-inset-right', `${right}px`);
-  root.style.setProperty('--uydosh-tg-inset-bottom', `${bottom}px`);
-  root.style.setProperty('--uydosh-tg-inset-left', `${left}px`);
+  root.style.setProperty("--uydosh-tg-inset-top", `${top}px`);
+  root.style.setProperty("--uydosh-tg-sticky-top", `${top}px`);
+  root.style.setProperty("--uydosh-tg-filters-sticky-top", `${top}px`);
+  root.style.setProperty("--uydosh-tg-inset-right", `${right}px`);
+  root.style.setProperty("--uydosh-tg-inset-bottom", `${bottom}px`);
+  root.style.setProperty("--uydosh-tg-inset-left", `${left}px`);
 }
 
 function parseMiniAppHeaderOptions(el) {
   const options = {};
-  const subtitle = el?.getAttribute('data-uydosh-header-subtitle');
+  const subtitle = el?.getAttribute("data-uydosh-header-subtitle");
   if (subtitle) options.subtitleKey = subtitle;
-  if (el?.getAttribute('data-uydosh-header-brand-link') === 'false') {
+  if (el?.getAttribute("data-uydosh-header-brand-link") === "false") {
     options.brandLink = false;
   }
-  const iconSrc = el?.getAttribute('data-uydosh-header-icon');
+  const iconSrc = el?.getAttribute("data-uydosh-header-icon");
   if (iconSrc) options.iconSrc = iconSrc;
   return options;
 }
 
-const MINI_APP_ACCOUNT_PATH = '/telegram/account.html';
-const MINI_APP_GROUPS_PATH = '/telegram/account.html?tab=groups';
-const MINI_APP_FAVORITES_PATH = '/telegram/account.html?tab=favorites';
-const MINI_APP_PROFILE_PATH = '/telegram/profile.html';
-const MINI_APP_PRIVACY_PATH = '/privacy-policy.html';
-const MINI_APP_TERMS_PATH = '/terms-of-service.html';
-const MINI_APP_DELETE_ACCOUNT_PATH = '/delete-account.html';
-const MINI_APP_CONTACT_HREF = 'mailto:uydoshtech@gmail.com';
+const MINI_APP_ACCOUNT_PATH = "/telegram/account.html";
+const MINI_APP_GROUPS_PATH = "/telegram/account.html?tab=groups";
+const MINI_APP_FAVORITES_PATH = "/telegram/account.html?tab=favorites";
+const MINI_APP_PROFILE_PATH = "/telegram/profile.html";
+const MINI_APP_PRIVACY_PATH = "/privacy-policy.html";
+const MINI_APP_TERMS_PATH = "/terms-of-service.html";
+const MINI_APP_DELETE_ACCOUNT_PATH = "/delete-account.html";
+const MINI_APP_CONTACT_HREF = "mailto:uydoshtech@gmail.com";
 // Native-app download links — App Store (production iOS) plus the same
 // App Store / APK CTAs as the public landing page (index.html). Surfaced
 // here since Mini App users otherwise have no way to find them without
 // leaving Telegram to visit the website.
-const MINI_APP_APP_STORE_HREF = 'https://apps.apple.com/uz/app/uydosh/id6767800712';
-const MINI_APP_ANDROID_APK_HREF = 'https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk';
+const MINI_APP_APP_STORE_HREF =
+  "https://apps.apple.com/uz/app/uydosh/id6767800712";
+const MINI_APP_ANDROID_APK_HREF =
+  "https://github.com/uydoshtech/uydoshtech.github.io/releases/latest/download/app-release.apk";
 
 /** Telegram profile photo of the current Mini App user, if Telegram exposed one. */
 function accountMenuAvatarUrl() {
   try {
-    return window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '';
+    return window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || "";
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -473,12 +525,15 @@ function accountMenuAvatarUrl() {
 function accountMenuDisplayName() {
   try {
     const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    if (!user) return '';
-    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+    if (!user) return "";
+    const fullName = [user.first_name, user.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
     if (fullName) return fullName;
-    return user.username ? `@${user.username}` : '';
+    return user.username ? `@${user.username}` : "";
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -492,17 +547,17 @@ function accountMenuDisplayName() {
  */
 function accountShortcutItemsHtml() {
   return `
-    <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
-    <a role="menuitem" href="${MINI_APP_HOSTELS_PATH}">${UyDosh.iconChrome('house')}<span>Хостелы</span></a>
-    <a role="menuitem" href="${MINI_APP_HOSTEL_CREATE_PATH}" data-admin-hostel-create hidden>${UyDosh.iconChrome('plus')}<span>Добавить хостел</span></a>
-    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
+    <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome("plus")}<span data-i18n="create.postListing"></span></a>
+    <a role="menuitem" href="${MINI_APP_HOSTELS_PATH}">${UyDosh.iconChrome("house")}<span>Хостелы</span></a>
+    <a role="menuitem" href="${MINI_APP_HOSTEL_CREATE_PATH}" data-admin-hostel-create hidden>${UyDosh.iconChrome("plus")}<span>Добавить хостел</span></a>
+    <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome("house")}<span data-i18n="account.tabs.mine"></span></a>
     <a role="menuitem" href="${MINI_APP_GROUPS_PATH}" data-join-request-menu-item>
-      ${UyDosh.iconChrome('users')}<span data-i18n="account.tabs.groups"></span>
+      ${UyDosh.iconChrome("users")}<span data-i18n="account.tabs.groups"></span>
       <span class="account-menu-badge" data-join-request-menu-badge hidden aria-hidden="true"></span>
     </a>
-    <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome('heartOutline')}<span data-i18n="account.tabs.favorites"></span></a>
+    <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome("heartOutline")}<span data-i18n="account.tabs.favorites"></span></a>
     <a role="menuitem" href="${MINI_APP_PROFILE_PATH}" data-profile-menu-item>
-      ${UyDosh.iconChrome('graduationCap')}<span data-i18n="profile.menuLabel"></span>
+      ${UyDosh.iconChrome("graduationCap")}<span data-i18n="profile.menuLabel"></span>
       <span class="account-menu-badge" data-profile-menu-badge hidden aria-hidden="true"></span>
     </a>
     <div class="account-menu-divider" role="separator"></div>
@@ -525,7 +580,7 @@ function accountMenuHtml() {
   const avatarUrl = accountMenuAvatarUrl();
   const avatarInner = avatarUrl
     ? `<img class="account-menu-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('has-avatar');this.remove();" />`
-    : UyDosh.iconChrome('person');
+    : UyDosh.iconChrome("person");
   return `
     <a
       class="account-menu-trigger"
@@ -533,7 +588,7 @@ function accountMenuHtml() {
       data-i18n="profile.menuLabel"
       data-i18n-attr="aria-label"
     >
-      <span class="account-menu-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
+      <span class="account-menu-avatar${avatarUrl ? " has-avatar" : ""}" aria-hidden="true">${avatarInner}</span>
     </a>`;
 }
 
@@ -556,7 +611,7 @@ function navMenuHtml() {
         data-i18n="nav.menuLabel"
         data-i18n-attr="aria-label"
       >
-        <span class="nav-menu-icon" aria-hidden="true">${UyDosh.iconChrome('menu')}</span>
+        <span class="nav-menu-icon" aria-hidden="true">${UyDosh.iconChrome("menu")}</span>
         <span class="nav-menu-join-badge" data-nav-join-badge hidden aria-hidden="true"></span>
       </button>
     </div>`;
@@ -579,22 +634,22 @@ function navDrawerHtml() {
   const avatarUrl = accountMenuAvatarUrl();
   const avatarInner = avatarUrl
     ? `<img class="nav-drawer-avatar-img" src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.parentElement.classList.remove('has-avatar');this.remove();" />`
-    : UyDosh.iconChrome('person');
+    : UyDosh.iconChrome("person");
   const displayName = accountMenuDisplayName();
   return `
     <div class="nav-drawer-backdrop" data-nav-drawer-backdrop hidden aria-hidden="true">
       <div class="nav-drawer" role="dialog" aria-modal="true" data-i18n="nav.menuLabel" data-i18n-attr="aria-label">
         <div class="nav-drawer-header">
           <a class="nav-drawer-user" role="menuitem" href="${MINI_APP_PROFILE_PATH}">
-            <span class="nav-drawer-avatar${avatarUrl ? ' has-avatar' : ''}" aria-hidden="true">${avatarInner}</span>
-            ${displayName ? `<strong class="nav-drawer-username">${escapeHtml(displayName)}</strong>` : ''}
+            <span class="nav-drawer-avatar${avatarUrl ? " has-avatar" : ""}" aria-hidden="true">${avatarInner}</span>
+            ${displayName ? `<strong class="nav-drawer-username">${escapeHtml(displayName)}</strong>` : ""}
           </a>
         </div>
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
           <div class="account-menu-divider" role="separator"></div>
-          <a role="menuitem" href="${MINI_APP_APP_STORE_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-app-store>${UyDosh.iconChrome('apple')}<span data-i18n="nav.appStore"></span></a>
-          <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome('android')}<span data-i18n="nav.androidApk"></span></a>
+          <a role="menuitem" href="${MINI_APP_APP_STORE_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-app-store>${UyDosh.iconChrome("apple")}<span data-i18n="nav.appStore"></span></a>
+          <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome("android")}<span data-i18n="nav.androidApk"></span></a>
           <div class="account-menu-divider" role="separator"></div>
           <button
             type="button"
@@ -603,15 +658,15 @@ function navDrawerHtml() {
             aria-expanded="false"
             aria-controls="nav-drawer-more-panel"
           >
-            ${UyDosh.iconChrome('moreHorizontal')}<span data-i18n="nav.more"></span>
-            <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome('chevronDown')}</span>
+            ${UyDosh.iconChrome("moreHorizontal")}<span data-i18n="nav.more"></span>
+            <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome("chevronDown")}</span>
           </button>
           <div class="nav-drawer-more-panel" id="nav-drawer-more-panel" data-nav-drawer-more-panel hidden>
-            <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome('shield')}<span data-i18n="nav.privacy"></span></a>
-            <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome('fileText')}<span data-i18n="nav.terms"></span></a>
-            <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome('mail')}<span data-i18n="nav.contact"></span></a>
+            <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome("shield")}<span data-i18n="nav.privacy"></span></a>
+            <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome("fileText")}<span data-i18n="nav.terms"></span></a>
+            <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome("mail")}<span data-i18n="nav.contact"></span></a>
             <div class="account-menu-divider" role="separator"></div>
-            <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome('trash')}<span data-i18n="nav.delete"></span></a>
+            <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome("trash")}<span data-i18n="nav.delete"></span></a>
           </div>
         </div>
       </div>
@@ -622,108 +677,121 @@ function navDrawerHtml() {
 const NAV_DRAWER_TRANSITION_MS = 220;
 
 function openNavDrawer() {
-  const backdrop = document.querySelector('[data-nav-drawer-backdrop]');
+  const backdrop = document.querySelector("[data-nav-drawer-backdrop]");
   if (!backdrop) return;
   backdrop.hidden = false;
-  backdrop.setAttribute('aria-hidden', 'false');
+  backdrop.setAttribute("aria-hidden", "false");
   // Force layout before adding the open class so the browser registers the
   // collapsed starting state and animates towards it instead of snapping.
   backdrop.getBoundingClientRect();
-  document.body.style.overflow = 'hidden';
-  requestAnimationFrame(() => backdrop.classList.add('is-open'));
-  for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
-    trigger.setAttribute('aria-expanded', 'true');
+  document.body.style.overflow = "hidden";
+  requestAnimationFrame(() => backdrop.classList.add("is-open"));
+  for (const trigger of document.querySelectorAll(
+    "[data-nav-drawer-trigger]",
+  )) {
+    trigger.setAttribute("aria-expanded", "true");
   }
 }
 
 function closeNavDrawer() {
-  const backdrop = document.querySelector('[data-nav-drawer-backdrop]');
+  const backdrop = document.querySelector("[data-nav-drawer-backdrop]");
   if (!backdrop || backdrop.hidden) return;
-  backdrop.classList.remove('is-open');
-  document.body.style.overflow = '';
+  backdrop.classList.remove("is-open");
+  document.body.style.overflow = "";
   // Keep the drawer rendered (but not interactive) until the closing
   // transition finishes, then hide it — animating `display` directly isn't possible.
   window.setTimeout(() => {
-    if (!backdrop.classList.contains('is-open')) {
+    if (!backdrop.classList.contains("is-open")) {
       backdrop.hidden = true;
-      backdrop.setAttribute('aria-hidden', 'true');
+      backdrop.setAttribute("aria-hidden", "true");
       // Reset the "More" disclosure so the drawer always reopens collapsed.
       setNavDrawerMoreExpanded(backdrop, false);
     }
   }, NAV_DRAWER_TRANSITION_MS);
-  for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
-    trigger.setAttribute('aria-expanded', 'false');
+  for (const trigger of document.querySelectorAll(
+    "[data-nav-drawer-trigger]",
+  )) {
+    trigger.setAttribute("aria-expanded", "false");
   }
 }
 
 /** Toggles the "More" (privacy/terms/contact/delete account) disclosure inside the drawer. */
 function setNavDrawerMoreExpanded(backdrop, expanded) {
-  const toggle = backdrop.querySelector('[data-nav-drawer-more-toggle]');
-  const panel = backdrop.querySelector('[data-nav-drawer-more-panel]');
+  const toggle = backdrop.querySelector("[data-nav-drawer-more-toggle]");
+  const panel = backdrop.querySelector("[data-nav-drawer-more-panel]");
   if (!toggle || !panel) return;
-  toggle.setAttribute('aria-expanded', String(expanded));
+  toggle.setAttribute("aria-expanded", String(expanded));
   panel.hidden = !expanded;
 }
 
 /** Lazily creates (once per page) and wires up the nav drawer + its hamburger trigger(s). */
 function ensureNavDrawerMounted() {
-  let backdrop = document.querySelector('[data-nav-drawer-backdrop]');
+  let backdrop = document.querySelector("[data-nav-drawer-backdrop]");
   if (!backdrop) {
-    const holder = document.createElement('div');
+    const holder = document.createElement("div");
     holder.innerHTML = navDrawerHtml();
     backdrop = holder.firstElementChild;
     document.body.appendChild(backdrop);
     applyI18n(backdrop);
     initThemeToggle();
   }
-  for (const trigger of document.querySelectorAll('[data-nav-drawer-trigger]')) {
+  for (const trigger of document.querySelectorAll(
+    "[data-nav-drawer-trigger]",
+  )) {
     if (trigger.dataset.bound) continue;
-    trigger.dataset.bound = '1';
-    trigger.addEventListener('click', (e) => {
+    trigger.dataset.bound = "1";
+    trigger.addEventListener("click", (e) => {
       e.stopPropagation();
       openNavDrawer();
     });
   }
   if (backdrop.dataset.bound) return;
-  backdrop.dataset.bound = '1';
+  backdrop.dataset.bound = "1";
   // No dedicated close button — tapping the backdrop or Escape (below) are
   // the only ways out, same as tapping outside the account-menu dropdown.
-  backdrop.addEventListener('click', (e) => {
+  backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) closeNavDrawer();
   });
   // The "More" toggle expands/collapses its own panel in place — it must not
   // also close the whole drawer, unlike every other button below.
-  backdrop.querySelector('[data-nav-drawer-more-toggle]')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const expanded = e.currentTarget.getAttribute('aria-expanded') === 'true';
-    setNavDrawerMoreExpanded(backdrop, !expanded);
-  });
+  backdrop
+    .querySelector("[data-nav-drawer-more-toggle]")
+    ?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const expanded = e.currentTarget.getAttribute("aria-expanded") === "true";
+      setNavDrawerMoreExpanded(backdrop, !expanded);
+    });
   // Nav items (`<a>`) close the drawer implicitly by navigating away; button
   // items (e.g. the theme toggle) don't navigate, so close explicitly. The
   // App Store / APK links are `<a>`s too, but `target="_blank"` / `download`
   // means this page never navigates away, so they need the same explicit
   // close as a button — plus a one-off analytics ping.
-  backdrop.querySelector('.nav-drawer')?.addEventListener('click', (e) => {
-    if (e.target.closest('[data-get-app-app-store]')) {
-      logMiniAppEvent('get_app_tap', { platform: 'ios' });
-    } else if (e.target.closest('[data-get-app-android-apk]')) {
-      logMiniAppEvent('get_app_tap', { platform: 'android' });
+  backdrop.querySelector(".nav-drawer")?.addEventListener("click", (e) => {
+    if (e.target.closest("[data-get-app-app-store]")) {
+      logMiniAppEvent("get_app_tap", { platform: "ios" });
+    } else if (e.target.closest("[data-get-app-android-apk]")) {
+      logMiniAppEvent("get_app_tap", { platform: "android" });
     }
-    if (e.target.closest('button:not([data-nav-drawer-more-toggle]), [data-get-app-app-store], [data-get-app-android-apk]')) {
+    if (
+      e.target.closest(
+        "button:not([data-nav-drawer-more-toggle]), [data-get-app-app-store], [data-get-app-android-apk]",
+      )
+    ) {
       closeNavDrawer();
     }
   });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && backdrop.classList.contains('is-open')) closeNavDrawer();
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && backdrop.classList.contains("is-open"))
+      closeNavDrawer();
   });
 }
 
 /** Shared Telegram mini-app header markup (nav menu + brand + account menu slots). */
 function miniAppHeaderHtml(options = {}) {
   const {
-    subtitleKey = 'brand.tagline',
+    subtitleKey = "brand.tagline",
     brandLink = true,
-    iconSrc = '/images/uydosh-logo.svg?v=20260715-1',
+    iconSrc = "/images/uydosh-logo.svg?v=20260715-1",
   } = options;
   const brandContent =
     `<img src="${escapeHtml(iconSrc)}" width="44" height="44" alt="UyDosh" />` +
@@ -736,11 +804,12 @@ function miniAppHeaderHtml(options = {}) {
 
 /** Inject the shared mini-app header into a <header> or mount element. */
 function mountMiniAppHeader(target, options = {}) {
-  const header = target?.tagName === 'HEADER' ? target : target?.closest?.('header');
+  const header =
+    target?.tagName === "HEADER" ? target : target?.closest?.("header");
   if (!header) return null;
   header.innerHTML = miniAppHeaderHtml(options);
-  header.classList.add('uydosh-mini-app-header');
-  header.dataset.uydoshHeaderMounted = '1';
+  header.classList.add("uydosh-mini-app-header");
+  header.dataset.uydoshHeaderMounted = "1";
   applyI18n(header);
   initThemeToggle();
   ensureNavDrawerMounted();
@@ -749,17 +818,17 @@ function mountMiniAppHeader(target, options = {}) {
 }
 
 function mountAllMiniAppHeaders() {
-  for (const el of document.querySelectorAll('[data-uydosh-mini-app-header]')) {
-    if (el.dataset.uydoshHeaderMounted === '1') continue;
+  for (const el of document.querySelectorAll("[data-uydosh-mini-app-header]")) {
+    if (el.dataset.uydoshHeaderMounted === "1") continue;
     mountMiniAppHeader(el, parseMiniAppHeaderOptions(el));
   }
 }
 
-const MINI_APP_TABBAR_STYLE_ID = 'uydosh-mini-app-tabbar-styles';
+const MINI_APP_TABBAR_STYLE_ID = "uydosh-mini-app-tabbar-styles";
 
 function shouldMountMiniAppTabbar() {
   if (!isMiniApp()) return false;
-  const path = location.pathname || '';
+  const path = location.pathname || "";
   if (/listing\.html/i.test(path)) return false;
   if (/chat\.html/i.test(path)) return false;
   if (/create\.html/i.test(path)) return false;
@@ -769,18 +838,20 @@ function shouldMountMiniAppTabbar() {
 }
 
 function miniAppTabbarActiveId() {
-  const path = location.pathname || '';
+  const path = location.pathname || "";
   const params = new URLSearchParams(location.search);
-  if (/chats\.html/i.test(path)) return 'messages';
-  if (/create\.html/i.test(path)) return 'create';
-  if (/account\.html/i.test(path)) return 'community';
-  if (/\/telegram\/?$/i.test(path) || /\/telegram\/index\.html$/i.test(path)) return 'housing';
-  return '';
+  if (/chats\.html/i.test(path)) return "messages";
+  if (/create\.html/i.test(path)) return "create";
+  if (/account\.html/i.test(path)) return "community";
+  if (/admin\.html/i.test(path)) return "admin";
+  if (/\/telegram\/?$/i.test(path) || /\/telegram\/index\.html$/i.test(path))
+    return "housing";
+  return "";
 }
 
 function ensureMiniAppTabbarStyles() {
   if (document.getElementById(MINI_APP_TABBAR_STYLE_ID)) return;
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = MINI_APP_TABBAR_STYLE_ID;
   style.textContent = `
     html.mini-app-has-tabbar {
@@ -809,6 +880,7 @@ function ensureMiniAppTabbarStyles() {
       align-items: center;
       padding: 0 6px;
     }
+    .mini-app-tabbar-items.has-admin { grid-template-columns: repeat(5, 1fr); }
     .mini-app-tab {
       appearance: none;
       position: relative;
@@ -852,32 +924,38 @@ function ensureMiniAppTabbarStyles() {
 
 function miniAppTabbarHtml(activeId) {
   const item = (id, href, icon, labelKey) => {
-    const active = id === activeId ? ' is-active' : '';
-    const badge = id === 'messages'
-      ? '<span class="mini-app-tab-badge" data-tabbar-unread hidden></span>'
-      : '';
+    const active = id === activeId ? " is-active" : "";
+    const badge =
+      id === "messages"
+        ? '<span class="mini-app-tab-badge" data-tabbar-unread hidden></span>'
+        : "";
     return `<a class="mini-app-tab${active}" href="${href}" data-tabbar-id="${id}">${badge}${UyDosh.iconChrome(icon)}<span data-i18n="${labelKey}"></span></a>`;
   };
   return `
     <nav class="mini-app-tabbar" aria-label="Main">
       <div class="mini-app-tabbar-items">
-        ${item('housing', MINI_APP_HOUSING_PATH, 'house', 'tabbar.housing')}
-        ${item('community', MINI_APP_COMMUNITY_PATH, 'users', 'tabbar.community')}
-        ${item('messages', MINI_APP_CHATS_PATH, 'chatBubbles', 'tabbar.messages')}
-        ${item('create', MINI_APP_CREATE_PATH, 'plus', 'tabbar.create')}
+        ${item("housing", MINI_APP_HOUSING_PATH, "house", "tabbar.housing")}
+        ${item("community", MINI_APP_COMMUNITY_PATH, "users", "tabbar.community")}
+        ${item("messages", MINI_APP_CHATS_PATH, "chatBubbles", "tabbar.messages")}
+        ${item("create", MINI_APP_CREATE_PATH, "plus", "tabbar.create")}
+        <a class="mini-app-tab" href="${MINI_APP_ADMIN_PATH}" data-tabbar-id="admin" data-admin-tab hidden>${UyDosh.iconChrome("shield")}<span>Управление</span></a>
       </div>
     </nav>`;
 }
 
 function mountMiniAppTabbar() {
   if (!shouldMountMiniAppTabbar()) return null;
-  if (document.querySelector('.mini-app-tabbar')) return document.querySelector('.mini-app-tabbar');
+  if (document.querySelector(".mini-app-tabbar"))
+    return document.querySelector(".mini-app-tabbar");
   ensureMiniAppTabbarStyles();
-  document.documentElement.classList.add('mini-app-has-tabbar');
-  document.body.insertAdjacentHTML('beforeend', miniAppTabbarHtml(miniAppTabbarActiveId()));
-  const bar = document.querySelector('.mini-app-tabbar');
+  document.documentElement.classList.add("mini-app-has-tabbar");
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    miniAppTabbarHtml(miniAppTabbarActiveId()),
+  );
+  const bar = document.querySelector(".mini-app-tabbar");
   applyI18n(bar);
-  if (typeof hydrateIcons === 'function') hydrateIcons(bar);
+  if (typeof hydrateIcons === "function") hydrateIcons(bar);
   refreshMiniAppTabbarUnread();
   return bar;
 }
@@ -885,22 +963,33 @@ function mountMiniAppTabbar() {
 /** Reveals staff-only operational shortcuts after the Mini App session resolves. */
 async function revealAdminHostelTools() {
   try {
-    if (!await ensureTelegramMiniAppSession() || !isAdmin()) return;
-    document.querySelectorAll('[data-admin-hostel-create]').forEach((el) => { el.hidden = false; });
-  } catch { /* The menu remains safely hidden for unauthenticated users. */ }
+    if (!(await ensureTelegramMiniAppSession()) || !isAdmin()) return;
+    document.querySelectorAll("[data-admin-hostel-create]").forEach((el) => {
+      el.hidden = false;
+    });
+    document.querySelectorAll("[data-admin-tab]").forEach((el) => {
+      el.hidden = false;
+    });
+    document
+      .querySelector(".mini-app-tabbar-items")
+      ?.classList.add("has-admin");
+  } catch {
+    /* The menu remains safely hidden for unauthenticated users. */
+  }
 }
 
 async function refreshMiniAppTabbarUnread() {
-  const badge = document.querySelector('[data-tabbar-unread]');
-  if (!badge || typeof fetchUnreadMessageCount !== 'function') return;
+  const badge = document.querySelector("[data-tabbar-unread]");
+  if (!badge || typeof fetchUnreadMessageCount !== "function") return;
   try {
     const sessionReady = await ensureTelegramMiniAppSession();
     if (!sessionReady) return;
     const payload = await fetchUnreadMessageCount();
-    const count = Number(payload?.data?.unread_count ?? payload?.unread_count) || 0;
+    const count =
+      Number(payload?.data?.unread_count ?? payload?.unread_count) || 0;
     if (count > 0) {
       badge.hidden = false;
-      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.textContent = count > 99 ? "99+" : String(count);
     } else {
       badge.hidden = true;
     }
@@ -912,20 +1001,22 @@ async function refreshMiniAppTabbarUnread() {
 /** Keep brand + account menu in one header row on phone (undo legacy relocation). */
 function syncMobileHeaderLayout() {
   if (!isTelegramMobile()) return;
-  const header = document.querySelector('header');
+  const header = document.querySelector("header");
   if (!header) return;
-  header.removeAttribute('hidden');
-  for (const row of document.querySelectorAll('.mobile-lang-row')) {
-    const menu = row.querySelector('.account-menu');
-    if (menu && !header.querySelector('.account-menu')) {
-      const nav = header.querySelector('nav');
+  header.removeAttribute("hidden");
+  for (const row of document.querySelectorAll(".mobile-lang-row")) {
+    const menu = row.querySelector(".account-menu");
+    if (menu && !header.querySelector(".account-menu")) {
+      const nav = header.querySelector("nav");
       (nav || header).appendChild(menu);
     }
     row.remove();
   }
-  const orphanMenu = document.querySelector('.feed-sticky > .account-menu, .wrap > .account-menu');
+  const orphanMenu = document.querySelector(
+    ".feed-sticky > .account-menu, .wrap > .account-menu",
+  );
   if (orphanMenu && !header.contains(orphanMenu)) {
-    const nav = header.querySelector('nav');
+    const nav = header.querySelector("nav");
     (nav || header).appendChild(orphanMenu);
   }
 }
@@ -955,7 +1046,7 @@ function syncMobileHeaderLayout() {
 function preventMiniAppDoubleTapZoom() {
   let style = document.getElementById(MINI_APP_ZOOM_GUARD_STYLE_ID);
   if (!style) {
-    style = document.createElement('style');
+    style = document.createElement("style");
     style.id = MINI_APP_ZOOM_GUARD_STYLE_ID;
     style.textContent = `
       html.mini-app, html.mini-app body {
@@ -967,24 +1058,33 @@ function preventMiniAppDoubleTapZoom() {
   if (window.__uydoshMiniAppZoomGuardBound) return;
   window.__uydoshMiniAppZoomGuardBound = true;
 
-  document.addEventListener('gesturestart', (event) => event.preventDefault());
+  document.addEventListener("gesturestart", (event) => event.preventDefault());
 
   let lastTouchEnd = 0;
-  document.addEventListener('touchend', (event) => {
-    const target = event.target;
-    const isFormControl = target?.closest?.('input, textarea, select, [contenteditable]');
-    const now = Date.now();
-    if (!isFormControl && now - lastTouchEnd <= MINI_APP_DOUBLE_TAP_WINDOW_MS) {
-      event.preventDefault();
-    }
-    lastTouchEnd = now;
-  }, { passive: false });
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const target = event.target;
+      const isFormControl = target?.closest?.(
+        "input, textarea, select, [contenteditable]",
+      );
+      const now = Date.now();
+      if (
+        !isFormControl &&
+        now - lastTouchEnd <= MINI_APP_DOUBLE_TAP_WINDOW_MS
+      ) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false },
+  );
 }
 
 function ensureMiniAppSafeAreaStyles() {
   let style = document.getElementById(MINI_APP_SAFE_AREA_STYLE_ID);
   if (!style) {
-    style = document.createElement('style');
+    style = document.createElement("style");
     style.id = MINI_APP_SAFE_AREA_STYLE_ID;
     document.head.appendChild(style);
   }
@@ -1597,15 +1697,15 @@ function ensureMiniAppSafeAreaStyles() {
   `;
 }
 
-const FIREBASE_VERSION = '11.6.0';
+const FIREBASE_VERSION = "11.6.0";
 const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyAv3KDcxTbeLCuyh7QVVk-MwxR4fnC96yM',
-  authDomain: 'uydosh-cd0fe.firebaseapp.com',
-  projectId: 'uydosh-cd0fe',
-  storageBucket: 'uydosh-cd0fe.firebasestorage.app',
-  messagingSenderId: '626930983094',
-  appId: '1:626930983094:web:0e1a429bcdf9602f580617',
-  measurementId: 'G-EH9C2VMSD8',
+  apiKey: "AIzaSyAv3KDcxTbeLCuyh7QVVk-MwxR4fnC96yM",
+  authDomain: "uydosh-cd0fe.firebaseapp.com",
+  projectId: "uydosh-cd0fe",
+  storageBucket: "uydosh-cd0fe.firebasestorage.app",
+  messagingSenderId: "626930983094",
+  appId: "1:626930983094:web:0e1a429bcdf9602f580617",
+  measurementId: "G-EH9C2VMSD8",
 };
 
 let _logEventFn = null;
@@ -1625,12 +1725,12 @@ function getTelegramAnalyticsContext() {
   const user = initDataUnsafe.user;
   const chat = initDataUnsafe.chat;
   return {
-    platform: tg?.platform || 'unknown',
-    tg_version: tg?.version || '',
-    color_scheme: tg?.colorScheme || '',
-    user_language: user?.language_code || '',
-    start_param: initDataUnsafe.start_param || '',
-    chat_type: initDataUnsafe.chat_type || '',
+    platform: tg?.platform || "unknown",
+    tg_version: tg?.version || "",
+    color_scheme: tg?.colorScheme || "",
+    user_language: user?.language_code || "",
+    start_param: initDataUnsafe.start_param || "",
+    chat_type: initDataUnsafe.chat_type || "",
     is_expanded: tg?.isExpanded ? 1 : 0,
     ...(user?.id != null ? { tg_user_id: user.id } : {}),
     ...(user?.username ? { tg_username: _clip(user.username, 100) } : {}),
@@ -1647,11 +1747,15 @@ function getTelegramAnalyticsContext() {
     ...(user?.added_to_attachment_menu != null
       ? { added_to_menu: user.added_to_attachment_menu ? 1 : 0 }
       : {}),
-    ...(initDataUnsafe.query_id ? { tg_query_id: _clip(initDataUnsafe.query_id, 100) } : {}),
+    ...(initDataUnsafe.query_id
+      ? { tg_query_id: _clip(initDataUnsafe.query_id, 100) }
+      : {}),
     ...(initDataUnsafe.chat_instance
       ? { tg_chat_instance: _clip(initDataUnsafe.chat_instance, 100) }
       : {}),
-    ...(initDataUnsafe.auth_date ? { tg_auth_date: initDataUnsafe.auth_date } : {}),
+    ...(initDataUnsafe.auth_date
+      ? { tg_auth_date: initDataUnsafe.auth_date }
+      : {}),
     ...(initDataUnsafe.can_send_after != null
       ? { tg_can_send_after: initDataUnsafe.can_send_after }
       : {}),
@@ -1670,8 +1774,10 @@ function setTelegramAnalyticsUserProperties(analyticsMod, analytics) {
     tg_last_name: _clip(user.last_name, 36),
     tg_language: _clip(user.language_code, 36),
     tg_platform: _clip(window.Telegram?.WebApp?.platform, 36),
-    ...(user.is_premium != null ? { tg_is_premium: user.is_premium ? '1' : '0' } : {}),
-    ...(user.is_bot != null ? { tg_is_bot: user.is_bot ? '1' : '0' } : {}),
+    ...(user.is_premium != null
+      ? { tg_is_premium: user.is_premium ? "1" : "0" }
+      : {}),
+    ...(user.is_bot != null ? { tg_is_bot: user.is_bot ? "1" : "0" } : {}),
   };
   for (const k of Object.keys(props)) {
     if (props[k] === undefined) delete props[k];
@@ -1695,12 +1801,15 @@ function initMiniAppAnalytics() {
         `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-analytics.js`
       );
       if (!(await analyticsMod.isSupported())) {
-        console.warn('[UyDosh] Firebase Analytics not supported in this environment');
+        console.warn(
+          "[UyDosh] Firebase Analytics not supported in this environment",
+        );
         return false;
       }
       const app = appMod.initializeApp(FIREBASE_CONFIG);
       const analytics = analyticsMod.getAnalytics(app);
-      _logEventFn = (name, params) => analyticsMod.logEvent(analytics, name, params);
+      _logEventFn = (name, params) =>
+        analyticsMod.logEvent(analytics, name, params);
 
       const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
       if (tgUserId != null) {
@@ -1708,13 +1817,13 @@ function initMiniAppAnalytics() {
       }
       setTelegramAnalyticsUserProperties(analyticsMod, analytics);
 
-      _logEventFn('app_opened', {
-        source: 'telegram_mini_app',
+      _logEventFn("app_opened", {
+        source: "telegram_mini_app",
         ...getTelegramAnalyticsContext(),
       });
       return true;
     } catch (err) {
-      console.warn('[UyDosh] Firebase Analytics init failed', err);
+      console.warn("[UyDosh] Firebase Analytics init failed", err);
       return false;
     }
   })();
@@ -1726,7 +1835,7 @@ function initMiniAppAnalytics() {
 function logMiniAppEvent(name, params) {
   if (!isMiniApp()) return;
   const payload = {
-    source: 'telegram_mini_app',
+    source: "telegram_mini_app",
     ...getTelegramAnalyticsContext(),
     ...params,
   };
@@ -1737,9 +1846,9 @@ function logMiniAppEvent(name, params) {
 
 /** Log a screen view for the Mini App feed or listing detail. */
 function logMiniAppScreen(screenName, params) {
-  logMiniAppEvent('screen_view', {
+  logMiniAppEvent("screen_view", {
     firebase_screen: screenName,
-    firebase_screen_class: 'telegram_mini_app',
+    firebase_screen_class: "telegram_mini_app",
     screen_name: screenName,
     ...params,
   });
@@ -1756,7 +1865,7 @@ function _logJsException(description, extra) {
   const key = _clip(description, 100);
   if (!key || _reportedJsErrorKeys.has(key)) return; // de-dupe repeats within this page load
   _reportedJsErrorKeys.add(key);
-  logMiniAppEvent('exception', {
+  logMiniAppEvent("exception", {
     description: key,
     fatal: false,
     page_path: _clip(location.pathname, 100),
@@ -1764,19 +1873,22 @@ function _logJsException(description, extra) {
   });
 }
 
-window.addEventListener('error', (event) => {
+window.addEventListener("error", (event) => {
   // Plain resource-load Events (img/script 404s) aren't real ErrorEvents.
   if (!(event instanceof ErrorEvent)) return;
-  _logJsException(`${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`, {
-    error_stack: _clip(event.error?.stack, 100),
-  });
+  _logJsException(
+    `${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`,
+    {
+      error_stack: _clip(event.error?.stack, 100),
+    },
+  );
 });
 
-window.addEventListener('unhandledrejection', (event) => {
+window.addEventListener("unhandledrejection", (event) => {
   const reason = event.reason;
   const message = reason instanceof Error ? reason.message : String(reason);
   _logJsException(`unhandled rejection: ${message}`, {
-    error_stack: _clip(reason instanceof Error ? reason.stack : '', 100),
+    error_stack: _clip(reason instanceof Error ? reason.stack : "", 100),
   });
 });
 
@@ -1807,10 +1919,10 @@ function redirectFromMiniAppStartParam() {
   const tg = window.Telegram?.WebApp;
   const startParam =
     tg?.initDataUnsafe?.start_param ||
-    new URLSearchParams(location.search).get('tgWebAppStartParam') ||
-    '';
+    new URLSearchParams(location.search).get("tgWebAppStartParam") ||
+    "";
   const trimmed = String(startParam).trim();
-  const sessionKey = 'uydosh:consumedStartParam';
+  const sessionKey = "uydosh:consumedStartParam";
 
   // Return leg of the App Clip room-scan flow: the clip's "Return to
   // Telegram" button deep-links here with scan_<token>. Show a blocking
@@ -1821,7 +1933,9 @@ function redirectFromMiniAppStartParam() {
     try {
       if (sessionStorage.getItem(sessionKey) === trimmed) return false;
       sessionStorage.setItem(sessionKey, trimmed);
-    } catch { /* ignore — worst case this restore fires again */ }
+    } catch {
+      /* ignore — worst case this restore fires again */
+    }
     restoreScanSessionFromStartParam(scanMatch[1]);
     return true;
   }
@@ -1831,10 +1945,12 @@ function redirectFromMiniAppStartParam() {
   try {
     if (sessionStorage.getItem(sessionKey) === trimmed) return false;
     sessionStorage.setItem(sessionKey, trimmed);
-  } catch { /* ignore — worst case this redirect fires again */ }
+  } catch {
+    /* ignore — worst case this redirect fires again */
+  }
   const extras = {};
-  if (match[2] === '_3d') extras.view = '3d';
-  if (match[2] === '_join') extras.group = 'requests';
+  if (match[2] === "_3d") extras.view = "3d";
+  if (match[2] === "_join") extras.group = "requests";
   location.replace(listingPageUrl(match[1], extras));
   return true;
 }
@@ -1848,27 +1964,29 @@ function redirectFromMiniAppStartParam() {
 function restoreScanSessionFromStartParam(token) {
   const t = (key) => window.UyDosh?.t?.(key, window.UyDosh?.getLang?.()) || key;
 
-  const overlay = document.createElement('div');
-  overlay.className = 'scan-restore-overlay';
-  const spinner = document.createElement('div');
-  spinner.className = 'loading-spinner';
-  const message = document.createElement('p');
-  message.className = 'scan-restore-message';
-  message.textContent = t('scanRestore.loading');
+  const overlay = document.createElement("div");
+  overlay.className = "scan-restore-overlay";
+  const spinner = document.createElement("div");
+  spinner.className = "loading-spinner";
+  const message = document.createElement("p");
+  message.className = "scan-restore-message";
+  message.textContent = t("scanRestore.loading");
   overlay.appendChild(spinner);
   overlay.appendChild(message);
   const attach = () => document.body.appendChild(overlay);
   if (document.body) attach();
-  else document.addEventListener('DOMContentLoaded', attach, { once: true });
+  else document.addEventListener("DOMContentLoaded", attach, { once: true });
 
   const showFallbackButton = (listingId) => {
     spinner.remove();
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'scan-restore-button';
-    button.textContent = t('scanRestore.openListing');
-    button.addEventListener('click', () => {
-      location.replace(listingId ? listingPageUrl(listingId) : MINI_APP_FEED_PATH);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "scan-restore-button";
+    button.textContent = t("scanRestore.openListing");
+    button.addEventListener("click", () => {
+      location.replace(
+        listingId ? listingPageUrl(listingId) : MINI_APP_FEED_PATH,
+      );
     });
     overlay.appendChild(button);
   };
@@ -1883,7 +2001,7 @@ function restoreScanSessionFromStartParam(token) {
       session = await window.UyDosh.fetchScanSession(token);
     } catch (err) {
       if (err?.status === 404 || err?.status === 410) {
-        message.textContent = t('scanRestore.expired');
+        message.textContent = t("scanRestore.expired");
         showFallbackButton(listingId);
         return;
       }
@@ -1893,27 +2011,29 @@ function restoreScanSessionFromStartParam(token) {
 
     if (session) {
       listingId = session.listingId ?? listingId;
-      if (session.status === 'completed') {
-        location.replace(listingPageUrl(session.listingId, { view: '3d' }));
+      if (session.status === "completed") {
+        location.replace(listingPageUrl(session.listingId, { view: "3d" }));
         return;
       }
-      if (session.status === 'failed') {
-        message.textContent = t('scanRestore.failed');
+      if (session.status === "failed") {
+        message.textContent = t("scanRestore.failed");
         showFallbackButton(listingId);
         return;
       }
-      if (session.status === 'expired') {
-        message.textContent = t('scanRestore.expired');
+      if (session.status === "expired") {
+        message.textContent = t("scanRestore.expired");
         showFallbackButton(listingId);
         return;
       }
       message.textContent = t(
-        session.status === 'processing' ? 'scanRestore.processing' : 'scanRestore.loading',
+        session.status === "processing"
+          ? "scanRestore.processing"
+          : "scanRestore.loading",
       );
     }
 
     if (Date.now() - startedAt > maxWaitMs) {
-      message.textContent = t('scanRestore.failed');
+      message.textContent = t("scanRestore.failed");
       showFallbackButton(listingId);
       return;
     }
@@ -1935,11 +2055,20 @@ function restoreScanSessionFromStartParam(token) {
  */
 function bindMiniAppInternalNav() {
   if (document.documentElement.dataset.uydoshInternalNavBound) return;
-  document.documentElement.dataset.uydoshInternalNavBound = '1';
-  document.addEventListener('click', (e) => {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const link = e.target.closest('a[href]');
-    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+  document.documentElement.dataset.uydoshInternalNavBound = "1";
+  document.addEventListener("click", (e) => {
+    if (
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    )
+      return;
+    const link = e.target.closest("a[href]");
+    if (!link || link.target === "_blank" || link.hasAttribute("download"))
+      return;
     let url;
     try {
       url = new URL(link.href, location.href);
@@ -1947,7 +2076,7 @@ function bindMiniAppInternalNav() {
       return;
     }
     if (url.origin !== location.origin) return;
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+    if (url.protocol !== "http:" && url.protocol !== "https:") return;
     e.preventDefault();
     location.href = url.href;
   });
@@ -1960,16 +2089,16 @@ function bindMiniAppInternalNav() {
  * `HapticFeedback` call by hand on every tap.
  */
 const MINI_APP_HAPTIC_TAP_SELECTOR = [
-  'button',
-  '.btn',
+  "button",
+  ".btn",
   'input[type="submit"]',
   'input[type="button"]',
-  'a[href]',
+  "a[href]",
   '[role="button"]',
   '[role="tab"]',
   '[role="switch"]',
   '[role="menuitem"]',
-].join(', ');
+].join(", ");
 
 /**
  * Resolves which `UyDosh.haptic` profile a tapped element should use.
@@ -1980,14 +2109,14 @@ const MINI_APP_HAPTIC_TAP_SELECTOR = [
  * handler already fires more specific feedback itself.
  */
 function miniAppHapticProfileFor(el) {
-  return el.closest('[data-haptic]')?.getAttribute('data-haptic') || 'light';
+  return el.closest("[data-haptic]")?.getAttribute("data-haptic") || "light";
 }
 
 function fireMiniAppHapticProfile(profile) {
-  if (profile === 'none') return;
+  if (profile === "none") return;
   const haptic = window.UyDosh?.haptic;
   const fn = haptic?.[profile];
-  (typeof fn === 'function' ? fn : haptic?.light)?.();
+  (typeof fn === "function" ? fn : haptic?.light)?.();
 }
 
 /**
@@ -2000,13 +2129,22 @@ function fireMiniAppHapticProfile(profile) {
  */
 function bindMiniAppHapticFeedback() {
   if (document.documentElement.dataset.uydoshHapticBound) return;
-  document.documentElement.dataset.uydoshHapticBound = '1';
-  document.addEventListener('click', (e) => {
-    if (e.defaultPrevented) return;
-    const target = e.target.closest?.(MINI_APP_HAPTIC_TAP_SELECTOR);
-    if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true') return;
-    fireMiniAppHapticProfile(miniAppHapticProfileFor(target));
-  }, true);
+  document.documentElement.dataset.uydoshHapticBound = "1";
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (e.defaultPrevented) return;
+      const target = e.target.closest?.(MINI_APP_HAPTIC_TAP_SELECTOR);
+      if (
+        !target ||
+        target.disabled ||
+        target.getAttribute("aria-disabled") === "true"
+      )
+        return;
+      fireMiniAppHapticProfile(miniAppHapticProfileFor(target));
+    },
+    true,
+  );
 }
 
 // --- Single active Mini App instance: blocking "session revoked" screen ---
@@ -2015,11 +2153,12 @@ function bindMiniAppHapticFeedback() {
 // by another one opened for the same Telegram user (either pushed instantly
 // over the Socket.IO channel, or discovered on the next ~10s heartbeat).
 
-const MINI_APP_SESSION_REVOKED_STYLE_ID = 'uydosh-mini-app-session-revoked-styles';
+const MINI_APP_SESSION_REVOKED_STYLE_ID =
+  "uydosh-mini-app-session-revoked-styles";
 
 function ensureMiniAppSessionRevokedStyles() {
   if (document.getElementById(MINI_APP_SESSION_REVOKED_STYLE_ID)) return;
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = MINI_APP_SESSION_REVOKED_STYLE_ID;
   style.textContent = `
     .mini-app-session-revoked-overlay {
@@ -2113,11 +2252,11 @@ function ensureMiniAppSessionRevokedStyles() {
 
 /** Locale-aware "HH:MM" for the new session's start time, matching `formatPublicationDate`'s locale mapping. */
 function formatMiniAppSessionRevokedTime(startedAt, lang) {
-  if (!startedAt) return '';
+  if (!startedAt) return "";
   const d = new Date(startedAt);
-  if (Number.isNaN(d.getTime())) return '';
-  const locale = lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-US' : 'uz-UZ';
-  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  if (Number.isNaN(d.getTime())) return "";
+  const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "uz-UZ";
+  return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 /**
@@ -2134,49 +2273,56 @@ function formatMiniAppSessionRevokedTime(startedAt, lang) {
  * as a small security-style hint (e.g. "New session: iPhone/iPad • 14:32").
  */
 function showMiniAppSessionRevokedScreen(_reason, details = {}) {
-  if (document.querySelector('.mini-app-session-revoked-overlay')) return;
+  if (document.querySelector(".mini-app-session-revoked-overlay")) return;
   ensureMiniAppSessionRevokedStyles();
   const lang = getLang();
-  const device = typeof details?.device === 'string' ? details.device.trim() : '';
+  const device =
+    typeof details?.device === "string" ? details.device.trim() : "";
   const time = formatMiniAppSessionRevokedTime(details?.startedAt, lang);
-  const info = [device, time].filter(Boolean).join(' • ');
+  const info = [device, time].filter(Boolean).join(" • ");
   const deviceLineHtml = info
-    ? `<p class="mini-app-session-revoked-device">${escapeHtml(t('session.revokedDeviceLine', lang).replace('{info}', info))}</p>`
-    : '';
-  const overlay = document.createElement('div');
-  overlay.className = 'mini-app-session-revoked-overlay';
-  overlay.setAttribute('role', 'alertdialog');
-  overlay.setAttribute('aria-modal', 'true');
+    ? `<p class="mini-app-session-revoked-device">${escapeHtml(t("session.revokedDeviceLine", lang).replace("{info}", info))}</p>`
+    : "";
+  const overlay = document.createElement("div");
+  overlay.className = "mini-app-session-revoked-overlay";
+  overlay.setAttribute("role", "alertdialog");
+  overlay.setAttribute("aria-modal", "true");
   overlay.innerHTML = `
     <div class="mini-app-session-revoked-card">
       <span class="mini-app-session-revoked-icon" aria-hidden="true"><img src="/images/uydosh-logo.svg?v=20260715-1" alt="" /></span>
-      <h2 class="mini-app-session-revoked-title">${escapeHtml(t('session.revokedTitle', lang))}</h2>
-      <p class="mini-app-session-revoked-message">${escapeHtml(t('session.revokedMessage', lang))}</p>
+      <h2 class="mini-app-session-revoked-title">${escapeHtml(t("session.revokedTitle", lang))}</h2>
+      <p class="mini-app-session-revoked-message">${escapeHtml(t("session.revokedMessage", lang))}</p>
       ${deviceLineHtml}
       <div class="mini-app-session-revoked-actions">
-        <button type="button" class="mini-app-session-revoked-refresh" data-session-revoked-refresh>${escapeHtml(t('session.revokedRefresh', lang))}</button>
-        <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t('session.revokedClose', lang))}</button>
+        <button type="button" class="mini-app-session-revoked-refresh" data-session-revoked-refresh>${escapeHtml(t("session.revokedRefresh", lang))}</button>
+        <button type="button" class="mini-app-session-revoked-close" data-session-revoked-close>${escapeHtml(t("session.revokedClose", lang))}</button>
       </div>
     </div>
   `;
   document.body.appendChild(overlay);
-  overlay.querySelector('[data-session-revoked-refresh]')?.addEventListener('click', () => {
-    // Covers the case where this instance was revoked stale (e.g. the other
-    // session already ended) — reloading re-runs `startTelegramMiniAppSession`
-    // and drops back into the normal app if this is once again the sole active
-    // instance, instead of forcing the user all the way out via `close()`.
-    window.location.reload();
-  });
-  overlay.querySelector('[data-session-revoked-close]')?.addEventListener('click', () => {
-    try {
-      if (typeof window.Telegram?.WebApp?.close === 'function') {
-        window.Telegram.WebApp.close();
-        return;
+  overlay
+    .querySelector("[data-session-revoked-refresh]")
+    ?.addEventListener("click", () => {
+      // Covers the case where this instance was revoked stale (e.g. the other
+      // session already ended) — reloading re-runs `startTelegramMiniAppSession`
+      // and drops back into the normal app if this is once again the sole active
+      // instance, instead of forcing the user all the way out via `close()`.
+      window.location.reload();
+    });
+  overlay
+    .querySelector("[data-session-revoked-close]")
+    ?.addEventListener("click", () => {
+      try {
+        if (typeof window.Telegram?.WebApp?.close === "function") {
+          window.Telegram.WebApp.close();
+          return;
+        }
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
-    // Outside Telegram (desktop browser testing) there's nothing to "close" —
-    // leave the blocking overlay up, which already prevents further interaction.
-  });
+      // Outside Telegram (desktop browser testing) there's nothing to "close" —
+      // leave the blocking overlay up, which already prevents further interaction.
+    });
 }
 
 /** Call on mini-app pages after telegram-web-app.js is loaded. */
@@ -2185,27 +2331,45 @@ function initTelegramMiniApp() {
   // in-app navigation (links without `?lang=`) keeps using it too.
   if (isMiniAppPage()) {
     try {
-      const urlLang = new URLSearchParams(location.search).get('lang');
+      const urlLang = new URLSearchParams(location.search).get("lang");
       if (urlLang && LANGS.includes(urlLang)) setLang(urlLang);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   const tg = window.Telegram?.WebApp;
   if (tg) {
     getTelegramInitData();
-    try { tg.ready(); } catch { /* ignore */ }
-    try { tg.expand(); } catch { /* ignore */ }
+    try {
+      tg.ready();
+    } catch {
+      /* ignore */
+    }
+    try {
+      tg.expand();
+    } catch {
+      /* ignore */
+    }
     // Block content-area swipe-down so the Mini App doesn't collapse while
     // scrolling / dragging maps. Users still close via the header ✕ (or by
     // swiping the header itself). No-op on clients < Bot API 7.7.
     // Same call as makon3d.js `initTelegramChrome`.
-    try { tg.disableVerticalSwipes?.(); } catch { /* ignore */ }
+    try {
+      tg.disableVerticalSwipes?.();
+    } catch {
+      /* ignore */
+    }
     // Telegram doesn't reset the header BackButton to match whatever page
     // you've navigated to — it can carry over "shown" from wherever you came
     // from (e.g. back from a listing to the feed). Default it off here, on
     // every page, since only specific pages need it: `listing.html` and
     // `telegram-create.js` (see `updateTelegramBackButton`) explicitly show
     // it themselves, after this runs.
-    try { tg.BackButton?.hide(); } catch { /* ignore */ }
+    try {
+      tg.BackButton?.hide();
+    } catch {
+      /* ignore */
+    }
     if (redirectFromMiniAppStartParam()) return true;
     // Single active Mini App instance per Telegram user: register this launch,
     // then start the ~10s heartbeat / realtime socket that detect being
@@ -2222,28 +2386,28 @@ function initTelegramMiniApp() {
     applyStoredManualTheme();
     applyHeaderBgTheme();
     applyTelegramSafeAreaInsets(tg);
-    if (typeof tg.onEvent === 'function') {
-      tg.onEvent('themeChanged', () => {
+    if (typeof tg.onEvent === "function") {
+      tg.onEvent("themeChanged", () => {
         applyTelegramTheme(tg);
         applyStoredManualTheme();
         // Keeps the header toggle's icon/label correct if Telegram's theme flips while a user
         // has no manual override set — currentUiTheme() falls back to tg.colorScheme (see
         // uydosh-map-pins.js), manual overrides still win regardless of this event firing.
-        document.dispatchEvent(new CustomEvent('uydosh:themechange'));
+        document.dispatchEvent(new CustomEvent("uydosh:themechange"));
       });
-      tg.onEvent('contentSafeAreaChanged', () => {
+      tg.onEvent("contentSafeAreaChanged", () => {
         applyTelegramSafeAreaInsets(tg);
         syncMobileHeaderLayout();
         reflowActiveMaps();
         window.UyDoshFeedMap?.scheduleSyncFeedMapPanelHeight?.();
       });
-      tg.onEvent('safeAreaChanged', () => {
+      tg.onEvent("safeAreaChanged", () => {
         applyTelegramSafeAreaInsets(tg);
         syncMobileHeaderLayout();
         reflowActiveMaps();
         window.UyDoshFeedMap?.scheduleSyncFeedMapPanelHeight?.();
       });
-      tg.onEvent('viewportChanged', () => {
+      tg.onEvent("viewportChanged", () => {
         applyTelegramSafeAreaInsets(tg);
         syncMobileHeaderLayout();
         reflowActiveMaps();
@@ -2260,7 +2424,7 @@ function initTelegramMiniApp() {
     }, 150);
   }
   if (!isMiniApp()) return false;
-  document.documentElement.classList.add('mini-app');
+  document.documentElement.classList.add("mini-app");
   preventMiniAppDoubleTapZoom();
   applyStoredManualTheme();
   applyHeaderBgTheme();
@@ -2276,11 +2440,11 @@ function initTelegramMiniApp() {
   // once the profile fetch resolves, if the user hasn't filled anything in yet.
   maybeShowProfileMenuBadge();
   maybeShowJoinRequestNavBadge();
-  for (const el of document.querySelectorAll('[data-hide-in-mini-app]')) {
-    el.setAttribute('hidden', '');
+  for (const el of document.querySelectorAll("[data-hide-in-mini-app]")) {
+    el.setAttribute("hidden", "");
   }
-  for (const el of document.querySelectorAll('[data-mini-app-home]')) {
-    el.setAttribute('href', MINI_APP_FEED_PATH);
+  for (const el of document.querySelectorAll("[data-mini-app-home]")) {
+    el.setAttribute("href", MINI_APP_FEED_PATH);
   }
   // Custom back links are hidden in Mini App — Telegram header BackButton handles navigation.
   // for (const el of document.querySelectorAll('[data-mini-app-back]')) {
@@ -2288,13 +2452,13 @@ function initTelegramMiniApp() {
   // }
   initMiniAppAnalytics().then((ok) => {
     if (!ok) return;
-    const path = location.pathname || '';
+    const path = location.pathname || "";
     if (/create\.html/i.test(path) || /\/telegram\/create\/?$/i.test(path)) {
-      logMiniAppScreen('telegram_create_listing');
+      logMiniAppScreen("telegram_create_listing");
     } else if (/chat\.html/i.test(path)) {
-      logMiniAppScreen('telegram_group_chat');
+      logMiniAppScreen("telegram_group_chat");
     } else if (!/listing\.html/i.test(path)) {
-      logMiniAppScreen('telegram_feed');
+      logMiniAppScreen("telegram_feed");
     }
   });
   return true;

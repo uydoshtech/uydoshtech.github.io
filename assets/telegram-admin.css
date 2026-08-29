@@ -1,0 +1,47 @@
+.admin-page {
+  padding: 18px 20px 32px;
+}
+.admin-page h1 {
+  margin: 0 0 18px;
+  font-size: 24px;
+}
+.admin-page[hidden] {
+  display: none;
+}
+.admin-page #admin-tools {
+  display: grid;
+  gap: 10px;
+}
+.admin-page #admin-tools[hidden] {
+  display: none;
+}
+.admin-action {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--fg);
+  text-decoration: none;
+}
+.admin-action > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+  font-size: 25px;
+}
+.admin-action b,
+.admin-action small {
+  display: block;
+}
+.admin-action small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+    />
+    <title>UyDosh — Управление</title>
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script src="../assets/theme-init.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <link rel="stylesheet" href="../assets/telegram-shared.css" />
+    <link rel="stylesheet" href="../assets/telegram-admin.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header data-uydosh-mini-app-header></header>
+      <main class="admin-page">
+        <h1>Управление</h1>
+        <div id="admin-access" class="status">Проверяем доступ…</div>
+        <div id="admin-tools" hidden>
+          <a class="admin-action" href="/telegram/hostel-create.html"
+            ><span aria-hidden="true">＋</span
+            ><span
+              ><b>Добавить хостел</b
+              ><small>Создать карточку и указать свободные места</small></span
+            ></a
+          ><a class="admin-action" href="/telegram/hostels.html"
+            ><span aria-hidden="true">⌂</span
+            ><span><b>Хостелы</b><small>Открыть каталог</small></span></a
+          >
+        </div>
+      </main>
+    </div>
+    <script src="../assets/uydosh-core.js"></script>
+    <script src="../assets/uydosh-i18n.js"></script>
+    <script src="../assets/uydosh-api.js" defer></script>
+    <script src="../assets/uydosh-icons.js" defer></script>
+    <script src="../assets/uydosh-mini-app.js" defer></script>
+    <script src="../assets/telegram-admin.js" defer></script>
+  </body>
+</html>
