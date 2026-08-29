@@ -16,6 +16,16 @@ html.mini-app body.chat-page {
   padding-bottom: 0 !important;
 }
 
+/* Chat has no branded <header>, so the peer row must clear Telegram's
+   Mini App chrome (Back / title / menu). Desktop often reports 0 inset;
+   phones do not — without this the names/avatars sit under that bar. */
+html.mini-app body.chat-page .wrap.chat-wrap {
+  padding-top: var(--uydosh-tg-inset-top, 0px);
+}
+html.mini-app-mobile body.chat-page .wrap.chat-wrap {
+  padding-top: var(--uydosh-tg-inset-top, 72px);
+}
+
 .chat-wrap {
   flex: 1;
   display: flex;
@@ -30,6 +40,8 @@ html.mini-app body.chat-page {
   gap: 10px;
   padding: 6px 0 10px;
   min-height: 48px;
+  flex-shrink: 0;
+  background: var(--bg, #061525);
 }
 .chat-peer-header[hidden] {
   display: none !important;
