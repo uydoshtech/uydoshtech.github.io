@@ -51,18 +51,31 @@
         return target > 0 && Number(ctx.group_spots_open) <= 0;
       }
 
-      function groupChatButtonHtml(listing, ctx, lang) {
-        if (!UyDosh.isMiniApp() || !ctx) return '';
+      function listingGroupChatCta(listing) {
+        const ctx = listingGroupContext(listing);
+        if (!UyDosh.isMiniApp() || !ctx) return null;
         const memberCount = Number(ctx.group_member_count) || 0;
-        if (memberCount < 2) return '';
+        if (memberCount < 2) return null;
         const conversationId = ctx.group_conversation_id;
         const canOpen = Boolean(ctx.group_progress?.can_open_group_chat)
           || groupActions(ctx).includes('open_group_chat');
-        if (!conversationId || !canOpen) return '';
-        const href = UyDosh.escapeHtml(UyDosh.chatPageUrl(conversationId, {
-          backTo: UyDosh.listingPageUrl(listing.id),
-        }));
-        return `<a class="btn primary" href="${href}" data-group-open-chat>${UyDosh.escapeHtml(UyDosh.t('detail.group.openChat', lang))}</a>`;
+        if (!conversationId || !canOpen) return null;
+        const lang = UyDosh.getLang();
+        return {
+          href: UyDosh.chatPageUrl(conversationId, {
+            backTo: UyDosh.listingPageUrl(listing.id),
+          }),
+          label: UyDosh.t('detail.group.openChat', lang),
+        };
+      }
+
+      function groupChatButtonHtml(listing, ctx, lang) {
+        // Owner CTA lives in the sticky footer (see updateDetailContactBar) so
+        // they don't also get a Telegram-to-self button there.
+        if (!ctx || ctx.is_owner) return '';
+        const cta = listingGroupChatCta(listing);
+        if (!cta) return '';
+        return `<a class="btn primary" href="${UyDosh.escapeHtml(cta.href)}" data-group-open-chat>${UyDosh.escapeHtml(cta.label)}</a>`;
       }
 
       function groupSectionHtml(listing) {
@@ -106,9 +119,7 @@
         } else if (ctx.is_owner) {
           body = `
             ${chatCta}
-            <div class="group-requests" data-group-requests>
-              <p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.requestsEmpty', lang))}</p>
-            </div>
+            <div class="group-requests" data-group-requests hidden></div>
           `;
         } else if (ctx.is_member) {
           body = `
@@ -191,13 +202,8 @@
         const formed = Boolean(rootEl.querySelector('[data-group-section][data-group-formed]'));
         const rows = Array.isArray(requests) ? requests : [];
         if (!rows.length) {
-          if (formed) {
-            host.innerHTML = '';
-            host.hidden = true;
-            return;
-          }
-          host.hidden = false;
-          host.innerHTML = `<p class="group-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.group.requestsEmpty'))}</p>`;
+          host.innerHTML = '';
+          host.hidden = true;
           return;
         }
         host.hidden = false;
@@ -225,6 +231,13 @@
         }
         bindGroupSection();
         await Promise.all([loadGroupJoinRequests(), loadGroupMemberAvatars()]);
+        if (typeof updateDetailContactBar === 'function') {
+          const listing = state.listing;
+          const viewerId = UyDosh.getSessionUserId?.();
+          const ownerId = Number(listing?.user_id ?? listing?.user?.id);
+          const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+          updateDetailContactBar(listing, { isOwner });
+        }
       }
 
       async function handleOwnerJoinDecision(requestId, action, card) {
