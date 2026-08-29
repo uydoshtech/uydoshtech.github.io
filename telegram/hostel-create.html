@@ -51,10 +51,13 @@
                 placeholder="(90)-123-45-67"
               /></div></label
           ><label
-            >Telegram ID<input
+            >Telegram<input
               name="telegram_username"
-              inputmode="numeric"
-              placeholder="Telegram user ID"
+              type="text"
+              autocomplete="username"
+              autocapitalize="none"
+              maxlength="33"
+              placeholder="@username"
           /></label>
           <fieldset class="gender-policy">
             <legend>Политика размещения</legend>
@@ -152,7 +155,7 @@
     <script src="../assets/uydosh-map-pins.js?v=20260830-1" defer></script>
     <script src="../assets/uydosh-mini-app.js" defer></script>
     <script
-      src="../assets/telegram-hostel-create.js?v=20260830-1"
+      src="../assets/telegram-hostel-create.js?v=20260830-2"
       defer
     ></script>
   </body>

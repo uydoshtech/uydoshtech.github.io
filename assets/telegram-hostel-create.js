@@ -5,23 +5,22 @@ const form = document.getElementById("form"),
   template = document.getElementById("unit"),
   error = document.getElementById("error");
 let hostelCoordinates = null;
-function telegramUserId() {
-  const direct = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+function telegramUsername() {
+  const direct = window.Telegram?.WebApp?.initDataUnsafe?.user?.username;
   if (direct) return String(direct);
   try {
     const raw = UyDosh.getTelegramInitData?.() || "";
     const user = new URLSearchParams(raw).get("user");
-    const id = user ? JSON.parse(user)?.id : null;
-    return id ? String(id) : "";
+    return user ? String(JSON.parse(user)?.username || "") : "";
   } catch (_) {
     return "";
   }
 }
-function prefillTelegramUserId() {
+function prefillTelegramUsername() {
   const field = form.elements.telegram_username;
-  const id = telegramUserId();
-  if (id && !field.value) field.value = id;
-  return Boolean(id);
+  const username = telegramUsername().replace(/^@+/, "");
+  if (username && !field.value) field.value = `@${username}`;
+  return Boolean(username);
 }
 function addUnit({ reveal = false } = {}) {
   const item = template.content.cloneNode(true);
@@ -47,7 +46,7 @@ async function boot() {
   // POST /admin/hostels.
   access.hidden = true;
   form.hidden = false;
-  prefillTelegramUserId();
+  prefillTelegramUsername();
   UyDosh.ensureTelegramMiniAppSession().then((ready) => {
     if (ready && UyDosh.isAdmin()) {
       document
@@ -58,12 +57,12 @@ async function boot() {
 }
 boot();
 // Telegram's WebApp object may arrive slightly after this deferred script.
-// Retry briefly without overwriting an ID the operator has edited manually.
-let telegramIdPrefillAttempts = 0;
-const telegramIdPrefillTimer = setInterval(() => {
-  telegramIdPrefillAttempts += 1;
-  if (prefillTelegramUserId() || telegramIdPrefillAttempts >= 20) {
-    clearInterval(telegramIdPrefillTimer);
+// Retry briefly without overwriting a username the operator has edited manually.
+let telegramUsernamePrefillAttempts = 0;
+const telegramUsernamePrefillTimer = setInterval(() => {
+  telegramUsernamePrefillAttempts += 1;
+  if (prefillTelegramUsername() || telegramUsernamePrefillAttempts >= 20) {
+    clearInterval(telegramUsernamePrefillTimer);
   }
 }, 250);
 document.getElementById("page-back").addEventListener("click", () => {
@@ -138,7 +137,8 @@ form.addEventListener("submit", async (e) => {
     phone: phoneInput.value.replace(/\D/g, "")
       ? `+998${phoneInput.value.replace(/\D/g, "")}`
       : null,
-    telegram_username: data.get("telegram_username") || null,
+    telegram_username:
+      String(data.get("telegram_username") || "").replace(/^@+/, "") || null,
     gender_policy: data.get("gender_policy"),
     description_ru: data.get("description_ru"),
     status: "active",
