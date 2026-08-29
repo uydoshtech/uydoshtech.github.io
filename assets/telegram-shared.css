@@ -154,20 +154,6 @@ a {
   height: 14px;
   display: block;
 }
-.mini-app-header-back {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--fg);
-  padding: 0 2px;
-  font: inherit;
-  font-size: 42px;
-  line-height: 1;
-  cursor: pointer;
-}
-.mini-app-header-back:active {
-  opacity: 0.65;
-}
 /*
  * Some chips (e.g. the create-listing "search area" Metro/District toggle)
  * use the shared stroke-based `.icon` glyphs from uydosh-icons.js

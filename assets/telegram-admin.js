@@ -1,4 +1,10 @@
 UyDosh.initTelegramMiniApp();
+const telegramBackButton = window.Telegram?.WebApp?.BackButton;
+telegramBackButton?.show();
+telegramBackButton?.onClick(() => {
+  if (window.history.length > 1) window.history.back();
+  else location.href = "/telegram/";
+});
 // Admin HTML includes a visual tab-bar fallback so it is available even while
 // a Telegram WebView is still serving a cached mini-app bootstrap script.
 UyDosh.hydrateIcons?.(document.querySelector(".mini-app-tabbar"));

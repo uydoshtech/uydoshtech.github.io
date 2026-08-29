@@ -1,4 +1,10 @@
 UyDosh.initTelegramMiniApp();
+const telegramBackButton = window.Telegram?.WebApp?.BackButton;
+telegramBackButton?.show();
+telegramBackButton?.onClick(() => {
+  if (window.history.length > 1) window.history.back();
+  else location.href = "/telegram/hostels.html";
+});
 const form = document.getElementById("form"),
   access = document.getElementById("access"),
   units = document.getElementById("units"),

@@ -1,4 +1,10 @@
 UyDosh.initTelegramMiniApp();
+const telegramBackButton = window.Telegram?.WebApp?.BackButton;
+telegramBackButton?.show();
+telegramBackButton?.onClick(() => {
+  if (window.history.length > 1) window.history.back();
+  else location.href = "/telegram/";
+});
 const money = (n) =>
   new Intl.NumberFormat("ru-RU").format(Number(n || 0)) + " сум/мес";
 const escape = (v) => UyDosh.escapeHtml(String(v ?? ""));
