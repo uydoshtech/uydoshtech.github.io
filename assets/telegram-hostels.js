@@ -12,6 +12,31 @@ back.addEventListener("click", () => {
 const money = (n) =>
   new Intl.NumberFormat("ru-RU").format(Number(n || 0)) + " сум/мес";
 const escape = (v) => UyDosh.escapeHtml(String(v ?? ""));
+const hostelFilters = [
+  { gender: "", label: "Все", modifier: "all" },
+  { gender: "male", label: "Мужские", modifier: "male" },
+  { gender: "female", label: "Женские", modifier: "female" },
+  { gender: "mixed", label: "Смешанные", modifier: "mixed" },
+];
+
+function selectedHostelFilter() {
+  const picker = document.querySelector(".hostel-filter-picker");
+  return (
+    hostelFilters.find((filter) => filter.gender === picker?.dataset.gender) ||
+    hostelFilters[0]
+  );
+}
+
+function applyHostelFilter(filter) {
+  const picker = document.querySelector(".hostel-filter-picker");
+  if (!picker) return;
+  picker.dataset.gender = filter.gender;
+  picker.className = `hostel-filter-picker hostel-filter-picker--${filter.modifier}`;
+  picker.setAttribute("aria-label", `Тип размещения: ${filter.label}`);
+  const label = picker.querySelector(".hostel-filter-picker-label");
+  if (label) label.textContent = filter.label;
+}
+
 function photo(hostel) {
   return hostel.photos?.[0]?.photo_url || "";
 }
@@ -21,8 +46,7 @@ async function listHostels() {
   const status = document.getElementById("status");
   status.textContent = "Загрузка…";
   try {
-    const gender = document.querySelector(".hostel-filter-pill.active")?.dataset
-      .gender;
+    const gender = selectedHostelFilter().gender;
     const hostels = await UyDosh.fetchHostels({ gender });
     target.innerHTML =
       hostels
@@ -78,17 +102,17 @@ async function detailHostel() {
     root.innerHTML = '<div class="status">Не удалось загрузить хостел</div>';
   }
 }
-document.querySelectorAll(".hostel-filter-pill").forEach((button) => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".hostel-filter-pill").forEach((pill) => {
-      pill.classList.remove("active");
-      pill.setAttribute("aria-pressed", "false");
-    });
-    button.classList.add("active");
-    button.setAttribute("aria-pressed", "true");
+document
+  .querySelector(".hostel-filter-picker")
+  ?.addEventListener("click", () => {
+    const current = selectedHostelFilter();
+    const next =
+      hostelFilters[
+        (hostelFilters.indexOf(current) + 1) % hostelFilters.length
+      ];
+    applyHostelFilter(next);
     UyDosh.haptic?.selection?.();
     listHostels();
   });
-});
 listHostels();
 detailHostel();
