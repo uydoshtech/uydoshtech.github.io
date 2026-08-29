@@ -45,7 +45,17 @@ const universityFieldEl = document.getElementById('university-field');
 const universitySearchEl = document.getElementById('university-search');
 const universityListEl = document.getElementById('university-list');
 const aboutMeInputEl = document.getElementById('about-me-input');
+const nameInputEl = document.getElementById('name-input');
 const lifestyleFieldsEl = document.getElementById('lifestyle-fields');
+const lookingGenderChipsEl = document.getElementById('looking-gender-chips');
+const lookingOverlapChipsEl = document.getElementById('looking-overlap-chips');
+const lookingDealbreakerChipsEl = document.getElementById('looking-dealbreaker-chips');
+const lookingPriorityChipsEl = document.getElementById('looking-priority-chips');
+const birthYearInputEl = document.getElementById('birth-year-input');
+const prefAgeMinInputEl = document.getElementById('pref-age-min-input');
+const prefAgeMaxInputEl = document.getElementById('pref-age-max-input');
+const budgetMinInputEl = document.getElementById('budget-min-input');
+const budgetMaxInputEl = document.getElementById('budget-max-input');
 
 const saveBtn = document.getElementById('save-btn');
 const saveBtnLabel = document.getElementById('save-btn-label');
@@ -273,14 +283,105 @@ const state = {
   isStudent: null,
   selectedUniversityId: null,
   searchQuery: '',
+  displayName: '',
   // Guards the empty-result haptic burst in `renderUniversityList` so it fires once per
   // "typed into a no-match query" rather than again on every subsequent keystroke while
   // the result set stays empty.
   universitySearchEmptyHapticFired: false,
   // Keyed by LIFESTYLE_FIELDS[].key (snake_case, matching the API body directly).
   lifestyle: Object.fromEntries(LIFESTYLE_FIELDS.map((f) => [f.key, null])),
+  looking: {
+    prefRoommateGender: null,
+    prefBudgetOverlapRequired: null,
+    dealbreakers: new Set(),
+    topPriorities: new Set(),
+  },
   saving: false,
 };
+
+const MAX_TOP_PRIORITIES = 3;
+const LOOKING_GENDER_OPTIONS = [
+  { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+  { value: 'any', labelKey: 'profile.looking.anyGender' },
+  { value: 'male', labelKey: 'profile.genderMale' },
+  { value: 'female', labelKey: 'profile.genderFemale' },
+];
+const LOOKING_OVERLAP_OPTIONS = [
+  { value: null, labelKey: 'profile.lifestyle.notSpecified' },
+  { value: true, labelKey: 'profile.studentYes' },
+  { value: false, labelKey: 'profile.studentNo' },
+];
+const DEALBREAKER_SLUGS = ['smoking', 'pets', 'cleanliness', 'noise', 'gender', 'age', 'budget', 'sleep'];
+const PRIORITY_SLUGS = ['sleep', 'smoking', 'pets', 'cleanliness', 'noise', 'sociability', 'drinking', 'gender', 'age', 'budget'];
+const MATCH_DIM_LABEL = {
+  sleep: 'profile.looking.dimSleep',
+  smoking: 'profile.lifestyle.smokingPreference',
+  pets: 'profile.lifestyle.petsPreference',
+  cleanliness: 'profile.lifestyle.cleanliness',
+  noise: 'profile.lifestyle.noiseLevel',
+  sociability: 'profile.lifestyle.sociability',
+  drinking: 'profile.lifestyle.alcoholPreference',
+  gender: 'compat.dimGender',
+  age: 'compat.dimAge',
+  budget: 'compat.dimBudget',
+};
+
+function slugSetFrom(raw) {
+  if (!Array.isArray(raw)) return new Set();
+  return new Set(raw.filter((s) => typeof s === 'string' && s));
+}
+
+function optionalIntFromInput(el) {
+  const raw = String(el?.value || '').trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return NaN;
+  return n;
+}
+
+function intOrEmpty(value) {
+  return value == null || value === '' ? '' : String(value);
+}
+
+function lookingChipHtml(opts, current, attrName) {
+  return opts.map((opt, i) => UyDosh.chipButtonHtml({
+    attrs: { [attrName]: i },
+    pressed: current === opt.value,
+    label: UyDosh.t(opt.labelKey),
+    labelWrap: false,
+  })).join('');
+}
+
+function lookingMultiChipHtml(slugs, selected) {
+  return slugs.map((slug) => UyDosh.chipButtonHtml({
+    attrs: { 'data-match-slug': slug },
+    pressed: selected.has(slug),
+    label: UyDosh.t(MATCH_DIM_LABEL[slug] || slug),
+    labelWrap: false,
+  })).join('');
+}
+
+function renderLookingFor() {
+  if (!lookingGenderChipsEl) return;
+  lookingGenderChipsEl.innerHTML = lookingChipHtml(
+    LOOKING_GENDER_OPTIONS,
+    state.looking.prefRoommateGender,
+    'data-looking-gender',
+  );
+  lookingOverlapChipsEl.innerHTML = lookingChipHtml(
+    LOOKING_OVERLAP_OPTIONS,
+    state.looking.prefBudgetOverlapRequired,
+    'data-looking-overlap',
+  );
+  lookingDealbreakerChipsEl.innerHTML = lookingMultiChipHtml(
+    DEALBREAKER_SLUGS,
+    state.looking.dealbreakers,
+  );
+  lookingPriorityChipsEl.innerHTML = lookingMultiChipHtml(
+    PRIORITY_SLUGS,
+    state.looking.topPriorities,
+  );
+}
 
 function showFormError(message) {
   if (!message) {
@@ -517,7 +618,10 @@ function render() {
     }
   }
 
-  if (state.activeTab === TAB_LIFESTYLE) renderLifestyleFields();
+  if (state.activeTab === TAB_LIFESTYLE) {
+    renderLifestyleFields();
+    renderLookingFor();
+  }
 
   renderLanguageRow();
   renderRoleRow();
@@ -592,6 +696,61 @@ function bindEvents() {
   aboutMeInputEl.addEventListener('input', () => {
     state.aboutMe = aboutMeInputEl.value;
     showFormError('');
+  });
+
+  nameInputEl?.addEventListener('input', () => {
+    state.displayName = nameInputEl.value;
+    showFormError('');
+  });
+
+  lookingGenderChipsEl?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-looking-gender]');
+    if (!btn) return;
+    const option = LOOKING_GENDER_OPTIONS[Number(btn.getAttribute('data-looking-gender'))];
+    if (!option) return;
+    state.looking.prefRoommateGender = option.value;
+    showFormError('');
+    renderLookingFor();
+  });
+
+  lookingOverlapChipsEl?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-looking-overlap]');
+    if (!btn) return;
+    const option = LOOKING_OVERLAP_OPTIONS[Number(btn.getAttribute('data-looking-overlap'))];
+    if (!option) return;
+    state.looking.prefBudgetOverlapRequired = option.value;
+    showFormError('');
+    renderLookingFor();
+  });
+
+  lookingDealbreakerChipsEl?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-match-slug]');
+    if (!btn) return;
+    const slug = btn.getAttribute('data-match-slug');
+    const next = new Set(state.looking.dealbreakers);
+    if (next.has(slug)) next.delete(slug);
+    else next.add(slug);
+    state.looking.dealbreakers = next;
+    showFormError('');
+    renderLookingFor();
+  });
+
+  lookingPriorityChipsEl?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-match-slug]');
+    if (!btn) return;
+    const slug = btn.getAttribute('data-match-slug');
+    const next = new Set(state.looking.topPriorities);
+    if (next.has(slug)) {
+      next.delete(slug);
+    } else if (next.size >= MAX_TOP_PRIORITIES) {
+      showFormError(UyDosh.t('profile.looking.prioritiesHint'));
+      return;
+    } else {
+      next.add(slug);
+    }
+    state.looking.topPriorities = next;
+    showFormError('');
+    renderLookingFor();
   });
 
   profileLangSelectEl?.addEventListener('change', () => {
@@ -669,6 +828,35 @@ async function onSave() {
     return;
   }
 
+  const name = String(state.displayName || '').trim();
+  if (!name) {
+    setActiveTab(TAB_BASIC);
+    showFormError(UyDosh.t('profile.errorNameRequired'));
+    render();
+    return;
+  }
+
+  const birthYear = optionalIntFromInput(birthYearInputEl);
+  const prefAgeMin = optionalIntFromInput(prefAgeMinInputEl);
+  const prefAgeMax = optionalIntFromInput(prefAgeMaxInputEl);
+  const budgetMin = optionalIntFromInput(budgetMinInputEl);
+  const budgetMax = optionalIntFromInput(budgetMaxInputEl);
+  const lookingInts = [birthYear, prefAgeMin, prefAgeMax, budgetMin, budgetMax];
+  const lookingInvalid = lookingInts.some((n) => Number.isNaN(n))
+    || (birthYear != null && (birthYear < 1900 || birthYear > 2100))
+    || (prefAgeMin != null && (prefAgeMin < 0 || prefAgeMin > 120))
+    || (prefAgeMax != null && (prefAgeMax < 0 || prefAgeMax > 120))
+    || (prefAgeMin != null && prefAgeMax != null && prefAgeMin > prefAgeMax)
+    || (budgetMin != null && (budgetMin < 0 || budgetMin > 100000000))
+    || (budgetMax != null && (budgetMax < 0 || budgetMax > 100000000))
+    || (budgetMin != null && budgetMax != null && budgetMin > budgetMax);
+  if (lookingInvalid) {
+    setActiveTab(TAB_LIFESTYLE);
+    showFormError(UyDosh.t('profile.errorLookingNumbers'));
+    render();
+    return;
+  }
+
   showFormError('');
   state.saving = true;
   render();
@@ -685,11 +873,21 @@ async function onSave() {
     ...(state.gender != null ? { gender: state.gender } : {}),
     ...(state.selectedRegionId != null ? { region_id: state.selectedRegionId } : {}),
     about_me: state.aboutMe.trim(),
+    name,
     preferred_language: normalizeProfileLang(state.preferredLanguage),
     ...(!STAFF_ROLES.has(state.serverRole)
       ? { role: roleToSave(state.serverRole, state.selectedRole) }
       : {}),
     ...state.lifestyle,
+    birth_year: birthYear,
+    pref_age_min: prefAgeMin,
+    pref_age_max: prefAgeMax,
+    budget_min: budgetMin,
+    budget_max: budgetMax,
+    pref_roommate_gender: state.looking.prefRoommateGender,
+    pref_budget_overlap_required: state.looking.prefBudgetOverlapRequired,
+    dealbreakers: [...state.looking.dealbreakers],
+    top_priorities: [...state.looking.topPriorities],
   };
 
   try {
@@ -752,6 +950,13 @@ async function loadProfile() {
     state.gender = profile?.gender === 1 || profile?.gender === 2 ? profile.gender : null;
     state.selectedRegionId = profile?.region_id != null ? Number(profile.region_id) : null;
     state.aboutMe = profile?.about_me ?? '';
+    state.displayName = String(profile?.name || '').trim();
+    if (!state.displayName) {
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      const fromTg = [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ').trim()
+        || String(tgUser?.username || '').trim();
+      if (fromTg) state.displayName = fromTg;
+    }
     state.preferredLanguage = normalizeProfileLang(profile?.preferred_language || UyDosh.getLang());
     state.serverRole = String(UyDosh.getSessionUserRole?.() || profile?.role || 'tenant').toLowerCase();
     state.selectedRole = visibleProfileRole(state.serverRole);
@@ -759,6 +964,14 @@ async function loadProfile() {
       const raw = profile?.[field.key];
       state.lifestyle[field.key] = raw === undefined ? null : raw;
     }
+    const genderPref = profile?.pref_roommate_gender;
+    state.looking.prefRoommateGender = genderPref === 'any' || genderPref === 'male' || genderPref === 'female'
+      ? genderPref
+      : null;
+    const overlap = profile?.pref_budget_overlap_required;
+    state.looking.prefBudgetOverlapRequired = overlap === true || overlap === false ? overlap : null;
+    state.looking.dealbreakers = slugSetFrom(profile?.dealbreakers);
+    state.looking.topPriorities = slugSetFrom(profile?.top_priorities);
   } catch (err) {
     if (err?.status === 404) {
       state.noProfile = true;
@@ -855,6 +1068,38 @@ function renderReadOnlyProfile() {
     viewRowHtml({ icon: 'alertCircle', label: UyDosh.t('profile.aboutMe', lang), value: about }),
   ].join('');
 
+  const roommateGenderLabel = profile.pref_roommate_gender === 'any'
+    ? UyDosh.t('profile.looking.anyGender', lang)
+    : profile.pref_roommate_gender === 'male'
+      ? UyDosh.t('profile.genderMale', lang)
+      : profile.pref_roommate_gender === 'female'
+        ? UyDosh.t('profile.genderFemale', lang)
+        : '';
+  const overlapLabel = profile.pref_budget_overlap_required === true
+    ? UyDosh.t('profile.studentYes', lang)
+    : profile.pref_budget_overlap_required === false
+      ? UyDosh.t('profile.studentNo', lang)
+      : '';
+  const dimList = (slugs) => Array.isArray(slugs) && slugs.length
+    ? slugs.map((s) => UyDosh.t(MATCH_DIM_LABEL[s] || s, lang)).join(', ')
+    : '';
+  const ageRange = [profile.pref_age_min, profile.pref_age_max].every((n) => n == null)
+    ? ''
+    : `${profile.pref_age_min ?? '—'}–${profile.pref_age_max ?? '—'}`;
+  const budgetRange = [profile.budget_min, profile.budget_max].every((n) => n == null)
+    ? ''
+    : `${profile.budget_min ?? '—'}–${profile.budget_max ?? '—'}`;
+
+  const lookingRows = [
+    viewRowHtml({ icon: 'person', label: UyDosh.t('profile.looking.roommateGender', lang), value: roommateGenderLabel }),
+    viewRowHtml({ icon: 'cake', label: UyDosh.t('profile.looking.birthYear', lang), value: profile.birth_year ? String(profile.birth_year) : '' }),
+    viewRowHtml({ icon: 'cake', label: UyDosh.t('profile.looking.ageRange', lang), value: ageRange }),
+    viewRowHtml({ icon: 'wallet', label: UyDosh.t('profile.looking.budgetRange', lang), value: budgetRange }),
+    viewRowHtml({ icon: 'wallet', label: UyDosh.t('profile.looking.budgetOverlap', lang), value: overlapLabel }),
+    viewRowHtml({ icon: 'xCircle', label: UyDosh.t('profile.looking.dealbreakers', lang), value: dimList(profile.dealbreakers) }),
+    viewRowHtml({ icon: 'sparkles', label: UyDosh.t('profile.looking.priorities', lang), value: dimList(profile.top_priorities) }),
+  ].join('');
+
   const lifeRows = [
     viewRowHtml({ icon: 'checkCircle', label: UyDosh.t('profile.work', lang), value: employedShort }),
     `<div class="pv-grid">${
@@ -868,7 +1113,9 @@ function renderReadOnlyProfile() {
     <div class="pv-avatar-wrap"><div class="pv-avatar">${avatarInner}</div></div>
     <div class="pv-card">${basicRows}</div>
     <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.tabs.lifestyle', lang))}</div>
-    <div class="pv-card">${lifeRows}</div>`;
+    <div class="pv-card">${lifeRows}</div>
+    <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.looking.title', lang))}</div>
+    <div class="pv-card">${lookingRows}</div>`;
 }
 
 function showReadOnlyProfile() {
@@ -945,6 +1192,12 @@ async function boot() {
   }
 
   aboutMeInputEl.value = state.aboutMe;
+  if (nameInputEl) nameInputEl.value = state.displayName;
+  if (birthYearInputEl) birthYearInputEl.value = intOrEmpty(state.profile?.birth_year);
+  if (prefAgeMinInputEl) prefAgeMinInputEl.value = intOrEmpty(state.profile?.pref_age_min);
+  if (prefAgeMaxInputEl) prefAgeMaxInputEl.value = intOrEmpty(state.profile?.pref_age_max);
+  if (budgetMinInputEl) budgetMinInputEl.value = intOrEmpty(state.profile?.budget_min);
+  if (budgetMaxInputEl) budgetMaxInputEl.value = intOrEmpty(state.profile?.budget_max);
 
   loadingEl.hidden = true;
   formRootEl.hidden = false;
