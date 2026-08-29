@@ -23,40 +23,22 @@ function addUnit({ reveal = false } = {}) {
 }
 addUnit();
 async function boot() {
-  try {
-    // Never leave the operator staring at a permanent loading state if the
-    // Telegram-auth request is stalled by a transient WebView/network issue.
-    const sessionReady = await Promise.race([
-      UyDosh.ensureTelegramMiniAppSession(),
-      new Promise((resolve) => setTimeout(() => resolve(false), 8000)),
-    ]);
-    if (!sessionReady) {
-      access.innerHTML =
-        'Не удалось проверить доступ. <button type="button" id="retry-access">Повторить</button>';
-      document
-        .getElementById("retry-access")
-        ?.addEventListener("click", () => location.reload());
-      return;
-    }
-    if (!UyDosh.isAdmin()) {
-      access.textContent = "Этот экран доступен только администраторам UyDosh.";
-      return;
-    }
-    document
-      .querySelectorAll("[data-admin-hostel-create]")
-      .forEach((el) => (el.hidden = false));
-    access.hidden = true;
-    form.hidden = false;
-    // Keep the onboarding contact traceable to the Telegram account that
-    // created it. The field remains editable for a hostel's public contact.
-    const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    if (telegramUserId && !form.elements.telegram_username.value) {
-      form.elements.telegram_username.value = String(telegramUserId);
-    }
-  } catch (_) {
-    access.textContent =
-      "Не удалось подтвердить доступ. Откройте Mini App заново.";
+  // Never block the form on a Telegram-auth request: this request can stall
+  // in a WebView, while the server remains the authoritative admin check on
+  // POST /admin/hostels.
+  access.hidden = true;
+  form.hidden = false;
+  const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  if (telegramUserId && !form.elements.telegram_username.value) {
+    form.elements.telegram_username.value = String(telegramUserId);
   }
+  UyDosh.ensureTelegramMiniAppSession().then((ready) => {
+    if (ready && UyDosh.isAdmin()) {
+      document
+        .querySelectorAll("[data-admin-hostel-create]")
+        .forEach((el) => (el.hidden = false));
+    }
+  });
 }
 boot();
 if (UyDosh.isMiniApp()) {
