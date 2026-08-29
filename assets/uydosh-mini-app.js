@@ -2447,8 +2447,9 @@ function initTelegramMiniApp() {
   }
   if (!isMiniApp()) return false;
   document.documentElement.classList.add("mini-app");
-  // Keep browser/Telegram double-tap zoom available on ordinary Mini App
-  // pages. Interactive 3D viewers retain their own local zoom guards.
+  // Prevent double-tap zoom throughout the Mini App. This must run globally:
+  // a double tap on any free area should never scale the page.
+  preventMiniAppDoubleTapZoom();
   applyStoredManualTheme();
   applyHeaderBgTheme();
   ensureMiniAppSafeAreaStyles();
