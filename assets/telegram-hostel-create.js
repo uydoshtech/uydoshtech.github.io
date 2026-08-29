@@ -65,10 +65,6 @@ const telegramUsernamePrefillTimer = setInterval(() => {
     clearInterval(telegramUsernamePrefillTimer);
   }
 }, 250);
-document.getElementById("page-back").addEventListener("click", () => {
-  if (window.history.length > 1) window.history.back();
-  else location.href = "/telegram/hostels.html";
-});
 document.getElementById("use-location").addEventListener("click", async () => {
   const button = document.getElementById("use-location");
   button.disabled = true;

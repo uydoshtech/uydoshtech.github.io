@@ -10,35 +10,52 @@
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <script src="../assets/theme-init.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <link rel="stylesheet" href="../assets/telegram-shared.css" />
-    <link rel="stylesheet" href="../assets/telegram-hostels.css?v=20260830-3" />
+    <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260830-4" />
+    <link rel="stylesheet" href="../assets/telegram-hostels.css?v=20260830-4" />
   </head>
   <body class="hostels-screen">
     <div class="wrap">
-      <header data-uydosh-mini-app-header></header>
+      <header data-uydosh-mini-app-header data-uydosh-header-back></header>
       <main>
         <div class="hostel-heading">
           <h1>Хостелы</h1>
           <p>Свободные места в Ташкенте</p>
         </div>
         <div class="hostel-filters" role="group" aria-label="Тип размещения">
-          <button
-            type="button"
-            class="hostel-filter-picker hostel-filter-picker--all"
-            data-gender=""
-            aria-label="Тип размещения: все"
-          >
-            <span class="hostel-filter-picker-dots" aria-hidden="true">
-              <span class="hostel-filter-dot hostel-filter-dot--all"></span>
-              <span class="hostel-filter-dot hostel-filter-dot--male"></span>
-              <span class="hostel-filter-dot hostel-filter-dot--female"></span>
-              <span class="hostel-filter-dot hostel-filter-dot--mixed"></span>
-            </span>
-            <span class="hostel-filter-picker-label">Все</span>
-            <span class="hostel-filter-picker-chevron" aria-hidden="true"
-              >⌄</span
+          <div class="hostel-filter-picker">
+            <button
+              type="button"
+              class="hostel-filter-pill hostel-filter-pill--all active"
+              data-gender=""
+              aria-pressed="true"
             >
-          </button>
+              Все
+            </button>
+            <button
+              type="button"
+              class="hostel-filter-pill hostel-filter-pill--male"
+              data-gender="male"
+              aria-pressed="false"
+            >
+              Мужские
+            </button>
+            <button
+              type="button"
+              class="hostel-filter-pill hostel-filter-pill--female"
+              data-gender="female"
+              aria-pressed="false"
+            >
+              Женские
+            </button>
+            <button
+              type="button"
+              class="hostel-filter-pill hostel-filter-pill--mixed"
+              data-gender="mixed"
+              aria-pressed="false"
+            >
+              Смешанные
+            </button>
+          </div>
         </div>
         <div id="status" class="status" aria-live="polite"></div>
         <div id="hostels" class="hostel-grid"></div>
@@ -48,7 +65,7 @@
     <script src="../assets/uydosh-i18n.js"></script>
     <script src="../assets/uydosh-api.js" defer></script>
     <script src="../assets/uydosh-icons.js" defer></script>
-    <script src="../assets/uydosh-mini-app.js" defer></script>
-    <script src="../assets/telegram-hostels.js?v=20260830-3" defer></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260830-4" defer></script>
+    <script src="../assets/telegram-hostels.js?v=20260830-4" defer></script>
   </body>
 </html>

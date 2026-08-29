@@ -1,22 +1,6 @@
 .hostel-heading {
   padding: 16px 8px 8px;
 }
-.hostels-screen header .nav-menu {
-  display: none;
-}
-.hostels-header-back {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--fg);
-  padding: 0 2px;
-  font: inherit;
-  font-size: 42px;
-  line-height: 1;
-}
-.hostels-header-back:active {
-  opacity: 0.65;
-}
 .hostel-heading h1 {
   margin: 0;
   font-size: 26px;
@@ -29,72 +13,51 @@
   padding: 10px 8px;
 }
 .hostel-filter-picker {
-  --filter-color: var(--stroke);
-  appearance: none;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: stretch;
   width: 100%;
   padding: 4px;
   border: 1px solid var(--stroke);
   border-radius: 999px;
   background: rgba(127, 127, 127, 0.08);
-  color: var(--fg);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
   box-sizing: border-box;
 }
-.hostel-filter-picker--male {
-  --filter-color: #60a5fa;
-  border-color: #60a5fa;
-}
-.hostel-filter-picker--female {
-  --filter-color: #f472b6;
-  border-color: #f472b6;
-}
-.hostel-filter-picker--mixed {
-  --filter-color: #34d399;
-  border-color: #34d399;
-}
-.hostel-filter-picker:active {
-  opacity: 0.88;
-}
-.hostel-filter-picker-dots {
-  display: inline-flex;
-  gap: 3px;
-  align-items: center;
-  flex: 0 0 auto;
-  padding: 4px;
-  border: 1px solid var(--filter-color);
-  border-radius: 50%;
-}
-.hostel-filter-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--stroke);
-}
-.hostel-filter-dot--male {
-  background: #60a5fa;
-}
-.hostel-filter-dot--female {
-  background: #f472b6;
-}
-.hostel-filter-dot--mixed {
-  background: #34d399;
-}
-.hostel-filter-picker-label {
+.hostel-filter-pill {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
 }
-.hostel-filter-picker-chevron {
-  padding: 0 8px 4px 2px;
-  font-size: 22px;
-  line-height: 1;
-  color: var(--muted);
+.hostel-filter-pill--male {
+  color: #60a5fa;
+}
+.hostel-filter-pill--female {
+  color: #f472b6;
+}
+.hostel-filter-pill--mixed {
+  color: #34d399;
+}
+.hostel-filter-pill--all.active {
+  background: rgba(127, 127, 127, 0.42);
+}
+.hostel-filter-pill--male.active {
+  background: #60a5fa;
+  color: #fff;
+}
+.hostel-filter-pill--female.active {
+  background: #f472b6;
+  color: #fff;
+}
+.hostel-filter-pill--mixed.active {
+  background: #34d399;
+  color: #fff;
 }
 .hostel-request button {
   border: 1px solid var(--stroke);

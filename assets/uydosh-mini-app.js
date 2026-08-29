@@ -492,6 +492,7 @@ function parseMiniAppHeaderOptions(el) {
   }
   const iconSrc = el?.getAttribute("data-uydosh-header-icon");
   if (iconSrc) options.iconSrc = iconSrc;
+  if (el?.hasAttribute("data-uydosh-header-back")) options.backButton = true;
   return options;
 }
 
@@ -799,7 +800,10 @@ function miniAppHeaderHtml(options = {}) {
   const brand = brandLink
     ? `<a class="brand" href="${MINI_APP_FEED_PATH}" data-mini-app-home>${brandContent}</a>`
     : `<div class="brand">${brandContent}</div>`;
-  return `${navMenuHtml()}${brand}<div class="header-actions">${accountMenuHtml()}</div>`;
+  const leadingControl = options.backButton
+    ? '<button type="button" class="mini-app-header-back" aria-label="Назад">←</button>'
+    : navMenuHtml();
+  return `${leadingControl}${brand}<div class="header-actions">${accountMenuHtml()}</div>`;
 }
 
 /** Inject the shared mini-app header into a <header> or mount element. */
@@ -810,6 +814,12 @@ function mountMiniAppHeader(target, options = {}) {
   header.innerHTML = miniAppHeaderHtml(options);
   header.classList.add("uydosh-mini-app-header");
   header.dataset.uydoshHeaderMounted = "1";
+  header
+    .querySelector(".mini-app-header-back")
+    ?.addEventListener("click", () => {
+      if (window.history.length > 1) window.history.back();
+      else location.href = MINI_APP_FEED_PATH;
+    });
   applyI18n(header);
   initThemeToggle();
   ensureNavDrawerMounted();

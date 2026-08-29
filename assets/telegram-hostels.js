@@ -1,14 +1,4 @@
 UyDosh.initTelegramMiniApp();
-const back = document.createElement("button");
-back.type = "button";
-back.className = "hostels-header-back";
-back.setAttribute("aria-label", "Назад");
-back.textContent = "←";
-document.querySelector("header.uydosh-mini-app-header .brand")?.before(back);
-back.addEventListener("click", () => {
-  if (window.history.length > 1) window.history.back();
-  else location.href = "/telegram/";
-});
 const money = (n) =>
   new Intl.NumberFormat("ru-RU").format(Number(n || 0)) + " сум/мес";
 const escape = (v) => UyDosh.escapeHtml(String(v ?? ""));
@@ -20,7 +10,7 @@ const hostelFilters = [
 ];
 
 function selectedHostelFilter() {
-  const picker = document.querySelector(".hostel-filter-picker");
+  const picker = document.querySelector(".hostel-filter-pill.active");
   return (
     hostelFilters.find((filter) => filter.gender === picker?.dataset.gender) ||
     hostelFilters[0]
@@ -28,13 +18,11 @@ function selectedHostelFilter() {
 }
 
 function applyHostelFilter(filter) {
-  const picker = document.querySelector(".hostel-filter-picker");
-  if (!picker) return;
-  picker.dataset.gender = filter.gender;
-  picker.className = `hostel-filter-picker hostel-filter-picker--${filter.modifier}`;
-  picker.setAttribute("aria-label", `Тип размещения: ${filter.label}`);
-  const label = picker.querySelector(".hostel-filter-picker-label");
-  if (label) label.textContent = filter.label;
+  document.querySelectorAll(".hostel-filter-pill").forEach((pill) => {
+    const active = pill.dataset.gender === filter.gender;
+    pill.classList.toggle("active", active);
+    pill.setAttribute("aria-pressed", String(active));
+  });
 }
 
 function photo(hostel) {
@@ -102,17 +90,16 @@ async function detailHostel() {
     root.innerHTML = '<div class="status">Не удалось загрузить хостел</div>';
   }
 }
-document
-  .querySelector(".hostel-filter-picker")
-  ?.addEventListener("click", () => {
-    const current = selectedHostelFilter();
-    const next =
-      hostelFilters[
-        (hostelFilters.indexOf(current) + 1) % hostelFilters.length
-      ];
-    applyHostelFilter(next);
+document.querySelectorAll(".hostel-filter-pill").forEach((pill) => {
+  pill.addEventListener("click", () => {
+    const filter = hostelFilters.find(
+      (item) => item.gender === pill.dataset.gender,
+    );
+    if (!filter || pill.classList.contains("active")) return;
+    applyHostelFilter(filter);
     UyDosh.haptic?.selection?.();
     listHostels();
   });
+});
 listHostels();
 detailHostel();

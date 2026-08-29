@@ -41,7 +41,9 @@
    * is the extra inset needed on top of that so content lines up with the
    * wider gutter above.
    */
-  --content-gutter-offset: calc(var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px));
+  --content-gutter-offset: calc(
+    var(--feed-content-gutter, 25px) - var(--feed-wrap-gutter, 14px)
+  );
 }
 @media (prefers-color-scheme: light) {
   :root:not([style*="--tg-bg"]) {
@@ -53,15 +55,27 @@
     --spinner-logo: url("../images/uydosh-logo-black-u.svg");
   }
 }
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial;
   background: var(--bg);
   color: var(--fg);
   min-height: 100vh;
 }
-a { color: inherit; text-decoration: none; }
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 .wrap {
   max-width: 720px;
@@ -139,6 +153,20 @@ a { color: inherit; text-decoration: none; }
   width: 14px;
   height: 14px;
   display: block;
+}
+.mini-app-header-back {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  padding: 0 2px;
+  font: inherit;
+  font-size: 42px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mini-app-header-back:active {
+  opacity: 0.65;
 }
 /*
  * Some chips (e.g. the create-listing "search area" Metro/District toggle)
@@ -315,7 +343,9 @@ a { color: inherit; text-decoration: none; }
 
 /* Generic spinner rotation — used by every loading/busy spinner across the Mini App. */
 @keyframes uydosh-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /*
@@ -340,7 +370,9 @@ a { color: inherit; text-decoration: none; }
   line-height: 1;
   min-height: 48px;
   padding: 14px 18px;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .wizard-btn[hidden] {
   display: none;
@@ -410,14 +442,21 @@ a { color: inherit; text-decoration: none; }
   color: var(--fg);
   gap: 0;
   padding: 6px 10px;
-  transition: border-color 220ms ease, border-width 220ms ease,
-    background 220ms ease, padding 220ms ease;
+  transition:
+    border-color 220ms ease,
+    border-width 220ms ease,
+    background 220ms ease,
+    padding 220ms ease;
 }
 .chip-line[aria-pressed="true"] {
   padding: 5px 9px;
   border-color: var(--line-color);
   border-width: 2px;
-  background: color-mix(in srgb, var(--line-color) 12%, rgba(127, 127, 127, 0.08));
+  background: color-mix(
+    in srgb,
+    var(--line-color) 12%,
+    rgba(127, 127, 127, 0.08)
+  );
 }
 /* Denser variant for the feed's collapsed/compact filter row. */
 .chip-line-compact {
@@ -502,7 +541,8 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
   margin-left: 0;
   overflow: hidden;
-  transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1),
+  transition:
+    grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1),
     margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .chip-line .chip-label-collapse > .chip-label {
@@ -510,7 +550,9 @@ a { color: inherit; text-decoration: none; }
   white-space: nowrap;
   opacity: 0;
   transform: translateX(-8px);
-  transition: opacity 160ms ease, transform 180ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease;
 }
 .chip-line[aria-pressed="true"] .chip-label-collapse {
   grid-template-columns: 1fr;
@@ -519,7 +561,9 @@ a { color: inherit; text-decoration: none; }
 .chip-line[aria-pressed="true"] .chip-label-collapse > .chip-label {
   opacity: 1;
   transform: translateX(0);
-  transition: opacity 260ms ease 100ms, transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms;
+  transition:
+    opacity 260ms ease 100ms,
+    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms;
 }
 /*
  * Full (non-compact) district/metro filter buttons carry a "Район"/"Метро"
@@ -617,7 +661,7 @@ a { color: inherit; text-decoration: none; }
    `--muted` / `--fg` navy. */
 .view-tab .view-tab-icon[data-icon="mapPin"],
 .view-tab[aria-selected="true"] .view-tab-icon[data-icon="mapPin"] {
-  color: #F44336;
+  color: #f44336;
 }
 .view-tab[aria-selected="true"] .view-tab-icon[data-icon="list"] {
   color: var(--brand2);
@@ -636,7 +680,9 @@ a { color: inherit; text-decoration: none; }
 .view-tab[aria-selected="true"] .view-tab-icon[data-icon="heartOutline"] svg * {
   fill: currentColor;
 }
-.view-tab:active { opacity: 0.9; }
+.view-tab:active {
+  opacity: 0.9;
+}
 
 /* --------------------------------------------------------------------------
    App Clip room-scan return overlay (see restoreScanSessionFromStartParam in
