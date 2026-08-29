@@ -203,16 +203,39 @@ function participantAvatarHtml(person, index) {
   return `<span class="account-participants-avatar" style="z-index:${index + 1}" aria-hidden="true">${inner}</span>`;
 }
 
+function peopleForAvatarStack(listing, members) {
+  const fromMembers = Array.isArray(members) ? members : [];
+  const chat = listing ? chatForListing(listing, state.groupChats || []) : null;
+  const fromChat = participantsFromConversation(chat);
+  const byKey = new Map();
+  for (const person of [...fromChat, ...fromMembers]) {
+    const id = Number(person.user_id ?? person.id);
+    const key = id > 0 ? `id:${id}` : `name:${String(person.name || '').trim()}`;
+    if (key === 'name:') continue;
+    const prev = byKey.get(key) || {};
+    byKey.set(key, {
+      ...prev,
+      ...person,
+      user_id: id > 0 ? id : prev.user_id,
+      name: person.name || prev.name,
+      avatar_url: person.avatar_url || prev.avatar_url,
+    });
+  }
+  const rows = [...byKey.values()];
+  return rows.length ? rows : fromMembers;
+}
+
 function participantsPillHtml(listing, conversation) {
   const lang = UyDosh.getLang();
-  const people = participantsFromConversation(conversation).slice(0, 3);
+  const people = peopleForAvatarStack(listing, participantsFromConversation(conversation)).slice(0, 3);
   const avatars = people.length
     ? people.map((person, index) => participantAvatarHtml(person, index)).join('')
     : participantAvatarHtml({}, 0);
   return `
         <button type="button" class="account-participants-pill" data-open-participants="${listing.id}" data-haptic="selection">
-          <span class="account-participants-avatars">${avatars}</span>
           <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))}</span>
+          <span class="account-participants-avatars">${avatars}</span>
+          <span class="account-participants-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
         </button>`;
 }
 
@@ -804,9 +827,10 @@ function memberCardHtml(member, listing, lang) {
 }
 
 function participantsSheetHtml(listing, members, lang) {
-  const names = members.map((m) => String(m.name || '').trim()).filter(Boolean).join(', ');
-  const count = members.length;
-  const avatars = members.slice(0, 3).map((person, index) => participantAvatarHtml(person, index)).join('');
+  const people = peopleForAvatarStack(listing, members);
+  const names = people.map((m) => String(m.name || '').trim()).filter(Boolean).join(', ');
+  const count = people.length || members.length;
+  const avatars = (people.length ? people : [{}]).slice(0, 3).map((person, index) => participantAvatarHtml(person, index)).join('');
   const cards = members.map((member) => memberCardHtml(member, listing, lang)).join('');
   return `
     <div class="gp-backdrop" data-gp-close></div>

@@ -450,9 +450,8 @@ header {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 14px 8px 10px;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
   border: 0;
   border-radius: 18px;
   background: #121c28;
@@ -468,6 +467,7 @@ header {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+  isolation: isolate;
 }
 .account-participants-avatar {
   position: relative;
@@ -477,7 +477,8 @@ header {
   overflow: hidden;
   flex-shrink: 0;
   margin-left: -10px;
-  border: 2px solid #121c28;
+  border: 2px solid #fff;
+  box-sizing: border-box;
   background: color-mix(in srgb, var(--brand2, #2a6) 22%, transparent);
   display: inline-flex;
   align-items: center;
@@ -494,7 +495,20 @@ header {
 }
 .account-participants-label {
   min-width: 0;
+  flex: 1;
+}
+.account-participants-avatars {
   margin-left: auto;
+}
+.account-participants-chevron {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+}
+.account-participants-chevron svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 #group-participants-root {
@@ -552,10 +566,10 @@ header {
   margin-bottom: 16px;
 }
 .gp-summary-avatars .account-participants-avatar {
-  width: 36px;
-  height: 36px;
-  border-color: #0b121b;
-  margin-left: -12px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #fff;
+  margin-left: -14px;
 }
 .gp-summary-avatars .account-participants-avatar:first-child { margin-left: 0; }
 .gp-summary-names {
