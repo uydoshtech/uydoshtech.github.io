@@ -163,12 +163,6 @@ header {
   flex-direction: column;
   gap: 4px;
 }
-.account-nested-you {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  padding: 0 2px;
-}
 .account-nested-chat-body {
   flex: 1;
   min-width: 0;

@@ -122,8 +122,14 @@ function memberAvatarsHtml(conversations) {
 
 function chatAvatarHtml(conversation, isGroup) {
   if (isGroup) {
-    const img = (Array.isArray(conversation.members) ? conversation.members : [])
-      .find((m) => m.avatar_url)?.avatar_url;
+    const members = Array.isArray(conversation.members) ? conversation.members : [];
+    const senderId = Number(conversation.last_message_sender_id);
+    const lastSender = Number.isFinite(senderId) && senderId > 0
+      ? members.find((m) => Number(m.user_id) === senderId)
+      : null;
+    const img = lastSender
+      ? lastSender.avatar_url
+      : (conversation.other_user_avatar || members.find((m) => m.avatar_url)?.avatar_url);
     if (img) {
       return `<img src="${UyDosh.escapeHtml(img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
     }
@@ -181,7 +187,6 @@ function listingCardHtml(group, lang) {
         </div>
       </button>
       <div class="inbox-chats">
-        <div class="inbox-you">${UyDosh.escapeHtml(UyDosh.t('chat.you', lang))}</div>
         ${group.conversations.map((c) => nestedChatHtml(c, lang)).join('')}
       </div>
     </article>`;

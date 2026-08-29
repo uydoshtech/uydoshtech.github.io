@@ -414,7 +414,13 @@ function formatChatTime(ms) {
 
 function groupChatAvatarInner(conversation) {
   const members = Array.isArray(conversation.members) ? conversation.members : [];
-  const img = members.find((m) => m.avatar_url)?.avatar_url;
+  const senderId = Number(conversation.last_message_sender_id);
+  const lastSender = Number.isFinite(senderId) && senderId > 0
+    ? members.find((m) => Number(m.user_id) === senderId)
+    : null;
+  const img = lastSender
+    ? lastSender.avatar_url
+    : (conversation.other_user_avatar || members.find((m) => m.avatar_url)?.avatar_url);
   if (img) {
     return `<img src="${UyDosh.escapeHtml(img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
   }
@@ -436,7 +442,6 @@ function groupChatRowHtml(conversation, { nested = false } = {}) {
   if (nested) {
     return `
     <div class="account-nested-chat-wrap">
-      <div class="account-nested-you">${UyDosh.escapeHtml(UyDosh.t('chat.you', lang))}</div>
       <a class="account-nested-chat" href="${href}">
         <div class="account-chat-avatars" aria-hidden="true">${groupChatAvatarInner(conversation)}</div>
         <div class="account-nested-chat-body">
