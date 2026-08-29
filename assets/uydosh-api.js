@@ -1281,6 +1281,17 @@ function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto,
   return fetchJson('/listings', params);
 }
 
+/** Public hostel catalogue. Availability is returned with each hostel unit. */
+function fetchHostels({ districtId, gender } = {}) {
+  return fetchJson('/hostels', { district_id: districtId, gender });
+}
+function fetchHostel(id) { return fetchJson(`/hostels/${encodeURIComponent(id)}`); }
+function requestHostelPlace(id, { hostelUnitId, message } = {}) {
+  return fetchJsonAuth(`/hostels/${encodeURIComponent(id)}/requests`, {
+    method: 'POST', body: { hostel_unit_id: hostelUnitId, message },
+  });
+}
+
 /**
  * Fetches listing detail, attaching the Mini App session's Bearer token when one is
  * already available (harmless for the public site — the endpoint's
@@ -1503,6 +1514,9 @@ function loadYandexMapModule() {
 
 Object.assign(window.UyDosh, {
   fetchListings,
+  fetchHostels,
+  fetchHostel,
+  requestHostelPlace,
   fetchListing,
   fetchListingViewCount,
   recordListingView,

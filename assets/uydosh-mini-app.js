@@ -7,6 +7,7 @@ const MINI_APP_CREATE_PATH = '/telegram/create.html';
 const MINI_APP_CHATS_PATH = '/telegram/chats.html';
 const MINI_APP_HOUSING_PATH = '/telegram/?listingTypeId=0';
 const MINI_APP_COMMUNITY_PATH = '/telegram/account.html?tab=groups';
+const MINI_APP_HOSTELS_PATH = '/telegram/hostels.html';
 
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
@@ -491,6 +492,7 @@ function accountMenuDisplayName() {
 function accountShortcutItemsHtml() {
   return `
     <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome('plus')}<span data-i18n="create.postListing"></span></a>
+    <a role="menuitem" href="${MINI_APP_HOSTELS_PATH}">${UyDosh.iconChrome('house')}<span>Хостелы</span></a>
     <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}">${UyDosh.iconChrome('house')}<span data-i18n="account.tabs.mine"></span></a>
     <a role="menuitem" href="${MINI_APP_GROUPS_PATH}" data-join-request-menu-item>
       ${UyDosh.iconChrome('users')}<span data-i18n="account.tabs.groups"></span>
@@ -2309,6 +2311,7 @@ Object.assign(window.UyDosh, {
   MINI_APP_FAVORITES_PATH,
   MINI_APP_CREATE_PATH,
   MINI_APP_CHATS_PATH,
+  MINI_APP_HOSTELS_PATH,
   MINI_APP_PROFILE_PATH,
   maybeShowProfileNudge,
   dismissProfileNudge,
