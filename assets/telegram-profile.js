@@ -35,13 +35,13 @@ const genderFemaleBtn = document.getElementById('gender-female');
 const profileLangSelectEl = document.getElementById('profile-lang-select');
 const profileLangFlagEl = document.getElementById('profile-lang-flag');
 const profileLangNameEl = document.getElementById('profile-lang-name');
+const profileRoleSelectEl = document.getElementById('profile-role-select');
+const profileRoleNameEl = document.getElementById('profile-role-name');
 const regionSelectEl = document.getElementById('profile-region-select');
 const regionNameEl = document.getElementById('profile-region-name');
 const studentYesBtn = document.getElementById('student-yes');
 const studentNoBtn = document.getElementById('student-no');
 const universityFieldEl = document.getElementById('university-field');
-const universityPickedEl = document.getElementById('university-picked');
-const universityPickedNameEl = document.getElementById('university-picked-name');
 const universitySearchEl = document.getElementById('university-search');
 const universityListEl = document.getElementById('university-list');
 const aboutMeInputEl = document.getElementById('about-me-input');
@@ -77,6 +77,45 @@ function renderLanguageRow() {
   if (profileLangSelectEl) profileLangSelectEl.value = meta.id;
   if (profileLangFlagEl) profileLangFlagEl.textContent = meta.flag;
   if (profileLangNameEl) profileLangNameEl.textContent = meta.native;
+}
+
+const STAFF_ROLES = new Set(['admin', 'manager', 'moderator']);
+const ROLE_LABEL_KEYS = {
+  tenant: 'profile.roleTenant',
+  landlord: 'profile.roleLandlord',
+  admin: 'profile.roleAdmin',
+  manager: 'profile.roleManager',
+  moderator: 'profile.roleModerator',
+};
+
+function visibleProfileRole(role) {
+  const id = String(role || '').trim().toLowerCase();
+  if (id === 'admin' || id === 'manager' || id === 'moderator') return id;
+  if (id === 'landlord' || id === 'service_provider') return 'landlord';
+  return 'tenant';
+}
+
+function roleToSave(serverRole, selected) {
+  if (serverRole === 'admin') return 'admin';
+  if (serverRole === 'manager') return 'manager';
+  if (serverRole === 'moderator') return 'moderator';
+  if (serverRole === 'service_provider' && selected === 'landlord') return 'service_provider';
+  if (serverRole === 'service_requester' && selected === 'tenant') return 'service_requester';
+  return selected === 'landlord' ? 'landlord' : 'tenant';
+}
+
+function renderRoleRow() {
+  if (!profileRoleSelectEl || !profileRoleNameEl) return;
+  const staff = STAFF_ROLES.has(state.serverRole);
+  const selected = staff ? state.serverRole : visibleProfileRole(state.selectedRole);
+  const options = staff ? [state.serverRole] : ['landlord', 'tenant'];
+  profileRoleSelectEl.innerHTML = options.map((id) => {
+    const label = UyDosh.t(ROLE_LABEL_KEYS[id] || 'profile.roleTenant');
+    return `<option value="${id}">${UyDosh.escapeHtml(label)}</option>`;
+  }).join('');
+  profileRoleSelectEl.value = selected;
+  profileRoleSelectEl.disabled = staff;
+  profileRoleNameEl.textContent = UyDosh.t(ROLE_LABEL_KEYS[selected] || 'profile.roleTenant');
 }
 
 // Mirrors the lifestyle fields on the Flutter app's edit-profile screen
@@ -226,6 +265,8 @@ const state = {
   // on every state change would reset the cursor position mid-edit.
   aboutMe: '',
   preferredLanguage: 'ru',
+  serverRole: 'tenant',
+  selectedRole: 'tenant',
   universities: [],
   universitiesError: false,
   // null = not answered yet, true/false once the user (or existing data) answers.
@@ -453,15 +494,21 @@ function render() {
 
   if (showUniversityField) {
     const selected = state.selectedUniversityId != null ? universityById(state.selectedUniversityId) : null;
-    if (selected) {
-      universityPickedEl.hidden = false;
-      universityPickedNameEl.textContent = UyDosh.titleCaseWords(UyDosh.localized(selected, lang));
+    const wrap = universitySearchEl?.closest('.university-search-wrap');
+    if (selected && !state.searchQuery.trim()) {
+      const label = UyDosh.titleCaseWords(UyDosh.localized(selected, lang));
+      if (universitySearchEl && document.activeElement !== universitySearchEl) {
+        universitySearchEl.value = label;
+      }
+      wrap?.classList.add('is-picked');
+    } else if (!state.searchQuery.trim()) {
+      if (universitySearchEl && document.activeElement !== universitySearchEl) {
+        universitySearchEl.value = '';
+      }
+      wrap?.classList.remove('is-picked');
     } else {
-      universityPickedEl.hidden = true;
+      wrap?.classList.remove('is-picked');
     }
-    // Autosuggest: the match list only appears once the user types something
-    // (see `universitySearchEl` input handler) — it never shows as a
-    // permanently-visible full list.
     if (state.searchQuery.trim()) {
       universityListEl.hidden = false;
       renderUniversityList();
@@ -473,6 +520,7 @@ function render() {
   if (state.activeTab === TAB_LIFESTYLE) renderLifestyleFields();
 
   renderLanguageRow();
+  renderRoleRow();
 
   saveBtn.disabled = state.saving;
   saveBtnLabel.textContent = state.saving ? UyDosh.t('profile.saving') : UyDosh.t('profile.save');
@@ -555,6 +603,14 @@ function bindEvents() {
     renderLanguageRow();
   });
 
+  profileRoleSelectEl?.addEventListener('change', () => {
+    const next = visibleProfileRole(profileRoleSelectEl.value);
+    if (next === state.selectedRole) return;
+    state.selectedRole = next;
+    showFormError('');
+    renderRoleRow();
+  });
+
   studentYesBtn.addEventListener('click', () => {
     if (state.isStudent === true) return;
     state.isStudent = true;
@@ -574,6 +630,7 @@ function bindEvents() {
 
   universitySearchEl.addEventListener('input', () => {
     state.searchQuery = universitySearchEl.value || '';
+    universitySearchEl.closest('.university-search-wrap')?.classList.remove('is-picked');
     if (state.searchQuery.trim()) {
       universityListEl.hidden = false;
       renderUniversityList();
@@ -582,15 +639,17 @@ function bindEvents() {
     }
   });
 
+  universitySearchEl.addEventListener('focus', () => {
+    if (state.selectedUniversityId != null && !state.searchQuery.trim()) {
+      universitySearchEl.select();
+    }
+  });
+
   universityListEl.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-university-id]');
     if (!btn) return;
     state.selectedUniversityId = Number(btn.getAttribute('data-university-id'));
-    // Selecting a suggestion closes the dropdown and clears the search box,
-    // matching a typical autosuggest field — the picked banner above shows
-    // the final choice instead.
     state.searchQuery = '';
-    universitySearchEl.value = '';
     showFormError('');
     render();
   });
@@ -627,11 +686,20 @@ async function onSave() {
     ...(state.selectedRegionId != null ? { region_id: state.selectedRegionId } : {}),
     about_me: state.aboutMe.trim(),
     preferred_language: normalizeProfileLang(state.preferredLanguage),
+    ...(!STAFF_ROLES.has(state.serverRole)
+      ? { role: roleToSave(state.serverRole, state.selectedRole) }
+      : {}),
     ...state.lifestyle,
   };
 
   try {
     await UyDosh.updateProfile(state.userId, body);
+    if (!STAFF_ROLES.has(state.serverRole)) {
+      const saved = roleToSave(state.serverRole, state.selectedRole);
+      state.serverRole = saved;
+      state.selectedRole = visibleProfileRole(saved);
+      UyDosh.setSessionUserRole?.(saved);
+    }
     // Either answer ("student" + university, or "not a student") counts as
     // having engaged with the prompt — don't keep nudging on the feed, and
     // the account menu's "profile not populated" dot no longer applies.
@@ -685,6 +753,8 @@ async function loadProfile() {
     state.selectedRegionId = profile?.region_id != null ? Number(profile.region_id) : null;
     state.aboutMe = profile?.about_me ?? '';
     state.preferredLanguage = normalizeProfileLang(profile?.preferred_language || UyDosh.getLang());
+    state.serverRole = String(UyDosh.getSessionUserRole?.() || profile?.role || 'tenant').toLowerCase();
+    state.selectedRole = visibleProfileRole(state.serverRole);
     for (const field of LIFESTYLE_FIELDS) {
       const raw = profile?.[field.key];
       state.lifestyle[field.key] = raw === undefined ? null : raw;

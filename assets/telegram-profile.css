@@ -186,27 +186,30 @@ textarea:focus {
   cursor: pointer;
   font-size: 16px;
 }
-.university-picked {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid var(--stroke);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--brand2) 8%, transparent);
-  margin-bottom: 10px;
-  font-weight: 700;
-  font-size: 14px;
-}
-.university-picked .icon {
-  flex-shrink: 0;
-  display: inline-flex;
-  color: var(--brand2);
-}
-.university-picked .icon svg { width: 20px; height: 20px; display: block; }
-.university-picked-name { flex: 1; min-width: 0; }
 .university-search-wrap {
   position: relative;
+}
+.university-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 1;
+  display: inline-flex;
+  color: var(--brand2);
+  pointer-events: none;
+}
+.university-search-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.university-search-wrap input[type="text"] {
+  padding-left: 42px;
+}
+.university-search-wrap.is-picked input[type="text"] {
+  font-weight: 700;
+  border-color: color-mix(in srgb, var(--brand2) 35%, var(--stroke));
+  background: color-mix(in srgb, var(--brand2) 8%, transparent);
 }
 /* Autosuggest dropdown: only shown once the user types something (see
    telegram-profile.js) — floats over whatever's below it instead of
@@ -389,7 +392,6 @@ textarea:focus {
 #view-root[hidden],
 #profile-footer[hidden],
 #university-field[hidden],
-#university-picked[hidden],
 #university-list[hidden] { display: none !important; }
 
 .profile-view {
