@@ -1056,8 +1056,8 @@ function syncMobileHeaderLayout() {
  *    directly lands on — not reliable everywhere, e.g. right after a
  *    control loses focus. Suppressing the second tap's default action
  *    directly, independent of viewport/touch-action support, is what
- *    actually stops the zoom. Form controls are excluded so double-tapping
- *    to place a caret or select text inside a field still works normally.
+ *    actually stops the zoom, including on form controls. Keeping the page
+ *    scale fixed takes priority over WebKit's text-selection shortcut.
  */
 function preventMiniAppDoubleTapZoom() {
   let style = document.getElementById(MINI_APP_ZOOM_GUARD_STYLE_ID);
@@ -1080,15 +1080,8 @@ function preventMiniAppDoubleTapZoom() {
   document.addEventListener(
     "touchend",
     (event) => {
-      const target = event.target;
-      const isFormControl = target?.closest?.(
-        "input, textarea, select, [contenteditable]",
-      );
       const now = Date.now();
-      if (
-        !isFormControl &&
-        now - lastTouchEnd <= MINI_APP_DOUBLE_TAP_WINDOW_MS
-      ) {
+      if (now - lastTouchEnd <= MINI_APP_DOUBLE_TAP_WINDOW_MS) {
         event.preventDefault();
       }
       lastTouchEnd = now;
