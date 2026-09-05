@@ -644,7 +644,8 @@
       .compat-matrix-user-avatar {
         width: 36px; height: 36px; border-radius: 50%; overflow: hidden;
         background: rgba(127, 127, 127, 0.12); display: flex; align-items: center; justify-content: center;
-        color: var(--muted); flex-shrink: 0;
+        color: var(--muted); flex-shrink: 0; text-decoration: none; cursor: pointer;
+        touch-action: manipulation;
       }
       .compat-matrix-user-avatar.is-good { outline: 2px solid #22c55e; outline-offset: 1px; }
       .compat-matrix-user-avatar.is-ok { outline: 2px solid #f59e0b; outline-offset: 1px; }

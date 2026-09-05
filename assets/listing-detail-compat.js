@@ -546,14 +546,18 @@
       }
 
       function renderGroupCompatibilityBody(bodyEl, { members, result, matrix, report, percentsByUserId = new Map() }) {
+        const backTo = `${location.pathname}${location.search}`;
         const header = `
           <div class="compat-matrix-users" style="grid-template-columns:repeat(${members.length}, minmax(0, 1fr))">
             ${members.map((m) => {
               const percent = percentsByUserId.get(Number(m.user_id));
               const avatarClass = percent == null ? '' : ` ${compatPercentClass(percent)}`;
+              const profileHref = typeof UyDosh.profilePageUrl === 'function'
+                ? UyDosh.profilePageUrl(m.user_id, { backTo })
+                : `/telegram/profile.html?user=${encodeURIComponent(m.user_id)}&back=${encodeURIComponent(backTo)}`;
               return `
               <div class="compat-matrix-user">
-                <span class="compat-matrix-user-avatar${avatarClass}" data-matrix-avatar="${m.user_id}"></span>
+                <a class="compat-matrix-user-avatar${avatarClass}" data-matrix-avatar="${m.user_id}" href="${UyDosh.escapeHtml(profileHref)}" aria-label="Открыть профиль ${UyDosh.escapeHtml(firstName(m.name))}"></a>
                 <span class="compat-matrix-user-name">${UyDosh.escapeHtml(firstName(m.name))}</span>
                 ${matrixMemberPercentHtml(percent)}
               </div>
@@ -756,5 +760,4 @@
           sectionEl.hidden = true;
         }
       }
-
 
