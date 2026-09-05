@@ -147,6 +147,28 @@
 .hostel-detail-body h1 {
   margin: 0 0 8px;
 }
+.hostel-detail-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hostel-admin-edit {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 18px rgba(217, 119, 6, 0.35);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+}
+.hostel-admin-edit[hidden] { display: none; }
 .hostel-units {
   display: grid;
   gap: 8px;

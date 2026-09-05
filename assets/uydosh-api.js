@@ -1467,6 +1467,9 @@ function fetchHostels({ districtId, gender } = {}) {
 function fetchHostel(id) {
   return fetchJson(`/hostels/${encodeURIComponent(id)}`);
 }
+function fetchHostelForAdminEdit(id) {
+  return fetchJsonAuth(`/admin/hostels/${encodeURIComponent(id)}`);
+}
 function requestHostelPlace(id, { hostelUnitId, message } = {}) {
   return fetchJsonAuth(`/hostels/${encodeURIComponent(id)}/requests`, {
     method: "POST",
@@ -1475,6 +1478,12 @@ function requestHostelPlace(id, { hostelUnitId, message } = {}) {
 }
 function createHostel(hostel) {
   return fetchJsonAuth("/admin/hostels", { method: "POST", body: hostel });
+}
+function updateHostel(hostelId, hostel) {
+  return fetchJsonAuth(`/admin/hostels/${encodeURIComponent(hostelId)}`, {
+    method: "PATCH",
+    body: hostel,
+  });
 }
 function uploadHostelPhoto(hostelId, imageData, { isPrimary = false } = {}) {
   return fetchJsonAuth(
@@ -1752,8 +1761,10 @@ Object.assign(window.UyDosh, {
   fetchListings,
   fetchHostels,
   fetchHostel,
+  fetchHostelForAdminEdit,
   requestHostelPlace,
   createHostel,
+  updateHostel,
   uploadHostelPhoto,
   fetchListing,
   fetchListingViewCount,

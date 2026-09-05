@@ -21,6 +21,7 @@ const hostelPhotoPreviews = document.getElementById("hostel-photo-previews");
 const MAX_HOSTEL_PHOTOS = 10;
 const hostelPhotos = [];
 let hostelCoordinates = null;
+const editingHostelId = new URLSearchParams(location.search).get("id");
 
 function renderHostelPhotoPreviews() {
   hostelPhotoPreviews.innerHTML = hostelPhotos
@@ -76,7 +77,7 @@ function prefillTelegramUsername() {
   if (username && !field.value) field.value = `@${username}`;
   return Boolean(username);
 }
-function addUnit({ reveal = false } = {}) {
+function addUnit({ reveal = false, value = null } = {}) {
   const item = template.content.cloneNode(true);
   item
     .querySelector(".remove")
@@ -85,6 +86,13 @@ function addUnit({ reveal = false } = {}) {
     );
   units.appendChild(item);
   const unit = units.lastElementChild;
+  if (unit && value) {
+    unit.querySelector("[name=unit_name]").value = value.name || "";
+    unit.querySelector("[name=beds_total]").value = value.beds_total ?? "";
+    unit.querySelector("[name=beds_available]").value = value.beds_available ?? "";
+    unit.querySelector("[name=price]").value = value.price ?? "";
+    unit.querySelector("[name=unit_gender]").value = value.gender || "mixed";
+  }
   if (reveal && unit) {
     unit.classList.add("unit--new");
     unit.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -93,6 +101,29 @@ function addUnit({ reveal = false } = {}) {
     setTimeout(() => unit.classList.remove("unit--new"), 900);
   }
 }
+function setEditMode(hostel) {
+  document.title = "UyDosh — Редактировать хостел";
+  document.querySelector(".hostel-create h1").textContent = "Редактировать хостел";
+  form.querySelector(".save").textContent = "Сохранить изменения";
+  form.elements.name.value = hostel.name || "";
+  form.elements.address.value = hostel.address || "";
+  form.elements.phone.value = String(hostel.phone || "").replace(/^\+998/, "");
+  phoneInput.dispatchEvent(new Event("input", { bubbles: true }));
+  form.elements.telegram_username.value = hostel.telegram_username
+    ? `@${String(hostel.telegram_username).replace(/^@+/, "")}`
+    : "";
+  form.elements.description_ru.value = hostel.description_ru || "";
+  const policy = form.querySelector(`[name=gender_policy][value="${hostel.gender_policy || "mixed"}"]`);
+  if (policy) policy.checked = true;
+  const latitude = Number(hostel.latitude);
+  const longitude = Number(hostel.longitude);
+  hostelCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? { latitude, longitude }
+    : null;
+  units.innerHTML = "";
+  (hostel.units || []).forEach((unit) => addUnit({ value: unit }));
+  if (!units.children.length) addUnit();
+}
 addUnit();
 async function boot() {
   // Never block the form on a Telegram-auth request: this request can stall
@@ -100,14 +131,27 @@ async function boot() {
   // POST /admin/hostels.
   access.hidden = true;
   form.hidden = false;
-  prefillTelegramUsername();
-  UyDosh.ensureTelegramMiniAppSession().then((ready) => {
-    if (ready && UyDosh.isAdmin()) {
-      document
-        .querySelectorAll("[data-admin-hostel-create]")
-        .forEach((el) => (el.hidden = false));
+  if (!editingHostelId) prefillTelegramUsername();
+  const ready = await UyDosh.ensureTelegramMiniAppSession();
+  if (!ready || !UyDosh.isAdmin()) {
+    if (editingHostelId) {
+      error.textContent = "Редактирование хостелов доступно только администратору.";
+      error.hidden = false;
+      form.hidden = true;
     }
-  });
+    return;
+  }
+  document
+    .querySelectorAll("[data-admin-hostel-create]")
+    .forEach((el) => (el.hidden = false));
+  if (!editingHostelId) return;
+  try {
+    setEditMode(await UyDosh.fetchHostelForAdminEdit(editingHostelId));
+  } catch (err) {
+    error.textContent = err.message || "Не удалось загрузить хостел для редактирования.";
+    error.hidden = false;
+    form.hidden = true;
+  }
 }
 boot();
 // Telegram's WebApp object may arrive slightly after this deferred script.
@@ -223,7 +267,9 @@ form.addEventListener("submit", async (e) => {
     })),
   };
   try {
-    const hostel = await UyDosh.createHostel(payload);
+    const hostel = editingHostelId
+      ? await UyDosh.updateHostel(editingHostelId, payload)
+      : await UyDosh.createHostel(payload);
     let failedPhotos = 0;
     for (let index = 0; index < hostelPhotos.length; index += 1) {
       try {
@@ -235,14 +281,14 @@ form.addEventListener("submit", async (e) => {
       }
     }
     if (failedPhotos) {
-      error.textContent = `Хостел создан, но не удалось загрузить фото: ${failedPhotos}.`;
+      error.textContent = `${editingHostelId ? "Изменения сохранены" : "Хостел создан"}, но не удалось загрузить фото: ${failedPhotos}.`;
       error.hidden = false;
       return;
     }
     window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success");
     location.href = "/telegram/hostel.html?id=" + encodeURIComponent(hostel.id);
   } catch (err) {
-    error.textContent = err.message || "Не удалось создать хостел.";
+    error.textContent = err.message || (editingHostelId ? "Не удалось сохранить изменения." : "Не удалось создать хостел.");
     error.hidden = false;
   }
 });
