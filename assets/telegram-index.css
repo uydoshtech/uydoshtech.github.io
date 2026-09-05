@@ -408,6 +408,10 @@ header {
 .chip-type-glyph[data-type="2"] { --type-color: #FF9800; }
 .chip-type-glyph[data-type="3"] { --type-color: #22c55e; }
 .chip-type-glyph[data-type="4"] { --type-color: #a78bfa; }
+.chip-type-glyph[data-type="4"].is-active {
+  border-color: #a78bfa !important;
+  background: rgba(167, 139, 250, 0.22);
+}
 .chip-type-glyph.is-active {
   opacity: 1;
   border-color: var(--type-color, var(--brand2));
