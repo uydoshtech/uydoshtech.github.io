@@ -407,6 +407,7 @@ header {
 .chip-type-glyph[data-type="1"] { --type-color: #64B5F6; }
 .chip-type-glyph[data-type="2"] { --type-color: #FF9800; }
 .chip-type-glyph[data-type="3"] { --type-color: #22c55e; }
+.chip-type-glyph[data-type="4"] { --type-color: #a78bfa; }
 .chip-type-glyph.is-active {
   opacity: 1;
   border-color: var(--type-color, var(--brand2));
