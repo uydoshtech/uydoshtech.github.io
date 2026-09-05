@@ -629,24 +629,37 @@ header {
   align-items: center;
   gap: 10px;
 }
-/* The "no results" empty state (`UyDosh.mapEmptyStateHtml()`) reuses the list
-   view's `.feed-empty-state-title` styling, which defaults to `var(--fg)`
-   (near-white in dark theme) — fine over the list's own dark background, but
-   unreadable here over the map's light tiles/district overlay. Override to
-   black just within this map overlay, without touching the shared class used
-   by the list's own empty state. Same reasoning for the icon, which otherwise
-   inherits the muted/accent-tinted color meant for the list's dark background. */
-.feed-map-status .feed-empty-state-title,
-.feed-map-status .feed-empty-state-icon {
-  color: #000;
-}
-/* Anchor the empty-state message near the top of the panel instead of the
-   `.feed-map-status` default dead-center placement (see `place-items: center`
-   above) — centered, it lands right on top of the map's own center pin/
-   marker instead of floating clear of it. */
+/* Keep the empty-map message readable over every map tile: it is centered in
+   the map and placed on a solid card, rather than competing with map labels
+   or a pin beneath it. */
 .feed-map-status.map-empty {
-  align-items: start;
-  padding-top: 15%;
+  align-items: center;
+  justify-items: center;
+  padding: 16px;
+}
+.feed-map-status.map-empty .feed-empty-state {
+  min-width: min(244px, calc(100vw - 72px));
+  max-width: 300px;
+  padding: 20px 24px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.28);
+}
+.feed-map-status.map-empty .feed-empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: #0f172a;
+  background: #dbeafe;
+}
+.feed-map-status.map-empty .feed-empty-state-icon svg {
+  width: 34px;
+  height: 34px;
+}
+.feed-map-status.map-empty .feed-empty-state-title {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 800;
 }
 /* Opaque backdrop while the map (re)loads — `renderPinsMap` (yandex-map.js)
    tears down and rebuilds the whole Yandex map instance on every load

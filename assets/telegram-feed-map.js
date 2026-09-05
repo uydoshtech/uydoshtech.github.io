@@ -137,9 +137,8 @@
       feedMapStatusEl.setAttribute('aria-label', UyDosh.t('map.loading'));
     }
 
-    // Anchored near the top of the panel (via the `map-empty` class) rather than the
-    // dead-center default, since centering it puts the message/icon right on top of
-    // the map's own center pin/marker.
+    // The `map-empty` class centers a high-contrast empty-state card over the map,
+    // keeping the message legible over all map tiles and labels.
     function showFeedMapEmpty() {
       if (!feedMapStatusEl) return;
       feedMapStatusEl.classList.remove('interactive', 'map-loading');
