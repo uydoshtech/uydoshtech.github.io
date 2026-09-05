@@ -12,8 +12,8 @@ async function fetchJson(path, params) {
     }
   }
   const res = await fetch(url.toString(), {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
+    method: "GET",
+    headers: { Accept: "application/json" },
   });
   if (!res.ok) {
     const err = new Error(`HTTP ${res.status}`);
@@ -23,40 +23,44 @@ async function fetchJson(path, params) {
   return res.json();
 }
 
-const SESSION_STORAGE_KEY = 'uydosh_session_token';
-const TG_INIT_DATA_KEY = 'uydosh_tg_init_data';
+const SESSION_STORAGE_KEY = "uydosh_session_token";
+const TG_INIT_DATA_KEY = "uydosh_tg_init_data";
 const TG_INIT_DATA_MAX_AGE_SEC = 86400;
 
 function readPersistedTelegramInitData() {
   try {
-    return String(sessionStorage.getItem(TG_INIT_DATA_KEY) ?? '').trim();
+    return String(sessionStorage.getItem(TG_INIT_DATA_KEY) ?? "").trim();
   } catch {
-    return '';
+    return "";
   }
 }
 
 function persistTelegramInitData(raw) {
-  const value = String(raw ?? '').trim();
+  const value = String(raw ?? "").trim();
   if (!value) return;
   try {
     sessionStorage.setItem(TG_INIT_DATA_KEY, value);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearPersistedTelegramInitData() {
   try {
     sessionStorage.removeItem(TG_INIT_DATA_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 /** Parse auth_date from initData; returns null when hash/auth_date are missing. */
 function parseTelegramInitDataAuthDate(raw) {
-  const value = String(raw ?? '').trim();
+  const value = String(raw ?? "").trim();
   if (!value) return null;
   try {
     const params = new URLSearchParams(value);
-    if (!params.get('hash')?.trim()) return null;
-    const authDate = Number(params.get('auth_date'));
+    if (!params.get("hash")?.trim()) return null;
+    const authDate = Number(params.get("auth_date"));
     if (!Number.isFinite(authDate) || authDate <= 0) return null;
     return authDate;
   } catch {
@@ -65,8 +69,11 @@ function parseTelegramInitDataAuthDate(raw) {
 }
 
 /** Client-side freshness check (matches backend maxAgeSec). */
-function isTelegramInitDataUsable(raw, { nowSec = Math.floor(Date.now() / 1000) } = {}) {
-  const value = String(raw ?? '').trim();
+function isTelegramInitDataUsable(
+  raw,
+  { nowSec = Math.floor(Date.now() / 1000) } = {},
+) {
+  const value = String(raw ?? "").trim();
   if (!value || value.length < 20) return false;
   const authDate = parseTelegramInitDataAuthDate(value);
   if (authDate == null) return false;
@@ -75,7 +82,7 @@ function isTelegramInitDataUsable(raw, { nowSec = Math.floor(Date.now() / 1000) 
 
 /** initData from Telegram WebApp, persisted for multi-page in-app navigation. */
 function getTelegramInitData() {
-  const fresh = String(window.Telegram?.WebApp?.initData ?? '').trim();
+  const fresh = String(window.Telegram?.WebApp?.initData ?? "").trim();
   const cached = readPersistedTelegramInitData();
   const freshOk = isTelegramInitDataUsable(fresh);
   const cachedOk = isTelegramInitDataUsable(cached);
@@ -86,7 +93,7 @@ function getTelegramInitData() {
   }
   if (cachedOk) return cached;
   if (cached && !cachedOk) clearPersistedTelegramInitData();
-  return '';
+  return "";
 }
 
 function clearTelegramInitData() {
@@ -102,14 +109,16 @@ function clearTelegramInitData() {
 // `onMiniAppSessionRevoked` (wired up in uydosh-mini-app.js) for how the
 // loser reacts.
 
-const MINI_APP_INSTANCE_ID_KEY = 'uydosh_mini_app_instance_id';
+const MINI_APP_INSTANCE_ID_KEY = "uydosh_mini_app_instance_id";
 const MINI_APP_HEARTBEAT_INTERVAL_MS = 10_000;
-const MINI_APP_SOCKET_IO_SRC = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+const MINI_APP_SOCKET_IO_SRC = "https://cdn.socket.io/4.7.5/socket.io.min.js";
 
 function generateMiniAppInstanceId() {
   try {
-    if (typeof crypto?.randomUUID === 'function') return crypto.randomUUID();
-  } catch { /* ignore */ }
+    if (typeof crypto?.randomUUID === "function") return crypto.randomUUID();
+  } catch {
+    /* ignore */
+  }
   return `mai_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
@@ -124,11 +133,15 @@ function getOrCreateMiniAppInstanceId() {
   try {
     const existing = sessionStorage.getItem(MINI_APP_INSTANCE_ID_KEY);
     if (existing) return existing;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   const id = generateMiniAppInstanceId();
   try {
     sessionStorage.setItem(MINI_APP_INSTANCE_ID_KEY, id);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return id;
 }
 
@@ -146,7 +159,8 @@ let _miniAppSessionRevoked = false;
  * server-side — as `{ device?: string, startedAt?: string }`.
  */
 function onMiniAppSessionRevoked(handler) {
-  _miniAppSessionRevokedHandler = typeof handler === 'function' ? handler : null;
+  _miniAppSessionRevokedHandler =
+    typeof handler === "function" ? handler : null;
 }
 
 function _triggerMiniAppSessionRevoked(reason, details = null) {
@@ -154,7 +168,11 @@ function _triggerMiniAppSessionRevoked(reason, details = null) {
   _miniAppSessionRevoked = true;
   stopMiniAppHeartbeatLoop();
   if (_miniAppSocket) {
-    try { _miniAppSocket.disconnect(); } catch { /* ignore */ }
+    try {
+      _miniAppSocket.disconnect();
+    } catch {
+      /* ignore */
+    }
     _miniAppSocket = null;
   }
   _miniAppSessionRevokedHandler?.(reason, details || {});
@@ -172,19 +190,19 @@ function loadSocketIoClient() {
   if (window.io) return Promise.resolve(window.io);
   if (_socketIoClientPromise) return _socketIoClientPromise;
   _socketIoClientPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = MINI_APP_SOCKET_IO_SRC;
     script.async = true;
     script.onload = () => {
       if (window.io) resolve(window.io);
       else {
         _socketIoClientPromise = null;
-        reject(new Error('socket.io client missing after load'));
+        reject(new Error("socket.io client missing after load"));
       }
     };
     script.onerror = () => {
       _socketIoClientPromise = null;
-      reject(new Error('Failed to load socket.io client'));
+      reject(new Error("Failed to load socket.io client"));
     };
     document.head.appendChild(script);
   });
@@ -201,24 +219,32 @@ async function connectMiniAppSessionSocket(instanceId) {
   try {
     const io = await loadSocketIoClient();
     if (_miniAppSocket) {
-      try { _miniAppSocket.disconnect(); } catch { /* ignore */ }
+      try {
+        _miniAppSocket.disconnect();
+      } catch {
+        /* ignore */
+      }
     }
     _miniAppSocket = io(API_BASE, {
-      path: '/telegram-mini-app/socket.io',
-      transports: ['websocket', 'polling'],
+      path: "/telegram-mini-app/socket.io",
+      transports: ["websocket", "polling"],
       auth: { instanceId },
       reconnection: true,
     });
-    _miniAppSocket.on('session_revoked', (payload) =>
-      _triggerMiniAppSessionRevoked('socket', payload));
+    _miniAppSocket.on("session_revoked", (payload) =>
+      _triggerMiniAppSessionRevoked("socket", payload),
+    );
   } catch (err) {
-    console.warn('[UyDosh] Mini App realtime connect failed', err);
+    console.warn("[UyDosh] Mini App realtime connect failed", err);
   }
 }
 
 function startMiniAppHeartbeatLoop() {
   if (_miniAppHeartbeatTimer) return;
-  _miniAppHeartbeatTimer = setInterval(sendTelegramMiniAppHeartbeat, MINI_APP_HEARTBEAT_INTERVAL_MS);
+  _miniAppHeartbeatTimer = setInterval(
+    sendTelegramMiniAppHeartbeat,
+    MINI_APP_HEARTBEAT_INTERVAL_MS,
+  );
 }
 
 function stopMiniAppHeartbeatLoop() {
@@ -241,20 +267,30 @@ async function sendTelegramMiniAppHeartbeat() {
   if (!initData) return;
   const instanceId = getOrCreateMiniAppInstanceId();
   try {
-    const res = await fetch(`${API_BASE}/app/telegram-mini-app-session/heartbeat`, {
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ init_data: initData, instance_id: instanceId }),
-    });
+    const res = await fetch(
+      `${API_BASE}/app/telegram-mini-app-session/heartbeat`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ init_data: initData, instance_id: instanceId }),
+      },
+    );
     if (res.status === 409) {
       let payload = null;
-      try { payload = await res.json(); } catch { /* ignore */ }
-      if (payload?.code === 'SESSION_REVOKED') {
-        _triggerMiniAppSessionRevoked('heartbeat', payload);
+      try {
+        payload = await res.json();
+      } catch {
+        /* ignore */
+      }
+      if (payload?.code === "SESSION_REVOKED") {
+        _triggerMiniAppSessionRevoked("heartbeat", payload);
       }
     }
   } catch (err) {
-    console.warn('[UyDosh] Mini App heartbeat failed', err);
+    console.warn("[UyDosh] Mini App heartbeat failed", err);
   }
 }
 
@@ -277,25 +313,32 @@ async function startTelegramMiniAppSession() {
   const platform = window.Telegram?.WebApp?.platform || undefined;
   try {
     const res = await fetch(`${API_BASE}/app/telegram-mini-app-session/start`, {
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ init_data: initData, instance_id: instanceId, platform }),
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        init_data: initData,
+        instance_id: instanceId,
+        platform,
+      }),
     });
     if (!res.ok) return false;
     connectMiniAppSessionSocket(instanceId);
     startMiniAppHeartbeatLoop();
     return true;
   } catch (err) {
-    console.warn('[UyDosh] Failed to start Mini App session', err);
+    console.warn("[UyDosh] Failed to start Mini App session", err);
     return false;
   }
 }
 
 function getSessionToken() {
   try {
-    return sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
+    return sessionStorage.getItem(SESSION_STORAGE_KEY) || "";
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -303,10 +346,12 @@ function setSessionToken(token) {
   try {
     if (token) sessionStorage.setItem(SESSION_STORAGE_KEY, token);
     else sessionStorage.removeItem(SESSION_STORAGE_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
-const SESSION_USER_ID_KEY = 'uydosh_session_user_id';
+const SESSION_USER_ID_KEY = "uydosh_session_user_id";
 
 /** The app-side numeric user id behind the current session token (see `setSessionUserId`), used to detect e.g. listing ownership without a dedicated "whoami" round trip. */
 function getSessionUserId() {
@@ -326,10 +371,12 @@ function setSessionUserId(id) {
     } else {
       sessionStorage.removeItem(SESSION_USER_ID_KEY);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
-const SESSION_USER_ROLE_KEY = 'uydosh_session_user_role';
+const SESSION_USER_ROLE_KEY = "uydosh_session_user_role";
 
 /** The app-side `users.role` behind the current session (see `setSessionUserRole`) —
  * used client-side only for UI gating (e.g. showing the admin "Edit" button below);
@@ -345,20 +392,23 @@ function getSessionUserRole() {
 
 function setSessionUserRole(role) {
   try {
-    if (typeof role === 'string' && role) sessionStorage.setItem(SESSION_USER_ROLE_KEY, role);
+    if (typeof role === "string" && role)
+      sessionStorage.setItem(SESSION_USER_ROLE_KEY, role);
     else sessionStorage.removeItem(SESSION_USER_ROLE_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 /** Client-side-only convenience for gating admin UI — see `getSessionUserRole` above. */
 function isAdmin() {
-  return getSessionUserRole() === 'admin';
+  return getSessionUserRole() === "admin";
 }
 
-async function fetchJsonAuth(path, { method = 'GET', body, params } = {}) {
+async function fetchJsonAuth(path, { method = "GET", body, params } = {}) {
   const token = getSessionToken();
   if (!token) {
-    const err = new Error('Not authenticated');
+    const err = new Error("Not authenticated");
     err.status = 401;
     throw err;
   }
@@ -370,19 +420,21 @@ async function fetchJsonAuth(path, { method = 'GET', body, params } = {}) {
     }
   }
   const headers = {
-    Accept: 'application/json',
+    Accept: "application/json",
     Authorization: `Bearer ${token}`,
   };
   const init = { method, headers };
   if (body != null) {
-    headers['Content-Type'] = 'application/json';
+    headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(body);
   }
   const res = await fetch(url.toString(), init);
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
@@ -405,9 +457,11 @@ let telegramMiniAppAuthInFlight = null;
  * Concurrent calls share one request instead of each hitting the backend. */
 function authenticateTelegramMiniApp() {
   if (!telegramMiniAppAuthInFlight) {
-    telegramMiniAppAuthInFlight = doAuthenticateTelegramMiniApp().finally(() => {
-      telegramMiniAppAuthInFlight = null;
-    });
+    telegramMiniAppAuthInFlight = doAuthenticateTelegramMiniApp().finally(
+      () => {
+        telegramMiniAppAuthInFlight = null;
+      },
+    );
   }
   return telegramMiniAppAuthInFlight;
 }
@@ -415,22 +469,24 @@ function authenticateTelegramMiniApp() {
 async function doAuthenticateTelegramMiniApp() {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
   const res = await fetch(`${API_BASE}/users/telegram-webapp-auth`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+      Accept: "application/json",
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ init_data: initData }),
   });
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     if (res.status === 401) clearTelegramInitData();
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -469,12 +525,14 @@ function checkListingFavorited(listingId) {
 
 /** Toggle favorite status for a listing (reuses the shared favorites API). */
 function toggleListingFavorite(listingId) {
-  return fetchJsonAuth(`/favorites/toggle/${encodeURIComponent(listingId)}`, { method: 'PUT' });
+  return fetchJsonAuth(`/favorites/toggle/${encodeURIComponent(listingId)}`, {
+    method: "PUT",
+  });
 }
 
 /** List the current Mini App user's favorited listings (reuses the shared favorites API). */
 function fetchFavoriteListings({ page = 1, limit = 100 } = {}) {
-  return fetchJsonAuth('/favorites', { params: { page, limit } });
+  return fetchJsonAuth("/favorites", { params: { page, limit } });
 }
 
 /**
@@ -483,12 +541,16 @@ function fetchFavoriteListings({ page = 1, limit = 100 } = {}) {
  * therefore claim it. Returns `{ eligible: boolean }`.
  */
 function checkListingClaimEligibility(listingId) {
-  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/claim-eligibility`);
+  return fetchJsonAuth(
+    `/listings/${encodeURIComponent(listingId)}/claim-eligibility`,
+  );
 }
 
 /** Claim a scraped listing that matches the current user's Telegram identity. */
 function claimListing(listingId) {
-  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/claim`, { method: 'POST' });
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/claim`, {
+    method: "POST",
+  });
 }
 
 /**
@@ -505,19 +567,24 @@ async function reportTelegramMiniAppLocation(latitude, longitude, contactRaw) {
   const initData = getTelegramInitData();
   if (!initData) return false;
   try {
-    const body = { init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), latitude, longitude };
+    const body = {
+      init_data: initData,
+      instance_id: getOrCreateMiniAppInstanceId(),
+      latitude,
+      longitude,
+    };
     if (contactRaw) body.contact = contactRaw;
     const res = await fetch(`${API_BASE}/app/telegram-mini-app-location`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
     });
     return res.ok;
   } catch (err) {
-    console.warn('[UyDosh] Failed to report Mini App location', err);
+    console.warn("[UyDosh] Failed to report Mini App location", err);
     return false;
   }
 }
@@ -530,14 +597,16 @@ async function reportTelegramMiniAppLocation(latitude, longitude, contactRaw) {
  */
 function requestTelegramContactShare() {
   const tg = window.Telegram?.WebApp;
-  if (typeof tg?.requestContact !== 'function') return Promise.resolve(null);
+  if (typeof tg?.requestContact !== "function") return Promise.resolve(null);
   return new Promise((resolve) => {
     try {
       tg.requestContact((success, response) => {
-        resolve(success && response?.status === 'sent' ? response.response : null);
+        resolve(
+          success && response?.status === "sent" ? response.response : null,
+        );
       });
     } catch (err) {
-      console.warn('[UyDosh] requestContact failed', err);
+      console.warn("[UyDosh] requestContact failed", err);
       resolve(null);
     }
   });
@@ -550,41 +619,46 @@ function requestTelegramContactShare() {
  * &hash=...` — NOT bare JSON, so it must be parsed as a query string first.
  */
 function phoneNumberFromContactShareResponse(contactRaw) {
-  if (!contactRaw) return '';
+  if (!contactRaw) return "";
   try {
-    const contactJson = new URLSearchParams(contactRaw).get('contact');
-    if (!contactJson) return '';
+    const contactJson = new URLSearchParams(contactRaw).get("contact");
+    if (!contactJson) return "";
     const parsed = JSON.parse(contactJson);
-    return typeof parsed?.phone_number === 'string' ? parsed.phone_number.trim() : '';
+    return typeof parsed?.phone_number === "string"
+      ? parsed.phone_number.trim()
+      : "";
   } catch {
-    return '';
+    return "";
   }
 }
 
 /** Persists the account's phone number (e.g. shared via `requestTelegramContactShare`). */
 function updateMyPhoneNumber(phoneNumber) {
-  return fetchJsonAuth('/users/me/phone-number', {
-    method: 'PATCH',
+  return fetchJsonAuth("/users/me/phone-number", {
+    method: "PATCH",
     body: { phone_number: phoneNumber },
   });
 }
 
 /** Complaint reasons for reporting a listing (public, shared with mobile app). */
 function fetchComplaintCategories() {
-  return fetchJson('/complaint-categories');
+  return fetchJson("/complaint-categories");
 }
 
 /** Submit a complaint about a listing (reuses the shared complaints API, same as mobile app). */
 function createComplaint({ listingId, categoryId, text }) {
-  const body = { listing_id: Number(listingId), category_id: Number(categoryId) };
-  const trimmedText = String(text ?? '').trim();
+  const body = {
+    listing_id: Number(listingId),
+    category_id: Number(categoryId),
+  };
+  const trimmedText = String(text ?? "").trim();
   if (trimmedText) body.text = trimmedText;
-  return fetchJsonAuth('/complaints', { method: 'POST', body });
+  return fetchJsonAuth("/complaints", { method: "POST", body });
 }
 
 /** Complaint count for a listing (public, no auth) — drives the listing detail page's complaints warning button. */
 function fetchListingComplaintsCount(listingId) {
-  return fetchJson('/complaints/counts-by-listing', { listing_id: listingId });
+  return fetchJson("/complaints/counts-by-listing", { listing_id: listingId });
 }
 
 /**
@@ -593,20 +667,22 @@ function fetchListingComplaintsCount(listingId) {
  * render the "grouped by user" complaints sheet.
  */
 function fetchListingComplaints(listingId, { limit = 100 } = {}) {
-  return fetchJson('/complaints', { listing_id: listingId, limit });
+  return fetchJson("/complaints", { listing_id: listingId, limit });
 }
 
 function fetchSubwayStationsByLine(lineId, lang = getLang()) {
-  return fetchJson(`/subway-stations/line/${encodeURIComponent(lineId)}`, { language: lang });
+  return fetchJson(`/subway-stations/line/${encodeURIComponent(lineId)}`, {
+    language: lang,
+  });
 }
 
 /** All Tashkent metro stations (every line) — used by the mini app map's metro layer. */
 function fetchSubwayStations(lang = getLang()) {
-  return fetchJson('/subway-stations', { language: lang });
+  return fetchJson("/subway-stations", { language: lang });
 }
 
 function fetchLocations({ page = 1, limit = 200, language = getLang() } = {}) {
-  return fetchJson('/locations', { page, limit, language });
+  return fetchJson("/locations", { page, limit, language });
 }
 
 /**
@@ -626,13 +702,16 @@ const subwayStationsByIdCache = new Map();
 const subwayStationsLoadPromiseByLang = new Map();
 
 function loadLocationsLookup(lang = getLang()) {
-  if (locationsByIdCache.has(lang)) return Promise.resolve(locationsByIdCache.get(lang));
+  if (locationsByIdCache.has(lang))
+    return Promise.resolve(locationsByIdCache.get(lang));
   let promise = locationsLoadPromiseByLang.get(lang);
   if (!promise) {
     promise = fetchLocations({ page: 1, limit: 200, language: lang })
       .then((data) => {
         const byId = new Map();
-        for (const loc of Array.isArray(data?.locations) ? data.locations : []) {
+        for (const loc of Array.isArray(data?.locations)
+          ? data.locations
+          : []) {
           const id = Number(loc?.id);
           if (id > 0) byId.set(id, loc);
         }
@@ -646,7 +725,8 @@ function loadLocationsLookup(lang = getLang()) {
 }
 
 function loadSubwayStationsLookup(lang = getLang()) {
-  if (subwayStationsByIdCache.has(lang)) return Promise.resolve(subwayStationsByIdCache.get(lang));
+  if (subwayStationsByIdCache.has(lang))
+    return Promise.resolve(subwayStationsByIdCache.get(lang));
   let promise = subwayStationsLoadPromiseByLang.get(lang);
   if (!promise) {
     promise = fetchSubwayStations(lang)
@@ -686,7 +766,7 @@ function getCachedSubwayStationById(stationId, lang = getLang()) {
 }
 
 function fetchAmenitiesOrdered() {
-  return fetchJson('/amenities/ordered');
+  return fetchJson("/amenities/ordered");
 }
 
 /**
@@ -695,7 +775,7 @@ function fetchAmenitiesOrdered() {
  * failure (network, etc.) defaults to visible, same as the mobile client.
  */
 function fetchGeminiListingUiHidden() {
-  return fetchJson('/app/settings/gemini-listing-ui-hidden')
+  return fetchJson("/app/settings/gemini-listing-ui-hidden")
     .then((data) => data?.hidden === true)
     .catch(() => false);
 }
@@ -709,7 +789,10 @@ function fetchGeminiListingUiHidden() {
  * feature-disabled (403 `gemini_listing_ui_disabled`) cases.
  */
 function improveListingDescription(text) {
-  return fetchJsonAuth('/app/gemini/improve-listing', { method: 'POST', body: { text } });
+  return fetchJsonAuth("/app/gemini/improve-listing", {
+    method: "POST",
+    body: { text },
+  });
 }
 
 /**
@@ -728,22 +811,24 @@ function improveListingDescription(text) {
 async function transcribeDescriptionAudio(blob, filename, language) {
   const token = getSessionToken();
   if (!token) {
-    const err = new Error('Not authenticated');
+    const err = new Error("Not authenticated");
     err.status = 401;
     throw err;
   }
   const form = new FormData();
-  form.append('audio', blob, filename);
-  if (language) form.append('language', language);
+  form.append("audio", blob, filename);
+  if (language) form.append("language", language);
   const res = await fetch(`${API_BASE}/app/openai/transcribe-description`, {
-    method: 'POST',
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    method: "POST",
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     body: form,
   });
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
@@ -754,7 +839,7 @@ async function transcribeDescriptionAudio(blob, filename, language) {
 }
 
 function createListing(body) {
-  return fetchJsonAuth('/listings', { method: 'POST', body });
+  return fetchJsonAuth("/listings", { method: "POST", body });
 }
 
 /**
@@ -765,7 +850,9 @@ function createListing(body) {
  * `{ addressText }`.
  */
 function fetchReverseGeocodeAddress(latitude, longitude, lang = getLang()) {
-  return fetchJsonAuth('/app/geosuggest/reverse', { params: { latitude, longitude, lang } });
+  return fetchJsonAuth("/app/geosuggest/reverse", {
+    params: { latitude, longitude, lang },
+  });
 }
 
 /**
@@ -775,8 +862,13 @@ function fetchReverseGeocodeAddress(latitude, longitude, lang = getLang()) {
  * session (Yandex billing groups a session's requests together). Resolves to
  * the raw upstream `{ results: [...] }` body — see `parseGeosuggestResults`.
  */
-function fetchGeosuggest({ text, sessionToken, lang = getLang(), results = 6 }) {
-  return fetchJsonAuth('/app/geosuggest/suggest', {
+function fetchGeosuggest({
+  text,
+  sessionToken,
+  lang = getLang(),
+  results = 6,
+}) {
+  return fetchJsonAuth("/app/geosuggest/suggest", {
     params: { text, sessiontoken: sessionToken, lang, results },
   });
 }
@@ -791,7 +883,7 @@ function fetchGeosuggest({ text, sessionToken, lang = getLang(), results = 6 }) 
  * addressText }` (coordinates null on failure).
  */
 function fetchGeocodeAddress({ text, lang = getLang() }) {
-  return fetchJsonAuth('/app/geosuggest/geocode', { params: { text, lang } });
+  return fetchJsonAuth("/app/geosuggest/geocode", { params: { text, lang } });
 }
 
 /**
@@ -804,8 +896,8 @@ function fetchGeocodeAddress({ text, lang = getLang() }) {
  */
 function _handleMiniAppApiErrorPayload(res, payload) {
   if (res.status === 401) clearTelegramInitData();
-  if (res.status === 409 && payload?.code === 'SESSION_REVOKED') {
-    _triggerMiniAppSessionRevoked('api');
+  if (res.status === 409 && payload?.code === "SESSION_REVOKED") {
+    _triggerMiniAppSessionRevoked("api");
   }
 }
 
@@ -813,22 +905,28 @@ function _handleMiniAppApiErrorPayload(res, payload) {
 async function createListingFromTelegramMiniApp(listing) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
   const res = await fetch(`${API_BASE}/listings/telegram-miniapp`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+      Accept: "application/json",
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), listing }),
+    body: JSON.stringify({
+      init_data: initData,
+      instance_id: getOrCreateMiniAppInstanceId(),
+      listing,
+    }),
   });
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -848,22 +946,27 @@ async function createListingFromTelegramMiniApp(listing) {
 async function createListingScanSession(listingId) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
-  const res = await fetch(`${API_BASE}/listings/${encodeURIComponent(listingId)}/scan-sessions`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${API_BASE}/listings/${encodeURIComponent(listingId)}/scan-sessions`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ init_data: initData }),
     },
-    body: JSON.stringify({ init_data: initData }),
-  });
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -879,13 +982,18 @@ async function createListingScanSession(listingId) {
  * { scanSessionId, listingId, status, roomScanGlbUrl?, ... }.
  */
 async function fetchScanSession(scanSessionId) {
-  const res = await fetch(`${API_BASE}/scan-sessions/${encodeURIComponent(scanSessionId)}`, {
-    headers: { Accept: 'application/json' },
-  });
+  const res = await fetch(
+    `${API_BASE}/scan-sessions/${encodeURIComponent(scanSessionId)}`,
+    {
+      headers: { Accept: "application/json" },
+    },
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     const err = new Error(payload?.error || `HTTP ${res.status}`);
     err.status = res.status;
@@ -902,22 +1010,31 @@ async function fetchScanSession(scanSessionId) {
 async function updateListingFromTelegramMiniApp(listingId, listing) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
-  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}`, {
-    method: 'PUT',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}`,
+    {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        init_data: initData,
+        instance_id: getOrCreateMiniAppInstanceId(),
+        listing,
+      }),
     },
-    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId(), listing }),
-  });
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -938,21 +1055,25 @@ async function updateListingFromTelegramMiniApp(listingId, listing) {
 async function fetchListingForAdminEditFromTelegramMiniApp(listingId) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
   const res = await fetch(
-    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/for-admin-edit?${new URLSearchParams({
-      init_data: initData,
-      instance_id: getOrCreateMiniAppInstanceId(),
-    })}`,
-    { headers: { Accept: 'application/json' } },
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/for-admin-edit?${new URLSearchParams(
+      {
+        init_data: initData,
+        instance_id: getOrCreateMiniAppInstanceId(),
+      },
+    )}`,
+    { headers: { Accept: "application/json" } },
   );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -968,30 +1089,38 @@ async function fetchListingForAdminEditFromTelegramMiniApp(listingId) {
  * corrected owner's Telegram @username or phone number rather than a raw numeric user
  * id. Pass exactly one of `ownerTelegramUsername`/`ownerPhoneNumber`.
  */
-async function reassignListingOwnerFromTelegramMiniApp(listingId, { ownerTelegramUsername, ownerPhoneNumber } = {}) {
+async function reassignListingOwnerFromTelegramMiniApp(
+  listingId,
+  { ownerTelegramUsername, ownerPhoneNumber } = {},
+) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
-  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/reassign-owner`, {
-    method: 'PUT',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/reassign-owner`,
+    {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        init_data: initData,
+        instance_id: getOrCreateMiniAppInstanceId(),
+        ...(ownerTelegramUsername ? { ownerTelegramUsername } : {}),
+        ...(ownerPhoneNumber ? { ownerPhoneNumber } : {}),
+      }),
     },
-    body: JSON.stringify({
-      init_data: initData,
-      instance_id: getOrCreateMiniAppInstanceId(),
-      ...(ownerTelegramUsername ? { ownerTelegramUsername } : {}),
-      ...(ownerPhoneNumber ? { ownerPhoneNumber } : {}),
-    }),
-  });
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -1006,7 +1135,7 @@ async function reassignListingOwnerFromTelegramMiniApp(listingId, { ownerTelegra
 async function fetchMyTelegramMiniAppListings() {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
@@ -1015,12 +1144,14 @@ async function fetchMyTelegramMiniAppListings() {
       init_data: initData,
       instance_id: getOrCreateMiniAppInstanceId(),
     })}`,
-    { headers: { Accept: 'application/json' } },
+    { headers: { Accept: "application/json" } },
   );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -1038,22 +1169,30 @@ async function fetchMyTelegramMiniAppListings() {
 async function toggleListingActiveFromTelegramMiniApp(listingId) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
-  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/toggle-active`, {
-    method: 'PATCH',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/toggle-active`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        init_data: initData,
+        instance_id: getOrCreateMiniAppInstanceId(),
+      }),
     },
-    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId() }),
-  });
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -1073,22 +1212,30 @@ async function toggleListingActiveFromTelegramMiniApp(listingId) {
 async function renewListingFromTelegramMiniApp(listingId) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
-  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/renew`, {
-    method: 'PATCH',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}/renew`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        init_data: initData,
+        instance_id: getOrCreateMiniAppInstanceId(),
+      }),
     },
-    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId() }),
-  });
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -1106,22 +1253,30 @@ async function renewListingFromTelegramMiniApp(listingId) {
 async function deleteListingFromTelegramMiniApp(listingId) {
   const initData = getTelegramInitData();
   if (!initData) {
-    const err = new Error('Telegram initData missing');
+    const err = new Error("Telegram initData missing");
     err.status = 401;
     throw err;
   }
-  const res = await fetch(`${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}`, {
-    method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const res = await fetch(
+    `${API_BASE}/listings/telegram-miniapp/${encodeURIComponent(listingId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        init_data: initData,
+        instance_id: getOrCreateMiniAppInstanceId(),
+      }),
     },
-    body: JSON.stringify({ init_data: initData, instance_id: getOrCreateMiniAppInstanceId() }),
-  });
+  );
   let payload = null;
   try {
     payload = await res.json();
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   if (!res.ok) {
     _handleMiniAppApiErrorPayload(res, payload);
     const err = new Error(payload?.error || `HTTP ${res.status}`);
@@ -1133,7 +1288,7 @@ async function deleteListingFromTelegramMiniApp(listingId) {
 }
 
 function createProfile(body) {
-  return fetchJsonAuth('/profiles', { method: 'POST', body });
+  return fetchJsonAuth("/profiles", { method: "POST", body });
 }
 
 /** Current (or any) user's profile — public endpoint, no session required. */
@@ -1147,12 +1302,15 @@ function fetchProfile(userId) {
  * `null`/`undefined` are both treated as "leave unchanged", not "clear".
  */
 function updateProfile(userId, body) {
-  return fetchJsonAuth(`/profiles/${encodeURIComponent(userId)}`, { method: 'PUT', body });
+  return fetchJsonAuth(`/profiles/${encodeURIComponent(userId)}`, {
+    method: "PUT",
+    body,
+  });
 }
 
 /** Full university list (for pickers) — public, localized by `lang`. */
 function fetchUniversitiesAll(lang = getLang()) {
-  return fetchJson('/universities/all', { language: lang });
+  return fetchJson("/universities/all", { language: lang });
 }
 
 /**
@@ -1161,7 +1319,7 @@ function fetchUniversitiesAll(lang = getLang()) {
  * generously-sized page covers all of them; no need for a paginated UI.
  */
 function fetchRegionsAll(lang = getLang()) {
-  return fetchJson('/regions', { language: lang, limit: 100 });
+  return fetchJson("/regions", { language: lang, limit: 100 });
 }
 
 // Regions are static reference data (1h server cache) — memoize per id so the
@@ -1174,33 +1332,39 @@ function fetchRegion(id) {
   const key = Number(id);
   if (!Number.isFinite(key)) return Promise.resolve(null);
   if (_regionCache.has(key)) return _regionCache.get(key);
-  const promise = fetchJson(`/regions/${encodeURIComponent(key)}`).catch((err) => {
-    _regionCache.delete(key);
-    throw err;
-  });
+  const promise = fetchJson(`/regions/${encodeURIComponent(key)}`).catch(
+    (err) => {
+      _regionCache.delete(key);
+      throw err;
+    },
+  );
   _regionCache.set(key, promise);
   return promise;
 }
 
 function uploadListingPhoto(listingId, imageData, { isPrimary = false } = {}) {
   return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/photos`, {
-    method: 'POST',
+    method: "POST",
     body: { imageData, isPrimary },
   });
 }
 
 /** Delete a listing photo (used when editing an existing listing). */
 function deleteListingPhoto(listingId, photoId) {
-  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/photos/${encodeURIComponent(photoId)}`, {
-    method: 'DELETE',
-  });
+  return fetchJsonAuth(
+    `/listings/${encodeURIComponent(listingId)}/photos/${encodeURIComponent(photoId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ''));
-    reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () =>
+      reject(reader.error || new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -1211,9 +1375,9 @@ function readFileAsDataUrl(file) {
  * back to a plain <img> element otherwise.
  */
 async function loadImageSource(file) {
-  if (typeof createImageBitmap === 'function') {
+  if (typeof createImageBitmap === "function") {
     try {
-      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
     } catch {
       // fall through to <img> based loading below
     }
@@ -1223,7 +1387,7 @@ async function loadImageSource(file) {
     return await new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Failed to decode image'));
+      img.onerror = () => reject(new Error("Failed to decode image"));
       img.src = objectUrl;
     });
   } finally {
@@ -1238,34 +1402,49 @@ async function loadImageSource(file) {
  * mini app's uploads working the same way the native app's photo cropper
  * does (downscale + re-encode as JPEG).
  */
-async function resizeImageFileForUpload(file, {
-  maxDimension = 1600,
-  quality = 0.85,
-  minQuality = 0.5,
-  targetBytes = 1.4 * 1024 * 1024,
-} = {}) {
+async function resizeImageFileForUpload(
+  file,
+  {
+    maxDimension = 1600,
+    quality = 0.85,
+    minQuality = 0.5,
+    targetBytes = 1.4 * 1024 * 1024,
+  } = {},
+) {
   const source = await loadImageSource(file);
   const sourceWidth = source.width || source.naturalWidth;
   const sourceHeight = source.height || source.naturalHeight;
   const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(sourceWidth * scale));
   canvas.height = Math.max(1, Math.round(sourceHeight * scale));
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-  if (typeof source.close === 'function') source.close();
+  if (typeof source.close === "function") source.close();
 
-  let dataUrl = canvas.toDataURL('image/jpeg', quality);
+  let dataUrl = canvas.toDataURL("image/jpeg", quality);
   let currentQuality = quality;
   while (dataUrl.length > targetBytes * 1.37 && currentQuality > minQuality) {
     currentQuality = Math.max(minQuality, currentQuality - 0.15);
-    dataUrl = canvas.toDataURL('image/jpeg', currentQuality);
+    dataUrl = canvas.toDataURL("image/jpeg", currentQuality);
   }
   return dataUrl;
 }
 
-function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays, sortBy, sortOrder } = {}) {
-  const params = { page, limit, isActive: 'true' };
+function fetchListings({
+  page = 1,
+  limit = 20,
+  listingTypeId,
+  gender,
+  withPhoto,
+  has3dTour,
+  subwayLineId,
+  locationId,
+  createdWithinDays,
+  sortBy,
+  sortOrder,
+} = {}) {
+  const params = { page, limit, isActive: "true" };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
@@ -1278,21 +1457,33 @@ function fetchListings({ page = 1, limit = 20, listingTypeId, gender, withPhoto,
   // on its default featured-then-recent order.
   if (sortBy) params.sortBy = sortBy;
   if (sortOrder) params.sortOrder = sortOrder;
-  return fetchJson('/listings', params);
+  return fetchJson("/listings", params);
 }
 
 /** Public hostel catalogue. Availability is returned with each hostel unit. */
 function fetchHostels({ districtId, gender } = {}) {
-  return fetchJson('/hostels', { district_id: districtId, gender });
+  return fetchJson("/hostels", { district_id: districtId, gender });
 }
-function fetchHostel(id) { return fetchJson(`/hostels/${encodeURIComponent(id)}`); }
+function fetchHostel(id) {
+  return fetchJson(`/hostels/${encodeURIComponent(id)}`);
+}
 function requestHostelPlace(id, { hostelUnitId, message } = {}) {
   return fetchJsonAuth(`/hostels/${encodeURIComponent(id)}/requests`, {
-    method: 'POST', body: { hostel_unit_id: hostelUnitId, message },
+    method: "POST",
+    body: { hostel_unit_id: hostelUnitId, message },
   });
 }
 function createHostel(hostel) {
-  return fetchJsonAuth('/admin/hostels', { method: 'POST', body: hostel });
+  return fetchJsonAuth("/admin/hostels", { method: "POST", body: hostel });
+}
+function uploadHostelPhoto(hostelId, imageData, { isPrimary = false } = {}) {
+  return fetchJsonAuth(
+    `/admin/hostels/${encodeURIComponent(hostelId)}/photos`,
+    {
+      method: "POST",
+      body: { imageData, isPrimary },
+    },
+  );
 }
 
 /**
@@ -1305,11 +1496,11 @@ function createHostel(hostel) {
  */
 async function fetchListing(id) {
   const token = getSessionToken();
-  const headers = { Accept: 'application/json' };
+  const headers = { Accept: "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const lang = typeof getLang === 'function' ? getLang() : 'uz';
+  const lang = typeof getLang === "function" ? getLang() : "uz";
   const url = new URL(`${API_BASE}/listings/${encodeURIComponent(id)}`);
-  url.searchParams.set('language', lang);
+  url.searchParams.set("language", lang);
   const res = await fetch(url.toString(), { headers });
   if (!res.ok) {
     const err = new Error(`HTTP ${res.status}`);
@@ -1331,7 +1522,10 @@ function fetchListingViewCount(listingId) {
  * a failure here shouldn't block or error out the detail page.
  */
 function recordListingView(listingId) {
-  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/record-view`, { method: 'POST' });
+  return fetchJsonAuth(
+    `/listings/${encodeURIComponent(listingId)}/record-view`,
+    { method: "POST" },
+  );
 }
 
 function listingGroupPath(listingId, suffix) {
@@ -1340,61 +1534,70 @@ function listingGroupPath(listingId, suffix) {
 
 function createListingGroupJoinRequest(listingId, { message } = {}) {
   const body = {};
-  const trimmed = typeof message === 'string' ? message.trim().slice(0, 500) : '';
+  const trimmed =
+    typeof message === "string" ? message.trim().slice(0, 500) : "";
   if (trimmed) body.message = trimmed;
-  return fetchJsonAuth(listingGroupPath(listingId, '/join-requests'), {
-    method: 'POST',
+  return fetchJsonAuth(listingGroupPath(listingId, "/join-requests"), {
+    method: "POST",
     body,
   });
 }
 
 function fetchListingGroupJoinRequests(listingId) {
-  return fetchJsonAuth(listingGroupPath(listingId, '/join-requests'));
+  return fetchJsonAuth(listingGroupPath(listingId, "/join-requests"));
 }
 
 function approveListingGroupJoinRequest(listingId, requestId) {
   return fetchJsonAuth(
-    listingGroupPath(listingId, `/join-requests/${encodeURIComponent(requestId)}/approve`),
-    { method: 'POST' },
+    listingGroupPath(
+      listingId,
+      `/join-requests/${encodeURIComponent(requestId)}/approve`,
+    ),
+    { method: "POST" },
   );
 }
 
 function rejectListingGroupJoinRequest(listingId, requestId) {
   return fetchJsonAuth(
-    listingGroupPath(listingId, `/join-requests/${encodeURIComponent(requestId)}/reject`),
-    { method: 'POST' },
+    listingGroupPath(
+      listingId,
+      `/join-requests/${encodeURIComponent(requestId)}/reject`,
+    ),
+    { method: "POST" },
   );
 }
 
 function withdrawListingGroupJoinRequest(listingId) {
-  return fetchJsonAuth(listingGroupPath(listingId, '/join-requests/mine'), {
-    method: 'DELETE',
+  return fetchJsonAuth(listingGroupPath(listingId, "/join-requests/mine"), {
+    method: "DELETE",
   });
 }
 
 function fetchListingGroupMembers(listingId) {
-  return fetchJson(listingGroupPath(listingId, '/members')).then((payload) => {
+  return fetchJson(listingGroupPath(listingId, "/members")).then((payload) => {
     if (Array.isArray(payload?.data)) return payload.data;
     return [];
   });
 }
 
 function leaveListingGroup(listingId) {
-  return fetchJsonAuth(listingGroupPath(listingId, '/members/me'), { method: 'DELETE' });
+  return fetchJsonAuth(listingGroupPath(listingId, "/members/me"), {
+    method: "DELETE",
+  });
 }
 
 function removeListingGroupMember(listingId, memberUserId, { reason } = {}) {
   const body = {};
-  const trimmed = typeof reason === 'string' ? reason.trim().slice(0, 160) : '';
+  const trimmed = typeof reason === "string" ? reason.trim().slice(0, 160) : "";
   if (trimmed) body.reason = trimmed;
   return fetchJsonAuth(
     listingGroupPath(listingId, `/members/${encodeURIComponent(memberUserId)}`),
-    { method: 'DELETE', body },
+    { method: "DELETE", body },
   );
 }
 
 function fetchUserConversations({ page = 1, limit = 50 } = {}) {
-  return fetchJsonAuth('/conversations', { params: { page, limit } });
+  return fetchJsonAuth("/conversations", { params: { page, limit } });
 }
 
 function fetchConversation(conversationId) {
@@ -1402,40 +1605,70 @@ function fetchConversation(conversationId) {
 }
 
 function fetchConversationMembers(conversationId) {
-  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/members`);
+  return fetchJsonAuth(
+    `/conversations/${encodeURIComponent(conversationId)}/members`,
+  );
 }
 
-function fetchConversationMessages(conversationId, { page = 1, limit = 50 } = {}) {
-  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
-    params: { page, limit },
-  });
+function fetchConversationMessages(
+  conversationId,
+  { page = 1, limit = 50 } = {},
+) {
+  return fetchJsonAuth(
+    `/conversations/${encodeURIComponent(conversationId)}/messages`,
+    {
+      params: { page, limit },
+    },
+  );
 }
 
-function sendConversationMessage(conversationId, content, { messageType = 'text', replyToMessageId } = {}) {
-  const text = typeof content === 'string'
-    ? content.trim()
-    : String(content?.content ?? '').trim();
+function sendConversationMessage(
+  conversationId,
+  content,
+  { messageType = "text", replyToMessageId } = {},
+) {
+  const text =
+    typeof content === "string"
+      ? content.trim()
+      : String(content?.content ?? "").trim();
   const body = { content: text, message_type: messageType };
   const replyId = Number(replyToMessageId);
-  if (Number.isFinite(replyId) && replyId > 0) body.reply_to_message_id = replyId;
-  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
-    method: 'POST',
-    body,
-  });
+  if (Number.isFinite(replyId) && replyId > 0)
+    body.reply_to_message_id = replyId;
+  return fetchJsonAuth(
+    `/conversations/${encodeURIComponent(conversationId)}/messages`,
+    {
+      method: "POST",
+      body,
+    },
+  );
 }
 
 function markConversationRead(conversationId) {
-  return fetchJsonAuth(`/conversations/${encodeURIComponent(conversationId)}/read`, {
-    method: 'PUT',
-  });
+  return fetchJsonAuth(
+    `/conversations/${encodeURIComponent(conversationId)}/read`,
+    {
+      method: "PUT",
+    },
+  );
 }
 
 function fetchUnreadMessageCount() {
-  return fetchJsonAuth('/messages/unread-count');
+  return fetchJsonAuth("/messages/unread-count");
 }
 
-function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, withPhoto, has3dTour, subwayLineId, locationId, createdWithinDays } = {}) {
-  const params = { page, limit, isActive: 'true' };
+function fetchListingsForMap({
+  page = 1,
+  limit = 300,
+  listingTypeId,
+  gender,
+  withPhoto,
+  has3dTour,
+  subwayLineId,
+  locationId,
+  createdWithinDays,
+} = {}) {
+  const params = { page, limit, isActive: "true" };
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
@@ -1443,10 +1676,10 @@ function fetchListingsForMap({ page = 1, limit = 300, listingTypeId, gender, wit
   if (subwayLineId) params.subwayLineId = subwayLineId;
   if (locationId) params.locationId = locationId;
   if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
-  return fetchJson('/listings/map', params);
+  return fetchJson("/listings/map", params);
 }
 
-const YANDEX_MAP_MODULE_PATH = '/assets/yandex-map.js';
+const YANDEX_MAP_MODULE_PATH = "/assets/yandex-map.js";
 let yandexMapModulePromise = null;
 
 function resetYandexMaps({ hard = false } = {}) {
@@ -1473,7 +1706,7 @@ function reflowActiveMaps() {
   });
 }
 
-function withTimeout(promise, ms, message = 'Timed out') {
+function withTimeout(promise, ms, message = "Timed out") {
   let timer;
   return Promise.race([
     promise,
@@ -1496,19 +1729,19 @@ function loadYandexMapModule() {
   if (window.UyDoshMap) return Promise.resolve(window.UyDoshMap);
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260827-2`;
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
       else {
         yandexMapModulePromise = null;
-        reject(new Error('UyDoshMap module missing'));
+        reject(new Error("UyDoshMap module missing"));
       }
     };
     script.onerror = () => {
       yandexMapModulePromise = null;
-      reject(new Error('Failed to load UyDoshMap module'));
+      reject(new Error("Failed to load UyDoshMap module"));
     };
     document.head.appendChild(script);
   });
@@ -1521,6 +1754,7 @@ Object.assign(window.UyDosh, {
   fetchHostel,
   requestHostelPlace,
   createHostel,
+  uploadHostelPhoto,
   fetchListing,
   fetchListingViewCount,
   recordListingView,

@@ -15,7 +15,50 @@ const form = document.getElementById("form"),
   units = document.getElementById("units"),
   template = document.getElementById("unit"),
   error = document.getElementById("error");
+const hostelPhotoInput = document.getElementById("hostel-photo-input");
+const hostelPhotoPicker = document.getElementById("hostel-photo-picker");
+const hostelPhotoPreviews = document.getElementById("hostel-photo-previews");
+const MAX_HOSTEL_PHOTOS = 10;
+const hostelPhotos = [];
 let hostelCoordinates = null;
+
+function renderHostelPhotoPreviews() {
+  hostelPhotoPreviews.innerHTML = hostelPhotos
+    .map(
+      (photo, index) =>
+        `<div class="hostel-photo-preview"><img src="${UyDosh.escapeHtml(photo.previewUrl)}" alt="Фото ${index + 1}"><button type="button" data-hostel-photo-remove="${index}" aria-label="Удалить фото ${index + 1}">×</button></div>`,
+    )
+    .join("");
+  hostelPhotoPreviews
+    .querySelectorAll("[data-hostel-photo-remove]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.hostelPhotoRemove);
+        const [removed] = hostelPhotos.splice(index, 1);
+        if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+        renderHostelPhotoPreviews();
+      });
+    });
+}
+
+hostelPhotoPicker.addEventListener("click", () => hostelPhotoInput.click());
+hostelPhotoInput.addEventListener("change", async () => {
+  const files = [...(hostelPhotoInput.files || [])];
+  hostelPhotoInput.value = "";
+  const remaining = MAX_HOSTEL_PHOTOS - hostelPhotos.length;
+  for (const file of files.slice(0, Math.max(0, remaining))) {
+    try {
+      hostelPhotos.push({
+        dataUrl: await UyDosh.resizeImageFileForUpload(file),
+        previewUrl: URL.createObjectURL(file),
+      });
+    } catch (_) {
+      error.textContent = "Не удалось обработать фото. Попробуйте другое.";
+      error.hidden = false;
+    }
+  }
+  renderHostelPhotoPreviews();
+});
 function telegramUsername() {
   const direct = window.Telegram?.WebApp?.initDataUnsafe?.user?.username;
   if (direct) return String(direct);
@@ -149,10 +192,6 @@ form.addEventListener("submit", async (e) => {
     gender_policy: data.get("gender_policy"),
     description_ru: data.get("description_ru"),
     status: "active",
-    photos: String(data.get("photos") || "")
-      .split(/\n/)
-      .map((s) => s.trim())
-      .filter(Boolean),
     units: rows.map((row) => ({
       name: row.querySelector("[name=unit_name]").value,
       beds_total: Number(row.querySelector("[name=beds_total]").value),
@@ -163,6 +202,21 @@ form.addEventListener("submit", async (e) => {
   };
   try {
     const hostel = await UyDosh.createHostel(payload);
+    let failedPhotos = 0;
+    for (let index = 0; index < hostelPhotos.length; index += 1) {
+      try {
+        await UyDosh.uploadHostelPhoto(hostel.id, hostelPhotos[index].dataUrl, {
+          isPrimary: index === 0,
+        });
+      } catch (_) {
+        failedPhotos += 1;
+      }
+    }
+    if (failedPhotos) {
+      error.textContent = `Хостел создан, но не удалось загрузить фото: ${failedPhotos}.`;
+      error.hidden = false;
+      return;
+    }
     window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success");
     location.href = "/telegram/hostel.html?id=" + encodeURIComponent(hostel.id);
   } catch (err) {

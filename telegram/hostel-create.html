@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260830-4" />
     <link
       rel="stylesheet"
-      href="../assets/telegram-hostel-create.css?v=20260830-2"
+      href="../assets/telegram-hostel-create.css?v=20260905-3"
     />
   </head>
   <body>
@@ -79,12 +79,35 @@
               >
             </div>
           </fieldset>
-          <label
-            >Фото (ссылки, по одной в строке)<textarea
-              name="photos"
-              placeholder="https://…"
-            ></textarea>
-          </label>
+          <section
+            class="hostel-photo-upload"
+            aria-labelledby="hostel-photo-label"
+          >
+            <div id="hostel-photo-label" class="hostel-photo-label">Фото</div>
+            <input
+              id="hostel-photo-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              hidden
+            />
+            <button
+              type="button"
+              class="hostel-photo-picker"
+              id="hostel-photo-picker"
+            >
+              <span aria-hidden="true">⌾</span> Снять или выбрать фото
+            </button>
+            <p class="hostel-photo-hint">
+              До 10 фото. Они будут загружены в хранилище UyDosh.
+            </p>
+            <div
+              class="hostel-photo-previews"
+              id="hostel-photo-previews"
+              aria-live="polite"
+            ></div>
+          </section>
           <section>
             <div class="section-head">
               <h2>Комнаты и места</h2>
@@ -147,12 +170,12 @@
     >
     <script src="../assets/uydosh-core.js"></script>
     <script src="../assets/uydosh-i18n.js"></script>
-    <script src="../assets/uydosh-api.js" defer></script>
+    <script src="../assets/uydosh-api.js?v=20260905-3" defer></script>
     <script src="../assets/uydosh-icons.js" defer></script>
     <script src="../assets/uydosh-map-pins.js?v=20260830-1" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260830-4" defer></script>
     <script
-      src="../assets/telegram-hostel-create.js?v=20260830-4"
+      src="../assets/telegram-hostel-create.js?v=20260905-3"
       defer
     ></script>
   </body>
