@@ -769,7 +769,6 @@ function renderFilters() {
               <div class="filter-controls">
                 ${genderSwitch}
                 ${photoChip}
-                ${threeDChip}
               </div>
               ${filtersResetHtml}
             </div>
@@ -779,6 +778,7 @@ function renderFilters() {
                 ${lineChip}
                 ${priceSortChip}
                 ${periodChip}
+                ${threeDChip}
               </div>
             </div>
           </div>
