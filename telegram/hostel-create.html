@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260830-4" />
     <link
       rel="stylesheet"
-      href="../assets/telegram-hostel-create.css?v=20260905-4"
+      href="../assets/telegram-hostel-create.css?v=20260905-5"
     />
   </head>
   <body>
@@ -33,8 +33,23 @@
             ><span>Адрес</span>
             <div class="address-row">
               <input name="address" required placeholder="Улица, дом" />
-              <button type="button" id="use-location">⌖ Моя локация</button>
-            </div></label
+              <button
+                type="button"
+                id="use-location"
+                aria-label="Определить мою локацию"
+                title="Моя локация"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="1.5"
+                    class="location-center"
+                  ></circle>
+                </svg>
+              </button></div></label
           ><label
             ><span>Телефон</span>
             <div class="phone-input-wrap phone-input-wrap-split">
@@ -181,7 +196,7 @@
     <script src="../assets/uydosh-map-pins.js?v=20260830-1" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260830-4" defer></script>
     <script
-      src="../assets/telegram-hostel-create.js?v=20260905-4"
+      src="../assets/telegram-hostel-create.js?v=20260905-5"
       defer
     ></script>
   </body>

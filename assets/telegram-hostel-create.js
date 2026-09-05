@@ -122,7 +122,8 @@ const telegramUsernamePrefillTimer = setInterval(() => {
 document.getElementById("use-location").addEventListener("click", async () => {
   const button = document.getElementById("use-location");
   button.disabled = true;
-  button.textContent = "Определяем…";
+  button.classList.add("is-loading");
+  button.setAttribute("aria-busy", "true");
   try {
     const { latitude, longitude } = await UyDosh.requestUserLocation();
     hostelCoordinates = { latitude, longitude };
@@ -155,7 +156,8 @@ document.getElementById("use-location").addEventListener("click", async () => {
     error.hidden = false;
   } finally {
     button.disabled = false;
-    button.textContent = "⌖ Моя локация";
+    button.classList.remove("is-loading");
+    button.removeAttribute("aria-busy");
   }
 });
 document
