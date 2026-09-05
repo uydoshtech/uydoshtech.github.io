@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260830-4" />
     <link
       rel="stylesheet"
-      href="../assets/telegram-hostel-create.css?v=20260905-5"
+      href="../assets/telegram-hostel-create.css?v=20260905-6"
     />
   </head>
   <body>
@@ -32,7 +32,16 @@
           ><label class="address-field"
             ><span>Адрес</span>
             <div class="address-row">
-              <input name="address" required placeholder="Улица, дом" />
+              <div class="hostel-address-autocomplete">
+                <input
+                  id="hostel-address"
+                  name="address"
+                  required
+                  autocomplete="off"
+                  placeholder="Улица, дом"
+                />
+                <div id="hostel-address-suggestions" class="hostel-address-suggestions" hidden></div>
+              </div>
               <button
                 type="button"
                 id="use-location"
@@ -208,7 +217,7 @@
     <script src="../assets/uydosh-map-pins.js?v=20260830-1" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260905-7" defer></script>
     <script
-      src="../assets/telegram-hostel-create.js?v=20260905-7"
+      src="../assets/telegram-hostel-create.js?v=20260905-8"
       defer
     ></script>
   </body>

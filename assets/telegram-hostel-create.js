@@ -21,7 +21,72 @@ const hostelPhotoPreviews = document.getElementById("hostel-photo-previews");
 const MAX_HOSTEL_PHOTOS = 10;
 const hostelPhotos = [];
 let hostelCoordinates = null;
+let hostelAddressResolvedText = null;
 const editingHostelId = new URLSearchParams(location.search).get("id");
+const hostelAddressInput = document.getElementById("hostel-address");
+const hostelAddressSuggestions = document.getElementById("hostel-address-suggestions");
+let hostelAddressSuggestTimer = null;
+let hostelAddressSuggestRequestId = 0;
+let hostelAddressSuggestSession = null;
+
+function hostelGeosuggestSession() {
+  if (!hostelAddressSuggestSession) {
+    const bytes = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    hostelAddressSuggestSession = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+  return hostelAddressSuggestSession;
+}
+function parseHostelSuggestions(data) {
+  return (Array.isArray(data?.results) ? data.results : [])
+    .map((item) => item?.address?.formatted_address || item?.title?.text || "")
+    .filter((value) => typeof value === "string" && value.trim())
+    .map((value) => value.trim());
+}
+function hideHostelAddressSuggestions() {
+  hostelAddressSuggestions.hidden = true;
+  hostelAddressSuggestions.innerHTML = "";
+}
+function renderHostelAddressSuggestions(items, { loading = false, empty = false } = {}) {
+  if (document.activeElement !== hostelAddressInput) return hideHostelAddressSuggestions();
+  if (loading) {
+    hostelAddressSuggestions.innerHTML = '<div class="hostel-address-suggestions-loading">Ищем адрес…</div>';
+  } else if (empty) {
+    hostelAddressSuggestions.innerHTML = '<div class="hostel-address-suggestions-empty">Адрес не найден</div>';
+  } else {
+    hostelAddressSuggestions.innerHTML = items.map((value, index) => `<button type="button" class="hostel-address-suggestion" data-hostel-address-suggestion="${index}">${UyDosh.escapeHtml(value)}</button>`).join("");
+  }
+  hostelAddressSuggestions.hidden = !loading && !empty && items.length === 0;
+}
+async function resolveHostelAddress({ force = false } = {}) {
+  const text = String(hostelAddressInput.value || "").trim();
+  if (!text || (!force && text === hostelAddressResolvedText)) return;
+  try {
+    const result = await UyDosh.fetchGeocodeAddress({ text, lang: UyDosh.getLang() });
+    const latitude = Number(result?.latitude);
+    const longitude = Number(result?.longitude);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      hostelCoordinates = { latitude, longitude };
+      hostelAddressResolvedText = text;
+    }
+  } catch (_) {
+    // The address remains usable even when coordinates cannot be resolved.
+  }
+}
+async function loadHostelAddressSuggestions() {
+  const query = hostelAddressInput.value.trim();
+  const requestId = ++hostelAddressSuggestRequestId;
+  if (query.length < 3) return hideHostelAddressSuggestions();
+  renderHostelAddressSuggestions([], { loading: true });
+  try {
+    const result = await UyDosh.fetchGeosuggest({ text: query, sessionToken: hostelGeosuggestSession(), lang: UyDosh.getLang() });
+    if (requestId !== hostelAddressSuggestRequestId) return;
+    const items = parseHostelSuggestions(result);
+    renderHostelAddressSuggestions(items, { empty: items.length === 0 });
+  } catch (_) {
+    if (requestId === hostelAddressSuggestRequestId) hideHostelAddressSuggestions();
+  }
+}
 
 function renderHostelPhotoPreviews() {
   hostelPhotoPreviews.innerHTML = hostelPhotos
@@ -107,6 +172,7 @@ function setEditMode(hostel) {
   form.querySelector(".save").textContent = "Сохранить изменения";
   form.elements.name.value = hostel.name || "";
   form.elements.address.value = hostel.address || "";
+  hostelAddressResolvedText = form.elements.address.value.trim() || null;
   form.elements.phone.value = String(hostel.phone || "").replace(/^\+998/, "");
   phoneInput.dispatchEvent(new Event("input", { bubbles: true }));
   form.elements.telegram_username.value = hostel.telegram_username
@@ -186,7 +252,10 @@ document.getElementById("use-location").addEventListener("click", async () => {
         longitude,
         UyDosh.getLang(),
       );
-      if (result?.addressText) form.elements.address.value = result.addressText;
+      if (result?.addressText) {
+        form.elements.address.value = result.addressText;
+        hostelAddressResolvedText = result.addressText.trim();
+      }
       else {
         error.textContent =
           "Местоположение определено, но адрес не удалось получить.";
@@ -243,9 +312,36 @@ phoneInput.addEventListener("input", () => {
     ? `(${groups[0]})${groups.length > 1 ? `-${groups.slice(1).join("-")}` : ""}`
     : "";
 });
+hostelAddressInput.addEventListener("input", () => {
+  hostelCoordinates = null;
+  hostelAddressResolvedText = null;
+  clearTimeout(hostelAddressSuggestTimer);
+  hostelAddressSuggestTimer = setTimeout(loadHostelAddressSuggestions, 260);
+});
+hostelAddressInput.addEventListener("focus", () => {
+  if (hostelAddressInput.value.trim().length >= 3) loadHostelAddressSuggestions();
+});
+hostelAddressInput.addEventListener("blur", () => {
+  setTimeout(() => {
+    hideHostelAddressSuggestions();
+    resolveHostelAddress();
+  }, 180);
+});
+hostelAddressSuggestions.addEventListener("click", (event) => {
+  const choice = event.target.closest("[data-hostel-address-suggestion]");
+  if (!choice) return;
+  hostelAddressInput.value = choice.textContent.trim();
+  hostelCoordinates = null;
+  hostelAddressResolvedText = null;
+  hostelAddressSuggestSession = null;
+  hideHostelAddressSuggestions();
+  resolveHostelAddress({ force: true });
+  UyDosh.haptic?.selection?.();
+});
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   error.hidden = true;
+  await resolveHostelAddress();
   const data = new FormData(form),
     rows = [...units.querySelectorAll(".unit")];
   const payload = {
