@@ -881,6 +881,7 @@ function ensureMiniAppTabbarStyles() {
       padding: 0 6px;
     }
     .mini-app-tabbar-items.has-admin { grid-template-columns: repeat(5, 1fr); }
+    .mini-app-tab[data-admin-tab][hidden] { display: none !important; }
     .mini-app-tab {
       appearance: none;
       position: relative;
