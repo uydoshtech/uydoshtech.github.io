@@ -2506,6 +2506,7 @@ Object.assign(window.UyDosh, {
   redirectFromMiniAppStartParam,
   mountMiniAppHeader,
   mountAllMiniAppHeaders,
+  mountMiniAppTabbar,
   miniAppHeaderHtml,
   MINI_APP_ACCOUNT_PATH,
   MINI_APP_GROUPS_PATH,
