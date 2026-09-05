@@ -2390,7 +2390,12 @@ function initTelegramMiniApp() {
     // On a user's very first Mini App visit ever, this is what triggers Telegram's native
     // location permission prompt; on every visit after that (granted or denied), it silently
     // resolves/no-ops with no repeat prompt. See `requestAndReportUserLocation`.
-    requestAndReportUserLocation();
+    // The map bundle owns this helper and is intentionally loaded only on the
+    // feed. Other Mini App pages must still finish mounting their shared
+    // header and tab bar when that optional bundle is absent.
+    if (typeof requestAndReportUserLocation === "function") {
+      requestAndReportUserLocation();
+    }
     applyTelegramTheme(tg);
     applyStoredManualTheme();
     applyHeaderBgTheme();
