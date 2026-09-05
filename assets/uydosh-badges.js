@@ -100,6 +100,8 @@ function filterListingTypeIcon(listingTypeId, { pressed = false } = {}) {
       return iconPeople(color);
     case 3:
       return iconGroups(color);
+    case 4:
+      return iconHome(color);
     default:
       return '';
   }

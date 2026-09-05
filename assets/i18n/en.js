@@ -206,6 +206,7 @@ I18N.en = {
     'filter.type.roomNeeded': 'Looking for housing',
     'filter.type.roommateNeeded': 'Need roommate',
     'filter.type.groupForming': 'Forming group',
+    'filter.type.hostels': 'Hostels',
     'filter.type.aria': 'Listing type',
     'filter.type.label': 'Type:',
     'filter.gender.label': 'Gender:',

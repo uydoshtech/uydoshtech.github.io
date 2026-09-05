@@ -207,6 +207,7 @@ I18N.uz = {
     'filter.type.roomNeeded': 'Uy qidiryapman',
     'filter.type.roommateNeeded': 'Xonadosh qidiramiz',
     'filter.type.groupForming': 'Guruh yigamiz',
+    'filter.type.hostels': 'Hostellar',
     'filter.type.aria': 'E’lon turi',
     'filter.type.label': 'Tur:',
     'filter.gender.label': 'Jins:',

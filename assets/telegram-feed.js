@@ -231,7 +231,8 @@ function readUrlListingTypeId() {
       id === LISTING_TYPE_ALL ||
       id === LISTING_TYPE_ROOM_NEEDED ||
       id === LISTING_TYPE_ROOMMATE_NEEDED ||
-      id === LISTING_TYPE_GROUP_FORMING
+      id === LISTING_TYPE_GROUP_FORMING ||
+      id === LISTING_TYPE_HOSTEL
     ) {
       return id;
     }
@@ -407,12 +408,22 @@ function filterTapHaptic() {
 
 function listingTypeQueryParam() {
   const id = state.filters.listingTypeId;
-  return id > 0 ? id : undefined;
+  return id > 0 && id !== LISTING_TYPE_HOSTEL ? id : undefined;
+}
+
+function isHostelsOnlyFilter() {
+  return state.filters.listingTypeId === LISTING_TYPE_HOSTEL;
 }
 
 function genderQueryParam() {
   const id = state.filters.gender;
   return id > 0 ? id : undefined;
+}
+
+function hostelGenderQueryParam() {
+  if (state.filters.gender === GENDER_MALE) return 'male';
+  if (state.filters.gender === GENDER_FEMALE) return 'female';
+  return undefined;
 }
 
 function withPhotoQueryParam() {
@@ -461,6 +472,35 @@ function logSearchEvent() {
   });
 }
 
+function hostelMapPin(hostel) {
+  const price = hostelMinPrice(hostel);
+  return {
+    id: -Number(hostel.id),
+    hostel_id: Number(hostel.id),
+    is_hostel: true,
+    title: hostel.name,
+    address: hostel.address || 'Ташкент',
+    latitude: Number(hostel.latitude),
+    longitude: Number(hostel.longitude),
+    listing_type_id: LISTING_TYPE_HOSTEL,
+    listing_type_code: 'hostel',
+    price: price || 0,
+    photo_url: hostel.photos?.[0]?.photo_url || '',
+    detail_url: `/telegram/hostel.html?id=${encodeURIComponent(hostel.id)}`,
+    created_at: hostel.created_at,
+  };
+}
+
+async function fetchFeedMapPins(params) {
+  if (!isHostelsOnlyFilter()) return UyDosh.fetchListingsForMap(params);
+  const hostels = await UyDosh.fetchHostels({
+    districtId: params.locationId,
+    gender: hostelGenderQueryParam(),
+  });
+  const pins = hostels.map(hostelMapPin).filter((pin) => Number.isFinite(pin.latitude) && Number.isFinite(pin.longitude));
+  return { pins, total: pins.length };
+}
+
 const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
   UyDosh,
   elements: {
@@ -474,6 +514,7 @@ const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
   },
   state,
   onHaptic: filterTapHaptic,
+  fetchMapPins: fetchFeedMapPins,
   getFilterParams: () => ({
     listingTypeId: listingTypeQueryParam(),
     gender: genderQueryParam(),
@@ -553,6 +594,7 @@ function renderFilters() {
     { value: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
     { value: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { value: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
+    { value: LISTING_TYPE_HOSTEL, label: UyDosh.t('filter.type.hostels', lang) },
   ];
   const genderOptions = [
     { value: GENDER_MALE, label: UyDosh.t('filter.gender.male', lang) },
@@ -1175,7 +1217,9 @@ function listingCardHtml(listing) {
 }
 
 function renderAll() {
-  gridEl.innerHTML = state.items.map(listingCardHtml).join('');
+  gridEl.innerHTML = isHostelsOnlyFilter()
+    ? state.items.map(hostelCardHtml).join('')
+    : state.items.map(listingCardHtml).join('');
 }
 
 /**
@@ -1213,6 +1257,10 @@ function patchCardLanguage(cardEl, listing) {
 }
 
 function updateCardsLanguage() {
+  if (isHostelsOnlyFilter()) {
+    renderAll();
+    return;
+  }
   const cards = gridEl.querySelectorAll(':scope > a.card');
   if (cards.length !== state.items.length) {
     // Structural mismatch (shouldn't normally happen) — fall back to a full rebuild.
@@ -1321,6 +1369,41 @@ function updatePagination(data, listings, page) {
   }
 }
 
+function hostelMinPrice(hostel) {
+  const prices = (hostel?.units || [])
+    .filter((unit) => Number(unit?.beds_available) > 0 && Number(unit?.price) > 0)
+    .map((unit) => Number(unit.price));
+  return prices.length ? Math.min(...prices) : null;
+}
+
+function hostelFreeBeds(hostel) {
+  return (hostel?.units || []).reduce((total, unit) => total + Number(unit?.beds_available || 0), 0);
+}
+
+function hostelCardHtml(hostel) {
+  const lang = UyDosh.getLang();
+  const title = UyDosh.escapeHtml(hostel?.name || '');
+  const photoSrc = hostel?.photos?.[0]?.photo_url ? UyDosh.photoUrl(hostel.photos[0].photo_url) : '';
+  const price = hostelMinPrice(hostel);
+  const beds = hostelFreeBeds(hostel);
+  const address = UyDosh.escapeHtml(hostel?.address || 'Ташкент');
+  const typeBadge = `<div class="type-badge" style="--badge-type-color:#a78bfa">${UyDosh.escapeHtml(UyDosh.t('filter.type.hostels', lang))}</div>`;
+  const thumb = photoSrc
+    ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${typeBadge}</div>`
+    : `<div class="thumb empty">${typeBadge}</div>`;
+  const priceHtml = price
+    ? `<div class="price">${UyDosh.escapeHtml(new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US').format(price))}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></div>`
+    : '';
+  return `<a class="card hostel-feed-card" href="/telegram/hostel.html?id=${encodeURIComponent(hostel.id)}" data-hostel-card>${thumb}<div class="body"><div class="title-row"><div class="title-col"><div class="title">${title}</div><div class="meta"><span>${UyDosh.iconPin()}${address}</span><span>${beds} ${beds === 1 ? 'место' : 'мест'}</span></div></div>${priceHtml ? `<div class="price-col">${priceHtml}</div>` : ''}</div></div></a>`;
+}
+
+function appendFeedItems(items) {
+  const markup = isHostelsOnlyFilter() ? items.map(hostelCardHtml).join('') : items.map(listingCardHtml).join('');
+  const frag = document.createElement('div');
+  frag.innerHTML = markup;
+  while (frag.firstChild) gridEl.appendChild(frag.firstChild);
+}
+
 async function loadMore() {
   if (state.view === 'map') return;
   if (state.loading || state.reachedEnd || state.errored) return;
@@ -1340,19 +1423,21 @@ async function loadMore() {
   }
 
   try {
-    const data = await UyDosh.fetchListings({
-      page: nextPage,
-      limit: PAGE_SIZE,
-      listingTypeId: listingTypeQueryParam(),
-      gender: genderQueryParam(),
-      withPhoto: withPhotoQueryParam(),
-      has3dTour: has3dTourQueryParam(),
-      subwayLineId: subwayLineQueryParam(),
-      locationId: locationQueryParam(),
-      createdWithinDays: createdWithinDaysQueryParam(),
-      sortBy: sortByQueryParam(),
-      sortOrder: sortOrderQueryParam(),
-    });
+    const data = isHostelsOnlyFilter()
+      ? { listings: await UyDosh.fetchHostels({ districtId: locationQueryParam(), gender: hostelGenderQueryParam() }), totalPages: 1 }
+      : await UyDosh.fetchListings({
+        page: nextPage,
+        limit: PAGE_SIZE,
+        listingTypeId: listingTypeQueryParam(),
+        gender: genderQueryParam(),
+        withPhoto: withPhotoQueryParam(),
+        has3dTour: has3dTourQueryParam(),
+        subwayLineId: subwayLineQueryParam(),
+        locationId: locationQueryParam(),
+        createdWithinDays: createdWithinDaysQueryParam(),
+        sortBy: sortByQueryParam(),
+        sortOrder: sortOrderQueryParam(),
+      });
     // A newer filter/reset superseded this request while it was in flight —
     // drop the stale response instead of appending results for a filter
     // that's no longer selected (see `loadGeneration` comment above).
@@ -1362,7 +1447,7 @@ async function loadMore() {
     state.page = nextPage;
     state.items.push(...listings);
     if (nextPage === 1) gridEl.innerHTML = '';
-    appendListings(listings);
+    appendFeedItems(listings);
     clearStatus();
 
     if (listings.length === 0 || state.page >= state.totalPages) {

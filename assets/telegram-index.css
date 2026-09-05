@@ -331,6 +331,9 @@ header {
 .chip-type-cycle[data-listing-type="3"][aria-pressed="true"] {
   border-color: #22c55e;
 }
+.chip-type-cycle[data-listing-type="4"][aria-pressed="true"] {
+  border-color: #a78bfa;
+}
 .chip-gender .chip-icon {
   width: 16px;
   height: 16px;

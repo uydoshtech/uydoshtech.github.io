@@ -594,7 +594,7 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
   const price = formatMapPinPrice(pin, lang);
   const badges = mapPinBadgesHtml(pin);
   const photoSrc = pin.photo_url ? photoUrl(pin.photo_url) : '';
-  const listingUrl = listingPageUrl(pin.id);
+  const listingUrl = pin.detail_url || listingPageUrl(pin.id);
   // Full listing detail (fetched async, see enrichMapPinTooltipListings) wins once it lands —
   // until then, fall back to the district/subway-station lookups cached by
   // warmLocationSubwayCaches() so the pin's own location_id/subway_station_id (already present
@@ -602,7 +602,9 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
   // tooltip's location/metro line staying blank until that fetch completes.
   const cachedLocation = !listing ? getCachedLocationById?.(pin.location_id, lang) : null;
   const cachedSubwayStation = !listing ? getCachedSubwayStationById?.(pin.subway_station_id, lang) : null;
-  const locName = listing ? localizedShort(listing.location, lang) : localizedShort(cachedLocation, lang);
+  const locName = listing
+    ? (pin.is_hostel ? String(pin.address || '') : localizedShort(listing.location, lang))
+    : (pin.is_hostel ? String(pin.address || '') : localizedShort(cachedLocation, lang));
   const metro = listing ? localized(listing.subway_station, lang) : localized(cachedSubwayStation, lang);
   const metroLine = listing
     ? resolveMetroLine(listing)

@@ -344,6 +344,9 @@ const LISTING_TYPE_ALL = 0;
 const LISTING_TYPE_ROOM_NEEDED = 1;
 const LISTING_TYPE_ROOMMATE_NEEDED = 2;
 const LISTING_TYPE_GROUP_FORMING = 3;
+// A hostel is catalogued separately from user listings, but participates as
+// an explicitly selected fourth type in the shared feed/map filter.
+const LISTING_TYPE_HOSTEL = 4;
 
 const GENDER_ANY = 0;
 const GENDER_MALE = 1;
@@ -857,6 +860,7 @@ Object.assign(window.UyDosh, {
   LISTING_TYPE_ROOM_NEEDED,
   LISTING_TYPE_ROOMMATE_NEEDED,
   LISTING_TYPE_GROUP_FORMING,
+  LISTING_TYPE_HOSTEL,
   GENDER_ANY,
   GENDER_MALE,
   GENDER_FEMALE,

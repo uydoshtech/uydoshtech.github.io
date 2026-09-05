@@ -28,6 +28,7 @@
     state,
     onHaptic = () => {},
     getFilterParams,
+    fetchMapPins = (params) => UyDosh.fetchListingsForMap(params),
   }) {
     const {
       feedListPanel = null,
@@ -402,7 +403,7 @@
       await Promise.all(pending.map(async (pin) => {
         const listingId = Number(pin.id);
         try {
-          listingsById[listingId] = await UyDosh.fetchListing(listingId);
+          listingsById[listingId] = pin.is_hostel ? pin : await UyDosh.fetchListing(listingId);
           if (listingId === currentId) currentEnriched = true;
         } catch (err) {
           console.warn('Failed to enrich map pin tooltip', err);
@@ -479,7 +480,7 @@
       UyDosh.loadYandexMapModule()
         .then((mapModule) => mapModule?.loadYandexScript?.(UyDosh.getLang()))
         .catch(() => { /* loadFeedMap() will retry + surface this */ });
-      const fetchPromise = UyDosh.fetchListingsForMap({
+      const fetchPromise = fetchMapPins({
         page: 1,
         limit: 300,
         ...getFilterParams(),
@@ -526,7 +527,7 @@
         // Overlap the Yandex SDK download with the pins fetch — they hit
         // different hosts, and sequencing them was the main reason Map tab
         // timed out in Telegram while List (api.uydosh.com only) still worked.
-        const pinsPromise = reusablePinsPromise || UyDosh.fetchListingsForMap({
+        const pinsPromise = reusablePinsPromise || fetchMapPins({
           page: 1,
           limit: 300,
           ...filterParams,
