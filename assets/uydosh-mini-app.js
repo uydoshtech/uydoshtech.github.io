@@ -109,10 +109,22 @@ function applyTelegramTheme(tg) {
  * kept in sync on manual toggle + Telegram theme changes via the
  * 'uydosh:themechange' event (dispatched by both). */
 function applyHeaderBgTheme() {
+  // `currentUiTheme` belongs to the optional map bundle. The shared chrome
+  // also runs on pages that do not load maps, so retain the already-applied
+  // default header treatment when that bundle is absent instead of aborting
+  // page initialization.
+  if (typeof currentUiTheme !== "function") return;
   document.documentElement.classList.toggle(
     "mini-app-header-light",
     currentUiTheme() === "light",
   );
+}
+
+function applyOptionalMapTheme() {
+  if (typeof applyStoredManualTheme === "function") {
+    applyStoredManualTheme();
+  }
+  applyHeaderBgTheme();
 }
 if (typeof document !== "undefined") {
   document.addEventListener("uydosh:themechange", applyHeaderBgTheme);
@@ -2397,13 +2409,12 @@ function initTelegramMiniApp() {
       requestAndReportUserLocation();
     }
     applyTelegramTheme(tg);
-    applyStoredManualTheme();
-    applyHeaderBgTheme();
+    applyOptionalMapTheme();
     applyTelegramSafeAreaInsets(tg);
     if (typeof tg.onEvent === "function") {
       tg.onEvent("themeChanged", () => {
         applyTelegramTheme(tg);
-        applyStoredManualTheme();
+        applyOptionalMapTheme();
         // Keeps the header toggle's icon/label correct if Telegram's theme flips while a user
         // has no manual override set — currentUiTheme() falls back to tg.colorScheme (see
         // uydosh-map-pins.js), manual overrides still win regardless of this event firing.
@@ -2442,8 +2453,7 @@ function initTelegramMiniApp() {
   // Prevent double-tap zoom throughout the Mini App. This must run globally:
   // a double tap on any free area should never scale the page.
   preventMiniAppDoubleTapZoom();
-  applyStoredManualTheme();
-  applyHeaderBgTheme();
+  applyOptionalMapTheme();
   ensureMiniAppSafeAreaStyles();
   applyTelegramSafeAreaInsets(tg);
   bindMiniAppInternalNav();
