@@ -1102,6 +1102,72 @@ function preventMiniAppDoubleTapZoom() {
   );
 }
 
+const MINI_APP_BACK_SWIPE_EDGE_PX = 28;
+const MINI_APP_BACK_SWIPE_MIN_DISTANCE_PX = 78;
+const MINI_APP_BACK_SWIPE_MAX_VERTICAL_DRIFT_PX = 56;
+
+function isMiniAppRootRoute() {
+  const path = location.pathname || "";
+  return (
+    /\/telegram\/?$/i.test(path) ||
+    /\/telegram\/index\.html$/i.test(path) ||
+    /\/telegram\/(?:admin|account|chats)\.html$/i.test(path)
+  );
+}
+
+/**
+ * iPhone-style back navigation for nested Mini App screens. It begins only
+ * from the left edge, so normal horizontal gestures within maps, carousels,
+ * filters, and form controls remain untouched.
+ */
+function bindMiniAppBackSwipe() {
+  if (document.documentElement.dataset.uydoshBackSwipeBound) return;
+  document.documentElement.dataset.uydoshBackSwipeBound = "1";
+
+  let startX = 0;
+  let startY = 0;
+  let startedAt = 0;
+  let tracking = false;
+
+  document.addEventListener(
+    "touchstart",
+    (event) => {
+      const touch = event.touches[0];
+      if (!touch || event.touches.length !== 1 || isMiniAppRootRoute()) {
+        tracking = false;
+        return;
+      }
+      tracking = touch.clientX <= MINI_APP_BACK_SWIPE_EDGE_PX;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startedAt = Date.now();
+    },
+    { passive: true },
+  );
+
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      if (!tracking) return;
+      tracking = false;
+      const touch = event.changedTouches[0];
+      if (!touch || Date.now() - startedAt > 900) return;
+      const horizontalDistance = touch.clientX - startX;
+      const verticalDistance = Math.abs(touch.clientY - startY);
+      if (
+        horizontalDistance < MINI_APP_BACK_SWIPE_MIN_DISTANCE_PX ||
+        verticalDistance > MINI_APP_BACK_SWIPE_MAX_VERTICAL_DRIFT_PX
+      )
+        return;
+
+      fireMiniAppHapticProfile("light");
+      if (window.history.length > 1) window.history.back();
+      else location.href = MINI_APP_FEED_PATH;
+    },
+    { passive: true },
+  );
+}
+
 function ensureMiniAppSafeAreaStyles() {
   let style = document.getElementById(MINI_APP_SAFE_AREA_STYLE_ID);
   if (!style) {
@@ -2458,6 +2524,7 @@ function initTelegramMiniApp() {
   applyTelegramSafeAreaInsets(tg);
   bindMiniAppInternalNav();
   bindMiniAppHapticFeedback();
+  bindMiniAppBackSwipe();
   mountAllMiniAppHeaders();
   mountMiniAppTabbar();
   revealAdminHostelTools();
