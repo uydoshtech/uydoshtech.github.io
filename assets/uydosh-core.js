@@ -167,7 +167,7 @@ function languageLabelWithFlag(code) {
 }
 const LANG_SWITCHER_STYLE_ID = 'uydosh-lang-switcher-styles';
 
-/** True on /telegram/, telegram.html redirect, or `?mini=1` listing pages. */
+/** True on every Telegram Mini App route or a `?mini=1` embedded listing page. */
 function isMiniAppPage() {
   try {
     if (new URLSearchParams(location.search).get('mini') === '1') return true;
@@ -175,14 +175,7 @@ function isMiniAppPage() {
   try {
     const path = location.pathname || '';
     if (/\/telegram\.html$/i.test(path)) return true;
-    if (/\/telegram\/?$/i.test(path)) return true;
-    if (/\/telegram\/index\.html$/i.test(path)) return true;
-    if (/\/telegram\/create\.html$/i.test(path)) return true;
-    if (/\/telegram\/create\/?$/i.test(path)) return true;
-    if (/\/telegram\/account\.html$/i.test(path)) return true;
-    if (/\/telegram\/account\/?$/i.test(path)) return true;
-    if (/\/telegram\/profile\.html$/i.test(path)) return true;
-    if (/\/telegram\/profile\/?$/i.test(path)) return true;
+    if (/\/telegram(?:\/|$)/i.test(path)) return true;
   } catch { /* ignore */ }
   return false;
 }
