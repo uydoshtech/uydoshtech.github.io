@@ -485,7 +485,7 @@ function hostelMapPin(hostel) {
     listing_type_id: LISTING_TYPE_HOSTEL,
     listing_type_code: 'hostel',
     price: price || 0,
-    photo_url: hostel.photos?.[0]?.photo_url || '',
+    photo_url: hostel.photos?.[0]?.photo_url || UyDosh.hostelPlaceholderImageUrl(),
     detail_url: `/telegram/hostel.html?id=${encodeURIComponent(hostel.id)}`,
     created_at: hostel.created_at,
   };
@@ -1383,14 +1383,14 @@ function hostelFreeBeds(hostel) {
 function hostelCardHtml(hostel) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(hostel?.name || '');
-  const photoSrc = hostel?.photos?.[0]?.photo_url ? UyDosh.photoUrl(hostel.photos[0].photo_url) : '';
+  const photoSrc = hostel?.photos?.[0]?.photo_url
+    ? UyDosh.photoUrl(hostel.photos[0].photo_url)
+    : UyDosh.hostelPlaceholderImageUrl();
   const price = hostelMinPrice(hostel);
   const beds = hostelFreeBeds(hostel);
   const address = UyDosh.escapeHtml(hostel?.address || 'Ташкент');
   const typeBadge = `<div class="type-badge" style="--badge-type-color:#a78bfa">${UyDosh.escapeHtml(UyDosh.t('filter.type.hostels', lang))}</div>`;
-  const thumb = photoSrc
-    ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${typeBadge}</div>`
-    : `<div class="thumb empty">${typeBadge}</div>`;
+  const thumb = `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${typeBadge}</div>`;
   const priceHtml = price
     ? `<div class="price">${UyDosh.escapeHtml(new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US').format(price))}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></div>`
     : '';

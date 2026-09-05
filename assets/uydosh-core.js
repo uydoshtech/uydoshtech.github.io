@@ -301,6 +301,9 @@ const NO_PHOTO_PLACEHOLDER_IMAGES = {
 /** Works with both full listing objects and map pin objects (both expose gender + listing type). */
 function noPhotoPlaceholderImageUrl(listingOrPin) {
   if (!listingOrPin) return '';
+  if (listingOrPin.is_hostel || listingTypeCodeFromListing(listingOrPin) === 'hostel') {
+    return '/images/no-photo-hostel.jpg';
+  }
   const typeCode = isRoomNeededListing(listingOrPin)
     ? 'room_needed'
     : isRoommateNeededListing(listingOrPin)
@@ -311,6 +314,11 @@ function noPhotoPlaceholderImageUrl(listingOrPin) {
   if (!typeCode) return '';
   const gender = Number(listingOrPin.gender);
   return NO_PHOTO_PLACEHOLDER_IMAGES[typeCode]?.[gender] ?? '';
+}
+
+/** Branded fallback art for hostel cards and hostel detail screens. */
+function hostelPlaceholderImageUrl() {
+  return '/images/no-photo-hostel.jpg';
 }
 
 /** Card/detail badge label; roommate_needed is gendered (ru: «Ищем соседа» / «Ищем соседку»).
@@ -931,6 +939,7 @@ Object.assign(window.UyDosh, {
   telegramAvatarUrl,
   primaryPhoto,
   noPhotoPlaceholderImageUrl,
+  hostelPlaceholderImageUrl,
   cardPhotoDotsHtml,
   formatPrice,
   listingViewsCountText,

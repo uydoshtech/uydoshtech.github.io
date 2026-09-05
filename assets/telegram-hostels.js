@@ -39,7 +39,7 @@ function applyHostelFilter(filter) {
 }
 
 function photo(hostel) {
-  return hostel.photos?.[0]?.photo_url || "";
+  return hostel.photos?.[0]?.photo_url || UyDosh.hostelPlaceholderImageUrl();
 }
 async function listHostels() {
   const target = document.getElementById("hostels");
