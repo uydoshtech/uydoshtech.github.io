@@ -154,6 +154,9 @@
   gap: 12px;
 }
 .hostel-admin-edit {
+  appearance: none;
+  border: 0;
+  padding: 0;
   flex: 0 0 auto;
   display: inline-grid;
   place-items: center;
@@ -163,6 +166,7 @@
   background: linear-gradient(135deg, #f59e0b, #d97706);
   box-shadow: 0 8px 18px rgba(217, 119, 6, 0.35);
   color: #fff;
+  cursor: pointer;
   text-decoration: none;
 }
 .hostel-admin-edit svg {
