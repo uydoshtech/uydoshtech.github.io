@@ -162,6 +162,26 @@ document
   .getElementById("add-unit")
   .addEventListener("click", () => addUnit({ reveal: true }));
 const phoneInput = form.elements.phone;
+document
+  .getElementById("hostel-phone-share")
+  .addEventListener("click", async () => {
+    const contactRaw = await UyDosh.requestTelegramContactShare();
+    const phoneNumber = UyDosh.phoneNumberFromContactShareResponse(contactRaw);
+    if (!phoneNumber) return;
+    const digits = phoneNumber.replace(/\D/g, "");
+    // The hostel form currently uses Uzbekistan's fixed +998 prefix, matching
+    // its phone control. Keep only the national part after Telegram shares it.
+    phoneInput.value = (
+      digits.startsWith("998") ? digits.slice(3) : digits
+    ).slice(-9);
+    phoneInput.dispatchEvent(new Event("input", { bubbles: true }));
+    try {
+      await UyDosh.updateMyPhoneNumber(phoneNumber);
+    } catch (_) {
+      // The number is already filled in the hostel form; account persistence is
+      // best-effort, exactly as on the listing creation flow.
+    }
+  });
 phoneInput.addEventListener("input", () => {
   const digits = phoneInput.value.replace(/\D/g, "").slice(0, 9);
   const groups = [

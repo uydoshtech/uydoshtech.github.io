@@ -147,6 +147,9 @@
   color: var(--fg);
   white-space: nowrap;
 }
+.hostel-phone-share {
+  width: 100%;
+}
 .hostel-create label {
   display: grid;
   gap: 7px;
