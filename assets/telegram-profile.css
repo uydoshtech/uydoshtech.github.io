@@ -362,7 +362,7 @@ textarea:focus {
 }
 .looking-dealbreakers .field-label,
 .looking-dealbreakers .looking-for-hint {
-  color: var(--error);
+  color: #facc15;
 }
 .profile-range-row {
   display: grid;
