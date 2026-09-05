@@ -198,3 +198,23 @@
   color: var(--fg);
   font: inherit;
 }
+.hostel-details {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--stroke);
+}
+.hostel-details h2 { margin: 0 0 12px; }
+.hostel-details h3 { margin: 16px 0 6px; font-size: 16px; }
+.hostel-details p { margin: 8px 0 0; line-height: 1.5; }
+.hostel-details-policy { color: var(--muted); }
+.hostel-details-policy b { color: var(--fg); }
+.hostel-details-description { color: var(--fg); }
+.hostel-details-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 12px;
+  color: var(--muted);
+}
+.hostel-details-row b { color: var(--fg); }
+.hostel-details-rules { margin-top: 14px; }

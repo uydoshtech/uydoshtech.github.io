@@ -143,6 +143,18 @@
               maxlength="5000"
               placeholder="Условия, правила, что рядом"
             ></textarea></label
+          ><section class="hostel-stay-details" aria-labelledby="hostel-stay-details-title">
+            <h2 id="hostel-stay-details-title">Детали проживания</h2>
+            <div class="hostel-stay-times">
+              <label>Заезд<input name="check_in_time" type="time" /></label>
+              <label>Выезд<input name="check_out_time" type="time" /></label>
+            </div>
+            <label>Правила хостела<textarea
+              name="rules"
+              maxlength="5000"
+              placeholder="Например: время тишины, правила заселения и проживания"
+            ></textarea></label>
+          </section>
           ><button class="save" type="submit">Создать хостел</button>
           <div id="error" class="form-error" hidden></div>
         </form>
@@ -196,7 +208,7 @@
     <script src="../assets/uydosh-map-pins.js?v=20260830-1" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260905-7" defer></script>
     <script
-      src="../assets/telegram-hostel-create.js?v=20260905-6"
+      src="../assets/telegram-hostel-create.js?v=20260905-7"
       defer
     ></script>
   </body>

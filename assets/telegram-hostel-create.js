@@ -113,6 +113,9 @@ function setEditMode(hostel) {
     ? `@${String(hostel.telegram_username).replace(/^@+/, "")}`
     : "";
   form.elements.description_ru.value = hostel.description_ru || "";
+  form.elements.check_in_time.value = hostel.hostel_details?.check_in_time || "";
+  form.elements.check_out_time.value = hostel.hostel_details?.check_out_time || "";
+  form.elements.rules.value = hostel.hostel_details?.rules || "";
   const policy = form.querySelector(`[name=gender_policy][value="${hostel.gender_policy || "mixed"}"]`);
   if (policy) policy.checked = true;
   const latitude = Number(hostel.latitude);
@@ -257,6 +260,9 @@ form.addEventListener("submit", async (e) => {
       String(data.get("telegram_username") || "").replace(/^@+/, "") || null,
     gender_policy: data.get("gender_policy"),
     description_ru: data.get("description_ru"),
+    check_in_time: data.get("check_in_time") || null,
+    check_out_time: data.get("check_out_time") || null,
+    rules: data.get("rules") || null,
     status: "active",
     units: rows.map((row) => ({
       name: row.querySelector("[name=unit_name]").value,

@@ -15,6 +15,24 @@ if (UyDosh.isMiniApp()) {
 const money = (n) =>
   new Intl.NumberFormat("ru-RU").format(Number(n || 0)) + " сум/мес";
 const escape = (v) => UyDosh.escapeHtml(String(v ?? ""));
+const hostelPolicyLabel = (policy) => ({
+  male: "Мужской",
+  female: "Женский",
+  mixed: "Смешанный",
+}[policy] || "");
+function hostelDetailsHtml(hostel) {
+  const details = hostel.hostel_details || {};
+  const description = hostel.description_ru || hostel.description_uz || hostel.description_en || "";
+  const policy = hostelPolicyLabel(hostel.gender_policy);
+  const checkIn = details.check_in_time;
+  const checkOut = details.check_out_time;
+  const rules = details.rules;
+  if (!description && !policy && !checkIn && !checkOut && !rules) return "";
+  const stayTimes = checkIn || checkOut
+    ? `<div class="hostel-details-row"><span>Заезд${checkIn ? `: <b>${escape(checkIn)}</b>` : ""}</span><span>Выезд${checkOut ? `: <b>${escape(checkOut)}</b>` : ""}</span></div>`
+    : "";
+  return `<section class="hostel-details"><h2>О хостеле</h2>${policy ? `<div class="hostel-details-policy">Размещение: <b>${escape(policy)}</b></div>` : ""}${description ? `<p class="hostel-details-description">${escape(description).replace(/\n/g, "<br>")}</p>` : ""}${stayTimes}${rules ? `<div class="hostel-details-rules"><h3>Правила</h3><p>${escape(rules).replace(/\n/g, "<br>")}</p></div>` : ""}</section>`;
+}
 const hostelFilters = [
   { gender: "", label: "Все", modifier: "all" },
   { gender: "male", label: "Мужские", modifier: "male" },
@@ -82,7 +100,7 @@ async function detailHostel() {
   try {
     const h = await UyDosh.fetchHostel(id);
     const units = h.units || [];
-    root.innerHTML = `${photo(h) ? `<img class="hostel-hero" src="${escape(photo(h))}" alt="">` : ""}<div class="hostel-detail-body"><div class="hostel-detail-title"><h1>${escape(h.name)}</h1><a id="hostel-admin-edit" class="hostel-admin-edit" href="/telegram/hostel-create.html?id=${encodeURIComponent(h.id)}" hidden aria-label="Редактировать хостел" title="Редактировать хостел">✎</a></div><div class="hostel-meta">${escape(h.address || "Ташкент")}</div><p>${escape(h.description_ru || h.description_uz || h.description_en || "")}</p><h2>Свободные места</h2><div class="hostel-units">${units.map((u) => `<label class="hostel-unit"><div class="hostel-unit-top"><b>${escape(u.name)}</b><b>${money(u.price)}</b></div><div class="hostel-meta">${u.beds_available} из ${u.beds_total} мест · ${escape(u.gender)}</div><input type="radio" name="unit" value="${u.id}" ${u.beds_available > 0 ? "" : "disabled"}></label>`).join("")}</div><form id="request" class="hostel-request"><textarea name="message" placeholder="Комментарий для администратора (необязательно)"></textarea><button ${units.some((u) => u.beds_available > 0) ? "" : "disabled"}>Запросить место</button></form></div>`;
+    root.innerHTML = `${photo(h) ? `<img class="hostel-hero" src="${escape(photo(h))}" alt="">` : ""}<div class="hostel-detail-body"><div class="hostel-detail-title"><h1>${escape(h.name)}</h1><a id="hostel-admin-edit" class="hostel-admin-edit" href="/telegram/hostel-create.html?id=${encodeURIComponent(h.id)}" hidden aria-label="Редактировать хостел" title="Редактировать хостел">✎</a></div><div class="hostel-meta">${escape(h.address || "Ташкент")}</div><h2>Свободные места</h2><div class="hostel-units">${units.map((u) => `<label class="hostel-unit"><div class="hostel-unit-top"><b>${escape(u.name)}</b><b>${money(u.price)}</b></div><div class="hostel-meta">${u.beds_available} из ${u.beds_total} мест · ${escape(u.gender)}</div><input type="radio" name="unit" value="${u.id}" ${u.beds_available > 0 ? "" : "disabled"}></label>`).join("")}</div><form id="request" class="hostel-request"><textarea name="message" placeholder="Комментарий для администратора (необязательно)"></textarea><button ${units.some((u) => u.beds_available > 0) ? "" : "disabled"}>Запросить место</button></form>${hostelDetailsHtml(h)}</div>`;
     UyDosh.ensureTelegramMiniAppSession().then((ready) => {
       const edit = document.getElementById("hostel-admin-edit");
       if (ready && UyDosh.isAdmin() && edit) edit.hidden = false;
