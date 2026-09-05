@@ -45,7 +45,8 @@ async function listHostels() {
   const target = document.getElementById("hostels");
   if (!target) return;
   const status = document.getElementById("status");
-  status.textContent = "Загрузка…";
+  status.classList.add("hostels-loading");
+  status.innerHTML = '<span class="hostels-loading-spinner" aria-label="Загрузка"></span>';
   try {
     const gender = selectedHostelFilter().gender;
     const hostels = await UyDosh.fetchHostels({ gender });
@@ -63,8 +64,10 @@ async function listHostels() {
           return `<a class="hostel-card" href="/telegram/hostel.html?id=${encodeURIComponent(h.id)}">${photo(h) ? `<img src="${escape(photo(h))}" alt="">` : ""}<div class="hostel-card-body"><h2>${escape(h.name)}</h2><div class="hostel-meta">${escape(h.address || "Ташкент")} · ${beds} свободных мест</div><div class="hostel-price">${min ? "от " + money(min) : "Нет свободных мест"}</div></div></a>`;
         })
         .join("") || '<div class="status">Хостелы не найдены</div>';
+    status.classList.remove("hostels-loading");
     status.textContent = "";
   } catch (e) {
+    status.classList.remove("hostels-loading");
     status.textContent = "Не удалось загрузить хостелы";
   }
 }
