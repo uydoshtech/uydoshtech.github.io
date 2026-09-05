@@ -331,7 +331,12 @@ function themeToggleButtonIconSvg(isDark) {
  * map's theme — the map deliberately ignores this toggle, see prefersDarkMapPins()).
  */
 function refreshThemeToggleButtons() {
-  const isDark = currentUiTheme() === 'dark';
+  // The map bundle owns `currentUiTheme`, while this header control is shared
+  // by every Mini App page. Fall back to the default dark chrome when a page
+  // deliberately does not load maps.
+  const isDark = typeof currentUiTheme === 'function'
+    ? currentUiTheme() === 'dark'
+    : !document.documentElement.classList.contains('mini-app-header-light');
   // Button shows the *target* mode's icon, so the label names the mode it switches to.
   const label = t(isDark ? 'theme.toggleLight' : 'theme.toggleDark');
   for (const btn of document.querySelectorAll('[data-uydosh-theme-toggle]')) {
@@ -356,7 +361,7 @@ function initThemeToggle() {
     if (btn.dataset.bound) continue;
     btn.dataset.bound = '1';
     btn.addEventListener('click', () => {
-      toggleManualTheme();
+      if (typeof toggleManualTheme === 'function') toggleManualTheme();
     });
   }
   refreshThemeToggleButtons();
