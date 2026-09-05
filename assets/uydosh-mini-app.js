@@ -979,12 +979,15 @@ async function revealAdminHostelTools() {
     document.querySelectorAll("[data-admin-hostel-create]").forEach((el) => {
       el.hidden = false;
     });
-    document.querySelectorAll("[data-admin-tab]").forEach((el) => {
-      el.hidden = false;
-    });
+    // Switch the grid before revealing the fifth item. Revealing it first
+    // leaves a 4-column grid for one paint frame, so the shield briefly wraps
+    // onto a second row while the Telegram session finishes loading.
     document
       .querySelector(".mini-app-tabbar-items")
       ?.classList.add("has-admin");
+    document.querySelectorAll("[data-admin-tab]").forEach((el) => {
+      el.hidden = false;
+    });
   } catch {
     /* The menu remains safely hidden for unauthenticated users. */
   }
