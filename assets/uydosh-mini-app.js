@@ -11,6 +11,54 @@ const MINI_APP_HOSTELS_PATH = "/telegram/hostels.html";
 const MINI_APP_HOSTEL_CREATE_PATH = "/telegram/hostel-create.html";
 const MINI_APP_ADMIN_PATH = "/telegram/admin.html";
 
+let miniAppToastTimer = null;
+let miniAppToastHideTimer = null;
+
+function ensureMiniAppToast() {
+  let toast = document.getElementById("uydosh-app-toast");
+  if (toast) return toast;
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .uydosh-app-toast { position: fixed; z-index: 500; top: calc(var(--uydosh-tg-inset-top, var(--tg-content-safe-area-inset-top, 0px)) + 12px); left: 50%; width: min(calc(100% - 32px), 520px); box-sizing: border-box; padding: 12px 16px; border: 1px solid transparent; border-radius: 14px; color: #fff; font-size: 14px; font-weight: 700; line-height: 1.35; text-align: center; box-shadow: 0 12px 30px rgba(0, 0, 0, .3); opacity: 0; pointer-events: none; transform: translate(-50%, -10px); transition: opacity .18s ease, transform .18s ease; }
+    .uydosh-app-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+    .uydosh-app-toast--success { background: #166534; border-color: #4ade80; color: #f0fdf4; }
+    .uydosh-app-toast--error { background: #7f1d1d; border-color: #f87171; color: #fef2f2; }
+    .uydosh-app-toast--warning { background: #713f12; border-color: #facc15; color: #fefce8; }
+  `;
+  document.head.append(style);
+  toast = document.createElement("div");
+  toast.id = "uydosh-app-toast";
+  toast.className = "uydosh-app-toast";
+  toast.hidden = true;
+  document.body.append(toast);
+  return toast;
+}
+
+function hideMiniAppToast() {
+  const toast = document.getElementById("uydosh-app-toast");
+  window.clearTimeout(miniAppToastTimer);
+  window.clearTimeout(miniAppToastHideTimer);
+  if (!toast) return;
+  toast.classList.remove("is-visible");
+  miniAppToastHideTimer = window.setTimeout(() => { toast.hidden = true; }, 180);
+}
+
+function showMiniAppToast(message, tone = "success", { duration = 3500 } = {}) {
+  const text = String(message || "").trim();
+  if (!text) return hideMiniAppToast();
+  const toast = ensureMiniAppToast();
+  const variant = ["success", "error", "warning"].includes(tone) ? tone : "success";
+  window.clearTimeout(miniAppToastTimer);
+  window.clearTimeout(miniAppToastHideTimer);
+  toast.className = `uydosh-app-toast uydosh-app-toast--${variant}`;
+  toast.setAttribute("role", variant === "success" ? "status" : "alert");
+  toast.textContent = text;
+  toast.hidden = false;
+  requestAnimationFrame(() => toast.classList.add("is-visible"));
+  miniAppToastTimer = window.setTimeout(hideMiniAppToast, duration);
+}
+
 /** True inside Telegram Mini App or on `?mini=1` / /telegram/. */
 function isMiniApp() {
   if (isMiniAppPage()) return true;
@@ -2596,4 +2644,6 @@ Object.assign(window.UyDosh, {
   logMiniAppScreen,
   MINI_APP_FEED_PATH,
   showMiniAppSessionRevokedScreen,
+  showToast: showMiniAppToast,
+  hideToast: hideMiniAppToast,
 });

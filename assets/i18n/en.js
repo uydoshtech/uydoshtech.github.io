@@ -451,7 +451,7 @@ I18N.en = {
     'profile.errorStudentRequired': 'Please answer this question',
     'profile.save': 'Save',
     'profile.saving': 'Saving…',
-    'profile.saved': 'Saved ✅',
+    'profile.saved': 'Saved',
     'profile.moreComingSoon': "We'll add more profile fields soon.",
     'profile.errorAuth': 'Telegram sign-in failed. Reopen the mini app.',
     'profile.errorLoad': 'Could not load your profile. Please try again.',

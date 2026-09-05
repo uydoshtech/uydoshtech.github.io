@@ -23,8 +23,6 @@ const viewRootEl = document.getElementById('view-root');
 const loadingEl = document.getElementById('loading');
 const formRootEl = document.getElementById('form-root');
 const footerEl = document.getElementById('profile-footer');
-const formErrorEl = document.getElementById('form-error');
-const formSuccessEl = document.getElementById('form-success');
 
 const tabButtons = Array.from(document.querySelectorAll('[data-profile-tab]'));
 const tabBasicEl = document.getElementById('tab-basic');
@@ -61,7 +59,6 @@ const saveBtn = document.getElementById('save-btn');
 const saveBtnLabel = document.getElementById('save-btn-label');
 const saveBtnSpinner = document.getElementById('save-btn-spinner');
 
-let successTimer = null;
 
 const TAB_BASIC = 'basic';
 const TAB_LIFESTYLE = 'lifestyle';
@@ -385,23 +382,18 @@ function renderLookingFor() {
 
 function showFormError(message) {
   if (!message) {
-    formErrorEl.hidden = true;
-    formErrorEl.textContent = '';
+    UyDosh.hideToast?.();
     return;
   }
-  formSuccessEl.hidden = true;
-  formErrorEl.textContent = message;
-  formErrorEl.hidden = false;
+  UyDosh.showToast?.(message, 'error', { duration: 4500 });
+}
+
+function showFormWarning(message) {
+  UyDosh.showToast?.(message, 'warning', { duration: 4000 });
 }
 
 function showFormSuccess(message) {
-  window.clearTimeout(successTimer);
-  formErrorEl.hidden = true;
-  formSuccessEl.textContent = message;
-  formSuccessEl.hidden = false;
-  successTimer = window.setTimeout(() => {
-    formSuccessEl.hidden = true;
-  }, 3000);
+  UyDosh.showToast?.(message, 'success', { duration: 3000 });
 }
 
 function filteredUniversities(lang) {
@@ -743,7 +735,7 @@ function bindEvents() {
     if (next.has(slug)) {
       next.delete(slug);
     } else if (next.size >= MAX_TOP_PRIORITIES) {
-      showFormError(UyDosh.t('profile.looking.prioritiesHint'));
+      showFormWarning(UyDosh.t('profile.looking.prioritiesHint'));
       return;
     } else {
       next.add(slug);

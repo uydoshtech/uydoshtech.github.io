@@ -391,31 +391,6 @@ input[type="number"]:focus {
   outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
   outline-offset: 1px;
 }
-.form-error-banner,
-.form-success-banner {
-  position: fixed;
-  z-index: 100;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--profile-footer-height) + 8px + env(safe-area-inset-bottom, 0px));
-  width: min(692px, calc(100% - 28px));
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
-}
-.form-error-banner {
-  background: color-mix(in srgb, var(--error) 14%, var(--bg));
-  border: 1px solid color-mix(in srgb, var(--error) 42%, transparent);
-  color: var(--error);
-}
-.form-success-banner {
-  background: color-mix(in srgb, var(--brand2) 16%, var(--bg));
-  border: 1px solid color-mix(in srgb, var(--brand2) 45%, transparent);
-  color: var(--brand2);
-}
 .profile-footer {
   position: fixed;
   z-index: 90;

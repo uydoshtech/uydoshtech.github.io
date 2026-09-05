@@ -451,7 +451,7 @@ I18N.ru = {
     'profile.errorStudentRequired': 'Ответьте на вопрос',
     'profile.save': 'Сохранить',
     'profile.saving': 'Сохранение…',
-    'profile.saved': 'Сохранено ✅',
+    'profile.saved': 'Сохранено',
     'profile.moreComingSoon': 'Скоро добавим в профиль ещё больше полей.',
     'profile.errorAuth': 'Не удалось войти через Telegram. Откройте мини-приложение заново.',
     'profile.errorLoad': 'Не удалось загрузить профиль. Попробуйте ещё раз.',

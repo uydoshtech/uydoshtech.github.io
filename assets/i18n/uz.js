@@ -452,7 +452,7 @@ I18N.uz = {
     'profile.errorStudentRequired': 'Savolga javob bering',
     'profile.save': 'Saqlash',
     'profile.saving': 'Saqlanmoqda…',
-    'profile.saved': 'Saqlandi ✅',
+    'profile.saved': 'Saqlandi',
     'profile.moreComingSoon': 'Tez orada profilga yana ma’lumotlar qo‘shamiz.',
     'profile.errorAuth': 'Telegram orqali kirish amalga oshmadi. Mini ilovani qayta oching.',
     'profile.errorLoad': 'Profilni yuklab bo‘lmadi. Qayta urinib ko‘ring.',
