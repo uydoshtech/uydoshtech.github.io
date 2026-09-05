@@ -293,8 +293,8 @@ const NO_PHOTO_PLACEHOLDER_IMAGES = {
     2: '/images/no-photo-roommate-needed-female.jpg',
   },
   group_forming: {
-    1: '/images/no-photo-group-forming-male.jpg',
-    2: '/images/no-photo-group-forming-female.jpg',
+    1: '/images/no-photo-group-forming-male.jpg?v=20260905-2',
+    2: '/images/no-photo-group-forming-female.jpg?v=20260905-2',
   },
 };
 
