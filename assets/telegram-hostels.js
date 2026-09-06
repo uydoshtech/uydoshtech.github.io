@@ -101,16 +101,25 @@ async function detailHostel() {
     const h = await UyDosh.fetchHostel(id);
     const units = h.units || [];
     root.innerHTML = `${photo(h) ? `<img class="hostel-hero" src="${escape(photo(h))}" alt="">` : ""}<div class="hostel-detail-body"><div class="hostel-detail-title"><h1>${escape(h.name)}</h1><button id="hostel-admin-edit" class="hostel-admin-edit" type="button" hidden aria-label="Редактировать хостел" title="Редактировать хостел">${UyDosh.iconChrome("pencil")}</button></div><div class="hostel-meta">${escape(h.address || "Ташкент")}</div><h2>Свободные места</h2><div class="hostel-units">${units.map((u) => `<label class="hostel-unit"><div class="hostel-unit-top"><b>${escape(u.name)}</b><b>${money(u.price)}</b></div><div class="hostel-meta">${u.beds_available} из ${u.beds_total} мест · ${escape(u.gender)}</div><input type="radio" name="unit" value="${u.id}" ${u.beds_available > 0 ? "" : "disabled"}></label>`).join("")}</div><form id="request" class="hostel-request"><textarea name="message" placeholder="Комментарий для администратора (необязательно)"></textarea><button ${units.some((u) => u.beds_available > 0) ? "" : "disabled"}>Запросить место</button></form>${hostelDetailsHtml(h)}</div>`;
-    UyDosh.ensureTelegramMiniAppSession().then((ready) => {
-      const edit = document.getElementById("hostel-admin-edit");
-      if (!ready || !UyDosh.isAdmin() || !edit) return;
-      edit.hidden = false;
-      edit.addEventListener("click", (event) => {
+    const edit = document.getElementById("hostel-admin-edit");
+    if (edit) {
+      let openingHostelEditor = false;
+      const openHostelEditor = (event) => {
+        if (openingHostelEditor) return;
+        openingHostelEditor = true;
         event.preventDefault();
         event.stopPropagation();
         UyDosh.haptic?.light?.();
-        window.location.href = `/telegram/hostel-create.html?id=${encodeURIComponent(h.id)}`;
-      });
+        window.location.assign(`/telegram/hostel-create.html?id=${encodeURIComponent(h.id)}`);
+      };
+      // Telegram's iOS WebView can suppress a synthetic `click` after an input
+      // received focus. `pointerup` fires at the end of the real tap, before
+      // that suppression, while `click` remains a fallback for mouse/keyboard.
+      edit.addEventListener("pointerup", openHostelEditor);
+      edit.addEventListener("click", openHostelEditor);
+    }
+    UyDosh.ensureTelegramMiniAppSession().then((ready) => {
+      if (ready && UyDosh.isAdmin() && edit) edit.hidden = false;
     });
     document
       .getElementById("request")

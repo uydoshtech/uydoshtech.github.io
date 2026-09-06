@@ -167,6 +167,7 @@
   box-shadow: 0 8px 18px rgba(217, 119, 6, 0.35);
   color: #fff;
   cursor: pointer;
+  touch-action: manipulation;
   text-decoration: none;
 }
 .hostel-admin-edit svg {
