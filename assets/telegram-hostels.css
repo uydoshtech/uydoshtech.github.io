@@ -181,6 +181,14 @@
   gap: 8px;
   margin: 16px 0;
 }
+.hostel-no-units {
+  padding: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
 .hostel-unit {
   border: 1px solid var(--stroke);
   border-radius: 12px;
