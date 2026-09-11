@@ -79,7 +79,8 @@ async function listHostels() {
             (n, u) => n + Number(u.beds_available || 0),
             0,
           );
-          return `<a class="hostel-card" href="/telegram/hostel.html?id=${encodeURIComponent(h.id)}">${photo(h) ? `<img src="${escape(photo(h))}" alt="">` : ""}<div class="hostel-card-body"><h2>${escape(h.name)}</h2><div class="hostel-meta">${escape(h.address || "Ташкент")} · ${beds} свободных мест</div><div class="hostel-price">${min ? "от " + money(min) : "Нет свободных мест"}</div></div></a>`;
+          const vacantBadge = beds > 0 ? '<span class="hostel-vacant-badge">Vacant</span>' : "";
+          return `<a class="hostel-card" href="/telegram/hostel.html?id=${encodeURIComponent(h.id)}">${vacantBadge}${photo(h) ? `<img src="${escape(photo(h))}" alt="">` : ""}<div class="hostel-card-body"><h2>${escape(h.name)}</h2><div class="hostel-meta">${escape(h.address || "Ташкент")} · ${beds} свободных мест</div><div class="hostel-price">${min ? "от " + money(min) : "Нет свободных мест"}</div></div></a>`;
         })
         .join("") || '<div class="status">Хостелы не найдены</div>';
     status.classList.remove("hostels-loading");
