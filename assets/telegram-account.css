@@ -145,6 +145,8 @@ header {
   background: var(--card);
   border-radius: 16px;
 }
+.account-card--group { cursor: pointer; }
+.account-card--group:active { opacity: 0.94; }
 .account-chat-row-nested,
 .account-nested-chat {
   display: flex;

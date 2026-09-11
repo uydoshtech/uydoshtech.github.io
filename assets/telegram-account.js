@@ -180,8 +180,12 @@ function listingRowHtml(listing) {
 
 function groupListingCardHtml(listing, conversation) {
   const chat = conversation ? groupChatRowHtml(conversation, { nested: true }) : '';
+  const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, {
+    backTo: UyDosh.MINI_APP_GROUPS_PATH,
+    group: 'requests',
+  }));
   return `
-    <article class="account-card" data-listing-row="${listing.id}">
+    <article class="account-card account-card--group" data-listing-row="${listing.id}" data-group-detail-href="${detailHref}">
       <div class="account-row-main">
         ${listingRowMainHtml(listing, { hidePhoto: true })}
         ${participantsPillHtml(listing, conversation)}
@@ -543,6 +547,7 @@ function renderGroups() {
   bindRenewButtons();
   bindDeleteButtons();
   bindParticipantsPills();
+  bindGroupCardDetailNavigation();
 }
 
 function renderFavorites() {
@@ -700,6 +705,24 @@ function bindParticipantsPills() {
     btn.addEventListener('click', () => {
       const id = Number(btn.getAttribute('data-open-participants'));
       if (Number.isFinite(id) && id > 0) openParticipantsSheet(id);
+    });
+  }
+}
+
+/**
+ * A group card is a shortcut to its listing details. Nested links and buttons
+ * retain their own actions: chat, participants, and the listing controls are
+ * intentionally excluded from this card-level navigation.
+ */
+function bindGroupCardDetailNavigation() {
+  const interactiveSelector = 'a, button, input, select, textarea, label, [role="button"], [role="link"]';
+  for (const card of listEl.querySelectorAll('[data-group-detail-href]')) {
+    card.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.target.closest(interactiveSelector)) return;
+      const href = card.getAttribute('data-group-detail-href');
+      if (!href) return;
+      UyDosh.haptic?.light?.();
+      location.href = href;
     });
   }
 }
