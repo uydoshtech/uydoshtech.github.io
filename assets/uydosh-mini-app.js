@@ -999,7 +999,7 @@ function miniAppTabbarHtml(activeId) {
         ${item("community", MINI_APP_COMMUNITY_PATH, "users", "tabbar.community")}
         ${item("messages", MINI_APP_CHATS_PATH, "chatBubbles", "tabbar.messages")}
         ${item("create", MINI_APP_CREATE_PATH, "plus", "tabbar.create")}
-        <a class="mini-app-tab" href="${MINI_APP_ADMIN_PATH}" data-tabbar-id="admin" data-admin-tab hidden>${UyDosh.iconChrome("shield")}<span>Управление</span></a>
+        <a class="mini-app-tab${activeId === "admin" ? " is-active" : ""}" href="${MINI_APP_ADMIN_PATH}" data-tabbar-id="admin" data-admin-tab hidden>${UyDosh.iconChrome("shield")}<span>Управление</span></a>
       </div>
     </nav>`;
 }
