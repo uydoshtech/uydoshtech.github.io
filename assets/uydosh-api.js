@@ -788,6 +788,20 @@ function fetchGeminiListingUiHidden() {
  * set so the caller can distinguish auth (401), quota (403 `gemini_quota_exceeded`), and
  * feature-disabled (403 `gemini_listing_ui_disabled`) cases.
  */
+function translateListingDescription(text, targetLanguageCode) {
+  return fetchJsonAuth("/app/gemini/translate-listing", {
+    method: "POST",
+    body: { text, targetLanguageCode },
+  });
+}
+
+function saveDescriptionTranslation(listingId, targetLanguageCode, translatedText) {
+  return fetchJsonAuth(`/listings/${encodeURIComponent(listingId)}/description-translations`, {
+    method: "POST",
+    body: { targetLanguageCode, translatedText },
+  });
+}
+
 function improveListingDescription(text) {
   return fetchJsonAuth("/app/gemini/improve-listing", {
     method: "POST",
@@ -1838,6 +1852,8 @@ Object.assign(window.UyDosh, {
   fetchAmenitiesOrdered,
   fetchGeminiListingUiHidden,
   improveListingDescription,
+  translateListingDescription,
+  saveDescriptionTranslation,
   transcribeDescriptionAudio,
   createListing,
   fetchReverseGeocodeAddress,

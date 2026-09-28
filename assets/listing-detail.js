@@ -268,12 +268,7 @@
         // Description and "posted"/author info share one card (dividers
         // between them), rendered above the location/metro/map card — see
         // `descHtml` below and its placement in the template.
-        const descriptionExtraHtml = desc ? `
-          <div class="map-section-extra map-section-description">
-            <h2 data-i18n="detail.description">${UyDosh.escapeHtml(UyDosh.t('detail.description'))}</h2>
-            <div class="description">${UyDosh.escapeHtml(desc)}</div>
-          </div>
-        ` : '';
+        const descriptionExtraHtml = desc ? listingDescriptionHtml(l, desc) : '';
 
         // Move-in date and amenities render directly under the description
         // (inside the same card) rather than trailing after the
@@ -365,6 +360,7 @@
           </div>
         `;
 
+        bindListingDescription(l);
         bindGallery();
         bindMapSection();
         if (typeof bindRoomScanSection === 'function') bindRoomScanSection();
