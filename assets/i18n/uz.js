@@ -4,6 +4,13 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    'build.local': "Mahalliy yig‘ilma",
+    'build.date': "Yig‘ilgan sana",
+    'build.copy': "Nusxalash",
+    'build.close': "Yopish",
+    'build.update': "Yangilanish mavjud",
+    'build.copied': "Nusxalandi",
+    'build.selectCopy': "Yig‘ilma ma’lumotlarini belgilang va nusxalang.",
     'brand.tagline': 'Keling Birga Yashaymiz!',
     'nav.listings': 'E’lonlar',
     'nav.home': 'Asosiy',

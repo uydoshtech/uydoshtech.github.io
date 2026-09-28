@@ -1,0 +1,23 @@
+.build-info-footer { text-align: center; padding: 24px 12px; }
+.build-info-label {
+  appearance: none; border: 0; background: none; color: var(--muted, #94a3b8);
+  font: inherit; font-size: 12px; padding: 12px; cursor: pointer;
+}
+.build-info-dialog {
+  box-sizing: border-box; width: min(360px, calc(100% - 32px));
+  padding: 24px; border: 1px solid #64748b66; border-radius: 20px;
+  background: var(--bg, #0f172a); color: var(--fg, #f8fafc);
+}
+.build-info-dialog::backdrop { background: #0009; }
+.build-info-dialog h2 { font-size: 18px; margin: 0 0 16px; }
+.build-info-dialog pre {
+  font: inherit; font-size: 14px; line-height: 1.7; white-space: pre-wrap;
+  overflow-wrap: anywhere; user-select: text; -webkit-user-select: text;
+}
+.build-info-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.build-info-actions button {
+  font: inherit; font-size: 14px; min-height: 44px; padding: 8px 12px;
+  border-radius: 10px; border: 1px solid #64748b66; background: transparent;
+  color: inherit; cursor: pointer;
+}
+#build-info-status { font-size: 13px; color: var(--muted, #94a3b8); }

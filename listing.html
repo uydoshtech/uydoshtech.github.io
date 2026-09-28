@@ -12,12 +12,18 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <meta name="uydosh-yandex-maps-key" content="70aaf6ac-5a4b-4a69-a5a5-c16536483324" />
+    <script>
+      // Establish Mini App layout before the first paint and deferred scripts.
+      if (new URLSearchParams(location.search).get('mini') === '1') {
+        document.documentElement.classList.add('mini-app');
+      }
+    </script>
     <script src="assets/theme-init.js?v=20260928-1"></script>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="stylesheet" href="assets/listing-detail.css?v=20260929-edit-button" />
+    <link rel="stylesheet" href="assets/listing-detail.css?v=20260929-loader" />
   </head>
   <body>
     <div class="wrap">
@@ -55,8 +61,10 @@
         <!-- Branded UyDosh spinner while loading (same `.loading-spinner`/
              `uydosh-spin` used by the Mini App's account/profile/create pages
              and the feed map) instead of a plain skeleton/text placeholder. -->
-        <div class="detail-loading" id="detail-loading-view" aria-busy="true" aria-live="polite">
-          <span class="loading-spinner" aria-hidden="true"></span>
+        <div class="detail-loading" id="detail-loading-view" role="status" aria-busy="true" aria-live="polite">
+          <div class="detail-loading-mark" aria-hidden="true"><span class="loading-spinner"></span></div>
+          <strong class="detail-loading-brand">UyDosh</strong>
+          <p class="detail-loading-label" data-i18n="detail.loading">Yuklanmoqda…</p>
         </div>
       </main>
 
@@ -125,6 +133,6 @@
     <script src="assets/listing-detail-group.js?v=20260928-1" defer></script>
     <script src="assets/listing-detail-description.js?v=20260928-1" defer></script>
     <script src="assets/listing-detail-discovery.js?v=20260928-4" defer></script>
-    <script src="assets/listing-detail.js?v=20260929-edit-button" defer></script>
+    <script src="assets/listing-detail.js?v=20260929-loader" defer></script>
   </body>
 </html>

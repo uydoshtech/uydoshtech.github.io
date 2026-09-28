@@ -3,6 +3,13 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    'build.local': "Локальная сборка",
+    'build.date': "Дата сборки",
+    'build.copy': "Скопировать",
+    'build.close': "Закрыть",
+    'build.update': "Доступно обновление",
+    'build.copied': "Скопировано",
+    'build.selectCopy': "Выделите и скопируйте сведения о сборке.",
     'brand.tagline': 'Давайте жить вместе!',
     'nav.listings': 'Объявления',
     'nav.home': 'Главная',

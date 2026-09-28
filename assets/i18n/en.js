@@ -3,6 +3,13 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    'build.local': "Local build",
+    'build.date': "Built on",
+    'build.copy': "Copy",
+    'build.close': "Close",
+    'build.update': "Update available",
+    'build.copied': "Copied",
+    'build.selectCopy': "Select and copy the build details.",
     'brand.tagline': "Let's Live Together!",
     'nav.listings': 'Listings',
     'nav.home': 'Home',

@@ -455,7 +455,11 @@
           else renderError(() => {
             // Branded spinner (same as the initial load) instead of a plain
             // "Loading…" text line while the retry is in flight.
-            rootEl.innerHTML = '<div class="detail-loading" aria-busy="true" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span></div>';
+            rootEl.innerHTML = `<div class="detail-loading" role="status" aria-busy="true" aria-live="polite">
+              <div class="detail-loading-mark" aria-hidden="true"><span class="loading-spinner"></span></div>
+              <strong class="detail-loading-brand">UyDosh</strong>
+              <p class="detail-loading-label">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</p>
+            </div>`;
             load();
           });
         }

@@ -1729,7 +1729,7 @@ function fetchListingsForMap({
   return fetchJson("/listings/map", params);
 }
 
-const ASSET_CACHE_VERSION = "20260928-1";
+const ASSET_CACHE_VERSION = window.UYDOSH_BUILD?.id || "20260929-build-info";
 const classicScriptLoads = new Map();
 
 function assetScriptUrl(fileName) {
