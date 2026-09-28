@@ -1688,7 +1688,51 @@ function fetchListingsForMap({
   return fetchJson("/listings/map", params);
 }
 
-const YANDEX_MAP_MODULE_PATH = "/assets/yandex-map.js";
+const ASSET_CACHE_VERSION = "20260928-1";
+const classicScriptLoads = new Map();
+
+function assetScriptUrl(fileName) {
+  const core = document.querySelector('script[src*="uydosh-core.js"]');
+  const base = core?.src
+    ? core.src.replace(/uydosh-core\.js.*$/, "")
+    : "/assets/";
+  const file = String(fileName || "").replace(/^\/?assets\//, "").replace(/^\//, "");
+  return `${base}${file}?v=${ASSET_CACHE_VERSION}`;
+}
+
+/** Load a classic (non-module) script once. Later callers share the same promise. */
+function loadClassicScript(fileName) {
+  const src = assetScriptUrl(fileName);
+  const key = src.split("?")[0];
+  const pending = classicScriptLoads.get(key);
+  if (pending) return pending;
+  const promise = new Promise((resolve, reject) => {
+    const existing = [...document.scripts].find((el) => (el.src || "").split("?")[0] === key);
+    if (existing?.dataset?.uydoshLoaded === "1") {
+      resolve();
+      return;
+    }
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Failed to load ${fileName}`)), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => {
+      script.dataset.uydoshLoaded = "1";
+      resolve();
+    };
+    script.onerror = () => {
+      classicScriptLoads.delete(key);
+      reject(new Error(`Failed to load ${fileName}`));
+    };
+    document.head.appendChild(script);
+  });
+  classicScriptLoads.set(key, promise);
+  return promise;
+}
+
 let yandexMapModulePromise = null;
 
 function resetYandexMaps({ hard = false } = {}) {
@@ -1739,7 +1783,7 @@ function loadYandexMapModule() {
   if (yandexMapModulePromise) return yandexMapModulePromise;
   yandexMapModulePromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `${YANDEX_MAP_MODULE_PATH}?v=20260827-2`;
+    script.src = assetScriptUrl("yandex-map.js");
     script.async = true;
     script.onload = () => {
       if (window.UyDoshMap) resolve(window.UyDoshMap);
@@ -1847,6 +1891,8 @@ Object.assign(window.UyDosh, {
   getSessionUserRole,
   isAdmin,
   loadYandexMapModule,
+  loadClassicScript,
+  assetScriptUrl,
   resetYandexMaps,
   reflowActiveMaps,
   withTimeout,

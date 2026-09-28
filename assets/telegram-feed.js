@@ -33,6 +33,7 @@ const FEED_SCROLL_STATE_MAX_AGE_MS = 30 * 60 * 1000;
 // pathologically long-lived session — 30 pages is far beyond any real scroll
 // depth and keeps a worst case from firing dozens of requests.
 const FEED_SCROLL_RESTORE_MAX_PAGES = 30;
+const FEED_VIEW_STORAGE_KEY = 'uydosh_tg_feed_view';
 // Scrolling down this far auto-collapses the filters — and skips straight
 // to the folded, chevron-only state (see `.filters--folded`) instead of
 // pausing at the compact icon ribbon in between, so listings underneath
@@ -291,6 +292,22 @@ function persistFilters() {
   }
 }
 
+function readStoredFeedView() {
+  try {
+    return localStorage.getItem(FEED_VIEW_STORAGE_KEY) === 'map' ? 'map' : 'list';
+  } catch {
+    return 'list';
+  }
+}
+
+function persistFeedView(view) {
+  try {
+    localStorage.setItem(FEED_VIEW_STORAGE_KEY, view === 'map' ? 'map' : 'list');
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 const storedFilters = readStoredFilters();
 const urlListingTypeId = readUrlListingTypeId();
 const state = {
@@ -316,7 +333,7 @@ const state = {
   },
   withPhotoExplicit: storedFilters?.withPhotoExplicit ?? false,
   filtersCollapsed: readFiltersCollapsed(),
-  view: 'map',
+  view: readStoredFeedView(),
   mapPins: [],
   mapResultTotal: 0,
   mapLoading: false,
@@ -543,6 +560,7 @@ function updateViewTabs() {
 function switchView(nextView) {
   if (state.view === nextView) return;
   state.view = nextView;
+  persistFeedView(nextView);
   updateViewTabs();
   updateScrollTopButton();
   unfoldFilters();
@@ -1460,7 +1478,14 @@ async function loadMore() {
     // before it can start rendering (see prefetchMap() for details). Fired
     // after (not alongside) the list request so it never competes with it
     // for bandwidth on a slow connection.
-    if (nextPage === 1) feedMap.prefetchMap();
+    if (nextPage === 1) {
+      const warmMap = () => feedMap.prefetchMap();
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(warmMap, { timeout: 2000 });
+      } else {
+        setTimeout(warmMap, 400);
+      }
+    }
   } catch (err) {
     if (requestGeneration !== loadGeneration) return;
     console.error('Failed to load listings', err);
@@ -1583,14 +1608,3 @@ if (state.view === 'map') {
 }
 // Best-effort "add your university" nudge — never blocks the feed itself.
 UyDosh.maybeShowProfileNudge?.();
-
-// Warm the Yandex Maps SDK as soon as the feed boots. `loadYandexScript()` is
-// itself idempotent (caches its in-flight/resolved promise and short-circuits
-// once `window.ymaps` is ready), so this can't race or duplicate work with
-// `onEnterMapView()` / `loadFeedMap()` — they reuse whatever this kicked off.
-UyDosh.loadYandexMapModule()
-  .then((mapModule) => mapModule.loadYandexScript(UyDosh.getLang()))
-  .catch(() => {
-    // Best-effort only — a real failure surfaces again (with its own retry
-    // UI) when the map actually loads via loadFeedMap().
-  });

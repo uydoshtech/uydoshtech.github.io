@@ -51,91 +51,10 @@ const VISITED_LISTINGS_STORAGE_KEY = 'uydosh_visited_listing_ids';
  * the Yandex map (tiles + pins) is intentionally excluded and always stays in its light
  * appearance — see prefersDarkMapPins() in this file and applyMapTileTheme() in yandex-map.js.
  */
-const MANUAL_THEME_STORAGE_KEY = 'uydosh_manual_theme';
-const UI_THEME_VARS = {
-  dark: {
-    '--bg': '#061525',
-    '--fg': 'rgba(255, 255, 255, 0.92)',
-    '--muted': 'rgba(255, 255, 255, 0.7)',
-    '--card': 'rgba(255, 255, 255, 0.06)',
-    '--stroke': 'rgba(255, 255, 255, 0.12)',
-  },
-  light: {
-    '--bg': '#f6f7fb',
-    '--fg': 'rgba(15, 23, 42, 0.92)',
-    '--muted': 'rgba(15, 23, 42, 0.7)',
-    '--card': 'rgba(15, 23, 42, 0.04)',
-    '--stroke': 'rgba(15, 23, 42, 0.12)',
-  },
-};
-
-function getManualTheme() {
-  try {
-    const saved = localStorage.getItem(MANUAL_THEME_STORAGE_KEY);
-    return saved === 'light' || saved === 'dark' ? saved : null;
-  } catch {
-    return null;
-  }
-}
-
-function applyManualThemeVars(uiTheme) {
-  const vars = UI_THEME_VARS[uiTheme];
-  if (!vars) return;
-  const root = document.documentElement;
-  for (const [prop, value] of Object.entries(vars)) {
-    root.style.setProperty(prop, value);
-  }
-}
-
-/** Re-apply a saved manual theme on load, before/after Telegram theme colors land. */
-function applyStoredManualTheme() {
-  const theme = getManualTheme();
-  if (theme) applyManualThemeVars(theme);
-}
-
-function setManualTheme(theme) {
-  if (theme !== 'light' && theme !== 'dark') return;
-  try {
-    localStorage.setItem(MANUAL_THEME_STORAGE_KEY, theme);
-  } catch {
-    /* ignore */
-  }
-  applyManualThemeVars(theme);
-  document.dispatchEvent(new CustomEvent('uydosh:themechange', { detail: { theme } }));
-}
-
-/**
- * Currently active app UI theme, in priority order:
- * 1. Manual override (header sun/moon toggle) — always wins once set.
- * 2. Telegram's own theme (`Telegram.WebApp.colorScheme`) when running inside a Mini App —
- *    this can differ from the OS setting (Telegram's theme is configured independently).
- * 3. OS/browser `prefers-color-scheme` — fallback when opened outside Telegram.
- */
-function currentUiTheme() {
-  const manual = getManualTheme();
-  if (manual) return manual;
-  if (typeof window === 'undefined') return 'dark';
-  try {
-    const tgScheme = window.Telegram?.WebApp?.colorScheme;
-    if (tgScheme === 'light' || tgScheme === 'dark') return tgScheme;
-  } catch { /* ignore */ }
-  try {
-    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
-  } catch {
-    return 'dark';
-  }
-}
-
-function toggleManualTheme() {
-  const next = currentUiTheme() === 'dark' ? 'light' : 'dark';
-  setManualTheme(next);
-  return next;
-}
-
 /**
  * The Yandex map (tiles + pins) always renders in its light appearance — by design it never
- * switches to a dark style, regardless of the app's UI theme, system preference, or Telegram
- * theme. See applyMapTileTheme() in yandex-map.js.
+ * switches to a dark style, regardless of the app's UI theme (uydosh-core.js), system
+ * preference, or Telegram theme. See applyMapTileTheme() in yandex-map.js.
  */
 function prefersDarkMapPins() {
   return false;
@@ -1138,9 +1057,4 @@ Object.assign(window.UyDosh, {
   loadVisitedListingIds,
   markListingVisited,
   prefersDarkMapPins,
-  getManualTheme,
-  setManualTheme,
-  toggleManualTheme,
-  applyStoredManualTheme,
-  currentUiTheme,
 });

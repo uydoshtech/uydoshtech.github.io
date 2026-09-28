@@ -39,7 +39,7 @@
           // check, tapping BackButton while it's open would skip past the
           // listing detail screen straight to the feed instead of just
           // closing the overlay.
-          if (closeRoomScanFullscreenIfOpen()) return;
+          if (typeof closeRoomScanFullscreenIfOpen === 'function' && closeRoomScanFullscreenIfOpen()) return;
           location.href = UyDosh.miniAppBackTargetFromUrl();
         });
       }
@@ -54,7 +54,7 @@
       if (UyDosh.isMiniApp() && detailBackFabEl) {
         detailBackFabEl.hidden = false;
         detailBackFabEl.addEventListener('click', () => {
-          if (closeRoomScanFullscreenIfOpen()) return;
+          if (typeof closeRoomScanFullscreenIfOpen === 'function' && closeRoomScanFullscreenIfOpen()) return;
           location.href = UyDosh.miniAppBackTargetFromUrl();
         });
       }
@@ -318,7 +318,9 @@
         const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
         const isAdmin = isMiniApp && Boolean(UyDosh.isAdmin?.());
         const mapHtml = buildMapSectionHtml(l, lang);
-        const roomScanHtml = buildRoomScanSectionHtml(l, { isOwner, isAdmin });
+        const roomScanHtml = typeof buildRoomScanSectionHtml === 'function'
+          ? buildRoomScanSectionHtml(l, { isOwner, isAdmin })
+          : '';
         state.mapExpanded = false;
         state.mapLoaded = false;
         state.mapLoading = false;
@@ -365,7 +367,7 @@
 
         bindGallery();
         bindMapSection();
-        bindRoomScanSection();
+        if (typeof bindRoomScanSection === 'function') bindRoomScanSection();
         bindShareButton(l);
         bindFavoriteButton(l);
         bindReportButton(l);
@@ -384,7 +386,7 @@
           recordNonOwnerView(l.id);
         }
         // Owner *or* admin may start a scan (admin CTA also shows on others' listings).
-        if (isOwner || isAdmin) {
+        if ((isOwner || isAdmin) && typeof bindOwnerAddRoomScan === 'function') {
           bindOwnerAddRoomScan(l.id);
         }
         if (isMiniApp) loadComplaintsWarning(l);
@@ -393,6 +395,28 @@
           loadCompatibilityTile(l, isOwner);
         }
         if (isMiniApp) loadGroupJoinRequests();
+      }
+
+      function listingNeedsRoomScanUi(listing) {
+        if (!listing) return false;
+        if (listing.room_scan_glb_url) return true;
+        if (new URLSearchParams(location.search).get('view') === '3d') return true;
+        if (!UyDosh.isMiniApp()) return false;
+        const viewerId = UyDosh.getSessionUserId();
+        const ownerId = Number(listing.user_id ?? listing.user?.id);
+        const isOwner = viewerId != null && Number.isFinite(ownerId) && ownerId === Number(viewerId);
+        return isOwner || Boolean(UyDosh.isAdmin?.());
+      }
+
+      function ensureRoomScanModules() {
+        if (typeof buildRoomScanSectionHtml === 'function') return Promise.resolve();
+        if (!ensureRoomScanModules.promise) {
+          ensureRoomScanModules.promise = Promise.all([
+            UyDosh.loadClassicScript('listing-detail-floorplan.js'),
+            UyDosh.loadClassicScript('room-scan-clip.js'),
+          ]).then(() => UyDosh.loadClassicScript('listing-detail-roomscan.js'));
+        }
+        return ensureRoomScanModules.promise;
       }
 
       async function load() {
@@ -404,6 +428,7 @@
           state.listing = data;
           state.photos = sortedPhotos(data);
           state.photoIdx = 0;
+          if (listingNeedsRoomScanUi(data)) await ensureRoomScanModules();
           render();
           if (UyDosh.isMiniApp()) {
             UyDosh.logMiniAppEvent('listing_viewed', {

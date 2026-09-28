@@ -3512,7 +3512,15 @@ function ensureScanUpsellQrHost(root) {
 
 function renderScanUpsell(listingId) {
   const root = document.getElementById('scan-upsell');
-  if (!root || !UyDosh.shouldShowRoomScanClipCta?.()) return;
+  if (!root) return;
+  const start = async () => {
+    try {
+      await UyDosh.loadClassicScript('room-scan-clip.js');
+    } catch (err) {
+      console.error('Failed to load room scan helper', err);
+      return;
+    }
+    if (!UyDosh.shouldShowRoomScanClipCta?.()) return;
   const lang = UyDosh.getLang();
   const isIos = UyDosh.isIosPlatform?.() ?? false;
 
@@ -3549,6 +3557,8 @@ function renderScanUpsell(listingId) {
     : UyDosh.t('create.scan3dCopyLink', lang);
   button.addEventListener('click', () => startScanFlow(listingId));
   root.appendChild(button);
+  };
+  start();
 }
 
 async function startScanFlow(listingId) {

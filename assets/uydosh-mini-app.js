@@ -2591,16 +2591,21 @@ function initTelegramMiniApp() {
   // for (const el of document.querySelectorAll('[data-mini-app-back]')) {
   //   el.setAttribute('href', MINI_APP_FEED_PATH);
   // }
-  initMiniAppAnalytics().then((ok) => {
-    if (!ok) return;
-    const path = location.pathname || "";
-    if (/create\.html/i.test(path) || /\/telegram\/create\/?$/i.test(path)) {
-      logMiniAppScreen("telegram_create_listing");
-    } else if (/chat\.html/i.test(path)) {
-      logMiniAppScreen("telegram_group_chat");
-    } else if (!/listing\.html/i.test(path)) {
-      logMiniAppScreen("telegram_feed");
-    }
+  const scheduleAnalytics = window.requestIdleCallback
+    ? (fn) => window.requestIdleCallback(fn, { timeout: 2500 })
+    : (fn) => window.setTimeout(fn, 1200);
+  scheduleAnalytics(() => {
+    initMiniAppAnalytics().then((ok) => {
+      if (!ok) return;
+      const path = location.pathname || "";
+      if (/create\.html/i.test(path) || /\/telegram\/create\/?$/i.test(path)) {
+        logMiniAppScreen("telegram_create_listing");
+      } else if (/chat\.html/i.test(path)) {
+        logMiniAppScreen("telegram_group_chat");
+      } else if (!/listing\.html/i.test(path)) {
+        logMiniAppScreen("telegram_feed");
+      }
+    });
   });
   return true;
 }

@@ -361,7 +361,9 @@ textarea:focus {
   margin: 0 0 8px;
 }
 .looking-dealbreakers .field-label,
-.looking-dealbreakers .looking-for-hint {
+.looking-dealbreakers .looking-for-hint,
+.looking-priorities .field-label,
+.looking-priorities .looking-for-hint {
   color: #facc15;
 }
 .profile-range-row {
