@@ -298,42 +298,74 @@
         `;
       }
 
+      const claimPromptsSeen = new Set();
+      let claimActionPending = false;
+
+      function showClaimPrompt(message) {
+        const tg = window.Telegram?.WebApp;
+        if (typeof tg?.showPopup === 'function') {
+          return new Promise((resolve) => tg.showPopup({
+            title: UyDosh.t('detail.claim.title'),
+            message,
+            buttons: [
+              { id: 'claim', type: 'default', text: UyDosh.t('detail.claim.button') },
+              { id: 'later', type: 'default', text: UyDosh.t('detail.claim.later') },
+            ],
+          }, id => resolve(id === 'claim')));
+        }
+        return confirmTelegramAction(`${UyDosh.t('detail.claim.title')}\n\n${message}`);
+      }
+
       async function loadClaimBanner(listing) {
         const wrapEl = rootEl.querySelector('[data-claim-banner]');
         if (!wrapEl) return;
         try {
-          const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
-          if (!sessionReady) return;
+          if (!await UyDosh.ensureTelegramMiniAppSession()) return;
+          const viewerId = UyDosh.getSessionUserId();
           const status = await UyDosh.checkListingClaimEligibility(listing.id);
-          if (!status?.eligible) return;
+          if (!wrapEl.isConnected || viewerId !== UyDosh.getSessionUserId() || !status?.eligible) return;
           wrapEl.hidden = false;
-
+          const message = status.telegramUsername
+            ? UyDosh.t('detail.claim.account').replace('{username}', `@${status.telegramUsername}`)
+            : UyDosh.t('detail.claim.subtitle');
+          wrapEl.querySelector('.claim-banner-subtitle').textContent = message;
           const btn = wrapEl.querySelector('[data-claim-listing]');
           const labelEl = wrapEl.querySelector('[data-claim-btn-label]');
-          let pending = false;
-          btn?.addEventListener('click', async () => {
-            if (pending) return;
-            const confirmed = await confirmTelegramAction(UyDosh.t('detail.claim.confirm'));
-            if (!confirmed) return;
-
-            pending = true;
+          const key = `uydosh.claimPrompt.v1.${viewerId}.${listing.id}`;
+          const offerClaim = async () => {
+            if (claimActionPending || !wrapEl.isConnected) return;
+            claimActionPending = true;
             btn.disabled = true;
-            if (labelEl) labelEl.textContent = UyDosh.t('detail.claim.pending');
             try {
+              claimPromptsSeen.add(key);
+              try { localStorage.setItem(key, '1'); } catch { /* Private browsing. */ }
+              if (!await showClaimPrompt(message)) return;
+              if (viewerId !== UyDosh.getSessionUserId()) return;
+              labelEl.textContent = UyDosh.t('detail.claim.pending');
               const result = await UyDosh.claimListing(listing.id);
+              if (viewerId !== UyDosh.getSessionUserId()) return;
               UyDosh.haptic.success();
               if (result?.listing) state.listing = result.listing;
-              showTelegramAlert(UyDosh.t('detail.claim.success'));
               render();
+              showTelegramAlert(UyDosh.t('detail.claim.success'));
             } catch (err) {
               console.error('Failed to claim listing', err);
               UyDosh.haptic.error();
-              showTelegramAlert(err?.payload?.error || UyDosh.t('detail.claim.error'));
-              pending = false;
+              showTelegramAlert(UyDosh.t('detail.claim.error'));
+              try {
+                const current = await UyDosh.checkListingClaimEligibility(listing.id);
+                if (!current?.eligible) { wrapEl.hidden = true; await load(); }
+              } catch { /* Keep the banner available for a network retry. */ }
+            } finally {
+              claimActionPending = false;
               btn.disabled = false;
-              if (labelEl) labelEl.textContent = UyDosh.t('detail.claim.button');
+              labelEl.textContent = UyDosh.t('detail.claim.button');
             }
-          });
+          };
+          btn.addEventListener('click', offerClaim);
+          let seen = claimPromptsSeen.has(key);
+          try { seen = seen || localStorage.getItem(key) === '1'; } catch { /* Memory fallback. */ }
+          if (!seen) await offerClaim();
         } catch (err) {
           console.error('Failed to check listing claim eligibility', err);
         }
