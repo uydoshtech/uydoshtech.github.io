@@ -105,7 +105,10 @@
       }
 
       function sortedPhotos(listing) {
-        const photos = Array.isArray(listing?.photos) ? [...listing.photos] : [];
+        const source = window.UyDosh?.listingPhotos?.(listing);
+        const photos = Array.isArray(source)
+          ? [...source]
+          : Array.isArray(listing?.photos) ? [...listing.photos] : [];
         photos.sort((a, b) => {
           if (a.is_primary && !b.is_primary) return -1;
           if (!a.is_primary && b.is_primary) return 1;

@@ -389,7 +389,50 @@ function telegramAvatarUrl(username) {
 }
 
 function listingPhotos(listing) {
-  return Array.isArray(listing?.photos) ? listing.photos : [];
+  const photos = Array.isArray(listing?.photos) ? listing.photos : [];
+  if (photos.length === 0) return photos;
+  const urls = photos.map((photo) => (typeof photo === 'string' ? photo : photo?.photo_url));
+  if (!urls.every(isStoredDefaultListingPhotoUrl)) return photos;
+  return photos.map((photo) => {
+    if (!photo || typeof photo !== 'object') return photo;
+    const next = alignedDefaultListingPhotoUrl(listing, photo.photo_url);
+    return next === photo.photo_url ? photo : { ...photo, photo_url: next };
+  });
+}
+
+const DEFAULT_LISTING_PHOTO_FILES = {
+  room_needed: {
+    1: 'no-photo-room-needed-male.jpg',
+    2: 'no-photo-room-needed-female.jpg',
+  },
+  roommate_needed: {
+    1: 'no-photo-roommate-needed-male.jpg',
+    2: 'no-photo-roommate-needed-female.jpg',
+  },
+  group_forming: {
+    1: 'no-photo-group-forming-male.jpg',
+    2: 'no-photo-group-forming-female.jpg',
+  },
+};
+
+function defaultListingTypeCode(listing) {
+  if (isRoomNeededListing(listing)) return 'room_needed';
+  if (isRoommateNeededListing(listing)) return 'roommate_needed';
+  if (isGroupFormingListing(listing)) return 'group_forming';
+  return '';
+}
+
+function isStoredDefaultListingPhotoUrl(url) {
+  return typeof url === 'string' && url.includes('/images/defaults/no-photo-');
+}
+
+/** Stored placeholder art can lag a later gender fix. Match the badge, not the old file. */
+function alignedDefaultListingPhotoUrl(listing, photoUrl) {
+  if (!isStoredDefaultListingPhotoUrl(photoUrl)) return photoUrl || '';
+  const file = DEFAULT_LISTING_PHOTO_FILES[defaultListingTypeCode(listing)]?.[Number(listing?.gender)];
+  if (!file) return photoUrl;
+  const next = `/images/defaults/${file}`;
+  return photoUrl.includes(`/${file}`) ? photoUrl : next;
 }
 
 function primaryPhoto(listing) {
@@ -1020,6 +1063,7 @@ Object.assign(window.UyDosh, {
   photoUrl,
   telegramAvatarUrl,
   primaryPhoto,
+  listingPhotos,
   noPhotoPlaceholderImageUrl,
   hostelPlaceholderImageUrl,
   cardPhotoDotsHtml,
