@@ -2970,6 +2970,28 @@
     }).catch(() => new Map());
   }
 
+  async function renderSearchDistrictMap(container, { locationIds, lang }) {
+    const ids = new Set(locationIds.map(Number));
+    const districts = (await loadDistrictBoundaries()).filter(d => ids.has(Number(d.locationId)));
+    if (!districts.length) throw new Error('Search district boundaries unavailable');
+    const map = await renderPinsMap(container, { pins: [], lang, showLayerControls: false });
+    if (!map) return null;
+    const instance = activeMaps.get(container);
+    const ymaps = window.ymaps;
+    let bounds = null;
+    const labels = [];
+    for (const district of districts) {
+      instance.districtLayer.collection.add(createDistrictPolygon(ymaps, district, 'emphasized'));
+      const label = createDistrictLabelPlacemark(ymaps, district, lang);
+      if (label) { instance.districtLayer.collection.add(label); labels.push(label); }
+      bounds = mergeBounds(bounds, boundsFromRing(district.outerRing));
+    }
+    instance.districtLayer.labelObjects = labels;
+    if (bounds) await map.setBounds(toYandexBounds(bounds), { checkZoomRange: true, zoomMargin: 28 });
+    refreshDistrictLabelVisibility(instance);
+    return map;
+  }
+
   async function renderPinsMap(container, {
     pins,
     lang,
@@ -2985,6 +3007,7 @@
     highlightedLocationId = null,
     initialMetroLayerMode = 'off',
     initialDistrictLayerVisible = false,
+    showLayerControls = true,
     onMetroLayerModeChange,
     onDistrictLayerVisibleChange,
     // Caller-supplied "is this call still the latest user action" check (see
@@ -3112,7 +3135,7 @@
       onResolved: onLocationResolved,
     });
     attachResultsCountTile(container, total ?? validPins.length);
-    attachLayerControls(container, mapInstance, {
+    if (showLayerControls) attachLayerControls(container, mapInstance, {
       onMetroModeChange: onMetroLayerModeChange,
       onDistrictVisibleChange: onDistrictLayerVisibleChange,
     });
@@ -3242,6 +3265,7 @@
     yandexMapsOpenUrl,
     yandexMapsLang,
     renderSinglePinMap,
+    renderSearchDistrictMap,
     setPinGuideLines,
     fetchPedestrianWalkTimes,
     renderPinsMap,

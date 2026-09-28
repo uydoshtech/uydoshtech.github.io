@@ -453,7 +453,7 @@ function groupChatRowHtml(conversation, { nested = false } = {}) {
           ${when ? `<div class="account-nested-time">${CLOCK_ICON}<span>${when}</span></div>` : ''}
         </div>
         ${unread > 0 ? `<span class="account-chat-unread">${unread}</span>` : ''}
-        <span class="account-nested-go" aria-hidden="true">${UyDosh.iconChrome('chevronRight')}</span>
+        <span class="account-nested-chat-link"><span>${UyDosh.escapeHtml(UyDosh.t('chat.title', lang))}</span><span class="account-nested-go" aria-hidden="true">${UyDosh.iconChrome('chevronRight')}</span></span>
       </a>
     </div>`;
   }

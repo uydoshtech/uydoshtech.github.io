@@ -649,6 +649,7 @@ function accountMenuHtml() {
       data-i18n-attr="aria-label"
     >
       <span class="account-menu-avatar${avatarUrl ? " has-avatar" : ""}" aria-hidden="true">${avatarInner}</span>
+      <span class="account-menu-edit-badge" aria-hidden="true">${UyDosh.iconPencil()}</span>
     </a>`;
 }
 
@@ -1432,6 +1433,7 @@ function ensureMiniAppSafeAreaStyles() {
       flex-shrink: 0;
     }
     html.mini-app .account-menu-trigger {
+      position: relative;
       appearance: none;
       border: none;
       background: none;
@@ -1446,6 +1448,26 @@ function ensureMiniAppSafeAreaStyles() {
     }
     html.mini-app .account-menu-trigger:active {
       opacity: 0.88;
+    }
+    html.mini-app .account-menu-edit-badge {
+      position: absolute;
+      right: -2px;
+      bottom: -2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--bg, #061725);
+      border-radius: 50%;
+      background: #2563eb;
+      color: #fff;
+      pointer-events: none;
+    }
+    html.mini-app .account-menu-edit-badge svg {
+      width: 11px;
+      height: 11px;
+      display: block;
     }
     html.mini-app .account-menu-avatar {
       width: 100%;

@@ -10,7 +10,7 @@ const DEFAULT_WITH_PHOTO = false;
 const DEFAULT_HAS_3D_TOUR = false;
 // Default period filter value; kept in sync with uydosh_mobile's
 // listingBrowseCreatedWithinDays so first-load behavior matches the app.
-const PERIOD_DEFAULT_DAYS = 30;
+const PERIOD_DEFAULT_DAYS = 60;
 const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 60, 90, PERIOD_ALL_TIME];
 // "Sort by price" cycling chip (filter-row-metro, list view only — see
@@ -329,6 +329,8 @@ const state = {
     withPhoto: discoverySearch?.withPhoto ?? storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
     has3dTour: discoverySearch?.has3dTour ?? storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
     subwayLineId: discoverySearch?.subwayLineId ?? storedFilters?.subwayLineId ?? METRO_LINE_ANY,
+    locationIds: discoverySearch?.locationIds ?? [],
+    subwayStationIds: discoverySearch?.subwayStationIds ?? [],
     locationId: discoverySearch?.locationId ?? storedFilters?.locationId ?? DISTRICT_ANY,
     subwayStationId: discoverySearch?.subwayStationId ?? null,
     minPrice: discoverySearch?.minPrice ?? null,
@@ -376,7 +378,7 @@ function hasActiveFilters() {
     f.subwayLineId !== METRO_LINE_ANY ||
     f.locationId !== DISTRICT_ANY ||
     f.createdWithinDays !== PERIOD_DEFAULT_DAYS ||
-    f.subwayStationId != null || f.minPrice != null || f.maxPrice != null ||
+    f.locationIds.length > 0 || f.subwayStationIds.length > 0 || f.subwayStationId != null || f.minPrice != null || f.maxPrice != null ||
     f.priceSortOrder != null
   );
 }
@@ -445,13 +447,14 @@ function renderDiscoveryBanner() {
     banner.className = 'discovery-banner';
     filtersEl.parentElement.before(banner);
   }
+  banner.classList.toggle('discovery-banner--group', discoverySearch.mode === 'group');
   const escape = UyDosh.escapeHtml;
   const labels = [];
   const area = discoverySearch.area[UyDosh.getLang()] || discoverySearch.area.uz;
-  if (area && (state.filters.subwayStationId || state.filters.locationId)) labels.push(area);
+  if (area && (state.filters.subwayStationId || state.filters.locationId || state.filters.locationIds.length || state.filters.subwayStationIds.length)) labels.push(area);
   if (state.filters.minPrice != null || state.filters.maxPrice != null) labels.push(`$${state.filters.minPrice ?? 0}–$${state.filters.maxPrice ?? '…'}`);
   const groupLink = discoverySearch.group
-    ? `<a class="btn" href="/listing.html?id=${discoverySearch.group}&mini=1#group-shortlist">${escape(UyDosh.t('discovery.shortlist'))}</a>` : '';
+    ? `<a href="/listing.html?id=${discoverySearch.group}&mini=1#group-shortlist">${escape(UyDosh.t('discovery.shortlist'))}</a>` : '';
   banner.innerHTML = `<strong>${escape(UyDosh.t(discoverySearch.mode === 'group' ? 'discovery.findHousing' : 'discovery.similar'))}</strong>
     <span>${escape(labels.join(' · '))}</span>${groupLink}
     <a href="/telegram/">${escape(UyDosh.t('discovery.allListings'))}</a>`;
@@ -536,7 +539,9 @@ function hostelMapPin(hostel) {
     listing_type_id: LISTING_TYPE_HOSTEL,
     listing_type_code: 'hostel',
     price: price || 0,
-    photo_url: hostel.photos?.[0]?.photo_url || UyDosh.hostelPlaceholderImageUrl(),
+    // Only actual photos belong here: tooltip photoUrl() resolves relative
+    // media against the API, while its placeholder is served by this site.
+    photo_url: hostel.photos?.[0]?.photo_url || null,
     detail_url: `/telegram/hostel.html?id=${encodeURIComponent(hostel.id)}`,
     created_at: hostel.created_at,
   };
@@ -595,6 +600,8 @@ function ensureFeedMap() {
           subwayStationId: state.filters.subwayStationId,
           minPrice: state.filters.minPrice,
           maxPrice: state.filters.maxPrice,
+          locationIds: state.filters.locationIds,
+          subwayStationIds: state.filters.subwayStationIds,
           locationId: locationQueryParam(),
           createdWithinDays: createdWithinDaysQueryParam(),
         }),
@@ -813,9 +820,9 @@ function renderFilters() {
   const priceSortChip = UyDosh.chipButtonHtml({
     className: 'chip chip-price-sort',
     attrs: { 'data-price-sort-cycle': true },
-    pressed: priceSortOrder != null,
+    pressed: priceSortOrder != null || state.filters.maxPrice != null,
     icon: UyDosh.filterPriceSortIcon(priceSortOrder),
-    label: UyDosh.t('filter.priceSort.chipLabel', lang),
+    label: state.filters.maxPrice != null ? `≤ $${state.filters.maxPrice}` : UyDosh.t('filter.priceSort.chipLabel', lang),
     iconAfterLabel: true,
     ariaLabel: priceSortAriaLabel,
   });
@@ -830,7 +837,7 @@ function renderFilters() {
   const priceSortChipCompact = UyDosh.chipButtonHtml({
     className: 'chip chip-icon-only chip-price-sort chip-price-sort-compact',
     attrs: { 'data-price-sort-cycle': true },
-    pressed: priceSortOrder != null,
+    pressed: priceSortOrder != null || state.filters.maxPrice != null,
     icon: UyDosh.filterPriceSortIcon(priceSortOrder),
     label: '$',
     iconAfterLabel: true,
@@ -935,6 +942,8 @@ function renderFilters() {
       </div>
     </div>
   `;
+  syncDistrictChipState();
+  syncMetroLineCycleChipState();
   setFiltersCollapsedVisual(collapsed);
   setFiltersFoldedVisual(filtersFolded);
 
@@ -998,6 +1007,8 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-subway-line-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      state.filters.locationIds = [];
+      state.filters.subwayStationIds = [];
       state.filters.subwayStationId = null;
       if (discoverySearch) discoverySearch.area = {};
       state.filters.subwayLineId = UyDosh.nextMetroLineId(state.filters.subwayLineId);
@@ -1019,6 +1030,8 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      state.filters.locationIds = [];
+      state.filters.subwayStationIds = [];
       state.filters.subwayStationId = null;
       if (discoverySearch) discoverySearch.area = {};
       state.filters.locationId = UyDosh.nextDistrictId(state.filters.locationId, lang);
@@ -1124,6 +1137,8 @@ function renderFilters() {
       state.filters.locationId = DISTRICT_ANY;
       state.filters.createdWithinDays = PERIOD_DEFAULT_DAYS;
       state.filters.priceSortOrder = null;
+      state.filters.locationIds = [];
+      state.filters.subwayStationIds = [];
       state.filters.subwayStationId = null;
       state.filters.minPrice = null;
       state.filters.maxPrice = null;
@@ -1158,8 +1173,9 @@ function syncFiltersResetButtonState() {
  * reveal/collapse transition plays each time. */
 function syncMetroLineCycleChipState() {
   const lang = UyDosh.getLang();
-  const selected = state.filters.subwayLineId;
-  const selectedLabel = selected > 0 ? UyDosh.metroLineLabel(selected, lang) : '';
+  const stationIds = state.filters.subwayStationIds;
+  const selected = stationIds.length || state.filters.subwayStationId ? 1 : state.filters.subwayLineId;
+  const selectedLabel = stationIds.length || state.filters.subwayStationId ? `${UyDosh.t('filter.line.placeholder', lang)} · ${stationIds.length || 1}` : selected > 0 ? UyDosh.metroLineLabel(selected, lang) : '';
   const ariaLabel = selected > 0 ? selectedLabel : UyDosh.t('filter.line.aria', lang);
   // Full row falls back to the "Метро" placeholder once cycled back to off (see
   // metroLineChipHtml's `compact` branch); the compact row stays icon-only, same as
@@ -1188,8 +1204,11 @@ function syncMetroLineCycleChipState() {
  * a full re-render, so the reveal/collapse transition plays each time. */
 function syncDistrictChipState() {
   const lang = UyDosh.getLang();
-  const selected = state.filters.locationId;
-  const selectedLabel = selected > 0 ? UyDosh.districtLabel(selected, lang) : '';
+  const ids = state.filters.locationIds;
+  const selected = ids.length ? ids[0] : state.filters.locationId;
+  const selectedLabel = ids.length > 1
+    ? UyDosh.listingLocationLabel({ listing_type_id: 3, search_locations: ids.map(id => ({ id, name_ru: UyDosh.districtLabel(id, 'ru'), name_en: UyDosh.districtLabel(id, 'en'), name_uz: UyDosh.districtLabel(id, 'uz') })) }, lang)
+    : selected > 0 ? UyDosh.districtLabel(selected, lang) : '';
   const ariaLabel = selected > 0 ? selectedLabel : UyDosh.t('filter.district.aria', lang);
   // Full row falls back to the "Район" placeholder once cycled back to off (see
   // districtChipHtml's `compact` branch); the compact row stays icon-only, same as
@@ -1226,7 +1245,7 @@ let loadGeneration = 0;
 function resetAndLoad({ skipFiltersRender = false } = {}) {
   if (discoverySearch) {
     const params = new URLSearchParams(location.search);
-    for (const key of ['listingTypeId', 'subwayStationId', 'locationId', 'minPrice', 'maxPrice', 'gender', 'subwayLineId', 'createdWithinDays', 'priceSortOrder', 'withPhoto', 'has3dTour']) {
+    for (const key of ['listingTypeId', 'subwayStationId', 'locationId', 'locationIds', 'subwayStationIds', 'minPrice', 'maxPrice', 'gender', 'subwayLineId', 'createdWithinDays', 'priceSortOrder', 'withPhoto', 'has3dTour']) {
       const value = state.filters[key];
       if (value != null) params.set(key, value);
       else params.delete(key);
@@ -1260,7 +1279,7 @@ function listingCardHtml(listing) {
   const typeName = UyDosh.listingTypeBadgeLabel(listing, lang);
   const listingTypeId = listing.listing_type_id ?? listing.listing_type?.id;
   const typeColor = UyDosh.listingTypeColor(listingTypeId);
-  const locName = UyDosh.localizedShort(listing.location, lang);
+  const locName = UyDosh.listingLocationLabel(listing, lang);
   const metro = UyDosh.localized(listing.subway_station, lang);
   const rooms = Number(listing.rooms_number);
   const metaParts = [];
@@ -1547,6 +1566,8 @@ async function loadMore() {
           subwayStationId: state.filters.subwayStationId,
           minPrice: state.filters.minPrice,
           maxPrice: state.filters.maxPrice,
+        locationIds: state.filters.locationIds,
+        subwayStationIds: state.filters.subwayStationIds,
         locationId: locationQueryParam(),
         createdWithinDays: createdWithinDaysQueryParam(),
         sortBy: sortByQueryParam(),

@@ -3,6 +3,12 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    "location.allTashkent": "All of Tashkent",
+    "location.districts.one": "{count} district in Tashkent",
+    "location.districts.few": "{count} districts in Tashkent",
+    "location.districts.many": "{count} districts in Tashkent",
+    "location.searchArea": "Search area",
+
     'build.local': "Local build",
     'build.date': "Built on",
     'build.copy': "Copy",

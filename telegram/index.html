@@ -4,6 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>UyDosh</title>
+    <script>
+      if (new URLSearchParams(location.search).get('search') === 'group') {
+        document.documentElement.classList.add('group-housing-search');
+      }
+    </script>
     <meta name="description" content="UyDosh ijara e’lonlari — Telegram Mini App." />
     <meta name="uydosh-api-base" content="https://api.uydosh.com" />
     <meta name="uydosh-yandex-maps-key" content="70aaf6ac-5a4b-4a69-a5a5-c16536483324" />
@@ -13,7 +18,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260928-1" />
-    <link rel="stylesheet" href="../assets/telegram-index.css?v=20260928-4" />
+    <link rel="stylesheet" href="../assets/telegram-index.css?v=20260929-group-header" />
   </head>
   <body>
     <div class="wrap">
@@ -94,14 +99,14 @@
       data-icon="chevronUp"
     ></button>
 
-    <script src="../assets/uydosh-core.js?v=20260928-2"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260928-4"></script>
-    <script src="../assets/uydosh-api.js?v=20260928-4" defer></script>
+    <script src="../assets/uydosh-core.js?v=20260929-search-districts"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260929-search-districts"></script>
+    <script src="../assets/uydosh-api.js?v=20260929-group-search" defer></script>
     <script src="../assets/uydosh-icons.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-map-pins.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-badges.js?v=20260928-1" defer></script>
-    <script src="../assets/listing-discovery.js?v=20260928-4" defer></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260928-2" defer></script>
-    <script src="../assets/telegram-feed.js?v=20260928-4" defer></script>
+    <script src="../assets/listing-discovery.js?v=20260929-group-search" defer></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260929-avatar-pencil" defer></script>
+    <script src="../assets/telegram-feed.js?v=20260929-hostel-map-photo" defer></script>
   </body>
 </html>

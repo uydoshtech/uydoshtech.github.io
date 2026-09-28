@@ -173,7 +173,10 @@
       }
 
       function buildMapSectionHtml(l, lang) {
-        const locName = UyDosh.localized(l.location, lang);
+        const districts = UyDosh.listingSearchDistricts(l);
+        const locName = districts.length
+          ? `${UyDosh.t('location.searchArea', lang)} · ${UyDosh.listingLocationLabel(l, lang, { summary: true })}`
+          : UyDosh.localized(l.location, lang);
         const metroLine = UyDosh.resolveMetroLine(l);
         const address = typeof l.address_text === 'string' ? l.address_text.trim() : '';
         const stations = listingMetroStations(l);
@@ -224,8 +227,10 @@
           <section class="map-section" data-map-section aria-expanded="false">
             <button type="button" class="map-section-toggle" data-map-toggle aria-expanded="false">
               <div class="map-section-summary">${rows.join('')}</div>
+              <svg class="map-section-chevron" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
             </button>
           <div class="map-section-body" hidden>
+            ${districts.length ? `<div class="map-search-districts">${districts.map(d => `<span class="map-search-district">${UyDosh.escapeHtml(UyDosh.localizedShort(d, lang))}</span>`).join('')}</div>` : ''}
             <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
             <div class="map-section-approx-note" data-map-approx-note hidden>${UyDosh.iconLocateMe()}${UyDosh.escapeHtml(UyDosh.t('map.approximateLocation'))}</div>
           </div>
@@ -266,4 +271,3 @@
           if (section) section.addEventListener('click', onListingMapIntent);
         }
       }
-

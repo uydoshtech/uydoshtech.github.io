@@ -41,15 +41,19 @@
               MAP_LOAD_TIMEOUT_MS,
               'Map module load timed out',
             );
+            const districts = UyDosh.listingSearchDistricts(state.listing);
             const coords = mapModule.resolveListingMapCoordinates(state.listing);
-            if (!coords) {
+            if (!coords && !districts.length) {
               container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.mapUnavailable'))}</div>`;
               return;
             }
             container.innerHTML = '';
             await UyDosh.waitForElementLayout(container);
             const map = await UyDosh.withTimeout(
-              mapModule.renderSinglePinMap(container, {
+              districts.length ? mapModule.renderSearchDistrictMap(container, {
+                locationIds: districts.map(d => Number(d.id)),
+                lang: UyDosh.getLang(),
+              }) : mapModule.renderSinglePinMap(container, {
                 latitude: coords.latitude,
                 longitude: coords.longitude,
                 lang: UyDosh.getLang(),
@@ -69,12 +73,14 @@
             }
             const approxNote = rootEl.querySelector('[data-map-approx-note]');
             if (approxNote) {
-              approxNote.toggleAttribute('hidden', coords.source !== 'approximate');
+              approxNote.toggleAttribute('hidden', districts.length > 0 || coords?.source !== 'approximate');
             }
             state.mapLoaded = true;
             UyDosh.reflowActiveMaps();
-            refineMetroStationWalkTimes(mapModule, state.listing);
-            drawNearestMetroStationRoute(mapModule, container, state.listing);
+            if (!districts.length) {
+              refineMetroStationWalkTimes(mapModule, state.listing);
+              drawNearestMetroStationRoute(mapModule, container, state.listing);
+            }
           } catch (err) {
             console.error('Failed to load listing map', err);
             showListingMapError(container);

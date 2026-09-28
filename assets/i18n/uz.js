@@ -4,6 +4,12 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    "location.allTashkent": "Butun Toshkent",
+    "location.districts.one": "Toshkentning {count} tumani",
+    "location.districts.few": "Toshkentning {count} tumani",
+    "location.districts.many": "Toshkentning {count} tumani",
+    "location.searchArea": "Qidiruv hududi",
+
     'build.local': "Mahalliy yig‘ilma",
     'build.date': "Yig‘ilgan sana",
     'build.copy': "Nusxalash",

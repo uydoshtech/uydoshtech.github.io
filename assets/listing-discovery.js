@@ -37,13 +37,29 @@
       filters.listingTypeId = 2; // roommate_needed: the shared housing-offer type.
       delete filters.minPrice;
       delete filters.maxPrice;
-      // Leave over-budget homes discoverable; show budget fit on each candidate.
+      const gender = Number(listing.gender);
+      if ([1, 2].includes(gender)) filters.gender = gender;
+      const size = positiveId(listing.group_context?.group_size_target ?? listing.group_size_target);
+      const price = bounds(listing);
+      if (size && price) filters.maxPrice = price.max * size;
+      const stations = [...new Set((listing.search_subway_stations || []).map(s => positiveId(s.id)).filter(Boolean))];
+      const districts = [...new Set((listing.search_locations || []).map(d => positiveId(d.id)).filter(Boolean))];
+      if (stations.length || districts.length) {
+        delete filters.subwayStationId;
+        delete filters.locationId;
+        if (stations.length) filters.subwayStationIds = stations.join(',');
+        else filters.locationIds = districts.join(',');
+      }
     }
     const params = new URLSearchParams({ search: housing ? 'group' : 'similar', ...filters });
     if (!housing && positiveId(listing.id)) params.set('exclude', listing.id);
     if (positiveId(group)) params.set('group', group);
+    const searchDistricts = housing && filters.locationIds;
     const area = listing.subway_station || listing.location;
-    if (area) {
+    if (searchDistricts && window.UyDosh?.listingLocationLabel) {
+      for (const lang of ['uz', 'ru', 'en']) params.set(`area_${lang}`, window.UyDosh.listingLocationLabel(listing, lang));
+    }
+    if (area && !searchDistricts) {
       for (const lang of ['uz', 'ru', 'en']) {
         if (area[`name_${lang}`]) params.set(`area_${lang}`, area[`name_${lang}`]);
       }
@@ -55,6 +71,7 @@
     if (!['similar', 'group'].includes(params.get('search'))) return null;
     const result = { mode: params.get('search'), group: positiveId(params.get('group')), exclude: positiveId(params.get('exclude')) };
     for (const key of ['listingTypeId', 'subwayStationId', 'locationId']) result[key] = positiveId(params.get(key));
+    for (const key of ['locationIds', 'subwayStationIds']) result[key] = [...new Set((params.get(key) || '').split(',').map(positiveId).filter(Boolean))];
     for (const key of ['minPrice', 'maxPrice']) {
       const raw = params.get(key), n = Number(raw);
       result[key] = raw !== null && raw.trim() !== '' && Number.isFinite(n) && n >= 0 ? n : null;

@@ -491,6 +491,46 @@ function closeUniversitySuggestions() {
   state.universitySearchEmptyHapticFired = false;
 }
 
+// Commit selection explicitly: mobile WebViews can leave the search input
+// focused when a suggestion is tapped, so render() deliberately won't fill it.
+function selectUniversity(id) {
+  const selected = universityById(id);
+  if (!selected) return;
+  state.selectedUniversityId = Number(selected.id);
+  state.searchQuery = '';
+  universitySearchEl.value = UyDosh.titleCaseWords(UyDosh.localized(selected, UyDosh.getLang()));
+  universitySearchEl.closest('.university-search-wrap')?.classList.add('is-picked');
+  closeUniversitySuggestions();
+  universitySearchEl.blur();
+  showFormError('');
+  render();
+}
+
+function handleUniversitySearchInput() {
+  const value = universitySearchEl.value || '';
+  const selected = universityById(state.selectedUniversityId);
+  const selectedLabel = selected
+    ? UyDosh.titleCaseWords(UyDosh.localized(selected, UyDosh.getLang()))
+    : null;
+  // A duplicate input event for the committed label isn't a new search.
+  if (selectedLabel != null && value === selectedLabel) {
+    state.searchQuery = '';
+    closeUniversitySuggestions();
+    universitySearchEl.closest('.university-search-wrap')?.classList.add('is-picked');
+    return;
+  }
+  // New text invalidates the previous selection; saving must require a new pick.
+  state.selectedUniversityId = null;
+  state.searchQuery = value;
+  universitySearchEl.closest('.university-search-wrap')?.classList.remove('is-picked');
+  if (state.searchQuery.trim()) {
+    universityListEl.hidden = false;
+    renderUniversityList();
+  } else {
+    closeUniversitySuggestions();
+  }
+}
+
 function scaleValueLabel(field, value) {
   const opt = field.options.find((o) => o.value === value);
   return UyDosh.t(opt ? opt.labelKey : 'profile.lifestyle.notSpecified');
@@ -779,13 +819,10 @@ function bindEvents() {
     render();
   });
 
-  universitySearchEl.addEventListener('input', () => {
-    state.searchQuery = universitySearchEl.value || '';
-    universitySearchEl.closest('.university-search-wrap')?.classList.remove('is-picked');
-    if (state.searchQuery.trim()) {
-      universityListEl.hidden = false;
-      renderUniversityList();
-    } else {
+  universitySearchEl.addEventListener('input', handleUniversitySearchInput);
+
+  document.addEventListener('pointerdown', (event) => {
+    if (!event.target.closest('.university-search-wrap')) {
       closeUniversitySuggestions();
     }
   });
@@ -799,10 +836,7 @@ function bindEvents() {
   universityListEl.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-university-id]');
     if (!btn) return;
-    state.selectedUniversityId = Number(btn.getAttribute('data-university-id'));
-    state.searchQuery = '';
-    showFormError('');
-    render();
+    selectUniversity(Number(btn.getAttribute('data-university-id')));
   });
 
   saveBtn.addEventListener('click', onSave);

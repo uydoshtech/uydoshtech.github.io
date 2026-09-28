@@ -9,6 +9,10 @@ body {
 .wrap {
   padding-bottom: 32px;
 }
+html.group-housing-search [data-uydosh-mini-app-header] { display: none; }
+html.group-housing-search .wrap {
+  padding-top: var(--uydosh-tg-inset-top, calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--tg-content-safe-area-inset-top, 72px)));
+}
 header {
   display: flex;
   align-items: center;
@@ -1450,3 +1454,7 @@ body.view-map .scroll-top-btn {
 .discovery-banner { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px; margin: 8px 0; border: 1px solid var(--stroke); border-radius: 14px; }
 .discovery-banner span { flex-basis: 100%; font-size: 13px; }
 .discovery-banner a { font-size: 13px; }
+
+.discovery-banner { box-sizing: border-box; margin: 8px var(--content-gutter-offset); }
+.discovery-banner--group { background: #15803d; border-color: #15803d; color: #fff; }
+.discovery-banner--group a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }

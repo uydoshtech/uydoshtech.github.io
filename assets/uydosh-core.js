@@ -264,6 +264,31 @@ function listingTypeCodeFromListing(listing) {
   return String(code || '').trim().toLowerCase();
 }
 
+// Search districts describe desired housing areas, not the author's address.
+function listingSearchDistricts(listing) {
+  if (![1, 3].includes(listingTypeIdFromListing(listing))) return [];
+  const districts = Array.isArray(listing?.search_locations) ? listing.search_locations : [];
+  const unique = new Map();
+  for (const district of districts) {
+    const id = Number(district?.id);
+    if (Number.isInteger(id) && id > 0) unique.set(id, district);
+  }
+  return [...unique.values()];
+}
+
+function listingLocationLabel(listing, lang, { summary = false } = {}) {
+  const districts = listingSearchDistricts(listing);
+  if (!districts.length) return localizedShort(listing?.location, lang);
+  // IDs match the bundled Tashkent district boundary catalogue.
+  if (Array.from({ length: 12 }, (_, i) => i + 1).every(id => districts.some(d => Number(d.id) === id))) {
+    return t('location.allTashkent', lang);
+  }
+  if (!summary && districts.length <= 2) return districts.map(d => localizedShort(d, lang)).join(', ');
+  const count = districts.length;
+  const suffix = lang === 'ru' ? (count === 1 ? 'one' : count >= 2 && count <= 4 ? 'few' : 'many') : 'many';
+  return t(`location.districts.${suffix}`, lang).replace('{count}', count);
+}
+
 function isRoommateNeededListing(listing) {
   return listingTypeIdFromListing(listing) === 2
     || listingTypeCodeFromListing(listing) === 'roommate_needed';
@@ -654,7 +679,7 @@ function mapPinTooltipCardHtml(pin, { listing = null, lang = getLang(), showClos
   const cachedLocation = !listing ? getCachedLocationById?.(pin.location_id, lang) : null;
   const cachedSubwayStation = !listing ? getCachedSubwayStationById?.(pin.subway_station_id, lang) : null;
   const locName = listing
-    ? (pin.is_hostel ? String(pin.address || '') : localizedShort(listing.location, lang))
+    ? (pin.is_hostel ? String(pin.address || '') : listingLocationLabel(listing, lang))
     : (pin.is_hostel ? String(pin.address || '') : localizedShort(cachedLocation, lang));
   const metro = listing ? localized(listing.subway_station, lang) : localized(cachedSubwayStation, lang);
   const metroLine = listing
@@ -1058,6 +1083,8 @@ Object.assign(window.UyDosh, {
   setLang,
   localized,
   localizedShort,
+  listingSearchDistricts,
+  listingLocationLabel,
   titleCaseWords,
   localizedDescription,
   photoUrl,

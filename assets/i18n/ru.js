@@ -3,6 +3,12 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    "location.allTashkent": "Весь Ташкент",
+    "location.districts.one": "{count} район Ташкента",
+    "location.districts.few": "{count} района Ташкента",
+    "location.districts.many": "{count} районов Ташкента",
+    "location.searchArea": "Зона поиска",
+
     'build.local': "Локальная сборка",
     'build.date': "Дата сборки",
     'build.copy': "Скопировать",

@@ -25,9 +25,9 @@ test('search URLs round-trip context and reject malformed price ranges', () => {
   assert.equal(D.readSearch('?search=similar&subwayStationId=-1').subwayStationId, null);
   assert.equal(D.readSearch('?search=similar&minPrice=0').minPrice, 0);
 });
-test('group search targets housing without hiding over-budget candidates', () => {
+test('group search presets the total upper budget without excluding cheaper housing', () => {
   const parsed = D.readSearch(D.searchUrl(group, { group: 10, housing: true }).split('?')[1]);
-  assert.equal(parsed.listingTypeId, 2); assert.equal(parsed.minPrice, null); assert.equal(parsed.maxPrice, null);
+  assert.equal(parsed.listingTypeId, 2); assert.equal(parsed.minPrice, null); assert.equal(parsed.maxPrice, 360);
 });
 test('budget comparison uses target size and explicit ranges without hidden tolerance', () => {
   const budget = D.budget(group, { price: 360 });
@@ -53,10 +53,20 @@ test('list and map API requests forward station and price filters, including zer
     const start = source.indexOf(`function ${name}(`);
     const end = source.indexOf('\n}\n', start) + 2;
     vm.runInContext(source.slice(start, end), api);
-    api[name]({ subwayStationId: 4, minPrice: 0, maxPrice: 600 });
+    api[name]({ subwayStationId: 4, minPrice: 0, maxPrice: 600, locationIds:[4,9], subwayStationIds:[2,8] });
   }
   for (const call of calls) {
     assert.equal(call.params.subwayStationId, 4);
+    assert.equal(call.params.locationIds, "4,9"); assert.equal(call.params.subwayStationIds, "2,8");
     assert.equal(call.params.minPrice, 0); assert.equal(call.params.maxPrice, 600);
   }
+});
+
+test('group search carries gender and every selected district through URL parsing', () => {
+ const parsed = D.readSearch(D.searchUrl({...group, gender: 1, location_id:4, search_locations:[{id:4},{id:9},{id:4}]}, {group:10,housing:true}).split('?')[1]);
+ assert.equal(parsed.gender,1); assert.deepEqual(plain(parsed.locationIds),[4,9]); assert.equal(parsed.locationId,null);
+});
+test('group search carries selected stations instead of legacy district', () => {
+ const parsed = D.readSearch(D.searchUrl({...group, gender:2, location_id:4, search_subway_stations:[{id:2},{id:8}]}, {group:10,housing:true}).split('?')[1]);
+ assert.equal(parsed.gender,2); assert.deepEqual(plain(parsed.subwayStationIds),[2,8]); assert.equal(parsed.locationId,null);
 });

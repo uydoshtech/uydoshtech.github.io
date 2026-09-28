@@ -15,11 +15,11 @@
     if (back) params.set('back', back);
     return `/listing.html?${params}`;
   };
-  function budgetHtml(group, housing) {
+  function budgetHtml(group, housing, { showStatus = true } = {}) {
     const result = D.budget(group, housing);
     if (!result) return `<p class="discovery-note">${e(t('budgetUnknown'))}</p>`;
     return `<div class="discovery-budget">
-      <strong class="budget-${result.fit}">${e(t(result.fit))}</strong>
+      ${showStatus ? `<strong class="budget-${result.fit}">${e(t(result.fit))}</strong>` : ''}
       <span>${e(t('share', { amount: range(result.share), count: result.size }))}</span>
       <span>${e(t('combined', { amount: range(result.total) }))}</span>
     </div>`;
@@ -57,16 +57,17 @@
     </section>`;
   }
   function html(listing) {
+    const shortlistCount = listing.group_context?.group_shortlist_count;
     const group = D.positiveId(new URLSearchParams(location.search).get('group'));
-    const isGroup = D.typeCode(listing) === 'group_forming' || listing.group_context?.is_group_forming;
+    const isGroup = D.typeCode(listing) === 'group_forming' || Number(listing.listing_type_id) === 3 || listing.group_context?.is_group_forming;
     const isHousing = D.typeCode(listing) === 'roommate_needed' || Number(listing.listing_type_id) === 2;
-    return `<section class="map-section map-section-static discovery-section">
+    return `${isGroup ? '' : `<section class="map-section map-section-static discovery-section">
       <a class="btn discovery-similar" href="${e(D.searchUrl(listing, { group }))}">${e(t('similar'))} →</a>
-    </section>${areaPricesHtml(listing)}
+    </section>`}${areaPricesHtml(listing)}
     ${isGroup && D.canShortlist(listing) ? `<section class="map-section map-section-static discovery-section" id="group-shortlist">
-      <h2>${e(t('shortlist'))}</h2>
+      <h2>${e(t('shortlist'))}<span data-shortlist-count>${Number.isInteger(shortlistCount) && shortlistCount >= 0 ? ` · ${shortlistCount}` : ''}</span></h2>
       <p class="discovery-note">${e(t('shared'))}</p>
-      <a class="btn primary" href="${e(D.searchUrl(listing, { group: listing.id, housing: true }))}">${e(t('findHousing'))}</a>
+      <a class="btn primary" href="${e(D.searchUrl(listing, { group: listing.id, housing: true }))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false" style="flex-shrink:0"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>${e(t('findHousing'))}</a>
       <details data-shortlist-details><summary>${e(t('viewShortlist'))}</summary><div data-shortlist-body></div></details>
     </section>` : ''}
     ${group && isHousing ? `<section class="map-section map-section-static discovery-section" data-group-save>
@@ -75,6 +76,13 @@
   }
   function errorText(error) {
     return t(error?.status === 401 ? 'auth' : error?.status === 403 ? 'forbidden' : 'error');
+  }
+  function savedByHtml(user) {
+    if (!user?.name) return '';
+    const initials = String(user.name).trim().split(/\s+/).slice(0, 2).map(part => Array.from(part)[0] || '').join('').toUpperCase();
+    const avatar = `<span class="discovery-saver-avatar" aria-hidden="true"><span>${e(initials)}</span>${user.avatar_url ? `<img src="${e(UyDosh.photoUrl(user.avatar_url))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove();" />` : ''}</span>`;
+    const person = `<span class="discovery-saver-person">${avatar}<span>${e(user.name)}</span></span>`;
+    return `<small class="discovery-saved-by">${e(t('savedBy', { name: '{person}' })).replace('{person}', person)}</small>`;
   }
   async function bindSave(listing, section) {
     const body = section.querySelector('[data-group-save-body]');
@@ -126,12 +134,24 @@
       body.innerHTML = `<p role="status">${e(message)}</p>${items.map(item => {
         const listing = item.listing;
         const title = listing ? (listing.title || `#${listing.id}`) : t('unavailable');
+        const budget = listing ? D.budget(group, listing) : null;
+        const photo = listing ? UyDosh.primaryPhoto(listing) : null;
+        const url = listing ? detailUrl(listing.id, group.id, back) : '';
+        const area = listing ? UyDosh.listingLocationLabel(listing, UyDosh.getLang()) : '';
+        const price = listing ? D.bounds(listing) : null;
         return `<article class="discovery-shortlist-item">
-          ${listing ? `<a href="${e(detailUrl(listing.id, group.id, back))}"><strong>${e(title)}</strong></a>
-            <p>${e(range(D.bounds(listing) || { min: 0, max: 0 }))} ${e(UyDosh.t('card.perMonth'))}</p>
-            ${budgetHtml(group, listing)}` : `<strong>${e(title)}</strong>`}
-          ${item.saved_by?.name ? `<small>${e(t('savedBy', { name: item.saved_by.name }))}</small>` : ''}
-          <button class="btn" type="button" data-shortlist-remove="${Number(item.listing_id)}" ${busy ? 'disabled' : ''}>${e(t('remove'))}</button>
+          ${photo ? `<a class="discovery-shortlist-photo" href="${e(url)}" aria-label="${e(title)}"><img src="${e(UyDosh.photoUrl(photo))}" alt="" loading="lazy" decoding="async" onerror="this.parentElement.remove();" /></a>` : ''}
+          <div class="discovery-shortlist-content">
+            ${budget ? `<div class="discovery-shortlist-status"><span class="discovery-budget-pill budget-${e(budget.fit)}">${e(t(budget.fit))}</span></div>` : ''}
+            ${listing ? `<a class="discovery-shortlist-title" href="${e(url)}"><strong>${e(title)}</strong></a>
+              ${area ? `<div class="discovery-shortlist-area"><span aria-hidden="true">${UyDosh.iconPin()}</span>${e(area)}</div>` : ''}
+              ${price ? `<div class="discovery-shortlist-price">${e(range(price))}<small>${e(UyDosh.t('card.perMonth'))}</small></div>` : ''}
+              <div class="discovery-shortlist-budget">${budgetHtml(group, listing, { showStatus: false })}</div>` : `<strong>${e(title)}</strong>`}
+            <div class="discovery-shortlist-footer">
+              ${savedByHtml(item.saved_by)}
+              <button class="btn discovery-shortlist-remove" type="button" data-shortlist-remove="${Number(item.listing_id)}" ${busy ? 'disabled' : ''}><span aria-hidden="true">${UyDosh.iconTrash()}</span>${e(t('remove'))}</button>
+            </div>
+          </div>
         </article>`;
       }).join('')}
       ${loaded && !items.length ? `<p>${e(t('empty'))}</p>` : ''}
@@ -157,6 +177,10 @@
       try {
         if (!await UyDosh.ensureTelegramMiniAppSession()) throw { status: 401 };
         const result = await UyDosh.fetchGroupShortlist(group.id, page + 1);
+        const count = details.closest('section').querySelector('[data-shortlist-count]');
+        if (count && Number.isInteger(result.total) && result.total >= 0) {
+          count.textContent = ` · ${result.total}`;
+        }
         const fresh = Array.isArray(result.data) ? result.data : [];
         const existing = new Set(items.map(item => item.listing_id));
         items.push(...fresh.filter(item => !existing.has(item.listing_id)));

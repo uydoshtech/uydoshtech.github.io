@@ -1457,11 +1457,15 @@ function fetchListings({
   minPrice,
   maxPrice,
   locationId,
+  locationIds,
+  subwayStationIds,
   createdWithinDays,
   sortBy,
   sortOrder,
 } = {}) {
   const params = { page, limit, isActive: "true" };
+  if (locationIds?.length) params.locationIds = locationIds.join(",");
+  if (subwayStationIds?.length) params.subwayStationIds = subwayStationIds.join(",");
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
@@ -1713,9 +1717,13 @@ function fetchListingsForMap({
   minPrice,
   maxPrice,
   locationId,
+  locationIds,
+  subwayStationIds,
   createdWithinDays,
 } = {}) {
   const params = { page, limit, isActive: "true" };
+  if (locationIds?.length) params.locationIds = locationIds.join(",");
+  if (subwayStationIds?.length) params.subwayStationIds = subwayStationIds.join(",");
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
@@ -1729,7 +1737,7 @@ function fetchListingsForMap({
   return fetchJson("/listings/map", params);
 }
 
-const ASSET_CACHE_VERSION = window.UYDOSH_BUILD?.id || "20260929-build-info";
+const ASSET_CACHE_VERSION = window.UYDOSH_BUILD?.id || "20260929-search-districts";
 const classicScriptLoads = new Map();
 
 function assetScriptUrl(fileName) {
