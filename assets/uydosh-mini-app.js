@@ -1832,6 +1832,120 @@ function ensureMiniAppSafeAreaStyles() {
   `;
 }
 
+const META_PIXEL_ID = "1421193423481652";
+
+/** Telegram identity fields. They stay on Firebase events and are not sent to Meta. */
+const META_PIXEL_OMIT_KEYS = new Set([
+  "tg_user_id",
+  "tg_username",
+  "tg_first_name",
+  "tg_last_name",
+  "tg_photo_url",
+  "tg_query_id",
+  "tg_chat_instance",
+  "tg_chat_id",
+]);
+
+let _metaPixelReady = false;
+
+/** Flat, non-empty params Meta Pixel will accept. Drops identity fields. */
+function metaPixelParams(params) {
+  const out = {};
+  if (!params || typeof params !== "object") return out;
+  for (const [key, value] of Object.entries(params)) {
+    if (META_PIXEL_OMIT_KEYS.has(key)) continue;
+    if (value == null || value === "") continue;
+    if (typeof value === "boolean") {
+      out[key] = value ? 1 : 0;
+      continue;
+    }
+    if (typeof value === "number") {
+      if (Number.isFinite(value)) out[key] = value;
+      continue;
+    }
+    if (typeof value === "string") out[key] = _clip(value, 100);
+  }
+  return out;
+}
+
+function metaContentIds(params) {
+  const id = params?.listing_id;
+  if (id == null || id === "") return undefined;
+  return [String(id)];
+}
+
+/**
+ * Loads the Meta Pixel base code once per page. `fbq` queues calls until
+ * fbevents.js arrives, matching the snippet from Events Manager.
+ */
+function initMetaPixel() {
+  if (!isMiniApp() || _metaPixelReady) return _metaPixelReady;
+  _metaPixelReady = true;
+  !(function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;
+    n = f.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!f._fbq) f._fbq = n;
+    n.push = n;
+    n.loaded = !0;
+    n.version = "2.0";
+    n.queue = [];
+    t = b.createElement(e);
+    t.async = !0;
+    t.src = v;
+    s = b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t, s);
+  })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+  window.fbq("init", META_PIXEL_ID);
+  window.fbq("track", "PageView");
+  return true;
+}
+
+/** Forwards a Mini App analytics event to Meta. Standard events stay deduped. */
+function trackMetaMiniAppEvent(name, params) {
+  if (!initMetaPixel() || typeof window.fbq !== "function") return;
+  if (name === "exception" || name === "app_opened" || name === "screen_view") return;
+  const safe = metaPixelParams(params);
+  const contentIds = metaContentIds(safe);
+  const content = {
+    ...(contentIds ? { content_ids: contentIds, content_type: "product" } : {}),
+  };
+  if (name === "listing_viewed") {
+    window.fbq("track", "ViewContent", content);
+    return;
+  }
+  if (name === "search") {
+    const searchString = [
+      safe.listing_type_id != null ? `type:${safe.listing_type_id}` : "",
+      safe.gender ? `gender:${safe.gender}` : "",
+      safe.location_id != null ? `location:${safe.location_id}` : "",
+      safe.subway_line_id != null ? `metro:${safe.subway_line_id}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    window.fbq("track", "Search", {
+      ...(searchString ? { search_string: searchString } : {}),
+      ...safe,
+    });
+    return;
+  }
+  if (name === "listing_favorite_toggled") {
+    if (safe.is_favorited) window.fbq("track", "AddToWishlist", content);
+    else window.fbq("trackCustom", "listing_favorite_removed", { ...safe, ...content });
+    return;
+  }
+  if (name === "telegram_contact_tapped" || name === "phone_contact_tapped") {
+    window.fbq("track", "Contact", content);
+    return;
+  }
+  if (name === "listing_published") {
+    window.fbq("track", "Lead", content);
+    return;
+  }
+  window.fbq("trackCustom", name, safe);
+}
+
 const FIREBASE_VERSION = "11.6.0";
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAv3KDcxTbeLCuyh7QVVk-MwxR4fnC96yM",
@@ -1974,6 +2088,7 @@ function logMiniAppEvent(name, params) {
     ...getTelegramAnalyticsContext(),
     ...params,
   };
+  trackMetaMiniAppEvent(name, payload);
   initMiniAppAnalytics().then((ok) => {
     if (ok && _logEventFn) _logEventFn(name, payload);
   });
@@ -2591,6 +2706,7 @@ function initTelegramMiniApp() {
   // for (const el of document.querySelectorAll('[data-mini-app-back]')) {
   //   el.setAttribute('href', MINI_APP_FEED_PATH);
   // }
+  initMetaPixel();
   const scheduleAnalytics = window.requestIdleCallback
     ? (fn) => window.requestIdleCallback(fn, { timeout: 2500 })
     : (fn) => window.setTimeout(fn, 1200);
