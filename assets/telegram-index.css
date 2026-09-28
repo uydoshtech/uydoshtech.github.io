@@ -437,16 +437,18 @@ header {
 }
 .filter-controls {
   display: flex;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 .gender-switch {
   --gender-switch-pad: 3px;
   position: relative;
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 230px;
   padding: var(--gender-switch-pad);
   border-radius: 999px;
   border: 1px solid var(--stroke);
@@ -485,8 +487,10 @@ header {
   appearance: none;
   position: relative;
   z-index: 1;
-  flex: 0 0 108px;
-  width: 108px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: 108px;
   border: 0;
   background: transparent;
   border-radius: 999px;
@@ -546,6 +550,13 @@ header {
   padding: 7px 10px;
   justify-content: center;
   flex-shrink: 0;
+}
+/* Second-row photo + 3D sit beside the gender switch. Slightly tighter
+   horizontal padding keeps «Девушка» from clipping on a 390px phone. */
+.filter-controls .chip-photo,
+.filter-controls .chip-3d {
+  padding-left: 8px;
+  padding-right: 8px;
 }
 .chip-price-sort[aria-pressed="true"] {
   color: var(--fg);

@@ -729,7 +729,8 @@ function renderFilters() {
 
   // "3D View" mini filter — shown in both the expanded and collapsed
   // (compact) ribbons, matching the mobile app's 3D room-scan badge/icon
-  // (see Room3dIconBadge, Icons.view_in_ar). In the compact row it is last.
+  // (see Room3dIconBadge, Icons.view_in_ar). Expanded: second row, right
+  // after the photo chip. Compact: still last in the icon ribbon.
   const threeDPressed = state.filters.has3dTour;
   const threeDChip = UyDosh.chipButtonHtml({
     className: 'chip chip-3d',
@@ -856,6 +857,7 @@ function renderFilters() {
               <div class="filter-controls">
                 ${genderSwitch}
                 ${photoChip}
+                ${threeDChip}
               </div>
               ${filtersResetHtml}
             </div>
@@ -865,7 +867,6 @@ function renderFilters() {
                 ${lineChip}
                 ${priceSortChip}
                 ${periodChip}
-                ${threeDChip}
               </div>
             </div>
           </div>
