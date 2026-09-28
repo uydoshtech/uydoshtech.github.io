@@ -518,40 +518,67 @@ async function fetchFeedMapPins(params) {
   return { pins, total: pins.length };
 }
 
-const feedMap = UyDoshTelegramFeedMap.createFeedMapController({
-  UyDosh,
-  elements: {
-    feedListPanel,
-    feedMapPanel,
-    feedMapEl,
-    feedMapTooltipEl,
-    feedMapStatusEl,
-    feedMapLocateBannerEl,
-    fabCreateEl,
-  },
-  state,
-  onHaptic: filterTapHaptic,
-  fetchMapPins: fetchFeedMapPins,
-  getFilterParams: () => ({
-    listingTypeId: listingTypeQueryParam(),
-    gender: genderQueryParam(),
-    withPhoto: withPhotoQueryParam(),
-    has3dTour: has3dTourQueryParam(),
-    subwayLineId: subwayLineQueryParam(),
-    locationId: locationQueryParam(),
-    createdWithinDays: createdWithinDaysQueryParam(),
-  }),
-});
-// Exposed so uydosh-mini-app.js can re-measure the map panel height on
-// Telegram viewport/safe-area events (keyboard, orientation, expand()).
-window.UyDoshFeedMap = feedMap;
+let feedMapController = null;
+let feedMapPromise = null;
+
+function applyFeedViewLayout(isMap) {
+  feedListPanel?.classList.toggle('hidden', isMap);
+  feedMapPanel?.classList.toggle('active', isMap);
+  document.body.classList.toggle('view-map', isMap);
+  if (isMap) feedMapController?.scheduleSyncFeedMapPanelHeight?.();
+}
+
+/** Map wrapper + Yandex load only after the user opens the map tab. */
+function ensureFeedMap() {
+  if (feedMapController) return Promise.resolve(feedMapController);
+  if (!feedMapPromise) {
+    feedMapPromise = UyDosh.loadClassicScript('telegram-feed-map.js').then(() => {
+      feedMapController = UyDoshTelegramFeedMap.createFeedMapController({
+        UyDosh,
+        elements: {
+          feedListPanel,
+          feedMapPanel,
+          feedMapEl,
+          feedMapTooltipEl,
+          feedMapStatusEl,
+          feedMapLocateBannerEl,
+          fabCreateEl,
+        },
+        state,
+        onHaptic: filterTapHaptic,
+        fetchMapPins: fetchFeedMapPins,
+        getFilterParams: () => ({
+          listingTypeId: listingTypeQueryParam(),
+          gender: genderQueryParam(),
+          withPhoto: withPhotoQueryParam(),
+          has3dTour: has3dTourQueryParam(),
+          subwayLineId: subwayLineQueryParam(),
+          locationId: locationQueryParam(),
+          createdWithinDays: createdWithinDaysQueryParam(),
+        }),
+      });
+      window.UyDoshFeedMap = feedMapController;
+      return feedMapController;
+    }).catch((err) => {
+      feedMapPromise = null;
+      throw err;
+    });
+  }
+  return feedMapPromise;
+}
+
+function withFeedMap(fn) {
+  return ensureFeedMap().then(fn).catch((err) => {
+    console.error('Failed to load feed map', err);
+  });
+}
 
 function updateViewTabs() {
   for (const tab of viewTabs) {
     const selected = tab.getAttribute('data-view') === state.view;
     tab.setAttribute('aria-selected', selected ? 'true' : 'false');
   }
-  feedMap.applyViewLayout(state.view === 'map');
+  applyFeedViewLayout(state.view === 'map');
   // Price sort only makes sense for the paginated list, not the map's pins —
   // see `.filters--map-view .chip-price-sort` in telegram-index.css.
   filtersEl.classList.toggle('filters--map-view', state.view === 'map');
@@ -565,10 +592,10 @@ function switchView(nextView) {
   updateScrollTopButton();
   unfoldFilters();
   if (nextView === 'map') {
-    feedMap.onEnterMapView();
+    withFeedMap((map) => map.onEnterMapView());
   } else {
     resetFiltersScrollAnchor();
-    feedMap.onLeaveMapView();
+    feedMapController?.onLeaveMapView?.();
     // A filter changed while the Map tab was active still clears the list's own
     // items/grid right away (see `resetAndLoad()`), but skips re-fetching them since
     // `loadMore()` is a no-op while `state.view !== 'list'` — so without this, tabbing
@@ -884,8 +911,10 @@ function renderFilters() {
         // The collapse/expand row swap animates via CSS grid-template-rows
         // (see .filters-slide); re-measure once now and once after the
         // transition so the map panel height tracks the ribbon's final size.
-        feedMap.scheduleSyncFeedMapPanelHeight();
-        setTimeout(() => feedMap.scheduleSyncFeedMapPanelHeight(), 340);
+        withFeedMap((map) => {
+          map.scheduleSyncFeedMapPanelHeight();
+          setTimeout(() => map.scheduleSyncFeedMapPanelHeight(), 340);
+        });
       }
     });
   });
@@ -901,7 +930,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -919,7 +948,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -938,7 +967,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -956,7 +985,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad({ skipFiltersRender: true });
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -971,7 +1000,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -987,7 +1016,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -998,7 +1027,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -1008,7 +1037,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -1020,7 +1049,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 
@@ -1050,7 +1079,7 @@ function renderFilters() {
       persistFilters();
       logSearchEvent();
       resetAndLoad();
-      if (state.view === 'map') feedMap.loadFeedMap();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
     });
   });
 }
@@ -1472,20 +1501,6 @@ async function loadMore() {
       state.reachedEnd = true;
       showEnd();
     }
-    // Warm up the Map tab's pins fetch + Yandex SDK script in the background
-    // right after the list's own first page succeeds, so the first-ever tap
-    // on "Карта" doesn't have to wait on a cold fetch + script download
-    // before it can start rendering (see prefetchMap() for details). Fired
-    // after (not alongside) the list request so it never competes with it
-    // for bandwidth on a slow connection.
-    if (nextPage === 1) {
-      const warmMap = () => feedMap.prefetchMap();
-      if (typeof requestIdleCallback === 'function') {
-        requestIdleCallback(warmMap, { timeout: 2000 });
-      } else {
-        setTimeout(warmMap, 400);
-      }
-    }
   } catch (err) {
     if (requestGeneration !== loadGeneration) return;
     console.error('Failed to load listings', err);
@@ -1562,9 +1577,9 @@ document.addEventListener('uydosh:langchange', () => {
   updateCardsLanguage();
   if (state.reachedEnd && state.view === 'list') showEnd();
   if (state.view === 'map') {
-    feedMap.onLangChange();
-  } else if (state.selectedMapPins.length > 0) {
-    feedMap.renderMapPinTooltip();
+    withFeedMap((map) => map.onLangChange());
+  } else if (feedMapController && state.selectedMapPins.length > 0) {
+    feedMapController.renderMapPinTooltip();
   }
   UyDosh.logMiniAppEvent('lang_changed', { language: UyDosh.getLang() });
 });
@@ -1602,7 +1617,7 @@ window.addEventListener('pageshow', () => {
 requestAnimationFrame(() => resetFiltersScrollAnchor());
 updateScrollTopButton();
 if (state.view === 'map') {
-  feedMap.onEnterMapView();
+  withFeedMap((map) => map.onEnterMapView());
 } else {
   restoreFeedScrollOrLoad();
 }
