@@ -341,6 +341,7 @@ I18N.uz = {
     'create.successHint': 'Moderatsiyadan so‘ng e’lonlar ro‘yxatida paydo bo‘ladi.',
     'create.successPhotoWarning': 'Ba’zi suratlarni yuklab bo‘lmadi. Ularni e’lon sahifasidan qo‘shishga urinib ko‘ring.',
     'create.viewListing': 'E’longa o‘tish',
+    'create.backToDetails': 'E’lonni ko‘rish',
     'create.backToFeed': 'E’lonlarga qaytish',
     'create.scan3dTitle': 'Xonaning 3D-rejasini qo‘shing',
     'create.scan3dSubtitle': 'Xonani iPhone bilan skanerlang — e’lon interaktiv 3D-rejaga ega bo‘ladi. Bu bir daqiqacha vaqt oladi.',

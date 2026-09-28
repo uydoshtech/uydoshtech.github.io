@@ -303,6 +303,20 @@
         background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 12px; font-weight: 600;
         pointer-events: none;
       }
+      .gallery-admin-edit-btn {
+        position: absolute; top: 14px; right: 14px; z-index: 2;
+        appearance: none; border: 0; padding: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+        color: #fff; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      }
+      .gallery-admin-edit-btn:active { opacity: 0.85; }
+      .gallery-admin-edit-btn svg { width: 18px; height: 18px; display: block; }
+      .gallery.has-admin-edit .gallery-share-btn { top: 58px; }
+      .gallery.has-admin-edit .gallery-favorite-btn { top: 102px; }
+      .gallery.has-admin-edit .gallery-report-btn { top: 146px; }
       .gallery-share-btn {
         position: absolute; top: 14px; right: 14px; z-index: 2;
         appearance: none; border: 0; padding: 0;

@@ -3418,6 +3418,13 @@ async function submitListing() {
       }
     }
 
+    // Both owner and admin edits return to the updated listing, replacing the
+    // completed form so Back cannot reopen it and accidentally resubmit.
+    if (isEdit && failedPhotoCount === 0) {
+      location.replace(UyDosh.listingPageUrl(listingId));
+      return;
+    }
+
     formRoot.hidden = true;
     showFormError('');
     wizardFooterEl.hidden = true;
@@ -3439,17 +3446,16 @@ async function submitListing() {
         successHintEl.textContent = UyDosh.t('create.editSuccessHint', lang);
         successHintEl.removeAttribute('data-i18n');
       }
-      // Edit mode: primary action returns to the "my listings" page the user
-      // came from (not the feed) — the secondary feed link stays available too.
-      // Icons follow the swapped destination/label, not the fixed DOM element.
+      // A partial photo-upload failure keeps the warning visible. Its primary
+      // action still leads to the saved listing, for owners and admins alike.
       if (successFeedBtn) {
-        successFeedBtn.href = UyDosh.MINI_APP_ACCOUNT_PATH;
+        successFeedBtn.href = UyDosh.listingPageUrl(listingId);
       }
       if (successFeedLabelEl) {
-        successFeedLabelEl.textContent = UyDosh.t('create.backToAccount', lang);
+        successFeedLabelEl.textContent = UyDosh.t('create.backToDetails', lang);
         successFeedLabelEl.removeAttribute('data-i18n');
       }
-      if (successFeedIconEl) successFeedIconEl.innerHTML = UyDosh.iconChrome('person');
+      if (successFeedIconEl) successFeedIconEl.innerHTML = UyDosh.iconChrome('list');
       if (successViewBtn) {
         successViewBtn.href = UyDosh.MINI_APP_FEED_PATH;
       }

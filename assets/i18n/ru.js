@@ -340,6 +340,7 @@ I18N.ru = {
     'create.successHint': 'После модерации оно появится в ленте.',
     'create.successPhotoWarning': 'Не удалось загрузить некоторые фото. Попробуйте добавить их со страницы объявления.',
     'create.viewListing': 'Открыть объявление',
+    'create.backToDetails': 'К объявлению',
     'create.backToFeed': 'К объявлениям',
     'create.scan3dTitle': 'Добавьте 3D-план комнаты',
     'create.scan3dSubtitle': 'Отсканируйте комнату iPhone — объявление получит интерактивный 3D-план. Это займёт около минуты.',

@@ -126,12 +126,24 @@
 
       function updateDetailAdminEditFab(listing, { isAdminViewer = false } = {}) {
         if (!detailAdminEditFabEl) return;
+        const gallery = rootEl.querySelector('.gallery');
+        gallery?.classList.toggle('has-admin-edit', isAdminViewer);
+        gallery?.querySelector('[data-gallery-admin-edit]')?.remove();
         if (!isAdminViewer) {
           detailAdminEditFabEl.hidden = true;
           return;
         }
         detailAdminEditFabEl.setAttribute('data-listing-id', String(listing?.id ?? ''));
         detailAdminEditFabEl.hidden = false;
+        if (gallery) {
+          // Reuse the floating button's icon, accessible label, and handler.
+          const editButton = detailAdminEditFabEl.cloneNode(true);
+          editButton.removeAttribute('id');
+          editButton.className = 'gallery-admin-edit-btn';
+          editButton.setAttribute('data-gallery-admin-edit', '');
+          gallery.insertBefore(editButton, gallery.querySelector('[data-share-listing]'));
+          UyDosh.bindDetailAdminEditFab(editButton, listing?.id);
+        }
         if (!adminEditFabBound) {
           adminEditFabBound = true;
           UyDosh.bindDetailAdminEditFab(detailAdminEditFabEl, listing?.id);

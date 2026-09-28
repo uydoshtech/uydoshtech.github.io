@@ -340,6 +340,7 @@ I18N.en = {
     'create.successHint': 'It will appear in the feed after moderation.',
     'create.successPhotoWarning': 'Some photos could not be uploaded. Try adding them from the listing page.',
     'create.viewListing': 'View listing',
+    'create.backToDetails': 'View listing',
     'create.backToFeed': 'Back to feed',
     'create.scan3dTitle': 'Add a 3D room plan',
     'create.scan3dSubtitle': 'Scan the room with your iPhone and the listing will get an interactive 3D plan. It takes about a minute.',
