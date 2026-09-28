@@ -1668,3 +1668,19 @@
 .description-languages button:disabled { opacity: .5; cursor: wait; }
 .description-languages button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .description-translation-status { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+
+.discovery-section { padding: 16px; }
+.discovery-section h2 { margin: 0 0 12px; font-size: 16px; }
+.discovery-section .btn { white-space: normal; text-align: center; }
+.discovery-section summary { cursor: pointer; padding: 16px 0; font-weight: 600; }
+.discovery-price-row, .discovery-budget { display: grid; gap: 6px; }
+.discovery-price-row + .discovery-price-row { border-top: 1px solid var(--stroke); margin-top: 12px; padding-top: 12px; }
+.discovery-price-row small, .discovery-note, .discovery-budget span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.discovery-shortlist-item { display: grid; gap: 10px; border-top: 1px solid var(--stroke); padding: 16px 0; }
+.discovery-shortlist-item p { margin: 0; }
+.discovery-shortlist-item a { overflow-wrap: anywhere; }
+.discovery-shortlist-item .btn { justify-self: start; }
+.discovery-budget { margin-bottom: 12px; }
+.budget-fits { color: var(--accent); }
+.budget-above, .budget-partial { color: var(--fg); }
+#group-shortlist { scroll-margin-top: 90px; }

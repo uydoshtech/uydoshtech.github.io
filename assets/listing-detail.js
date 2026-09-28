@@ -350,6 +350,7 @@
               ${compatibilityTileHtml(l, isOwner)}
               ${descHtml}
               ${mapHtml}
+              ${UyDoshListingDiscovery.html(l)}
               ${metaHtml}
               <div class="cta-row app-cta-row">
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
@@ -360,6 +361,7 @@
           </div>
         `;
 
+        UyDoshListingDiscovery.bind(l);
         bindListingDescription(l);
         bindGallery();
         bindMapSection();

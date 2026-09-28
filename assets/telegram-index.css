@@ -1446,3 +1446,7 @@ body.view-map .scroll-top-btn {
 @media (prefers-reduced-motion: reduce) {
   .scroll-top-btn { transition: none; }
 }
+
+.discovery-banner { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px; margin: 8px 0; border: 1px solid var(--stroke); border-radius: 14px; }
+.discovery-banner span { flex-basis: 100%; font-size: 13px; }
+.discovery-banner a { font-size: 13px; }

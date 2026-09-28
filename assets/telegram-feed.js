@@ -272,6 +272,7 @@ function readStoredFilters() {
 }
 
 function persistFilters() {
+  if (discoverySearch) return;
   try {
     localStorage.setItem(
       FILTER_STORAGE_KEY,
@@ -308,7 +309,8 @@ function persistFeedView(view) {
   }
 }
 
-const storedFilters = readStoredFilters();
+let discoverySearch = UyDoshDiscovery.readSearch(location.search);
+const storedFilters = discoverySearch ? null : readStoredFilters();
 const urlListingTypeId = readUrlListingTypeId();
 const state = {
   page: 0,
@@ -322,14 +324,17 @@ const state = {
   emptyResultHapticFired: false,
   items: [],
   filters: {
-    listingTypeId: urlListingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
-    gender: storedFilters?.gender ?? GENDER_ANY,
-    withPhoto: storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
-    has3dTour: storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
-    subwayLineId: storedFilters?.subwayLineId ?? METRO_LINE_ANY,
-    locationId: storedFilters?.locationId ?? DISTRICT_ANY,
-    createdWithinDays: storedFilters?.createdWithinDays ?? PERIOD_DEFAULT_DAYS,
-    priceSortOrder: storedFilters?.priceSortOrder ?? null,
+    listingTypeId: discoverySearch?.listingTypeId ?? urlListingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
+    gender: discoverySearch?.gender ?? storedFilters?.gender ?? GENDER_ANY,
+    withPhoto: discoverySearch?.withPhoto ?? storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
+    has3dTour: discoverySearch?.has3dTour ?? storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
+    subwayLineId: discoverySearch?.subwayLineId ?? storedFilters?.subwayLineId ?? METRO_LINE_ANY,
+    locationId: discoverySearch?.locationId ?? storedFilters?.locationId ?? DISTRICT_ANY,
+    subwayStationId: discoverySearch?.subwayStationId ?? null,
+    minPrice: discoverySearch?.minPrice ?? null,
+    maxPrice: discoverySearch?.maxPrice ?? null,
+    createdWithinDays: discoverySearch?.createdWithinDays ?? storedFilters?.createdWithinDays ?? PERIOD_DEFAULT_DAYS,
+    priceSortOrder: discoverySearch?.priceSortOrder ?? storedFilters?.priceSortOrder ?? null,
   },
   withPhotoExplicit: storedFilters?.withPhotoExplicit ?? false,
   filtersCollapsed: readFiltersCollapsed(),
@@ -371,6 +376,7 @@ function hasActiveFilters() {
     f.subwayLineId !== METRO_LINE_ANY ||
     f.locationId !== DISTRICT_ANY ||
     f.createdWithinDays !== PERIOD_DEFAULT_DAYS ||
+    f.subwayStationId != null || f.minPrice != null || f.maxPrice != null ||
     f.priceSortOrder != null
   );
 }
@@ -421,6 +427,34 @@ function clearFeedScrollState() {
 /** Feedback for map interactions that aren't a plain DOM button/link tap (e.g. a native map-pin tap) — see `onHaptic` above. */
 function filterTapHaptic() {
   UyDosh.haptic.light();
+}
+
+function discoveryListingUrl(id) {
+  if (!discoverySearch) return UyDosh.listingPageUrl(id);
+  const params = new URLSearchParams({ id: String(id), mini: '1', back: location.pathname + location.search });
+  if (discoverySearch.group) params.set('group', discoverySearch.group);
+  return `/listing.html?${params}`;
+}
+
+function renderDiscoveryBanner() {
+  let banner = document.getElementById('discovery-banner');
+  if (!discoverySearch) { banner?.remove(); return; }
+  if (!banner) {
+    banner = document.createElement('section');
+    banner.id = 'discovery-banner';
+    banner.className = 'discovery-banner';
+    filtersEl.parentElement.before(banner);
+  }
+  const escape = UyDosh.escapeHtml;
+  const labels = [];
+  const area = discoverySearch.area[UyDosh.getLang()] || discoverySearch.area.uz;
+  if (area && (state.filters.subwayStationId || state.filters.locationId)) labels.push(area);
+  if (state.filters.minPrice != null || state.filters.maxPrice != null) labels.push(`$${state.filters.minPrice ?? 0}–$${state.filters.maxPrice ?? '…'}`);
+  const groupLink = discoverySearch.group
+    ? `<a class="btn" href="/listing.html?id=${discoverySearch.group}&mini=1#group-shortlist">${escape(UyDosh.t('discovery.shortlist'))}</a>` : '';
+  banner.innerHTML = `<strong>${escape(UyDosh.t(discoverySearch.mode === 'group' ? 'discovery.findHousing' : 'discovery.similar'))}</strong>
+    <span>${escape(labels.join(' · '))}</span>${groupLink}
+    <a href="/telegram/">${escape(UyDosh.t('discovery.allListings'))}</a>`;
 }
 
 function listingTypeQueryParam() {
@@ -509,7 +543,12 @@ function hostelMapPin(hostel) {
 }
 
 async function fetchFeedMapPins(params) {
-  if (!isHostelsOnlyFilter()) return UyDosh.fetchListingsForMap(params);
+  if (!isHostelsOnlyFilter()) {
+    const data = await UyDosh.fetchListingsForMap(params);
+    if (!discoverySearch) return data;
+    return { ...data, pins: (data.pins || []).filter(pin => Number(pin.id) !== discoverySearch.exclude)
+      .map(pin => ({ ...pin, detail_url: discoveryListingUrl(pin.id) })) };
+  }
   const hostels = await UyDosh.fetchHostels({
     districtId: params.locationId,
     gender: hostelGenderQueryParam(),
@@ -553,6 +592,9 @@ function ensureFeedMap() {
           withPhoto: withPhotoQueryParam(),
           has3dTour: has3dTourQueryParam(),
           subwayLineId: subwayLineQueryParam(),
+          subwayStationId: state.filters.subwayStationId,
+          minPrice: state.filters.minPrice,
+          maxPrice: state.filters.maxPrice,
           locationId: locationQueryParam(),
           createdWithinDays: createdWithinDaysQueryParam(),
         }),
@@ -634,6 +676,7 @@ function listingTypeCycleChipHtml(typeOptions, lang, { compact = false } = {}) {
 }
 
 function renderFilters() {
+  renderDiscoveryBanner();
   const lang = UyDosh.getLang();
   const typeOptions = [
     { value: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
@@ -955,6 +998,8 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-subway-line-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      state.filters.subwayStationId = null;
+      if (discoverySearch) discoverySearch.area = {};
       state.filters.subwayLineId = UyDosh.nextMetroLineId(state.filters.subwayLineId);
       // Metro and district are mutually exclusive location filters: picking a
       // line clears any district selection so the two never combine.
@@ -974,6 +1019,8 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      state.filters.subwayStationId = null;
+      if (discoverySearch) discoverySearch.area = {};
       state.filters.locationId = UyDosh.nextDistrictId(state.filters.locationId, lang);
       // Metro and district are mutually exclusive location filters: picking a
       // district clears any metro line selection so the two never combine.
@@ -1077,6 +1124,10 @@ function renderFilters() {
       state.filters.locationId = DISTRICT_ANY;
       state.filters.createdWithinDays = PERIOD_DEFAULT_DAYS;
       state.filters.priceSortOrder = null;
+      state.filters.subwayStationId = null;
+      state.filters.minPrice = null;
+      state.filters.maxPrice = null;
+      if (discoverySearch) { discoverySearch.exclude = null; discoverySearch.area = {}; }
       persistFilters();
       logSearchEvent();
       resetAndLoad();
@@ -1173,6 +1224,18 @@ function syncDistrictChipState() {
 let loadGeneration = 0;
 
 function resetAndLoad({ skipFiltersRender = false } = {}) {
+  if (discoverySearch) {
+    const params = new URLSearchParams(location.search);
+    for (const key of ['listingTypeId', 'subwayStationId', 'locationId', 'minPrice', 'maxPrice', 'gender', 'subwayLineId', 'createdWithinDays', 'priceSortOrder', 'withPhoto', 'has3dTour']) {
+      const value = state.filters[key];
+      if (value != null) params.set(key, value);
+      else params.delete(key);
+    }
+    if (!discoverySearch.exclude) params.delete('exclude');
+    if (!discoverySearch.area.uz) for (const lang of ['uz', 'ru', 'en']) params.delete(`area_${lang}`);
+    history.replaceState(null, '', `${location.pathname}?${params}`);
+    renderDiscoveryBanner();
+  }
   loadGeneration += 1;
   clearFeedScrollState();
   state.page = 0;
@@ -1248,7 +1311,7 @@ function listingCardHtml(listing) {
       : `<div class="thumb empty">${featured}${typeBadge}${threeDBadge}</div>`;
 
   return `
-    <a class="card" href="${UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id))}">
+    <a class="card" href="${UyDosh.escapeHtml(discoveryListingUrl(listing.id))}">
       ${thumb}
       <div class="body">
         <div class="title-row">
@@ -1481,6 +1544,9 @@ async function loadMore() {
         withPhoto: withPhotoQueryParam(),
         has3dTour: has3dTourQueryParam(),
         subwayLineId: subwayLineQueryParam(),
+          subwayStationId: state.filters.subwayStationId,
+          minPrice: state.filters.minPrice,
+          maxPrice: state.filters.maxPrice,
         locationId: locationQueryParam(),
         createdWithinDays: createdWithinDaysQueryParam(),
         sortBy: sortByQueryParam(),
@@ -1490,15 +1556,16 @@ async function loadMore() {
     // drop the stale response instead of appending results for a filter
     // that's no longer selected (see `loadGeneration` comment above).
     if (requestGeneration !== loadGeneration) return;
-    const listings = Array.isArray(data?.listings) ? data.listings : [];
-    updatePagination(data, listings, nextPage);
+    const rawListings = Array.isArray(data?.listings) ? data.listings : [];
+    const listings = rawListings.filter(item => Number(item.id) !== discoverySearch?.exclude);
+    updatePagination(data, rawListings, nextPage);
     state.page = nextPage;
     state.items.push(...listings);
     if (nextPage === 1) gridEl.innerHTML = '';
     appendFeedItems(listings);
     clearStatus();
 
-    if (listings.length === 0 || state.page >= state.totalPages) {
+    if (rawListings.length === 0 || state.page >= state.totalPages) {
       state.reachedEnd = true;
       showEnd();
     }

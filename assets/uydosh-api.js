@@ -1453,6 +1453,9 @@ function fetchListings({
   withPhoto,
   has3dTour,
   subwayLineId,
+  subwayStationId,
+  minPrice,
+  maxPrice,
   locationId,
   createdWithinDays,
   sortBy,
@@ -1463,6 +1466,9 @@ function fetchListings({
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
   if (has3dTour != null) params.has3dTour = String(has3dTour);
+  if (subwayStationId) params.subwayStationId = subwayStationId;
+  if (minPrice != null) params.minPrice = minPrice;
+  if (maxPrice != null) params.maxPrice = maxPrice;
   if (subwayLineId) params.subwayLineId = subwayLineId;
   if (locationId) params.locationId = locationId;
   if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
@@ -1553,6 +1559,21 @@ function recordListingView(listingId) {
 
 function listingGroupPath(listingId, suffix) {
   return `/listings/${encodeURIComponent(listingId)}/group${suffix}`;
+}
+
+function fetchGroupShortlist(groupId, page = 1) {
+  return fetchJsonAuth(listingGroupPath(groupId, "/shortlist"), {
+    params: { page, limit: 50, language: getLang() },
+  });
+}
+function checkGroupShortlist(groupId, listingId) {
+  return fetchJsonAuth(listingGroupPath(groupId, `/shortlist/check/${encodeURIComponent(listingId)}`));
+}
+function toggleGroupShortlist(groupId, listingId) {
+  return fetchJsonAuth(listingGroupPath(groupId, `/shortlist/toggle/${encodeURIComponent(listingId)}`), { method: "PUT" });
+}
+function removeGroupShortlist(groupId, listingId) {
+  return fetchJsonAuth(listingGroupPath(groupId, `/shortlist/${encodeURIComponent(listingId)}`), { method: "DELETE" });
 }
 
 function createListingGroupJoinRequest(listingId, { message } = {}) {
@@ -1688,6 +1709,9 @@ function fetchListingsForMap({
   withPhoto,
   has3dTour,
   subwayLineId,
+  subwayStationId,
+  minPrice,
+  maxPrice,
   locationId,
   createdWithinDays,
 } = {}) {
@@ -1696,6 +1720,9 @@ function fetchListingsForMap({
   if (gender) params.gender = gender;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
   if (has3dTour != null) params.has3dTour = String(has3dTour);
+  if (subwayStationId) params.subwayStationId = subwayStationId;
+  if (minPrice != null) params.minPrice = minPrice;
+  if (maxPrice != null) params.maxPrice = maxPrice;
   if (subwayLineId) params.subwayLineId = subwayLineId;
   if (locationId) params.locationId = locationId;
   if (createdWithinDays != null) params.createdWithinDays = createdWithinDays;
@@ -1829,6 +1856,10 @@ Object.assign(window.UyDosh, {
   recordListingView,
   createListingGroupJoinRequest,
   fetchListingGroupJoinRequests,
+  fetchGroupShortlist,
+  checkGroupShortlist,
+  toggleGroupShortlist,
+  removeGroupShortlist,
   approveListingGroupJoinRequest,
   rejectListingGroupJoinRequest,
   withdrawListingGroupJoinRequest,
