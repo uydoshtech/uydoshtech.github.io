@@ -705,6 +705,7 @@ function navDrawerHtml() {
             <span class="nav-drawer-avatar${avatarUrl ? " has-avatar" : ""}" aria-hidden="true">${avatarInner}</span>
             ${displayName ? `<strong class="nav-drawer-username">${escapeHtml(displayName)}</strong>` : ""}
           </a>
+          <div class="nav-drawer-build">Telegram · ${window.UYDOSH_BUILD?.id ? `Build ${escapeHtml(String(window.UYDOSH_BUILD.id))}` : `<span data-i18n="build.local"></span>`}</div>
         </div>
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
@@ -1465,9 +1466,15 @@ function ensureMiniAppSafeAreaStyles() {
       pointer-events: none;
     }
     html.mini-app .account-menu-edit-badge svg {
-      width: 11px;
-      height: 11px;
+      width: 12px;
+      height: 12px;
       display: block;
+      stroke: currentColor;
+      fill: none;
+    }
+    html.mini-app .account-menu-edit-badge .icon {
+      display: inline-flex;
+      color: inherit;
     }
     html.mini-app .account-menu-avatar {
       width: 100%;
@@ -1653,6 +1660,12 @@ function ensureMiniAppSafeAreaStyles() {
     html.mini-app .nav-drawer-header {
       margin-bottom: 18px;
       flex: 0 0 auto;
+    }
+    html.mini-app .nav-drawer-build {
+      margin-top: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted, #aeb8c4);
     }
     /* Own circular Telegram avatar + display name, replacing the brand logo
        that used to sit here — the drawer already opens from an identity

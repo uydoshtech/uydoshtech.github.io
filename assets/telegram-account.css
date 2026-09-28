@@ -502,9 +502,10 @@ header {
 .account-participants-label {
   min-width: 0;
   flex: 1;
-}
-.account-participants-avatars {
-  margin-left: auto;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
 }
 .account-participants-chevron {
   flex-shrink: 0;

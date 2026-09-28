@@ -3,6 +3,8 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    "profile.number.decrease": "Уменьшить",
+    "profile.number.increase": "Увеличить",
     "location.allTashkent": "Весь Ташкент",
     "location.districts.one": "{count} район Ташкента",
     "location.districts.few": "{count} района Ташкента",

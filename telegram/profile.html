@@ -12,8 +12,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260928-1" />
-    <link rel="stylesheet" href="../assets/telegram-profile.css?v=20260928-1" />
-    <link rel="stylesheet" href="../assets/build-info.css?v=20260929-1" />
+    <link rel="stylesheet" href="../assets/telegram-profile.css?v=20260929-steppers" />
   </head>
   <body>
     <div class="wrap">
@@ -180,7 +179,11 @@
             <div class="field">
               <div class="field-label" data-i18n="profile.looking.ageRange"></div>
               <div class="profile-range-row">
-                <input
+                <div class="profile-number-field">
+                  <label for="pref-age-min-input" data-i18n="profile.looking.from"></label>
+                  <div class="profile-number-stepper">
+                    <button type="button" data-number-target="pref-age-min-input" data-number-delta="-1" data-i18n="profile.number.decrease" data-i18n-attr="aria-label" aria-controls="pref-age-min-input">−</button>
+                    <input
                   type="number"
                   id="pref-age-min-input"
                   inputmode="numeric"
@@ -190,7 +193,14 @@
                   data-i18n="profile.looking.from"
                   data-i18n-attr="placeholder"
                 />
-                <input
+                    <button type="button" data-number-target="pref-age-min-input" data-number-delta="1" data-i18n="profile.number.increase" data-i18n-attr="aria-label" aria-controls="pref-age-min-input">+</button>
+                  </div>
+                </div>
+                <div class="profile-number-field">
+                  <label for="pref-age-max-input" data-i18n="profile.looking.to"></label>
+                  <div class="profile-number-stepper">
+                    <button type="button" data-number-target="pref-age-max-input" data-number-delta="-1" data-i18n="profile.number.decrease" data-i18n-attr="aria-label" aria-controls="pref-age-max-input">−</button>
+                    <input
                   type="number"
                   id="pref-age-max-input"
                   inputmode="numeric"
@@ -200,13 +210,20 @@
                   data-i18n="profile.looking.to"
                   data-i18n-attr="placeholder"
                 />
+                    <button type="button" data-number-target="pref-age-max-input" data-number-delta="1" data-i18n="profile.number.increase" data-i18n-attr="aria-label" aria-controls="pref-age-max-input">+</button>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="field">
               <div class="field-label" data-i18n="profile.looking.budgetRange"></div>
               <div class="profile-range-row">
-                <input
+                <div class="profile-number-field">
+                  <label for="budget-min-input" data-i18n="profile.looking.from"></label>
+                  <div class="profile-number-stepper">
+                    <button type="button" data-number-target="budget-min-input" data-number-delta="-1" data-i18n="profile.number.decrease" data-i18n-attr="aria-label" aria-controls="budget-min-input">−</button>
+                    <input
                   type="number"
                   id="budget-min-input"
                   inputmode="numeric"
@@ -216,7 +233,14 @@
                   data-i18n="profile.looking.from"
                   data-i18n-attr="placeholder"
                 />
-                <input
+                    <button type="button" data-number-target="budget-min-input" data-number-delta="1" data-i18n="profile.number.increase" data-i18n-attr="aria-label" aria-controls="budget-min-input">+</button>
+                  </div>
+                </div>
+                <div class="profile-number-field">
+                  <label for="budget-max-input" data-i18n="profile.looking.to"></label>
+                  <div class="profile-number-stepper">
+                    <button type="button" data-number-target="budget-max-input" data-number-delta="-1" data-i18n="profile.number.decrease" data-i18n-attr="aria-label" aria-controls="budget-max-input">−</button>
+                    <input
                   type="number"
                   id="budget-max-input"
                   inputmode="numeric"
@@ -226,6 +250,9 @@
                   data-i18n="profile.looking.to"
                   data-i18n-attr="placeholder"
                 />
+                    <button type="button" data-number-target="budget-max-input" data-number-delta="1" data-i18n="profile.number.increase" data-i18n-attr="aria-label" aria-controls="budget-max-input">+</button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -250,9 +277,6 @@
       </div>
 
       <div id="view-root" class="profile-view content-gutter" hidden></div>
-      <div class="build-info-footer">
-        <button type="button" id="build-info-open" class="build-info-label" hidden></button>
-      </div>
 
     </div>
 
@@ -265,23 +289,11 @@
       </div>
     </footer>
 
-    <dialog id="build-info-dialog" class="build-info-dialog" aria-labelledby="build-info-title">
-      <h2 id="build-info-title">Telegram Mini App</h2>
-      <pre id="build-info-details"></pre>
-      <p id="build-info-status" role="status" aria-live="polite"></p>
-      <div class="build-info-actions">
-        <button type="button" id="build-info-update" hidden></button>
-        <button type="button" id="build-info-copy"></button>
-        <button type="button" id="build-info-close"></button>
-      </div>
-    </dialog>
-
     <script src="../assets/uydosh-core.js?v=20260928-2"></script>
     <script src="../assets/uydosh-i18n.js?v=20260929-build-info"></script>
     <script src="../assets/uydosh-api.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-icons.js?v=20260928-1" defer></script>
-    <script src="../assets/uydosh-mini-app.js?v=20260929-avatar-pencil" defer></script>
-    <script src="../assets/build-info.js?v=20260929-1" defer></script>
-    <script src="../assets/telegram-profile.js?v=20260929-university" defer></script>
+    <script src="../assets/uydosh-mini-app.js?v=20260929-pencil-stroke" defer></script>
+    <script src="../assets/telegram-profile.js?v=20260929-profile-defaults" defer></script>
   </body>
 </html>

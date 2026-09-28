@@ -237,8 +237,8 @@ function participantsPillHtml(listing, conversation) {
     : participantAvatarHtml({}, 0);
   return `
         <button type="button" class="account-participants-pill" data-open-participants="${listing.id}" data-haptic="selection">
-          <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))}</span>
           <span class="account-participants-avatars">${avatars}</span>
+          <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))}</span>
           <span class="account-participants-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
         </button>`;
 }

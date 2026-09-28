@@ -22,6 +22,7 @@ a new deployment to republish an old commit. Do not reset/replace the deployment
 workflow's numbering without preserving ordering against existing releases.
 
 The stamp embeds metadata in HTML, updates local CSS/JS cache versions, and
-writes `build.json` for update detection. The profile's `assets/build-info.js`
-shows the embedded build, never the remotely fetched version. Source checkouts
+writes `build.json`. Show the build number ONLY in the burger menu, using
+embedded metadata in `assets/uydosh-mini-app.js`; never on the profile or other
+screens, and never replace it with remotely fetched metadata. Source checkouts
 show "Local build". Run the stamp only on disposable deployment checkouts.

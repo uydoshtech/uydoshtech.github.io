@@ -12,10 +12,9 @@ metadata and versions their local JS/CSS links. Dynamically loaded dictionaries
 use the same build identifier. `build.json` carries the matching metadata for
 update detection; it never replaces the loaded client's displayed build.
 
-At the bottom of the Telegram profile, tap the build label to view/copy the
-build time and short commit hash. When a newer release is detected, "Update
-available" reloads the profile. Offline clients keep showing their loaded
-version. Unpublished source checkouts display "Local build".
+The Telegram build number appears only in the burger menu, below the user's
+name. It identifies the loaded page's embedded build. Unpublished source
+checkouts display "Local build".
 
 Build stamping runs only on disposable CI checkouts:
 `node scripts/stamp-build.cjs` requires GitHub run number, attempt, and commit

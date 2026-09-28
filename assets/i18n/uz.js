@@ -4,6 +4,8 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    "profile.number.decrease": "Kamaytirish",
+    "profile.number.increase": "Oshirish",
     "location.allTashkent": "Butun Toshkent",
     "location.districts.one": "Toshkentning {count} tumani",
     "location.districts.few": "Toshkentning {count} tumani",

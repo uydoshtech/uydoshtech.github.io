@@ -664,6 +664,25 @@ function render() {
 }
 
 function bindEvents() {
+  document.querySelectorAll('[data-number-target]').forEach(button => {
+    button.addEventListener('click', () => {
+      const input = document.getElementById(button.dataset.numberTarget);
+      if (!input || input.disabled) return;
+      const isBudget = input.id.startsWith('budget-');
+      const isMin = input.id.includes('-min-');
+      const peer = document.getElementById(input.id.replace(isMin ? '-min-' : '-max-', isMin ? '-max-' : '-min-'));
+      const delta = Number(button.dataset.numberDelta) * (isBudget ? 10 : 1);
+      const current = input.value === '' ? (isBudget ? (isMin ? 100 : 150) : (isMin ? 18 : 30)) : Number(input.value);
+      let next = Math.max(Number(input.min), Math.min(Number(input.max), current + delta));
+      if (peer?.value !== '' && Number.isFinite(Number(peer?.value))) {
+        next = isMin ? Math.min(next, Number(peer.value)) : Math.max(next, Number(peer.value));
+      }
+      input.value = String(next);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      UyDosh.haptic?.selection?.();
+    });
+  });
   for (const btn of tabButtons) {
     btn.addEventListener('click', () => {
       setActiveTab(btn.getAttribute('data-profile-tab'));
@@ -1220,10 +1239,10 @@ async function boot() {
   aboutMeInputEl.value = state.aboutMe;
   if (nameInputEl) nameInputEl.value = state.displayName;
   if (birthYearInputEl) birthYearInputEl.value = intOrEmpty(state.profile?.birth_year);
-  if (prefAgeMinInputEl) prefAgeMinInputEl.value = intOrEmpty(state.profile?.pref_age_min);
-  if (prefAgeMaxInputEl) prefAgeMaxInputEl.value = intOrEmpty(state.profile?.pref_age_max);
-  if (budgetMinInputEl) budgetMinInputEl.value = intOrEmpty(state.profile?.budget_min);
-  if (budgetMaxInputEl) budgetMaxInputEl.value = intOrEmpty(state.profile?.budget_max);
+  if (prefAgeMinInputEl) prefAgeMinInputEl.value = intOrEmpty(state.profile?.pref_age_min ?? 18);
+  if (prefAgeMaxInputEl) prefAgeMaxInputEl.value = intOrEmpty(state.profile?.pref_age_max ?? 30);
+  if (budgetMinInputEl) budgetMinInputEl.value = intOrEmpty(state.profile?.budget_min ?? 100);
+  if (budgetMaxInputEl) budgetMaxInputEl.value = intOrEmpty(state.profile?.budget_max ?? 150);
 
   loadingEl.hidden = true;
   formRootEl.hidden = false;
