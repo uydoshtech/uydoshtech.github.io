@@ -99,9 +99,8 @@
        * clock icon with walking distance/time from the listing's location
        * to that station — see `UyDosh.stationWalkInfo` in uydosh-core.js —
        * plus a "draw route" button when that walk ("metro proximity") exists.
-       * The nearest station's button starts enabled (`options.routeOn`) so
-       * it matches the auto-drawn map route (see
-       * `drawNearestMetroStationRoute` / `bindMetroStationRouteButtons`).
+       * The button starts off. Opening the map draws the nearest station's
+       * route and turns that button on (`drawNearestMetroStationRoute`).
        *
        * The straight-line km/min shown here is only the *initial* number,
        * good enough for the collapsed summary that's visible before any map
@@ -206,11 +205,8 @@
         }
         if (hasMetro) {
           const refCoords = UyDosh.listingReferenceCoordinates(l);
-          const nearestId = Number(nearestMetroStation(l)?.id);
           const metroRows = stations
-            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords, {
-              routeOn: Number.isFinite(nearestId) && Number(station.id) === nearestId,
-            }))
+            .map((station) => buildMetroStationRowHtml(station, lang, metroLine, refCoords))
             .filter(Boolean);
           // Same "stands apart from the rows above it" treatment as the
           // address row, but only on the first station row — multiple
@@ -260,8 +256,11 @@
           await UyDosh.loadClassicScript('listing-detail-map-view.js');
           if (section) delete section.dataset.mapLazy;
           bindMapSection();
-          await expandMapSection();
+          // A route tap is handled by the view script, which opens the map
+          // itself. Expanding first would draw the nearest route and the
+          // replayed tap would then toggle that route back off.
           if (routeBtn) routeBtn.click();
+          else await expandMapSection();
         } catch (err) {
           console.error('Failed to load listing map', err);
           if (section) section.addEventListener('click', onListingMapIntent);
