@@ -10,7 +10,9 @@ body {
   padding-bottom: 32px;
 }
 html.group-housing-search [data-uydosh-mini-app-header] { display: none; }
-html.group-housing-search .wrap {
+/* Keep the native Telegram safe area when the app header is hidden.
+   Extra specificity beats the later-injected html.mini-app .wrap reset. */
+html.mini-app.group-housing-search .wrap {
   padding-top: var(--uydosh-tg-inset-top, calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--tg-content-safe-area-inset-top, 72px)));
 }
 header {
