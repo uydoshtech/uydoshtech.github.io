@@ -1725,6 +1725,8 @@
 .budget-fits { color: var(--accent); }
 .budget-above, .budget-partial { color: var(--fg); }
 #group-shortlist { scroll-margin-top: 90px; }
+#group-shortlist > h2 { margin-bottom: 6px; }
+#group-shortlist > .discovery-note { margin-top: 0; }
 
 .map-search-districts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .map-search-district { padding: 6px 10px; border: 1px solid var(--district-color, var(--stroke)); border-radius: 18px; font-size: 13px; color: var(--fg); background: color-mix(in srgb, var(--district-color, transparent) 18%, transparent); }
