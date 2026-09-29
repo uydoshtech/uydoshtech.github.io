@@ -3625,7 +3625,9 @@ function goBack() {
   if (state.dictationState === 'recording') cancelActiveDictation();
   haptic();
   if (state.step <= 0) {
-    location.href = UyDosh.MINI_APP_FEED_PATH;
+    location.href = state.editingListingId
+      ? UyDosh.listingPageUrl(state.editingListingId)
+      : UyDosh.MINI_APP_FEED_PATH;
     return;
   }
   state.step -= 1;

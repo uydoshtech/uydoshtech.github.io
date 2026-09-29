@@ -216,6 +216,28 @@
         </div>${Object.entries(panels).map(([key, html]) => `<section class="group-tab-panel" role="tabpanel" id="group-panel-${key}" aria-labelledby="group-tab-${key}" tabindex="0" ${activeGroupTab === key ? '' : 'hidden'}>${html}</section>`).join('')}`;
       }
 
+      async function openGroupMapByDefault() {
+        const panel = rootEl.querySelector('#group-panel-description');
+        const section = panel?.querySelector('[data-map-section]');
+        if (!section || panel.hidden || section.dataset.defaultOpened) return;
+        section.dataset.defaultOpened = '1';
+        try {
+          await UyDosh.loadClassicScript('listing-detail-map-view.js');
+          if (!section.isConnected) return;
+          section.removeEventListener('click', onListingMapIntent);
+          delete section.dataset.mapLazy;
+          bindMapSection();
+          if (panel.hidden) {
+            delete section.dataset.defaultOpened;
+            return;
+          }
+          await expandMapSection();
+        } catch (err) {
+          delete section.dataset.defaultOpened;
+          console.error('Failed to open group map', err);
+        }
+      }
+
       function bindGroupTabs() {
         const tabs = [...rootEl.querySelectorAll('[data-group-tab]')];
         function select(tab) {
@@ -226,6 +248,7 @@
             item.tabIndex = selected ? 0 : -1;
             document.getElementById(item.getAttribute('aria-controls')).hidden = !selected;
           }
+          openGroupMapByDefault();
         }
         tabs.forEach((tab, index) => {
           tab.addEventListener('click', () => select(tab));
@@ -414,6 +437,7 @@
         bindListingDescription(l);
         bindGallery();
         bindMapSection();
+        openGroupMapByDefault();
         if (typeof bindRoomScanSection === 'function') bindRoomScanSection();
         bindShareButton(l);
         bindFavoriteButton(l);
