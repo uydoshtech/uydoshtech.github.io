@@ -97,9 +97,9 @@ function filterListingTypeIcon(listingTypeId, { pressed = false } = {}) {
     case 1:
       return iconHome(color);
     case 2:
-      return iconPeople(color);
+      return iconPerson(color);
     case 3:
-      return iconGroups(color);
+      return iconPeople(color);
     case 4:
       return iconHome(color);
     default:
