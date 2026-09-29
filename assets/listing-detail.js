@@ -52,11 +52,14 @@
       // html.has-detail-contact in listing-detail.css, not JS.
       const detailBackFabEl = document.getElementById('detail-back-fab');
       if (UyDosh.isMiniApp() && detailBackFabEl) {
-        detailBackFabEl.hidden = false;
         detailBackFabEl.addEventListener('click', () => {
           if (typeof closeRoomScanFullscreenIfOpen === 'function' && closeRoomScanFullscreenIfOpen()) return;
           location.href = UyDosh.miniAppBackTargetFromUrl();
         });
+      }
+      function setDetailBackFabShown(shown) {
+        if (!detailBackFabEl || !UyDosh.isMiniApp()) return;
+        detailBackFabEl.hidden = !shown;
       }
 
       // Owner-only "views" toolbar (see `ownerToolbarHtml`/`loadOwnerViewCount`) needs
@@ -194,6 +197,7 @@
 
 
       function renderNotFound() {
+        setDetailBackFabShown(false);
         hideDetailContactBar();
         rootEl.innerHTML = `
           <div class="status-page">
@@ -204,6 +208,7 @@
       }
 
       function renderError(retry) {
+        setDetailBackFabShown(false);
         hideDetailContactBar();
         rootEl.innerHTML = `
           <div class="status-page">
@@ -473,6 +478,7 @@
           loadCompatibilityTile(l, isOwner);
         }
         if (isMiniApp) loadGroupJoinRequests();
+        setDetailBackFabShown(true);
       }
 
       function listingNeedsRoomScanUi(listing) {
@@ -523,6 +529,7 @@
           else renderError(() => {
             // Branded spinner (same as the initial load) instead of a plain
             // "Loading…" text line while the retry is in flight.
+            setDetailBackFabShown(false);
             rootEl.innerHTML = `<div class="detail-loading" role="status" aria-busy="true" aria-live="polite">
               <span class="loading-spinner" aria-hidden="true"></span>
               <p class="detail-loading-label">${UyDosh.escapeHtml(UyDosh.t('detail.loading'))}</p>

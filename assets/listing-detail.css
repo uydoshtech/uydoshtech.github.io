@@ -1691,6 +1691,7 @@
 .discovery-price-row, .discovery-budget { display: grid; gap: 6px; }
 .discovery-price-row + .discovery-price-row { border-top: 1px solid var(--stroke); margin-top: 12px; padding-top: 12px; }
 .discovery-price-row small, .discovery-note, .discovery-budget span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.discovery-budget .discovery-share-amount { font-weight: 800; color: var(--price-green); }
 .discovery-shortlist-item { position: relative; margin: 0 0 16px; border: 1px solid var(--stroke); border-radius: 18px; overflow: hidden; background: color-mix(in srgb, var(--fg) 3%, var(--card)); }
 .discovery-shortlist-item p { margin: 0; }
 .discovery-shortlist-item a { overflow-wrap: anywhere; }
@@ -1829,15 +1830,15 @@ html.has-group-housing-action .detail-admin-edit-fab {
 button.shortlist-star { cursor: pointer; }
 .shortlist-rating-prompt { display: grid; gap: 4px; padding: 8px 10px; border-radius: 12px; border: 1px solid color-mix(in srgb, #e0a100 28%, transparent); background: color-mix(in srgb, #e0a100 10%, transparent); }
 .shortlist-rating-prompt span { font-size: 13px; font-weight: 700; }
-.shortlist-rating-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.shortlist-rating-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border: 0; border-radius: 999px; background: var(--card); color: inherit; font: inherit; }
+.shortlist-rating-chips { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.shortlist-rating-chip { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 0; border-radius: 12px; background: var(--card); color: inherit; font: inherit; text-align: left; }
 button.shortlist-rating-chip { cursor: pointer; }
 .shortlist-rating-chip .shortlist-star svg { width: 14px; height: 14px; }
-.shortlist-rating-person { max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; }
+.shortlist-rating-person { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 700; }
 .shortlist-rating-summary { margin: 0; font-size: 13px; line-height: 1.35; color: var(--muted); }
 .shortlist-rating-summary strong { display: block; margin-bottom: 2px; color: var(--fg); }
-.shortlist-rating-dialog { position: fixed; inset: 0; z-index: 80; display: grid; place-items: end center; padding: 12px; background: rgba(0, 0, 0, 0.45); }
-.shortlist-rating-sheet { width: min(440px, 100%); max-height: min(88vh, 760px); overflow: auto; padding: 14px; border-radius: 16px; background: var(--card); color: var(--fg); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28); }
+.shortlist-rating-dialog { position: fixed; inset: 0; z-index: 200; display: grid; place-items: end center; padding: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; background: rgba(0, 0, 0, 0.55); }
+.shortlist-rating-sheet { width: min(520px, 100%); max-height: min(88vh, 760px); overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border: 1px solid var(--stroke); border-bottom: 0; border-radius: 20px 20px 0 0; background: var(--bg); color: var(--fg); box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.45); }
 .shortlist-rating-sheet-head { display: flex; align-items: flex-start; gap: 12px; }
 .shortlist-rating-sheet-head h2 { margin: 0; font-size: 22px; line-height: 1.1; }
 .shortlist-rating-sheet-head p { margin: 4px 0 0; font-size: 13px; }

@@ -18,9 +18,11 @@
   function budgetHtml(group, housing, { showStatus = true } = {}) {
     const result = D.budget(group, housing);
     if (!result) return `<p class="discovery-note">${e(t('budgetUnknown'))}</p>`;
+    const shareAmount = `<strong class="discovery-share-amount">${e(range(result.share))}</strong>`;
+    const share = e(t('share', { amount: '\u0001', count: result.size })).replace('\u0001', shareAmount);
     return `<div class="discovery-budget">
       ${showStatus ? `<strong class="budget-${result.fit}">${e(t(result.fit))}</strong>` : ''}
-      <span>${e(t('share', { amount: range(result.share), count: result.size }))}</span>
+      <span>${share}</span>
       <span>${e(t('combined', { amount: range(result.total) }))}</span>
     </div>`;
   }
@@ -234,7 +236,24 @@
       <p class="shortlist-rating-error" data-rating-error hidden></p>
       <button type="button" class="btn primary shortlist-rating-submit" data-rating-submit ${selected >= 1 ? '' : 'disabled'}>${e(t('rating.submit'))}</button>
     </div>`;
-    function close() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    const lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.documentElement.classList.add('shortlist-rating-open');
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    function close() {
+      overlay.remove();
+      document.removeEventListener('keydown', onKey);
+      document.documentElement.classList.remove('shortlist-rating-open');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      window.scrollTo(0, lockedScrollY);
+    }
     function onKey(event) { if (event.key === 'Escape') close(); }
     overlay.addEventListener('click', async event => {
       if (event.target === overlay || event.target.closest('[data-rating-close]')) { close(); return; }
@@ -282,6 +301,9 @@
         error.textContent = errorText(err);
       }
     });
+    overlay.addEventListener('touchmove', event => {
+      if (!event.target.closest('.shortlist-rating-sheet')) event.preventDefault();
+    }, { passive: false });
     document.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
   }
