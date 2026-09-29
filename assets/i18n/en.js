@@ -509,6 +509,7 @@ I18N.en = {
     'account.participantProfiles': 'Participant profiles',
     'account.groupOfPeople': 'Group of {count} people',
     'account.lookingForRoommates': 'Looking for roommates',
+    'account.lookingForHousing': 'Looking for housing',
     'account.waitingLandlord': 'Waiting for landlord’s response',
     'account.roleOrganizer': 'Organizer',
     'account.roleYou': 'You',

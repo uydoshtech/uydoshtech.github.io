@@ -510,6 +510,7 @@ I18N.uz = {
     'account.participantProfiles': 'Ishtirokchilar profillari',
     'account.groupOfPeople': '{count} kishilik guruh',
     'account.lookingForRoommates': 'Qo‘shni qidirilmoqda',
+    'account.lookingForHousing': 'Uy qidirilmoqda',
     'account.waitingLandlord': 'Ijaraga beruvchi javobini kutamiz',
     'account.roleOrganizer': 'Tashkilotchi',
     'account.roleYou': 'Siz',

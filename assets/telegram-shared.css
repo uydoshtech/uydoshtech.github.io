@@ -650,12 +650,12 @@ a {
   color: var(--brand2);
 }
 /* Account's My listings/Favorites switch (`telegram/account.html`) — same
-   per-icon tint idea as the feed tabs above: "house" reads brand blue, and
-   "heart" switches to a filled heart in the same red used by the favorite
-   button on each row (`FAVORITE_ICON_COLOR_ACTIVE` in uydosh-map-pins.js) so
-   the tab visually matches an "active" favorite elsewhere on the page. */
+   per-icon tint idea as the feed tabs above. The groups icon uses the same
+   blue as the selected tab border. The heart switches to a filled heart in
+   the same red used by the favorite button on each row
+   (`FAVORITE_ICON_COLOR_ACTIVE` in uydosh-map-pins.js). */
 .view-tab[aria-selected="true"] .view-tab-icon[data-icon="users"] {
-  color: var(--accent, #22c55e);
+  color: var(--brand2);
 }
 .view-tab[aria-selected="true"] .view-tab-icon[data-icon="heartOutline"] {
   color: #f44336;

@@ -326,7 +326,7 @@
       if (!details.isConnected) return;
       activeIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
       body.innerHTML = `<p role="status">${e(message)}</p>
-      ${items.length > 1 ? `<div class="shortlist-carousel-controls"><button type="button" class="btn" data-shortlist-prev aria-label="${e(t('previousOption'))}">‹</button><span data-shortlist-position aria-live="polite"></span><button type="button" class="btn" data-shortlist-next aria-label="${e(t('nextOption'))}">›</button></div>` : ''}
+      ${items.length > 1 ? `<div class="shortlist-carousel-dots" role="tablist" aria-label="${e(t('shortlist'))}">${items.map((_, index) => `<button type="button" class="shortlist-carousel-dot" role="tab" data-shortlist-dot="${index}" aria-label="${index + 1} / ${items.length}" aria-current="${index === activeIndex ? 'true' : 'false'}"></button>`).join('')}</div>` : ''}
       <div class="shortlist-carousel" data-shortlist-carousel tabindex="0" aria-label="${e(t('shortlist'))}">${items.map(item => {
         const listing = item.listing;
         const title = listing ? (listing.title || `#${listing.id}`) : t('unavailable');
@@ -356,19 +356,17 @@
       ${loaded && !items.length ? `<p>${e(t('empty'))}</p>` : ''}
       ${!loaded || page < pages ? `<button class="btn" type="button" data-shortlist-more ${busy ? 'disabled' : ''}>${e(t(loaded ? 'more' : 'retry'))}</button>` : ''}`;
       const carousel = body.querySelector('[data-shortlist-carousel]');
-      const prev = body.querySelector('[data-shortlist-prev]');
-      const next = body.querySelector('[data-shortlist-next]');
-      const position = body.querySelector('[data-shortlist-position]');
+      const dots = [...body.querySelectorAll('[data-shortlist-dot]')];
       const step = () => carousel.clientWidth + 12;
       function updateControls() {
-        if (prev) prev.disabled = activeIndex === 0;
-        if (next) next.disabled = activeIndex >= items.length - 1;
-        if (position) position.textContent = `${activeIndex + 1} / ${items.length}`;
+        for (const dot of dots) {
+          dot.setAttribute('aria-current', Number(dot.dataset.shortlistDot) === activeIndex ? 'true' : 'false');
+        }
       }
-      function move(delta) {
-        const targetIndex = Math.max(0, Math.min(items.length - 1, activeIndex + delta));
+      function moveTo(index) {
+        const targetIndex = Math.max(0, Math.min(items.length - 1, index));
         // The scroll handler owns the visible index. Setting it to the target
-        // here made early animation frames switch the counter back again.
+        // here made early animation frames switch the indicator back again.
         carousel.scrollTo({ left: targetIndex * step(), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       }
       carousel.scrollLeft = activeIndex * step();
@@ -382,11 +380,12 @@
       carousel.addEventListener('keydown', event => {
         if (event.target !== carousel) return;
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-          event.preventDefault(); move(event.key === 'ArrowLeft' ? -1 : 1);
+          event.preventDefault(); moveTo(activeIndex + (event.key === 'ArrowLeft' ? -1 : 1));
         }
       });
-      prev?.addEventListener('click', () => move(-1));
-      next?.addEventListener('click', () => move(1));
+      for (const dot of dots) {
+        dot.addEventListener('click', () => moveTo(Number(dot.dataset.shortlistDot)));
+      }
       body.querySelector('[data-shortlist-more]')?.addEventListener('click', loadMore);
       for (const button of body.querySelectorAll('[data-shortlist-remove]')) {
         button.addEventListener('click', async () => {

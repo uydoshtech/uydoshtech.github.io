@@ -106,8 +106,8 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   flex: 1;
 }
 .chat-peer-names {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.2;
   color: var(--fg);
   white-space: nowrap;
@@ -394,6 +394,9 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   font-size: 10px;
   color: var(--muted);
   text-align: right;
+}
+.chat-bubble-row.mine .chat-time {
+  color: #475569;
 }
 
 .chat-listing-card {

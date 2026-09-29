@@ -509,6 +509,7 @@ I18N.ru = {
     'account.participantProfiles': 'Профили участников',
     'account.groupOfPeople': 'Группа из {count} человек',
     'account.lookingForRoommates': 'Ищем соседей',
+    'account.lookingForHousing': 'Ищем жильё',
     'account.waitingLandlord': 'Ждём ответа арендодателя',
     'account.roleOrganizer': 'Организатор',
     'account.roleYou': 'Вы',

@@ -836,9 +836,19 @@ function memberRoleKey(member, listing, me) {
 
 function groupStatusLabel(listing, lang) {
   const ctx = listing?.group_context;
-  const landlord = ctx?.group_progress?.landlord_invite_status || ctx?.landlord_invite_status;
-  if (landlord === 'landlord_outreach' || landlord === 'landlord_joined') {
+  const phase = ctx?.group_progress?.phase;
+  if (phase === 'landlord_outreach' || phase === 'landlord_joined') {
     return UyDosh.t('account.waitingLandlord', lang);
+  }
+  if (phase === 'housing_search' || phase === 'shortlisting') {
+    return UyDosh.t('account.lookingForHousing', lang);
+  }
+  if (phase === 'closed') return UyDosh.t('detail.group.closed', lang);
+  if (phase === 'forming') return UyDosh.t('account.lookingForRoommates', lang);
+  const target = Number(ctx?.group_size_target ?? listing?.group_size_target);
+  const filled = Number(ctx?.group_member_count ?? listing?.group_member_count);
+  if (Number.isFinite(target) && target > 0 && filled >= target) {
+    return UyDosh.t('account.lookingForHousing', lang);
   }
   return UyDosh.t('account.lookingForRoommates', lang);
 }
@@ -1014,7 +1024,7 @@ async function openParticipantsSheet(listingOrId, { backTo } = {}) {
   if (!listing || !Number.isFinite(listingId) || listingId < 1) return;
   UyDosh.haptic?.light?.();
   const me = currentUserId();
-  const ownerId = Number(listing.user_id ?? listing.user?.id);
+  let ownerId = Number(listing.user_id ?? listing.user?.id);
   participantsSheetState.backTo = backTo || `${location.pathname}${location.search}`;
   participantsSheetState.listingId = listingId;
   participantsSheetState.listing = listing;
@@ -1033,7 +1043,16 @@ async function openParticipantsSheet(listingOrId, { backTo } = {}) {
     </div>`;
   participantsRoot.querySelector('[data-gp-close]')?.addEventListener('click', closeParticipantsSheet);
   try {
-    const members = await UyDosh.fetchListingGroupMembers(listingId);
+    const [freshListing, members] = await Promise.all([
+      UyDosh.fetchListing(listingId).then(listingFromPayload).catch(() => null),
+      UyDosh.fetchListingGroupMembers(listingId),
+    ]);
+    if (freshListing?.group_context) {
+      participantsSheetState.listing = { ...listing, ...freshListing };
+      listing = participantsSheetState.listing;
+      ownerId = Number(listing.user_id ?? listing.user?.id);
+      participantsSheetState.isOwner = me > 0 && me === ownerId;
+    }
     const rows = Array.isArray(members) ? [...members] : [];
     rows.sort((a, b) => {
       if (Number(a.user_id) === ownerId) return -1;

@@ -332,10 +332,14 @@ function headerAvatarHtml(person, index) {
   return `<span class="chat-peer-avatar" style="z-index:${index + 1}">${inner}</span>`;
 }
 
+function headerFirstName(name) {
+  return String(name || '').trim().split(/\s+/)[0] || '';
+}
+
 function updateHeader(conversation, members) {
   if (!peerHeaderEl) return;
   const people = headerPeople(conversation, members);
-  const names = people.map((p) => String(p.name || '').trim()).filter(Boolean).join(', ')
+  const names = people.map((p) => headerFirstName(p.name)).filter(Boolean).join(', ')
     || UyDosh.t('chat.title');
   const subtitle = conversation?.listing?.title
     || conversation?.listing_title

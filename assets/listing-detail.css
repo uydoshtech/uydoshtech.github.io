@@ -1771,9 +1771,10 @@
 .shortlist-carousel { width: 100%; min-width: 0; max-width: 100%; display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; align-items: flex-start; }
 .shortlist-carousel::-webkit-scrollbar { display: none; }
 .shortlist-carousel > .discovery-shortlist-item { flex: 0 0 100%; min-width: 0; box-sizing: border-box; scroll-snap-align: start; scroll-snap-stop: always; }
-.shortlist-carousel-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
-.shortlist-carousel-controls .btn { min-width: 44px; min-height: 44px; padding: 4px; font-size: 26px; }
-.shortlist-carousel-controls .btn:disabled { opacity: 0.3; cursor: default; }
+.shortlist-carousel-dots { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; margin: 2px 0 12px; }
+.shortlist-carousel-dot { appearance: none; position: relative; width: 8px; height: 8px; margin: 0; padding: 0; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--fg) 42%, transparent); background: transparent; cursor: pointer; flex: 0 0 auto; }
+.shortlist-carousel-dot::before { content: ""; position: absolute; inset: -12px; }
+.shortlist-carousel-dot[aria-current="true"] { background: var(--fg); border-color: var(--fg); }
 
 /* Group detail tabs share the existing theme colors and fit narrow Mini Apps. */
 .group-tabs {
