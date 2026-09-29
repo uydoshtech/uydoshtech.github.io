@@ -26,7 +26,7 @@
       <span>${e(t('combined', { amount: range(result.total) }))}</span>
     </div>`;
   }
-  function areaPricesHtml(listing) {
+  function areaPricesHtml(listing, similarHref = '') {
     if (D.typeCode(listing) === 'group_forming') return '';
     const stats = listing.area_price_stats;
     const rows = [];
@@ -60,9 +60,13 @@
         ${comparison ? `<span class="discovery-price-compare is-${tone}">${comparison}</span>` : ''}
       </div>`);
     }
+    const similar = similarHref
+      ? `<a class="btn discovery-similar" href="${e(similarHref)}">${e(t('similar'))} →</a>`
+      : '';
     return `<section class="map-section map-section-static discovery-section">
       <h2>${e(t('areaPrices'))}</h2>
       ${rows.length ? rows.join('') : `<p class="discovery-note">${e(t('noStats'))}</p>`}
+      ${similar}
     </section>`;
   }
   function html(listing) {
@@ -70,9 +74,7 @@
     const group = D.positiveId(new URLSearchParams(location.search).get('group'));
     const isGroup = D.typeCode(listing) === 'group_forming' || Number(listing.listing_type_id) === 3 || listing.group_context?.is_group_forming;
     const isHousing = D.typeCode(listing) === 'roommate_needed' || Number(listing.listing_type_id) === 2;
-    return `${isGroup ? '' : `<section class="map-section map-section-static discovery-section">
-      <a class="btn discovery-similar" href="${e(D.searchUrl(listing, { group }))}">${e(t('similar'))} →</a>
-    </section>`}${areaPricesHtml(listing)}
+    return `${isGroup ? '' : areaPricesHtml(listing, D.searchUrl(listing, { group }))}
     ${isGroup && D.canShortlist(listing) ? `<section class="map-section map-section-static discovery-section" id="group-shortlist">
       <h2>${e(t('shortlist'))}<span data-shortlist-count>${Number.isInteger(shortlistCount) && shortlistCount >= 0 ? ` · ${shortlistCount}` : ''}</span></h2>
       <p class="discovery-note">${e(t('shared'))}</p>

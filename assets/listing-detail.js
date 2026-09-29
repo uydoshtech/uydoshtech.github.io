@@ -359,7 +359,10 @@
 
         const authorHandle = isMiniApp ? UyDosh.listingContactTelegram(l) : '';
         const authorAvatarUrl = authorHandle ? UyDosh.telegramAvatarUrl(authorHandle) : '';
-        const authorUserId = Number(l.user_id ?? l.user?.id);
+        // `author_user_id` is the account behind the shown @handle. Listing
+        // `user_id` is the UyDosh import account for scraped posts, so it must
+        // not be used as the profile link.
+        const authorUserId = Number(l.author_user_id);
         const authorProfileHref = isMiniApp && Number.isFinite(authorUserId) && authorUserId > 0
           ? UyDosh.profilePageUrl(authorUserId, { backTo: `${location.pathname}${location.search}` })
           : '';

@@ -1695,6 +1695,7 @@
 .discovery-section { padding: 16px; }
 .discovery-section h2 { margin: 0 0 12px; font-size: 16px; }
 .discovery-section .btn { white-space: normal; text-align: center; }
+.discovery-section .discovery-similar { display: flex; width: 100%; margin-top: 12px; }
 .discovery-section summary { cursor: pointer; padding: 16px 0; font-weight: 600; }
 .discovery-price-row, .discovery-budget { display: grid; gap: 6px; }
 .discovery-price-row {
