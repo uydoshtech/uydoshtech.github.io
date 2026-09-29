@@ -328,11 +328,6 @@ a {
 }
 
 /* Generic spinner rotation — used by every loading/busy spinner across the Mini App. */
-@keyframes uydosh-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /*
  * Primary/secondary footer action button — the create-listing wizard's
@@ -687,12 +682,7 @@ a {
   background: var(--bg);
   text-align: center;
 }
-.scan-restore-overlay .loading-spinner {
-  width: 64px;
-  height: 64px;
-  background: var(--spinner-logo) center / contain no-repeat;
-  animation: uydosh-spin 0.9s linear infinite;
-}
+
 .scan-restore-message {
   margin: 0;
   max-width: 320px;

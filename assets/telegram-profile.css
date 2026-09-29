@@ -49,12 +49,7 @@
   text-decoration: none;
 }
 .status-cta:active { opacity: 0.9; }
-.loading-spinner {
-  width: 64px;
-  height: 64px;
-  background: var(--spinner-logo) center / contain no-repeat;
-  animation: uydosh-spin 0.9s linear infinite;
-}
+
 .content-gutter {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));

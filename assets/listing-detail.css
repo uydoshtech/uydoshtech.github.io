@@ -1312,19 +1312,8 @@
         padding-bottom: var(--uydosh-tg-inset-bottom, env(safe-area-inset-bottom, 0px));
         background: var(--bg);
       }
-      .loading-spinner {
-        width: 64px;
-        height: 64px;
-        background: var(--spinner-logo) center / contain no-repeat;
-        animation: uydosh-spin 0.9s linear infinite;
-      }
+
       .detail-loading-label { margin: -8px 0 0; font-size: 14px; color: var(--muted); }
-      @media (prefers-reduced-motion: reduce) {
-        .detail-loading .loading-spinner { animation: none; }
-      }
-      @keyframes uydosh-spin {
-        to { transform: rotate(360deg); }
-      }
 
       .status-page {
         text-align: center; padding: 60px 0; color: var(--muted);

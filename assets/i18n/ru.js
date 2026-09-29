@@ -110,6 +110,7 @@ I18N.ru = {
     'discovery.empty': "Пока нет сохранённых вариантов. Найдите жильё и сохраните его для группы.",
     'discovery.more': "Загрузить ещё",
     'detail.group.tabDescription': 'Описание группы',
+    'detail.group.tabMembers': 'Участники группы',
     'detail.group.tabHousing': 'Варианты жилья',
     'detail.group.tabs': 'Информация о группе',
     'detail.group.compatUnavailable': 'Совместимость группы недоступна. Нужны как минимум два участника с заполненными профилями.',

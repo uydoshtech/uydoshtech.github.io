@@ -110,6 +110,7 @@ I18N.en = {
     'discovery.empty': "No saved homes yet. Find housing and save options for your group.",
     'discovery.more': "Load more",
     'detail.group.tabDescription': 'Group description',
+    'detail.group.tabMembers': 'Group members',
     'detail.group.tabHousing': 'Housing options',
     'detail.group.tabs': 'Group details',
     'detail.group.compatUnavailable': 'Group compatibility is unavailable. At least two members with profile information are needed.',

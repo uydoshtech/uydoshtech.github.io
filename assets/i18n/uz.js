@@ -111,6 +111,7 @@ I18N.uz = {
     'discovery.empty': "Hozircha saqlangan uylar yo‘q. Uy toping va guruhingiz uchun variantlarni saqlang.",
     'discovery.more': "Yana yuklash",
     'detail.group.tabDescription': 'Guruh tavsifi',
+    'detail.group.tabMembers': 'Guruh a’zolari',
     'detail.group.tabHousing': 'Uy-joy variantlari',
     'detail.group.tabs': 'Guruh haqida',
     'detail.group.compatUnavailable': 'Guruh mosligi mavjud emas. Profil maʼlumotlariga ega kamida ikki ishtirokchi kerak.',

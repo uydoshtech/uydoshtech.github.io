@@ -138,12 +138,7 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
 #chat-composer[hidden] {
   display: none !important;
 }
-.loading-spinner {
-  width: 64px;
-  height: 64px;
-  background: var(--spinner-logo) center / contain no-repeat;
-  animation: uydosh-spin 0.9s linear infinite;
-}
+
 
 .chat-day {
   align-self: center;

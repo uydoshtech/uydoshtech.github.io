@@ -36,12 +36,7 @@ header {
   min-height: calc(100dvh - var(--uydosh-tg-inset-top, 0px) - 160px);
   padding: 0;
 }
-.loading-spinner {
-  width: 64px;
-  height: 64px;
-  background: var(--spinner-logo) center / contain no-repeat;
-  animation: uydosh-spin 0.9s linear infinite;
-}
+
 .account-empty {
   display: flex;
   flex-direction: column;
