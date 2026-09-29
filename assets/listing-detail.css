@@ -223,7 +223,7 @@
         align-items: start;
       }
       @media (max-width: 860px) {
-        .layout { grid-template-columns: 1fr; }
+        .layout { grid-template-columns: minmax(0, 1fr); }
       }
 
       /* Gallery */
@@ -1111,7 +1111,7 @@
         .gallery-track { scroll-behavior: auto; }
       }
 
-      .details { display: flex; flex-direction: column; gap: 14px; }
+      .details { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
       .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
       h1 { font-size: clamp(22px, 2.6vw, 30px); margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
       .price {
@@ -1722,7 +1722,7 @@
 
 .discovery-shortlist-photo { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--stroke); }
 .discovery-shortlist-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.discovery-shortlist-content { display: grid; gap: 10px; padding: 16px; }
+.discovery-shortlist-content { display: grid; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere; gap: 10px; padding: 16px; }
 .discovery-shortlist-status { display: flex; justify-content: flex-end; }
 .discovery-shortlist-photo + .discovery-shortlist-content .discovery-shortlist-status { position: absolute; top: 12px; right: 12px; left: 12px; pointer-events: none; }
 .discovery-shortlist-photo + .discovery-shortlist-content .discovery-budget-pill { box-shadow: 0 2px 8px #0002; }
@@ -1742,7 +1742,7 @@
 .discovery-shortlist-footer .discovery-shortlist-remove { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 8px 10px; min-height: 44px; }
 [data-shortlist-body] > p:empty { display: none; }
 
-.shortlist-carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; align-items: flex-start; }
+.shortlist-carousel { width: 100%; min-width: 0; max-width: 100%; display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; align-items: flex-start; }
 .shortlist-carousel::-webkit-scrollbar { display: none; }
 .shortlist-carousel > .discovery-shortlist-item { flex: 0 0 100%; min-width: 0; box-sizing: border-box; scroll-snap-align: start; scroll-snap-stop: always; }
 .shortlist-carousel-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
@@ -1811,3 +1811,10 @@ html.has-group-housing-action .detail-back-fab {
 html.has-group-housing-action .detail-admin-edit-fab {
   bottom: calc(195px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
 }
+
+/* Keep the housing carousel's intrinsic width inside its tab and grid column. */
+.group-tab-panel,
+#group-shortlist,
+[data-shortlist-details],
+[data-shortlist-body] { min-width: 0; max-width: 100%; }
+.discovery-shortlist-footer > .discovery-saved-by { overflow-wrap: anywhere; }
