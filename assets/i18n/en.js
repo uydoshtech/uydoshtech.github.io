@@ -100,6 +100,7 @@ I18N.en = {
     'discovery.auth': "Open in Telegram and sign in to use the group shortlist.",
     'discovery.forbidden': "The shortlist is available to members of an open group with at least two members.",
     'discovery.error': "Couldn’t update the shortlist. Try again.",
+    'discovery.removeShort': "Remove",
     'discovery.remove': "Remove from shortlist",
     'discovery.saved': "Saved for your group.",
     'discovery.removed': "Removed from the group shortlist.",

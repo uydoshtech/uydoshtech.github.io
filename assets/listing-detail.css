@@ -1748,8 +1748,9 @@
 .discovery-shortlist-price small { font-size: 12px; font-weight: 400; color: inherit; opacity: 0.85; }
 .discovery-shortlist-budget { padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--fg) 5%, transparent); }
 .discovery-shortlist-budget .discovery-budget { margin: 0; }
-.discovery-shortlist-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid var(--stroke); }
-.discovery-shortlist-footer .discovery-shortlist-remove { font-size: 12px; padding: 8px 10px; min-height: 44px; }
+.discovery-shortlist-footer { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid var(--stroke); }
+.discovery-shortlist-footer .discovery-saved-by { flex: 1; min-width: 0; }
+.discovery-shortlist-footer .discovery-shortlist-remove { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 8px 10px; min-height: 44px; }
 [data-shortlist-body] > p:empty { display: none; }
 
 .shortlist-carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; align-items: flex-start; }
@@ -1806,3 +1807,18 @@
 .group-layout { row-gap: 14px; }
 /* Including the 14px flex gap: 7px above and 15px below the tabs. */
 .group-layout .group-tabs { margin-top: -7px; margin-bottom: 1px; }
+
+.detail-contact-bar .detail-contact-btn-housing {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  margin-bottom: 10px;
+  text-decoration: none;
+}
+html.mini-app.has-group-housing-action body .wrap {
+  padding-bottom: calc(154px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+}
+html.has-group-housing-action .detail-back-fab {
+  bottom: calc(141px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+}
+html.has-group-housing-action .detail-admin-edit-fab {
+  bottom: calc(195px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+}

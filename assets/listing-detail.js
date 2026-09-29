@@ -85,7 +85,7 @@
         detailContactBarEl.hidden = true;
         detailContactBarEl.setAttribute('aria-hidden', 'true');
         detailContactBarEl.innerHTML = '';
-        document.documentElement.classList.remove('has-detail-contact');
+        document.documentElement.classList.remove('has-detail-contact', 'has-group-housing-action');
       }
 
       function updateDetailContactBar(listing, { isOwner = false, isMember = false } = {}) {
@@ -96,10 +96,17 @@
         const groupChat = typeof listingGroupChatCta === 'function' ? listingGroupChatCta(listing) : null;
         const inGroup = isOwner || isMember;
         if (inGroup && groupChat) {
+          const housingSearch = rootEl.querySelector('[data-group-housing-search]')
+            || detailContactBarEl.querySelector('[data-group-housing-search]');
           detailContactBarEl.innerHTML = `
             <div class="detail-contact-bar-inner">
               <a class="detail-contact-btn detail-contact-btn-group-chat" href="${UyDosh.escapeHtml(groupChat.href)}">${UyDosh.escapeHtml(groupChat.label)}</a>
             </div>`;
+          if (housingSearch) {
+            housingSearch.className = 'detail-contact-btn detail-contact-btn-housing';
+            detailContactBarEl.querySelector('.detail-contact-bar-inner').prepend(housingSearch);
+          }
+          document.documentElement.classList.toggle('has-group-housing-action', Boolean(housingSearch));
           detailContactBarEl.hidden = false;
           detailContactBarEl.setAttribute('aria-hidden', 'false');
           document.documentElement.classList.add('has-detail-contact');

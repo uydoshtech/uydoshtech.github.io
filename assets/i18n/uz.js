@@ -101,6 +101,7 @@ I18N.uz = {
     'discovery.auth': "Guruh ro‘yxatidan foydalanish uchun Telegram orqali kiring.",
     'discovery.forbidden': "Ro‘yxat kamida ikki a’zosi bor, yopilmagan guruh a’zolari uchun mavjud.",
     'discovery.error': "Ro‘yxatni yangilab bo‘lmadi. Qayta urinib ko‘ring.",
+    'discovery.removeShort': "Olib tashlash",
     'discovery.remove': "Ro‘yxatdan olib tashlash",
     'discovery.saved': "Guruhingiz uchun saqlandi.",
     'discovery.removed': "Guruh ro‘yxatidan olib tashlandi.",
