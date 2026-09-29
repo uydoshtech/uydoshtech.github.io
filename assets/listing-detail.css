@@ -1689,10 +1689,10 @@
   font: inherit; font-size: 13px; cursor: pointer;
 }
 .description-languages button[aria-pressed="true"] {
-  border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: var(--brand2); background: color-mix(in srgb, var(--brand2) 14%, transparent);
 }
 .description-languages button:disabled { opacity: .5; cursor: wait; }
-.description-languages button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.description-languages button:focus-visible { outline: 2px solid var(--brand2); outline-offset: 2px; }
 .description-translation-status { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
 
 .discovery-section { padding: 16px; }
@@ -1787,10 +1787,10 @@
 .group-tabs [aria-selected="true"] {
   color: var(--fg);
   background: var(--card);
-  border-color: var(--accent);
+  border-color: var(--brand2);
 }
 .group-tabs [role="tab"]:focus-visible,
-.group-tab-panel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.group-tab-panel:focus-visible { outline: 2px solid var(--brand2); outline-offset: 2px; }
 .group-tab-panel[hidden] { display: none !important; }
 #group-panel-description > .title-row { margin-bottom: 14px; }
 .group-tab-panel .compat-section:not([hidden]) ~ .group-compat-unavailable { display: none; }

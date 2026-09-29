@@ -4,24 +4,11 @@
 // see loadActiveLanguageDictionaries() below for why this file must never be
 // marked `defer`/`async`.
 
-// The uz/ru/en translation strings themselves live in assets/i18n/{uz,ru,en}.js
-// instead of one big dictionary here, and only the ones actually needed for the
-// current session are loaded: `uz` always (it's the fallback language for any
-// key missing from the active one — see t() below) plus the active language's
-// own file if it isn't already uz. This cuts what would otherwise be ~70KB of
-// translation strings shipped on every single page load down to ~1/3-2/3 of
-// that, depending on which language is active.
-//
-// This only works because this script — unlike every other one loaded after
-// it on these pages — stays a plain, synchronous, non-deferred <script> tag:
-// document.write() here inserts the needed <script src> tag(s) directly into
-// the still-parsing HTML stream, and the parser fetches + executes them
-// (populating window.I18N) before moving on to the next tag, so every later
-// script (deferred or not) is guaranteed to see a fully populated dictionary
-// by the time it actually runs.
+// Load all supported dictionaries synchronously before page scripts run.
+// Language switches happen in place, so each dictionary must already be
+// available when setLang dispatches the language-change event.
 (function loadActiveLanguageDictionaries() {
-  var lang = typeof getLang === 'function' ? getLang() : 'uz';
-  var langs = lang === 'uz' ? ['uz'] : ['uz', lang];
+  var langs = ['uz', 'ru', 'en'];
   var thisScript = document.currentScript;
   var base = thisScript && thisScript.src
     ? thisScript.src.replace(/uydosh-i18n\.js.*$/, 'i18n/')
