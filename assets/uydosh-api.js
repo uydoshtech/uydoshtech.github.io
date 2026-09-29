@@ -1579,6 +1579,18 @@ function toggleGroupShortlist(groupId, listingId) {
 function removeGroupShortlist(groupId, listingId) {
   return fetchJsonAuth(listingGroupPath(groupId, `/shortlist/${encodeURIComponent(listingId)}`), { method: "DELETE" });
 }
+function rateGroupShortlist(groupId, listingId, { stars, reasons = [], categoryRatings = {}, verdict = null } = {}) {
+  return fetchJsonAuth(listingGroupPath(groupId, `/shortlist/${encodeURIComponent(listingId)}/rating`), {
+    method: "PUT",
+    body: {
+      stars,
+      reasons,
+      category_ratings: categoryRatings,
+      verdict,
+      language: getLang(),
+    },
+  });
+}
 
 function createListingGroupJoinRequest(listingId, { message } = {}) {
   const body = {};
@@ -1868,6 +1880,7 @@ Object.assign(window.UyDosh, {
   checkGroupShortlist,
   toggleGroupShortlist,
   removeGroupShortlist,
+  rateGroupShortlist,
   approveListingGroupJoinRequest,
   rejectListingGroupJoinRequest,
   withdrawListingGroupJoinRequest,

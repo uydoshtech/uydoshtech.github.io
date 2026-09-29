@@ -124,7 +124,170 @@
       body.querySelector('[data-save-retry]').onclick = () => bindSave(listing, section);
     }
   }
+  let shortlistGroupId = 0;
+  let refreshShortlist = () => {};
+  const RATING_CATEGORIES = [
+    ['price', '#34C759'],
+    ['location', '#2F80ED'],
+    ['condition', '#8E5CF7'],
+    ['landlord', '#EB5757'],
+  ];
+  const RATING_REASONS = ['expensive', 'far', 'badCondition', 'owner', 'space', 'neighborhood'];
+  const RATING_REASON_CODES = {
+    expensive: 'too_expensive',
+    far: 'too_far',
+    badCondition: 'bad_condition',
+    owner: 'owner_doubts',
+    space: 'not_enough_space',
+    neighborhood: 'bad_neighborhood',
+  };
+  function starSvg() {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 14.7 9l6.7.6-5.1 4.4 1.6 6.6L12 17.2 6.1 20.6 7.7 14 2.6 9.6 9.3 9 12 2.6z"/></svg>`;
+  }
+  function starButtons(value, { interactive = false, listingId = 0 } = {}) {
+    return `<span class="shortlist-stars">${[1, 2, 3, 4, 5].map(star => {
+      const filled = Number(value) >= star;
+      const label = t('rating.star', { n: star });
+      return interactive
+        ? `<button type="button" class="shortlist-star${filled ? ' is-on' : ''}" data-rate-open="${listingId}" data-stars="${star}" aria-label="${e(label)}">${starSvg()}</button>`
+        : `<span class="shortlist-star${filled ? ' is-on' : ''}" aria-hidden="true">${starSvg()}</span>`;
+    }).join('')}</span>`;
+  }
+  function ratingLabel(stars) {
+    if (stars >= 5) return t('rating.excellent');
+    if (stars >= 4) return t('rating.good');
+    if (stars >= 3) return t('rating.normal');
+    if (stars > 0) return t('rating.bad');
+    return '';
+  }
+  function currentUserRating(item) {
+    const me = Number(UyDosh.getSessionUserId());
+    return (item.rating?.participants || []).find(person => Number(person.user_id) === me) || null;
+  }
+  function ratingHtml(item) {
+    const rating = item.rating || {};
+    const count = Number(rating.count) || 0;
+    const average = Number(rating.average);
+    const hasRating = count > 0 && Number.isFinite(average);
+    const me = Number(UyDosh.getSessionUserId());
+    const mine = currentUserRating(item);
+    const others = (rating.participants || []).filter(person => Number(person.user_id) !== me);
+    const ordered = mine ? [mine, ...others] : (rating.participants || []);
+    const summary = typeof rating.summary === 'string' ? rating.summary.trim() : '';
+    const chips = ordered.map(person => {
+      const isMe = Number(person.user_id) === me;
+      const name = isMe ? t('rating.you') : (person.name || '');
+      const stars = person.stars == null ? '' : starButtons(person.stars);
+      const editable = isMe && person.stars != null;
+      const inner = `<span class="shortlist-rating-person">${e(name)}</span>${stars}`;
+      return editable
+        ? `<button type="button" class="shortlist-rating-chip" data-rate-open="${Number(item.listing_id)}" data-stars="${Number(person.stars)}">${inner}</button>`
+        : `<span class="shortlist-rating-chip">${inner}</span>`;
+    }).join('');
+    return `<section class="shortlist-rating">
+      <p class="shortlist-rating-head">${e(t('rating.group'))} · ${hasRating ? `<span class="shortlist-star is-on">${starSvg()}</span> ${e(average.toFixed(1))} · ${e(t('rating.count', { count }))}` : e(t('rating.none'))}</p>
+      ${mine?.stars == null ? `<div class="shortlist-rating-prompt">${starButtons(0, { interactive: true, listingId: Number(item.listing_id) })}<span>${e(t('rating.cta'))}</span></div>` : ''}
+      ${chips ? `<div class="shortlist-rating-chips">${chips}</div>` : ''}
+      ${summary ? `<p class="shortlist-rating-summary"><strong>${e(t('rating.summary'))}</strong> ${e(summary)}</p>` : ''}
+    </section>`;
+  }
+  function openRatingDialog(item, initialStars) {
+    const mine = currentUserRating(item);
+    const categories = Object.fromEntries(RATING_CATEGORIES.map(([code]) => {
+      const saved = Number(mine?.category_ratings?.[code]);
+      return [code, saved >= 1 && saved <= 5 ? saved : 0];
+    }));
+    const reasons = new Set(Array.isArray(mine?.reasons) ? mine.reasons : []);
+    let selected = Math.min(5, Math.max(0, Number(initialStars) || Number(mine?.stars) || 0));
+    const overlay = document.createElement('div');
+    overlay.className = 'shortlist-rating-dialog';
+    function average() {
+      const picked = Object.values(categories).filter(value => value > 0);
+      if (!picked.length) return null;
+      return Math.min(5, Math.max(1, Math.round(picked.reduce((sum, value) => sum + value, 0) / picked.length)));
+    }
+    function paintStars(root, value) {
+      for (const button of root.querySelectorAll('[data-star]')) {
+        button.classList.toggle('is-on', Number(button.dataset.star) <= value);
+      }
+    }
+    overlay.innerHTML = `<div class="shortlist-rating-sheet" role="dialog" aria-modal="true" aria-labelledby="shortlist-rating-title">
+      <div class="shortlist-rating-sheet-head">
+        <div>
+          <h2 id="shortlist-rating-title">${e(t('rating.title'))}</h2>
+          <p>${e(t('rating.subtitle'))}</p>
+        </div>
+        <button type="button" class="shortlist-rating-close" data-rating-close aria-label="${e(t('rating.close'))}">×</button>
+      </div>
+      ${RATING_CATEGORIES.map(([code, color]) => `<section class="shortlist-rating-category" style="--rating-accent:${color}">
+        <div><strong>${e(t(`rating.${code}`))}</strong><span>${e(t(`rating.${code}Hint`))}</span></div>
+        <div class="shortlist-rating-category-score">
+          <span data-rating-label="${code}">${e(ratingLabel(categories[code]))}</span>
+          <span class="shortlist-stars" data-category="${code}">${[1, 2, 3, 4, 5].map(star => `<button type="button" class="shortlist-star${categories[code] >= star ? ' is-on' : ''}" data-star="${star}" aria-label="${e(t('rating.star', { n: star }))}">${starSvg()}</button>`).join('')}</span>
+        </div>
+      </section>`).join('')}
+      <p class="shortlist-rating-reasons-title">${e(t('rating.reasons'))} <span>(${e(t('rating.optional'))})</span></p>
+      <div class="shortlist-rating-reasons">${RATING_REASONS.map(key => {
+        const code = RATING_REASON_CODES[key];
+        return `<button type="button" class="shortlist-rating-reason${reasons.has(code) ? ' is-on' : ''}" data-reason="${code}">${e(t(`rating.${key}`))}</button>`;
+      }).join('')}</div>
+      <p class="shortlist-rating-error" data-rating-error hidden></p>
+      <button type="button" class="btn primary shortlist-rating-submit" data-rating-submit ${selected >= 1 ? '' : 'disabled'}>${e(t('rating.submit'))}</button>
+    </div>`;
+    function close() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(event) { if (event.key === 'Escape') close(); }
+    overlay.addEventListener('click', async event => {
+      if (event.target === overlay || event.target.closest('[data-rating-close]')) { close(); return; }
+      const star = event.target.closest('[data-star]');
+      if (star) {
+        const row = star.closest('[data-category]');
+        const code = row?.dataset.category;
+        if (!code) return;
+        categories[code] = Number(star.dataset.star);
+        paintStars(row, categories[code]);
+        row.parentElement.querySelector(`[data-rating-label="${code}"]`).textContent = ratingLabel(categories[code]);
+        const next = average();
+        if (next != null) selected = next;
+        overlay.querySelector('[data-rating-submit]').disabled = selected < 1;
+        UyDosh.haptic?.selection?.();
+        return;
+      }
+      const reason = event.target.closest('[data-reason]');
+      if (reason) {
+        const code = reason.dataset.reason;
+        if (reasons.has(code)) reasons.delete(code); else reasons.add(code);
+        reason.classList.toggle('is-on', reasons.has(code));
+        UyDosh.haptic?.selection?.();
+        return;
+      }
+      if (!event.target.closest('[data-rating-submit]') || selected < 1) return;
+      const submit = overlay.querySelector('[data-rating-submit]');
+      const error = overlay.querySelector('[data-rating-error]');
+      submit.disabled = true;
+      error.hidden = true;
+      try {
+        const categoryRatings = Object.fromEntries(Object.entries(categories).filter(([, value]) => value > 0));
+        const result = await UyDosh.rateGroupShortlist(shortlistGroupId, item.listing_id, {
+          stars: selected,
+          reasons: [...reasons],
+          categoryRatings,
+          verdict: selected >= 5 ? 'yes' : selected >= 3 ? 'maybe' : 'no',
+        });
+        item.rating = result.rating || item.rating;
+        close();
+        refreshShortlist(t('rating.updated'));
+      } catch (err) {
+        submit.disabled = selected < 1;
+        error.hidden = false;
+        error.textContent = errorText(err);
+      }
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+  }
   function bindShortlist(group, details) {
+    shortlistGroupId = group.id;
+    refreshShortlist = message => paint(message);
     const body = details.querySelector('[data-shortlist-body]');
     let loaded = false, busy = false, page = 0, pages = 1, items = [], activeIndex = 0;
     const back = detailUrl(group.id) + '#group-shortlist';
@@ -151,6 +314,7 @@
               </div>
               ${area ? `<div class="discovery-shortlist-area"><span aria-hidden="true">${UyDosh.iconPin()}</span>${e(area)}</div>` : ''}
               <div class="discovery-shortlist-budget">${budgetHtml(group, listing, { showStatus: false })}</div>` : `<strong>${e(title)}</strong>`}
+            ${ratingHtml(item)}
             <div class="discovery-shortlist-footer">
               ${savedByHtml(item.saved_by)}
               <button class="btn discovery-shortlist-remove" type="button" data-shortlist-remove="${Number(item.listing_id)}" ${busy ? 'disabled' : ''}><span aria-hidden="true">${UyDosh.iconTrash()}</span>${e(t('removeShort'))}</button>
@@ -204,6 +368,13 @@
             page = 0; pages = 1; items = []; loaded = false; busy = false;
             await loadMore();
           } catch (error) { busy = false; paint(errorText(error)); }
+        });
+      }
+      for (const button of body.querySelectorAll('[data-rate-open]')) {
+        button.addEventListener('click', () => {
+          const id = Number(button.dataset.rateOpen);
+          const row = items.find(candidate => Number(candidate.listing_id) === id);
+          if (row) openRatingDialog(row, Number(button.dataset.stars) || 0);
         });
       }
     }
