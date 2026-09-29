@@ -3627,7 +3627,9 @@ function goBack() {
   if (state.step <= 0) {
     location.href = state.editingListingId
       ? UyDosh.listingPageUrl(state.editingListingId)
-      : UyDosh.MINI_APP_FEED_PATH;
+      : new URLSearchParams(location.search).get('type') === 'group_forming'
+        ? UyDosh.MINI_APP_GROUPS_PATH
+        : UyDosh.MINI_APP_FEED_PATH;
     return;
   }
   state.step -= 1;
@@ -3708,6 +3710,18 @@ async function boot() {
     if (state.editingListingId) {
       await loadListingForEdit(state.editingListingId);
     } else {
+      if (params.get('type') === 'group_forming') {
+        state.form.listingTypeId = LISTING_TYPE_GROUP_FORMING;
+        // Use the saved profile gender; let users choose if none is available.
+        state.form.gender = null;
+        try {
+          const userId = UyDosh.getSessionUserId();
+          const profile = userId ? await UyDosh.fetchProfile(userId) : null;
+          if (profile?.gender === 1 || profile?.gender === 2) state.form.gender = profile.gender;
+        } catch (err) {
+          console.warn('Could not prefill group gender', err);
+        }
+      }
       updateDefaultTitle();
     }
     applyEditModeChrome();

@@ -13,7 +13,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     <link rel="stylesheet" href="../assets/loading-spinner.css?v=20260929-shared-spinner" />
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260929-shared-spinner" />
-    <link rel="stylesheet" href="../assets/telegram-account.css?v=20260929-shared-spinner" />
+    <link rel="stylesheet" href="../assets/telegram-account.css?v=20260929-create-group" />
   </head>
   <body>
     <div class="wrap">
@@ -37,6 +37,10 @@
         </button>
       </div>
 
+      <div id="create-group-action" class="content-gutter" hidden>
+        <a class="btn-link" href="/telegram/create.html?type=group_forming" data-i18n="account.createGroup">Create group</a>
+      </div>
+
       <div id="loading" class="status" aria-busy="true" aria-live="polite">
         <span class="loading-spinner" aria-hidden="true"></span>
       </div>
@@ -51,13 +55,13 @@
     <div id="group-participants-root" hidden></div>
 
     <script src="../assets/uydosh-core.js?v=20260928-2"></script>
-    <script src="../assets/uydosh-i18n.js?v=20260929-language-switch"></script>
+    <script src="../assets/uydosh-i18n.js?v=20260929-create-group"></script>
     <script src="../assets/uydosh-api.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-icons.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-map-pins.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-badges.js?v=20260928-1" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260929-pencil-stroke" defer></script>
     <script src="../assets/uydosh-profile-match.js?v=20260928-1"></script>
-    <script src="../assets/telegram-account.js?v=20260929-participants-layout" defer></script>
+    <script src="../assets/telegram-account.js?v=20260929-create-group" defer></script>
   </body>
 </html>

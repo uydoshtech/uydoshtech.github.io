@@ -109,6 +109,7 @@ I18N.ru = {
     'discovery.savedBy': "Добавил(а): {name}",
     'discovery.empty': "Пока нет сохранённых вариантов. Найдите жильё и сохраните его для группы.",
     'discovery.more': "Загрузить ещё",
+    'account.createGroup': 'Создать группу',
     'detail.group.tabDescription': 'Описание группы',
     'detail.group.tabMembers': 'Участники группы',
     'detail.group.tabHousing': 'Варианты жилья',

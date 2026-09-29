@@ -109,6 +109,7 @@ I18N.en = {
     'discovery.savedBy': "Saved by {name}",
     'discovery.empty': "No saved homes yet. Find housing and save options for your group.",
     'discovery.more': "Load more",
+    'account.createGroup': 'Create group',
     'detail.group.tabDescription': 'Group description',
     'detail.group.tabMembers': 'Group members',
     'detail.group.tabHousing': 'Housing options',

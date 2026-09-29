@@ -275,7 +275,7 @@ function showEmpty(text, { showCreateCta = false } = {}) {
   listEl.hidden = true;
   emptyEl.hidden = false;
   emptyTextEl.textContent = text;
-  emptyCtaEl.hidden = !showCreateCta;
+  emptyCtaEl.hidden = !showCreateCta || state.activeTab === TAB_GROUPS;
 }
 
 function showList(html) {
@@ -569,6 +569,7 @@ function renderFavorites() {
 }
 
 function renderActiveTab() {
+  document.getElementById('create-group-action').hidden = state.activeTab !== TAB_GROUPS;
   if (state.activeTab === TAB_FAVORITES) renderFavorites();
   else if (state.activeTab === TAB_GROUPS) renderGroups();
   else renderMine();

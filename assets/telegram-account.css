@@ -803,3 +803,7 @@ header {
 }
 .gp-confirm-cancel { color: var(--fg); }
 .gp-confirm-remove { color: #f87171; }
+
+#create-group-action { margin: 12px 0; }
+#create-group-action[hidden] { display: none; }
+#create-group-action .btn-link { display: block; text-align: center; }

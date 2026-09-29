@@ -110,6 +110,7 @@ I18N.uz = {
     'discovery.savedBy': "Saqlagan: {name}",
     'discovery.empty': "Hozircha saqlangan uylar yo‘q. Uy toping va guruhingiz uchun variantlarni saqlang.",
     'discovery.more': "Yana yuklash",
+    'account.createGroup': 'Guruh yaratish',
     'detail.group.tabDescription': 'Guruh tavsifi',
     'detail.group.tabMembers': 'Guruh a’zolari',
     'detail.group.tabHousing': 'Uy-joy variantlari',
