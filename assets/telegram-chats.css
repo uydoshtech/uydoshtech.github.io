@@ -72,7 +72,16 @@
   height: 16px;
   display: block;
 }
-.inbox-type-group { background: #7c5cbf; }
+.inbox-type-group {
+  background: color-mix(in srgb, #22c55e 22%, transparent);
+  border: 1px solid #22c55e;
+  color: #22c55e;
+}
+.inbox-type-group .chip-icon,
+.inbox-type-group .chip-icon svg {
+  width: 18px;
+  height: 18px;
+}
 .inbox-type-seek { background: #e08a3c; }
 .inbox-type-housing { background: #2aa8a0; }
 .inbox-card-title {

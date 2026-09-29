@@ -64,7 +64,8 @@ function typeClass(conversation) {
 
 function typeIcon(conversation) {
   const typeId = Number(conversation.listing_type_id);
-  if (typeId === 3 || typeId === 2) return UyDosh.iconChrome('users');
+  if (typeId === 3) return UyDosh.filterListingTypeIcon(3);
+  if (typeId === 2) return UyDosh.iconChrome('users');
   return UyDosh.iconChrome('house');
 }
 
