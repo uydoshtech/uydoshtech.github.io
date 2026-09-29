@@ -91,8 +91,7 @@
     function paint(message = '') {
       if (!section.isConnected) return;
       body.innerHTML = `${budgetHtml(group, listing)}
-        <button type="button" class="btn primary" data-save-toggle ${busy ? 'disabled' : ''} aria-pressed="${Boolean(saved)}">${e(t(saved ? 'remove' : 'saveForGroup'))}</button>
-        <a class="btn" href="${e(detailUrl(groupId))}#group-shortlist">${e(t('viewShortlist'))}</a>
+        <button type="button" class="btn ${saved ? 'discovery-shortlist-remove' : 'primary'}" data-save-toggle ${busy ? 'disabled' : ''} aria-pressed="${Boolean(saved)}">${saved ? `<span aria-hidden="true">${UyDosh.iconTrash()}</span>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex-shrink:0"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>`}${e(t(saved ? 'remove' : 'saveForGroup'))}</button>
         <p role="status">${e(message)}</p>`;
       body.querySelector('[data-save-toggle]').addEventListener('click', async () => {
         if (busy) return;

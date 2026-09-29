@@ -1318,23 +1318,6 @@
         background: var(--spinner-logo) center / contain no-repeat;
         animation: uydosh-spin 0.9s linear infinite;
       }
-      .detail-loading-mark {
-        display: grid;
-        place-items: center;
-        width: 112px;
-        height: 112px;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 8px 36px rgba(0, 66, 110, 0.22);
-      }
-      .detail-loading .loading-spinner {
-        display: block;
-        width: 80px;
-        height: 80px;
-        background-image: url("../images/uydosh-logo-black-u.svg?v=20260929-svg-fix");
-        animation-duration: 1.2s;
-      }
-      .detail-loading-brand { font-size: 22px; font-weight: 750; color: var(--fg); }
       .detail-loading-label { margin: -8px 0 0; font-size: 14px; color: var(--muted); }
       @media (prefers-reduced-motion: reduce) {
         .detail-loading .loading-spinner { animation: none; }
@@ -1721,7 +1704,7 @@
 .discovery-shortlist-item p { margin: 0; }
 .discovery-shortlist-item a { overflow-wrap: anywhere; }
 .discovery-shortlist-item .btn { justify-self: start; }
-.discovery-shortlist-item .discovery-shortlist-remove { display: inline-flex; align-items: center; gap: 8px; color: #ef4444; border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+.discovery-section .discovery-shortlist-remove { display: inline-flex; align-items: center; gap: 8px; color: #ef4444; border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
 .discovery-shortlist-remove > span { display: inline-flex; }
 .discovery-shortlist-remove .icon { display: inline-flex; flex-shrink: 0; }
 .discovery-shortlist-remove svg { display: block; width: 18px; height: 18px; stroke: currentColor; fill: none; }
