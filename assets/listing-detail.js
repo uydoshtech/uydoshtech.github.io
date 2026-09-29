@@ -386,7 +386,7 @@
             isAdmin,
             isActive: l.is_active !== false,
           })}
-          <div class="layout">
+          <div class="layout${isGroupPage ? ' group-layout' : ''}">
             <div class="gallery-col">
               ${buildGalleryHtml()}
             </div>

@@ -71,10 +71,6 @@
             if (!map) {
               throw new Error('Listing map failed to render');
             }
-            const approxNote = rootEl.querySelector('[data-map-approx-note]');
-            if (approxNote) {
-              approxNote.toggleAttribute('hidden', districts.length > 0 || coords?.source !== 'approximate');
-            }
             state.mapLoaded = true;
             UyDosh.reflowActiveMaps();
             if (!districts.length) {

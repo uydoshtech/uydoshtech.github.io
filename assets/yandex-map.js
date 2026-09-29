@@ -2987,7 +2987,8 @@
       bounds = mergeBounds(bounds, boundsFromRing(district.outerRing));
     }
     instance.districtLayer.labelObjects = labels;
-    if (bounds) await map.setBounds(toYandexBounds(bounds), { checkZoomRange: true, zoomMargin: 28 });
+    // Fractional zoom fits the district outlines without rounding down a full level.
+    if (bounds) await map.setBounds(toYandexBounds(bounds), { checkZoomRange: true, preciseZoom: true, zoomMargin: 12 });
     refreshDistrictLabelVisibility(instance);
     return map;
   }

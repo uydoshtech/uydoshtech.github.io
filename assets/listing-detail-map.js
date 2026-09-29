@@ -173,7 +173,8 @@
       }
 
       function buildMapSectionHtml(l, lang) {
-        const districts = UyDosh.listingSearchDistricts(l);
+        const districts = [...UyDosh.listingSearchDistricts(l)].sort((a, b) =>
+          UyDosh.localizedShort(a, lang).localeCompare(UyDosh.localizedShort(b, lang), lang));
         const locName = districts.length
           ? `${UyDosh.t('location.searchArea', lang)} · ${UyDosh.listingLocationLabel(l, lang, { summary: true })}`
           : UyDosh.localized(l.location, lang);
@@ -232,7 +233,6 @@
           <div class="map-section-body" hidden>
             ${districts.length ? `<div class="map-search-districts">${districts.map(d => `<span class="map-search-district" style="--district-color:${UyDosh.escapeHtml(UyDosh.districtColor(d.id))}">${UyDosh.escapeHtml(UyDosh.localizedShort(d, lang))}</span>`).join('')}</div>` : ''}
             <div class="map-container" id="listing-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.map'))}"></div>
-            <div class="map-section-approx-note" data-map-approx-note hidden>${UyDosh.iconLocateMe()}${UyDosh.escapeHtml(UyDosh.t('map.approximateLocation'))}</div>
           </div>
         </section>
       `;
