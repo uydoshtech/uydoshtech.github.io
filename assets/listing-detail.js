@@ -359,23 +359,33 @@
 
         const authorHandle = isMiniApp ? UyDosh.listingContactTelegram(l) : '';
         const authorAvatarUrl = authorHandle ? UyDosh.telegramAvatarUrl(authorHandle) : '';
+        const authorUserId = Number(l.user_id ?? l.user?.id);
+        const authorProfileHref = isMiniApp && Number.isFinite(authorUserId) && authorUserId > 0
+          ? UyDosh.profilePageUrl(authorUserId, { backTo: `${location.pathname}${location.search}` })
+          : '';
+        const authorHandleHtml = authorProfileHref
+          ? `<a class="author-handle" href="${UyDosh.escapeHtml(authorProfileHref)}">@${UyDosh.escapeHtml(authorHandle)}</a>`
+          : `@${UyDosh.escapeHtml(authorHandle)}`;
+        const authorAvatarInner = authorAvatarUrl
+          ? `<img src="${UyDosh.escapeHtml(authorAvatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+          : UyDosh.iconChrome('person');
         const postedExtraHtml = (isMiniApp && (authorHandle || l.created_at)) ? `
           <div class="map-section-extra map-section-posted${authorHandle ? ' map-section-posted--with-avatar' : ''}">
             <dl class="meta-grid">
               ${authorHandle ? `
                 <dt>${UyDosh.escapeHtml(UyDosh.t('detail.author'))}</dt>
-                <dd>@${UyDosh.escapeHtml(authorHandle)}</dd>
+                <dd>${authorHandleHtml}</dd>
               ` : ''}
               ${l.created_at ? `
                 <dt>${UyDosh.iconCalendar()}${UyDosh.escapeHtml(UyDosh.t('detail.posted'))}</dt>
                 <dd>${UyDosh.escapeHtml(UyDosh.formatDate(l.created_at, lang))}</dd>
               ` : ''}
             </dl>
-            ${authorHandle ? `
-              <span class="author-avatar" aria-hidden="true">
-                ${authorAvatarUrl ? `<img src="${UyDosh.escapeHtml(authorAvatarUrl)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />` : UyDosh.iconChrome('person')}
-              </span>
-            ` : ''}
+            ${authorHandle ? (
+              authorProfileHref
+                ? `<a class="author-avatar" href="${UyDosh.escapeHtml(authorProfileHref)}" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.author'))}">${authorAvatarInner}</a>`
+                : `<span class="author-avatar" aria-hidden="true">${authorAvatarInner}</span>`
+            ) : ''}
           </div>
         ` : '';
 

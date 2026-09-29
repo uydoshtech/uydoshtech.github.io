@@ -529,6 +529,8 @@ I18N.uz = {
     'account.removeError': 'Ishtirokchini chiqarib bo‘lmadi. Qayta urinib ko‘ring.',
     'profile.menuLabel': 'Profil',
     'profile.title': 'Profil',
+    'profile.follow': 'Obuna bo‘lish',
+    'profile.following': 'Obuna bo‘lgansiz',
     'profile.gender': 'Jinsi',
     'profile.nameOrNickname': 'Ism yoki taxallus',
     'profile.district': 'Tuman',

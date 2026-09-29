@@ -251,6 +251,9 @@ const LIFESTYLE_FIELDS = [
 const state = {
   userId: null,
   readOnly: false,
+  isSelf: false,
+  following: false,
+  followBusy: false,
   profile: null,
   authError: false,
   loadError: false,
@@ -1154,8 +1157,13 @@ function renderReadOnlyProfile() {
     viewRowHtml({ icon: 'sparkles', label: UyDosh.t('profile.lifestyle.cleanliness', lang), value: cleanLabel }),
   ].join('');
 
+  const followButton = state.readOnly && !state.isSelf ? `
+    <button type="button" class="pv-follow${state.following ? ' is-on' : ''}" data-follow ${state.followBusy ? 'disabled' : ''}>
+      ${UyDosh.escapeHtml(UyDosh.t(state.following ? 'profile.following' : 'profile.follow', lang))}
+    </button>` : '';
   viewRootEl.innerHTML = `
     <div class="pv-avatar-wrap"><div class="pv-avatar">${avatarInner}</div></div>
+    ${followButton}
     <div class="pv-card">${basicRows}</div>
     <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.tabs.lifestyle', lang))}</div>
     <div class="pv-card">${lifeRows}</div>
@@ -1210,6 +1218,16 @@ async function boot() {
   } else {
     state.userId = viewUserId;
     await UyDosh.ensureTelegramMiniAppSession();
+    const viewerId = Number(UyDosh.getSessionUserId());
+    state.isSelf = Number.isFinite(viewerId) && viewerId === viewUserId;
+    if (!state.isSelf) {
+      try {
+        const follow = await UyDosh.checkIfFollowing(viewUserId);
+        state.following = follow?.isFollowing === true;
+      } catch (err) {
+        console.error('Failed to load follow state', err);
+      }
+    }
   }
 
   await Promise.all([loadProfile(), loadUniversities(), loadRegions()]);
@@ -1250,6 +1268,24 @@ async function boot() {
   bindEvents();
   render();
 }
+
+viewRootEl?.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-follow]');
+  if (!button || state.followBusy || state.isSelf) return;
+  state.followBusy = true;
+  renderReadOnlyProfile();
+  try {
+    const result = await UyDosh.toggleFollow(state.userId);
+    state.following = result?.isFollowing === true;
+    UyDosh.haptic?.success?.();
+  } catch (err) {
+    console.error('Failed to toggle follow', err);
+    UyDosh.haptic?.error?.();
+  } finally {
+    state.followBusy = false;
+    renderReadOnlyProfile();
+  }
+});
 
 boot().catch((err) => {
   console.error('Profile page failed to start', err);

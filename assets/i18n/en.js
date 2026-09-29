@@ -528,6 +528,8 @@ I18N.en = {
     'account.removeError': 'Could not remove this member. Try again.',
     'profile.menuLabel': 'Profile',
     'profile.title': 'Profile',
+    'profile.follow': 'Follow',
+    'profile.following': 'Following',
     'profile.gender': 'Gender',
     'profile.nameOrNickname': 'Name or nickname',
     'profile.district': 'District',

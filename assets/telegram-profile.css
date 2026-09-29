@@ -451,6 +451,27 @@ input[type="number"]:focus {
   display: block;
 }
 .pv-avatar svg { width: 48px; height: 48px; display: block; }
+.pv-follow {
+  display: flex;
+  width: min(280px, 100%);
+  margin: -8px auto 18px;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #2AABEE;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pv-follow.is-on {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--stroke);
+}
+.pv-follow:disabled { opacity: 0.6; }
 .pv-card {
   background: #121c2a;
   border: 1px solid rgba(120, 150, 190, 0.28);

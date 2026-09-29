@@ -1310,6 +1310,14 @@ function fetchProfile(userId) {
   return fetchJson(`/profiles/${encodeURIComponent(userId)}`);
 }
 
+function checkIfFollowing(userId) {
+  return fetchJsonAuth(`/follows/check/${encodeURIComponent(userId)}`);
+}
+
+function toggleFollow(userId) {
+  return fetchJsonAuth(`/follows/toggle/${encodeURIComponent(userId)}`, { method: "PUT" });
+}
+
 /**
  * Partial profile update (only the fields set are changed). Note: per the
  * backend's update handler, `university_id: 0` clears the university —
@@ -1927,6 +1935,8 @@ Object.assign(window.UyDosh, {
   deleteListingFromTelegramMiniApp,
   createProfile,
   fetchProfile,
+  checkIfFollowing,
+  toggleFollow,
   updateProfile,
   fetchUniversitiesAll,
   fetchRegionsAll,

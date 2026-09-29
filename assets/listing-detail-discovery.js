@@ -44,13 +44,20 @@
           ? UyDosh.localized(listing.location, UyDosh.getLang()) : '';
       const price = Number(listing.price);
       const difference = price > 0 ? Math.round((price / Number(value.median) - 1) * 100) : null;
-      const comparison = difference == null ? '' : difference === 0 ? t('atMedian')
-        : t(difference > 0 ? 'aboveMedian' : 'belowMedian', { percent: Math.abs(difference) });
-      rows.push(`<div class="discovery-price-row">
+      const tone = difference == null ? '' : difference > 0 ? 'above' : difference < 0 ? 'below' : 'even';
+      const scopeKind = scope === 'location' || (key === 'location' && scope !== 'subway_station' && scope !== 'subway_line')
+        ? 'district' : 'metro';
+      const amount = `<strong class="discovery-price-amount">${e(money(Number(value.median)))}</strong>`;
+      const median = e(t('median', { amount: '\u0001' })).replace('\u0001', amount);
+      const comparison = tone === 'above' || tone === 'below'
+        ? e(t(tone === 'above' ? 'aboveMedian' : 'belowMedian', { percent: '\u0001' }))
+          .replace('\u0001', `<strong>${Math.abs(difference)}</strong>`)
+        : tone === 'even' ? e(t('atMedian')) : '';
+      rows.push(`<div class="discovery-price-row is-${scopeKind}${tone ? ` is-${tone}` : ''}">
         <strong>${e(label)}${name ? ` · ${e(name)}` : ''}</strong>
-        <span>${e(t('median', { amount: money(Number(value.median)) }))}</span>
+        <span>${median}</span>
         <small>${e(t('sample', { count: value.sample_count }))}${value.listing_type_id === 0 ? ` · ${e(t('allTypes'))}` : ''}</small>
-        ${comparison ? `<span>${e(comparison)}</span>` : ''}
+        ${comparison ? `<span class="discovery-price-compare is-${tone}">${comparison}</span>` : ''}
       </div>`);
     }
     return `<section class="map-section map-section-static discovery-section">

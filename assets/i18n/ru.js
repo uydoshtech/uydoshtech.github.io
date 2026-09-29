@@ -528,6 +528,8 @@ I18N.ru = {
     'account.removeError': 'Не удалось удалить участника. Попробуйте ещё раз.',
     'profile.menuLabel': 'Профиль',
     'profile.title': 'Профиль',
+    'profile.follow': 'Подписаться',
+    'profile.following': 'Вы подписаны',
     'profile.gender': 'Пол',
     'profile.nameOrNickname': 'Имя или никнейм',
     'profile.district': 'Район',

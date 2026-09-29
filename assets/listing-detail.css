@@ -1220,6 +1220,14 @@
       .map-section-extra.map-section-posted--with-avatar {
         padding-right: 61px;
       }
+      a.author-handle {
+        color: inherit;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      a.author-handle:active { opacity: 0.7; }
+      a.author-avatar { color: inherit; text-decoration: none; cursor: pointer; }
+      a.author-avatar:active { opacity: 0.8; }
       .author-avatar {
         position: absolute;
         top: 50%;
@@ -1689,7 +1697,23 @@
 .discovery-section .btn { white-space: normal; text-align: center; }
 .discovery-section summary { cursor: pointer; padding: 16px 0; font-weight: 600; }
 .discovery-price-row, .discovery-budget { display: grid; gap: 6px; }
-.discovery-price-row + .discovery-price-row { border-top: 1px solid var(--stroke); margin-top: 12px; padding-top: 12px; }
+.discovery-price-row {
+  gap: 4px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  border-left: 3px solid var(--scope-accent, var(--stroke));
+}
+.discovery-price-row.is-metro { --scope-accent: #60a5fa; }
+.discovery-price-row.is-district { --scope-accent: #fb923c; }
+.discovery-price-row.is-metro > strong { color: #93c5fd; }
+.discovery-price-row.is-district > strong { color: #fdba74; }
+.discovery-price-row + .discovery-price-row { margin-top: 10px; }
+.discovery-price-amount { font-weight: 800; color: var(--price-green); }
+.discovery-price-compare { font-weight: 700; }
+.discovery-price-compare.is-below { color: #4ade80; }
+.discovery-price-compare.is-above { color: #f87171; }
+.discovery-price-compare.is-even { color: var(--muted); font-weight: 600; }
 .discovery-price-row small, .discovery-note, .discovery-budget span { color: var(--muted); font-size: 13px; line-height: 1.5; }
 .discovery-budget .discovery-share-amount { font-weight: 800; color: var(--price-green); }
 .discovery-shortlist-item { position: relative; margin: 0 0 16px; border: 1px solid var(--stroke); border-radius: 18px; overflow: hidden; background: color-mix(in srgb, var(--fg) 3%, var(--card)); }
