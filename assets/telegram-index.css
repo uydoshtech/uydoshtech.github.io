@@ -299,19 +299,17 @@ header {
   padding-bottom: 2px;
   scrollbar-width: none;
   transition: opacity 160ms ease;
-  /* Fade the scroll edges instead of hard-clipping chips mid-shape when
-     the row is scrolled. */
+  /* Fade only the trailing edge. The listing-type icons sit at the start,
+     so a left fade was washing them out. */
   -webkit-mask-image: linear-gradient(
     to right,
-    transparent 0,
-    black 16px,
+    black 0,
     black calc(100% - 16px),
     transparent 100%
   );
   mask-image: linear-gradient(
     to right,
-    transparent 0,
-    black 16px,
+    black 0,
     black calc(100% - 16px),
     transparent 100%
   );
