@@ -1742,7 +1742,7 @@
 #group-shortlist { scroll-margin-top: 90px; }
 
 .map-search-districts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.map-search-district { padding: 6px 10px; border: 1px solid var(--stroke); border-radius: 18px; font-size: 13px; }
+.map-search-district { padding: 6px 10px; border: 1px solid var(--district-color, var(--stroke)); border-radius: 18px; font-size: 13px; color: var(--fg); background: color-mix(in srgb, var(--district-color, transparent) 18%, transparent); }
 
 .discovery-shortlist-photo { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--stroke); }
 .discovery-shortlist-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
