@@ -996,6 +996,7 @@ const UI_THEME_VARS = {
     '--muted': 'rgba(255, 255, 255, 0.7)',
     '--card': 'rgba(255, 255, 255, 0.06)',
     '--stroke': 'rgba(255, 255, 255, 0.12)',
+    '--avatar-ring': '#fff',
   },
   light: {
     '--bg': '#f6f7fb',
@@ -1003,6 +1004,7 @@ const UI_THEME_VARS = {
     '--muted': 'rgba(15, 23, 42, 0.7)',
     '--card': 'rgba(15, 23, 42, 0.04)',
     '--stroke': 'rgba(15, 23, 42, 0.12)',
+    '--avatar-ring': '#000',
   },
 };
 

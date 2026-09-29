@@ -97,28 +97,45 @@ function priceLabel(conversation, lang) {
   return UyDosh.formatPrice({ price: conversation.listing_price }, lang);
 }
 
+function memberInitial(name) {
+  const ch = Array.from(String(name || '').trim())[0] || '';
+  return ch.toUpperCase();
+}
+
+/** Faces on the inbox card. Four fit beside the title; beyond that, show three and a +N. */
 function memberAvatarsHtml(conversations) {
   const seen = new Set();
-  const urls = [];
+  const people = [];
   for (const c of conversations) {
     const members = Array.isArray(c.members) ? c.members : [];
     for (const member of members) {
-      const url = member?.avatar_url;
-      if (!url || seen.has(url)) continue;
-      seen.add(url);
-      urls.push(url);
-      if (urls.length >= 3) break;
+      const id = Number(member?.user_id);
+      const key = id > 0
+        ? `id:${id}`
+        : `url:${member?.avatar_url || ''}|name:${String(member?.name || '').trim()}`;
+      if (!member || seen.has(key) || key === 'url:|name:') continue;
+      seen.add(key);
+      people.push(member);
     }
-    if (urls.length >= 3) break;
-    if (!urls.length && c.other_user_avatar && !seen.has(c.other_user_avatar)) {
-      seen.add(c.other_user_avatar);
-      urls.push(c.other_user_avatar);
+    if (!people.length && (c.other_user_avatar || c.other_user_name)) {
+      people.push({ avatar_url: c.other_user_avatar, name: c.other_user_name });
     }
   }
-  if (!urls.length) return '';
-  return urls.map((url) => (
-    `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
-  )).join('');
+  if (!people.length) return '';
+  const maxFaces = people.length > 4 ? 3 : people.length;
+  const shown = people.slice(0, maxFaces);
+  const extra = people.length - shown.length;
+  const faces = shown.map((person) => {
+    const url = person?.avatar_url;
+    if (url) {
+      return `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`;
+    }
+    return `<span class="inbox-avatar-fallback">${UyDosh.escapeHtml(memberInitial(person?.name))}</span>`;
+  }).join('');
+  const more = extra > 0
+    ? `<span class="inbox-avatar-fallback inbox-avatar-more">+${extra}</span>`
+    : '';
+  return `${faces}${more}`;
 }
 
 function chatAvatarHtml(conversation, isGroup) {

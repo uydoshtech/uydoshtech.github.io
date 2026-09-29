@@ -12,6 +12,7 @@
   --muted: var(--tg-muted, rgba(255, 255, 255, 0.7));
   --card: var(--tg-card, rgba(255, 255, 255, 0.06));
   --stroke: rgba(255, 255, 255, 0.12);
+  --avatar-ring: #fff;
   --brand: #ff0000;
   --brand2: #60a5fa;
   --price-green: #35c26b;
@@ -52,6 +53,7 @@
     --muted: rgba(15, 23, 42, 0.7);
     --card: rgba(15, 23, 42, 0.04);
     --stroke: rgba(15, 23, 42, 0.12);
+    --avatar-ring: #000;
     --spinner-logo: url("../images/uydosh-logo-black-u.svg");
   }
 }

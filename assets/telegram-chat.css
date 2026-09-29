@@ -41,12 +41,24 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 6px 0 10px;
   min-height: 48px;
   flex-shrink: 0;
   z-index: 6;
+  appearance: none;
   background: var(--bg, #061525);
+  border: 0;
   border-bottom: 1px solid var(--stroke);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.chat-peer-header.is-action {
+  cursor: pointer;
+}
+.chat-peer-header.is-action:active {
+  opacity: 0.88;
 }
 .chat-peer-header[hidden] {
   display: none !important;
@@ -64,15 +76,23 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   overflow: hidden;
   flex-shrink: 0;
   margin-left: -10px;
-  border: 2px solid var(--bg, #061525);
+  border: 1px solid var(--avatar-ring, #fff);
   background: color-mix(in srgb, var(--brand2, #2a6) 22%, transparent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
 }
 .chat-peer-avatar:first-child {
   margin-left: 0;
+}
+.chat-peer-avatar.chat-peer-more {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 16%, var(--bg, #061525));
 }
 .chat-peer-avatar img,
 .chat-peer-avatar svg {
@@ -237,6 +257,7 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   align-items: center;
   justify-content: center;
   color: var(--muted);
+  border: 1px solid var(--avatar-ring, #fff);
 }
 .chat-reply-avatar img,
 .chat-reply-avatar svg {
@@ -308,6 +329,7 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   align-items: center;
   justify-content: center;
   color: var(--muted);
+  border: 1px solid var(--avatar-ring, #fff);
 }
 .chat-avatar img {
   width: 100%;

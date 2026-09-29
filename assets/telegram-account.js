@@ -1,10 +1,15 @@
 UyDosh.initTelegramMiniApp();
 
+// The participants sheet in this file is also opened from the group chat
+// header. Account boot and the BackButton handler must stay on the account
+// page, otherwise they replace the chat's own back navigation.
+const isAccountPage = Boolean(document.getElementById('account-list'));
+
 // Reached from the account menu on any page — the header's BackButton
 // defaults to hidden (see `initTelegramMiniApp`), so show it here and send
 // the user back to wherever a `?back=` deep link points, falling back to
 // the feed (same pattern as listing.html).
-if (UyDosh.isMiniApp()) {
+if (isAccountPage && UyDosh.isMiniApp()) {
   const webApp = window.Telegram?.WebApp;
   const hasBack = Boolean(new URLSearchParams(location.search).get('back'));
   if (hasBack) {
@@ -207,9 +212,11 @@ function participantsFromConversation(conversation) {
 
 function participantAvatarHtml(person, index) {
   const url = person?.avatar_url || '';
+  const initial = Array.from(String(person?.name || '').trim())[0] || '';
+  const letter = UyDosh.escapeHtml(initial.toUpperCase());
   const inner = url
     ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
-    : (UyDosh.iconChrome?.('person') || '');
+    : (letter || UyDosh.iconChrome?.('person') || '');
   return `<span class="account-participants-avatar" style="z-index:${index + 1}" aria-hidden="true">${inner}</span>`;
 }
 
@@ -235,12 +242,18 @@ function peopleForAvatarStack(listing, members) {
   return rows.length ? rows : fromMembers;
 }
 
+function accountAvatarStackHtml(people) {
+  const list = people.length ? people : [{}];
+  const maxFaces = people.length > 4 ? 3 : list.length;
+  const extra = people.length - maxFaces;
+  return list.slice(0, maxFaces).map((person, index) => participantAvatarHtml(person, index)).join('')
+    + (extra > 0 ? `<span class="account-participants-avatar account-participants-more">+${extra}</span>` : '');
+}
+
 function participantsPillHtml(listing, conversation) {
   const lang = UyDosh.getLang();
-  const people = peopleForAvatarStack(listing, participantsFromConversation(conversation)).slice(0, 3);
-  const avatars = people.length
-    ? people.map((person, index) => participantAvatarHtml(person, index)).join('')
-    : participantAvatarHtml({}, 0);
+  const people = peopleForAvatarStack(listing, participantsFromConversation(conversation));
+  const avatars = accountAvatarStackHtml(people);
   return `
         <button type="button" class="account-participants-pill" data-open-participants="${listing.id}" data-haptic="selection">
           <span class="account-participants-avatars">${avatars}</span>
@@ -746,7 +759,7 @@ async function boot() {
   renderActiveTab();
 }
 
-boot();
+if (isAccountPage) boot();
 
 const REMOVE_REASON_KEYS = ['inactive', 'rules', 'notFit', 'requested', 'other'];
 
@@ -759,6 +772,7 @@ const participantsSheetState = {
   myProfile: null,
   isOwner: false,
   busy: false,
+  backTo: '',
 };
 
 function currentUserId() {
@@ -768,9 +782,10 @@ function currentUserId() {
 function openMemberProfile(userId) {
   const id = Number(userId);
   if (!Number.isFinite(id) || id < 1) return;
+  const backTo = participantsSheetState.backTo || UyDosh.MINI_APP_GROUPS_PATH;
   const href = typeof UyDosh.profilePageUrl === 'function'
-    ? UyDosh.profilePageUrl(id, { backTo: UyDosh.MINI_APP_GROUPS_PATH })
-    : `${UyDosh.MINI_APP_PROFILE_PATH}?user=${encodeURIComponent(id)}&back=${encodeURIComponent(UyDosh.MINI_APP_GROUPS_PATH)}`;
+    ? UyDosh.profilePageUrl(id, { backTo })
+    : `${UyDosh.MINI_APP_PROFILE_PATH}?user=${encodeURIComponent(id)}&back=${encodeURIComponent(backTo)}`;
   location.href = href;
 }
 
@@ -932,7 +947,7 @@ function participantsSheetHtml(listing, members, lang) {
   const people = peopleForAvatarStack(listing, members);
   const names = people.map((m) => String(m.name || '').trim()).filter(Boolean).join(', ');
   const count = people.length || members.length;
-  const avatars = (people.length ? people : [{}]).slice(0, 3).map((person, index) => participantAvatarHtml(person, index)).join('');
+  const avatars = accountAvatarStackHtml(people);
   const cards = members.map((member) => memberCardHtml(member, listing, lang)).join('');
   return `
     <div class="gp-backdrop" data-gp-close></div>
@@ -966,12 +981,41 @@ function renderParticipantsSheet() {
   bindParticipantsSheetEvents();
 }
 
-async function openParticipantsSheet(listingId) {
-  const listing = state.myListings.find((l) => Number(l?.id) === listingId);
-  if (!listing || !participantsRoot) return;
+function listingFromPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  if (payload.id) return payload;
+  if (payload.data?.id) return payload.data;
+  if (payload.listing?.id) return payload.listing;
+  return null;
+}
+
+async function resolveParticipantsListing(listingOrId) {
+  if (listingOrId && typeof listingOrId === 'object' && listingOrId.id) return listingOrId;
+  const listingId = Number(listingOrId);
+  if (!Number.isFinite(listingId) || listingId < 1) return null;
+  const owned = state.myListings.find((l) => Number(l?.id) === listingId);
+  if (owned) return owned;
+  const joined = state.memberGroupListings.find((l) => Number(l?.id) === listingId);
+  if (joined) return joined;
+  const payload = await UyDosh.fetchListing(listingId);
+  return listingFromPayload(payload);
+}
+
+async function openParticipantsSheet(listingOrId, { backTo } = {}) {
+  if (!participantsRoot) return;
+  let listing;
+  try {
+    listing = await resolveParticipantsListing(listingOrId);
+  } catch (err) {
+    console.error('Failed to load group listing', err);
+    return;
+  }
+  const listingId = Number(listing?.id);
+  if (!listing || !Number.isFinite(listingId) || listingId < 1) return;
   UyDosh.haptic?.light?.();
   const me = currentUserId();
   const ownerId = Number(listing.user_id ?? listing.user?.id);
+  participantsSheetState.backTo = backTo || `${location.pathname}${location.search}`;
   participantsSheetState.listingId = listingId;
   participantsSheetState.listing = listing;
   participantsSheetState.isOwner = me > 0 && me === ownerId;
@@ -1093,9 +1137,13 @@ function bindParticipantsSheetEvents() {
     try {
       await UyDosh.leaveListingGroup(participantsSheetState.listingId);
       UyDosh.haptic?.success?.();
+      const listingId = participantsSheetState.listingId;
       closeParticipantsSheet();
-      await Promise.all([loadGroupChats(), loadMemberGroupListings(), loadGroupCreateEligibility()]);
-      renderActiveTab();
+      document.dispatchEvent(new CustomEvent('uydosh-group-roster-changed', { detail: { listingId } }));
+      if (isAccountPage) {
+        await Promise.all([loadGroupChats(), loadMemberGroupListings(), loadGroupCreateEligibility()]);
+        renderActiveTab();
+      }
     } catch (err) {
       console.error('Failed to leave group', err);
       showTelegramAlert(UyDosh.t('account.removeError'));
@@ -1168,6 +1216,9 @@ function openRemoveConfirm(memberUserId, name) {
         (m) => Number(m.user_id) !== memberUserId,
       );
       renderParticipantsSheet();
+      document.dispatchEvent(new CustomEvent('uydosh-group-roster-changed', {
+        detail: { listingId: participantsSheetState.listingId },
+      }));
     } catch (err) {
       console.error('Failed to remove member', err);
       showTelegramAlert(UyDosh.t('account.removeError', lang));
@@ -1177,6 +1228,8 @@ function openRemoveConfirm(memberUserId, name) {
     }
   });
 }
+
+window.UyDosh.openGroupParticipantsSheet = openParticipantsSheet;
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && participantsRoot && !participantsRoot.hidden) {

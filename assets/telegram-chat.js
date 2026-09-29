@@ -325,9 +325,10 @@ function headerPeople(conversation, members) {
 
 function headerAvatarHtml(person, index) {
   const url = person?.avatar_url || '';
+  const initial = Array.from(String(person?.name || '').trim())[0] || '';
   const inner = url
     ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
-    : (UyDosh.iconChrome?.('person') || '');
+    : UyDosh.escapeHtml(initial.toUpperCase());
   return `<span class="chat-peer-avatar" style="z-index:${index + 1}">${inner}</span>`;
 }
 
@@ -339,8 +340,21 @@ function updateHeader(conversation, members) {
   const subtitle = conversation?.listing?.title
     || conversation?.listing_title
     || '';
-  const avatars = people.slice(0, 3).map((person, index) => headerAvatarHtml(person, index)).join('');
+  const maxFaces = people.length > 4 ? 3 : people.length;
+  const shown = people.slice(0, maxFaces);
+  const extra = people.length - shown.length;
+  const avatars = shown.map((person, index) => headerAvatarHtml(person, index)).join('')
+    + (extra > 0 ? `<span class="chat-peer-avatar chat-peer-more">+${extra}</span>` : '');
+  const listingId = Number(conversation?.listing_id ?? conversation?.context_id);
+  const isGroup = conversation?.conversation_type === 'listing_group' && listingId > 0;
   peerHeaderEl.hidden = false;
+  peerHeaderEl.classList.toggle('is-action', isGroup);
+  peerHeaderEl.dataset.listingId = isGroup ? String(listingId) : '';
+  if (isGroup) {
+    peerHeaderEl.setAttribute('aria-label', UyDosh.t('account.participantProfiles'));
+  } else {
+    peerHeaderEl.removeAttribute('aria-label');
+  }
   peerHeaderEl.innerHTML = `
     <div class="chat-peer-avatars" aria-hidden="true">${avatars}</div>
     <div class="chat-peer-text">
@@ -430,6 +444,38 @@ async function maybeLoadOlder() {
     state.loadingOlder = false;
   }
 }
+
+async function refreshGroupRoster() {
+  if (!state.conversation) return;
+  try {
+    const membersPayload = await UyDosh.fetchConversationMembers(conversationId);
+    const members = membersPayload?.data || membersPayload || [];
+    state.members = Array.isArray(members) ? members : [];
+    state.membersById = new Map();
+    for (const member of state.members) {
+      state.membersById.set(Number(member.user_id), member);
+    }
+    updateHeader(state.conversation, state.members);
+    renderThread({ stick: false });
+  } catch (err) {
+    console.error('Failed to refresh group roster', err);
+  }
+}
+
+peerHeaderEl?.addEventListener('click', () => {
+  const listingId = Number(peerHeaderEl.dataset.listingId);
+  if (!listingId || typeof UyDosh.openGroupParticipantsSheet !== 'function') return;
+  UyDosh.openGroupParticipantsSheet(listingId, {
+    backTo: `${location.pathname}${location.search}`,
+  });
+});
+
+document.addEventListener('uydosh-group-roster-changed', (event) => {
+  const listingId = Number(event.detail?.listingId);
+  const openId = Number(state.conversation?.listing_id ?? state.conversation?.context_id);
+  if (!listingId || listingId !== openId) return;
+  refreshGroupRoster();
+});
 
 async function boot() {
   UyDosh.applyI18n();

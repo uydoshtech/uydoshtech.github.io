@@ -109,6 +109,18 @@
   border: 2px solid var(--card);
   margin-left: -10px;
   background: color-mix(in srgb, var(--brand2) 22%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+}
+.inbox-avatars .inbox-avatar-more {
+  background: color-mix(in srgb, var(--fg) 16%, var(--card));
+  color: var(--fg);
+  font-size: 11px;
 }
 .inbox-avatars img:first-child,
 .inbox-avatars .inbox-avatar-fallback:first-child {
