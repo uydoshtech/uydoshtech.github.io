@@ -145,9 +145,11 @@
           ${photo ? `<a class="discovery-shortlist-photo" href="${e(url)}" aria-label="${e(title)}"><img src="${e(UyDosh.photoUrl(photo))}" alt="" loading="lazy" decoding="async" onerror="this.parentElement.remove();" /></a>` : ''}
           <div class="discovery-shortlist-content">
             ${budget ? `<div class="discovery-shortlist-status"><span class="discovery-budget-pill budget-${e(budget.fit)}">${e(t(budget.fit))}</span></div>` : ''}
-            ${listing ? `<a class="discovery-shortlist-title" href="${e(url)}"><strong>${e(title)}</strong></a>
+            ${listing ? `<div class="discovery-shortlist-title-row">
+                <a class="discovery-shortlist-title" href="${e(url)}"><strong>${e(title)}</strong></a>
+                ${price ? `<div class="discovery-shortlist-price">${e(range(price))}<small>${e(UyDosh.t('card.perMonth'))}</small></div>` : ''}
+              </div>
               ${area ? `<div class="discovery-shortlist-area"><span aria-hidden="true">${UyDosh.iconPin()}</span>${e(area)}</div>` : ''}
-              ${price ? `<div class="discovery-shortlist-price">${e(range(price))}<small>${e(UyDosh.t('card.perMonth'))}</small></div>` : ''}
               <div class="discovery-shortlist-budget">${budgetHtml(group, listing, { showStatus: false })}</div>` : `<strong>${e(title)}</strong>`}
             <div class="discovery-shortlist-footer">
               ${savedByHtml(item.saved_by)}
@@ -169,14 +171,17 @@
         if (position) position.textContent = `${activeIndex + 1} / ${items.length}`;
       }
       function move(delta) {
-        activeIndex = Math.max(0, Math.min(items.length - 1, activeIndex + delta));
-        carousel.scrollTo({ left: activeIndex * step(), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
-        updateControls();
+        const targetIndex = Math.max(0, Math.min(items.length - 1, activeIndex + delta));
+        // The scroll handler owns the visible index. Setting it to the target
+        // here made early animation frames switch the counter back again.
+        carousel.scrollTo({ left: targetIndex * step(), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       }
       carousel.scrollLeft = activeIndex * step();
       updateControls();
       carousel.addEventListener('scroll', () => {
-        activeIndex = Math.max(0, Math.min(items.length - 1, Math.round(carousel.scrollLeft / step())));
+        const visibleIndex = Math.max(0, Math.min(items.length - 1, Math.round(carousel.scrollLeft / step())));
+        if (visibleIndex === activeIndex) return;
+        activeIndex = visibleIndex;
         updateControls();
       }, { passive: true });
       carousel.addEventListener('keydown', event => {
