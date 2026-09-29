@@ -373,8 +373,9 @@
         const isGroupPage = Boolean(listingGroupContext(l)) || Number(listingTypeId) === 3;
         const compatibilityHtml = isGroupPage && !isGroupCompatListing(l) ? '' : compatibilityTileHtml(l, isOwner);
         const discoveryHtml = UyDoshListingDiscovery.html(l);
+        const titleHtml = `<div class="title-row"><h1>${title}</h1></div>`;
         const contentHtml = isGroupPage ? groupTabsHtml({
-          description: `${groupSectionHtml(l)}${roomScanHtml}${descHtml}${mapHtml}${metaHtml}`,
+          description: `${titleHtml}${groupSectionHtml(l)}${roomScanHtml}${descHtml}${mapHtml}${metaHtml}`,
           compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.compatUnavailable'))}</p>`,
           housing: discoveryHtml || `<p class="discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.housingUnavailable'))}</p>`,
         }) : `${groupSectionHtml(l)}${roomScanHtml}${compatibilityHtml}${descHtml}${mapHtml}${discoveryHtml}${metaHtml}`;
@@ -396,9 +397,7 @@
                   ${secondaryBadges.length ? `<div class="badges">${secondaryBadges.join('')}</div>` : ''}
                 </div>
               ` : ''}
-              <div class="title-row">
-                <h1>${title}</h1>
-              </div>
+              ${isGroupPage ? '' : titleHtml}
               ${isOwner ? '' : claimBannerHtml()}
               ${contentHtml}
               <div class="cta-row app-cta-row">
