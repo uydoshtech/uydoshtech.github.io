@@ -59,6 +59,12 @@ const state = {
   favoritesUnavailable: false,
   groupChats: [],
   groupChatsError: false,
+  // Group listings the viewer belongs to but does not own. Loaded from the
+  // public listing so a member sees the same card as the creator.
+  memberGroupListings: [],
+  // False until GET /listings/group-forming/membership-limit says the user is
+  // under group_forming_max_active_memberships. Owners count as participants.
+  canCreateGroup: false,
 };
 
 function statusBadgeHtml(listing, lang) {
@@ -104,7 +110,7 @@ function renewLabelHtml(listing, lang) {
   return UyDosh.escapeHtml(UyDosh.t(key, lang).replace('{days}', String(days)));
 }
 
-function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
+function listingRowMainHtml(listing, { hidePhoto = false, ownerActions = true } = {}) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
@@ -113,7 +119,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
   const backTo = groupsTab ? UyDosh.MINI_APP_GROUPS_PATH : UyDosh.MINI_APP_ACCOUNT_PATH;
   const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, {
     backTo,
-    group: groupsTab ? 'requests' : undefined,
+    group: groupsTab && ownerActions ? 'requests' : undefined,
   }));
   const visibilityLabelKey = listing.is_active ? 'account.deactivate' : 'account.activate';
   const visibilityLabel = UyDosh.t(visibilityLabelKey, lang);
@@ -141,7 +147,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
         </a>
         ${photoBlock}
         ${metaStrip}
-        <div class="account-row-actions">
+        ${ownerActions ? `<div class="account-row-actions">
           <a class="account-edit-btn" href="${editHref}" title="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.edit', lang))}">${UyDosh.iconPencil()}</a>
           <button
             type="button"
@@ -167,7 +173,7 @@ function listingRowMainHtml(listing, { hidePhoto = false } = {}) {
             title="${UyDosh.escapeHtml(UyDosh.t('account.delete', lang))}"
             aria-label="${UyDosh.escapeHtml(UyDosh.t('account.delete', lang))}"
           >${UyDosh.iconTrash()}</button>
-        </div>
+        </div>` : ''}
       </div>`;
 }
 
@@ -178,16 +184,16 @@ function listingRowHtml(listing) {
     </div>`;
 }
 
-function groupListingCardHtml(listing, conversation) {
+function groupListingCardHtml(listing, conversation, { owner = true } = {}) {
   const chat = conversation ? groupChatRowHtml(conversation, { nested: true }) : '';
   const detailHref = UyDosh.escapeHtml(UyDosh.listingPageUrl(listing.id, {
     backTo: UyDosh.MINI_APP_GROUPS_PATH,
-    group: 'requests',
+    group: owner ? 'requests' : undefined,
   }));
   return `
     <article class="account-card account-card--group" data-listing-row="${listing.id}" data-group-detail-href="${detailHref}">
       <div class="account-row-main">
-        ${listingRowMainHtml(listing, { hidePhoto: true })}
+        ${listingRowMainHtml(listing, { hidePhoto: true, ownerActions: owner })}
         ${participantsPillHtml(listing, conversation)}
       </div>
       ${chat}
@@ -299,6 +305,7 @@ function bindVisibilityToggleButtons() {
         const data = await UyDosh.toggleListingActiveFromTelegramMiniApp(id);
         const updated = data?.listing;
         listing.is_active = updated ? !!updated.is_active : !listing.is_active;
+        await loadGroupCreateEligibility();
         renderActiveTab();
       } catch (err) {
         console.error('Failed to toggle listing visibility', err);
@@ -372,6 +379,7 @@ function bindDeleteButtons() {
       try {
         await UyDosh.deleteListingFromTelegramMiniApp(id);
         state.myListings = state.myListings.filter((l) => l?.id !== id);
+        await loadGroupCreateEligibility();
         renderActiveTab();
       } catch (err) {
         console.error('Failed to delete listing', err);
@@ -528,7 +536,8 @@ function renderGroups() {
   }
   const chats = (state.groupChats || []).filter((c) => c.conversation_type === 'listing_group');
   const rows = groupListings();
-  if (!chats.length && !rows.length) {
+  const memberRows = state.memberGroupListings || [];
+  if (!chats.length && !rows.length && !memberRows.length) {
     showEmpty(UyDosh.t('account.groupsEmpty', lang), { showCreateCta: true });
     return;
   }
@@ -538,6 +547,11 @@ function renderGroups() {
     const chat = chatForListing(listing, chats);
     if (chat?.id != null) usedChatIds.add(Number(chat.id));
     parts.push(groupListingCardHtml(listing, chat));
+  }
+  for (const listing of memberRows) {
+    const chat = chatForListing(listing, chats);
+    if (chat?.id != null) usedChatIds.add(Number(chat.id));
+    parts.push(groupListingCardHtml(listing, chat, { owner: false }));
   }
   for (const chat of chats) {
     if (!usedChatIds.has(Number(chat.id))) parts.push(groupChatRowHtml(chat));
@@ -568,8 +582,47 @@ function renderFavorites() {
   bindFavoriteRemoveButtons();
 }
 
+function syncCreateGroupAction() {
+  const el = document.getElementById('create-group-action');
+  if (!el) return;
+  el.hidden = state.activeTab !== TAB_GROUPS || !state.canCreateGroup;
+}
+
+const DEFAULT_GROUP_FORMING_MAX_ACTIVE_MEMBERSHIPS = 2;
+
+function localActiveGroupCount() {
+  const ids = new Set();
+  for (const listing of groupListings()) {
+    if (listing?.is_active === false || listing?.group_forming_status === 'closed') continue;
+    const id = Number(listing.id);
+    if (id > 0) ids.add(id);
+  }
+  for (const chat of state.groupChats || []) {
+    const id = conversationListingId(chat);
+    if (id > 0) ids.add(id);
+  }
+  return ids.size;
+}
+
+async function loadGroupCreateEligibility() {
+  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+  if (!sessionReady) {
+    state.canCreateGroup = false;
+    return;
+  }
+  try {
+    const data = await UyDosh.fetchMyGroupMembershipLimit();
+    const activeCount = Number(data?.activeCount);
+    const limit = Number(data?.limit);
+    state.canCreateGroup = Number.isFinite(activeCount) && Number.isFinite(limit) && activeCount < limit;
+  } catch (err) {
+    console.error('Failed to load group membership limit', err);
+    state.canCreateGroup = localActiveGroupCount() < DEFAULT_GROUP_FORMING_MAX_ACTIVE_MEMBERSHIPS;
+  }
+}
+
 function renderActiveTab() {
-  document.getElementById('create-group-action').hidden = state.activeTab !== TAB_GROUPS;
+  syncCreateGroupAction();
   if (state.activeTab === TAB_FAVORITES) renderFavorites();
   else if (state.activeTab === TAB_GROUPS) renderGroups();
   else renderMine();
@@ -636,6 +689,25 @@ async function loadFavorites() {
   }
 }
 
+async function loadMemberGroupListings() {
+  const owned = new Set(groupListings().map((listing) => Number(listing.id)));
+  const ids = [];
+  for (const chat of state.groupChats || []) {
+    const id = conversationListingId(chat);
+    if (id > 0 && !owned.has(id) && !ids.includes(id)) ids.push(id);
+  }
+  const fetched = await Promise.all(ids.map(async (id) => {
+    try {
+      const listing = await UyDosh.fetchListing(id);
+      return listing?.id ? listing : null;
+    } catch (err) {
+      console.error('Failed to load member group listing', id, err);
+      return null;
+    }
+  }));
+  state.memberGroupListings = fetched.filter(Boolean);
+}
+
 async function loadGroupChats() {
   const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
   if (!sessionReady) return;
@@ -669,6 +741,7 @@ async function boot() {
   // state in that case, independent of Favorites.)
 
   await Promise.all([loadMyListings(), loadFavorites(), loadGroupChats()]);
+  await Promise.all([loadMemberGroupListings(), loadGroupCreateEligibility()]);
   loadingEl.hidden = true;
   renderActiveTab();
 }
@@ -1021,7 +1094,7 @@ function bindParticipantsSheetEvents() {
       await UyDosh.leaveListingGroup(participantsSheetState.listingId);
       UyDosh.haptic?.success?.();
       closeParticipantsSheet();
-      await loadGroupChats();
+      await Promise.all([loadGroupChats(), loadMemberGroupListings(), loadGroupCreateEligibility()]);
       renderActiveTab();
     } catch (err) {
       console.error('Failed to leave group', err);

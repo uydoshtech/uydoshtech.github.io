@@ -143,6 +143,7 @@ I18N.uz = {
     'discovery.rating.close': "Yopish",
     'discovery.rating.star': "{n}/5 baho",
     'account.createGroup': 'Guruh yaratish',
+    'account.groupLimitReached': 'Siz allaqachon guruhlarning maksimal sonidasiz.',
     'detail.group.tabDescription': 'Guruh tavsifi',
     'detail.group.tabMembers': 'Guruh a’zolari',
     'detail.group.tabHousing': 'Uy-joy variantlari',

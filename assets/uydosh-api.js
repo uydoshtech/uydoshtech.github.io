@@ -1656,6 +1656,11 @@ function removeListingGroupMember(listingId, memberUserId, { reason } = {}) {
   );
 }
 
+/** Active group memberships vs `group_forming_max_active_memberships`. */
+function fetchMyGroupMembershipLimit() {
+  return fetchJsonAuth("/listings/group-forming/membership-limit");
+}
+
 function fetchUserConversations({ page = 1, limit = 50 } = {}) {
   return fetchJsonAuth("/conversations", { params: { page, limit } });
 }
@@ -1887,6 +1892,7 @@ Object.assign(window.UyDosh, {
   fetchListingGroupMembers,
   leaveListingGroup,
   removeListingGroupMember,
+  fetchMyGroupMembershipLimit,
   fetchUserConversations,
   fetchConversation,
   fetchConversationMembers,

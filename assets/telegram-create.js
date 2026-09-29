@@ -3711,6 +3711,18 @@ async function boot() {
       await loadListingForEdit(state.editingListingId);
     } else {
       if (params.get('type') === 'group_forming') {
+        try {
+          const membership = await UyDosh.fetchMyGroupMembershipLimit();
+          const activeCount = Number(membership?.activeCount);
+          const limit = Number(membership?.limit);
+          if (Number.isFinite(activeCount) && Number.isFinite(limit) && activeCount >= limit) {
+            loadingEl.classList.add('error');
+            loadingEl.textContent = UyDosh.t('account.groupLimitReached', UyDosh.getLang());
+            return;
+          }
+        } catch (err) {
+          console.warn('Could not check group membership limit', err);
+        }
         state.form.listingTypeId = LISTING_TYPE_GROUP_FORMING;
         // Use the saved profile gender; let users choose if none is available.
         state.form.gender = null;

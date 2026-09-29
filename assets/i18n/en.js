@@ -142,6 +142,7 @@ I18N.en = {
     'discovery.rating.close': "Close",
     'discovery.rating.star': "Rate {n} of 5",
     'account.createGroup': 'Create group',
+    'account.groupLimitReached': 'You are already in the maximum number of groups.',
     'detail.group.tabDescription': 'Group description',
     'detail.group.tabMembers': 'Group members',
     'detail.group.tabHousing': 'Housing options',

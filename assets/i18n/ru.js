@@ -142,6 +142,7 @@ I18N.ru = {
     'discovery.rating.close': "Закрыть",
     'discovery.rating.star': "Оценка {n} из 5",
     'account.createGroup': 'Создать группу',
+    'account.groupLimitReached': 'Вы уже участвуете в максимальном числе групп.',
     'detail.group.tabDescription': 'Описание группы',
     'detail.group.tabMembers': 'Участники группы',
     'detail.group.tabHousing': 'Варианты жилья',
