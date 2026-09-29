@@ -22,9 +22,11 @@ function listingDescriptionState(listing, fallback) {
 function listingDescriptionHtml(listing, fallback) {
   const model = listingDescriptionState(listing, fallback);
   return `<div class="map-section-extra map-section-description" data-description-section>
+    <div class="description-header">
     <h2>${UyDosh.escapeHtml(UyDosh.t('detail.description'))}</h2>
     <div class="description-languages" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.translation.label'))}" hidden>
       ${['original', 'uz', 'ru', 'en'].map(code => `<button type="button" data-description-language="${code}" aria-pressed="false">${code === 'original' ? UyDosh.escapeHtml(UyDosh.t('detail.translation.original')) : code.toUpperCase()}</button>`).join('')}
+    </div>
     </div>
     <div class="description">${UyDosh.escapeHtml(model.cache[model.selected])}</div>
     <p class="description-translation-status" role="status" aria-live="polite" hidden></p>
