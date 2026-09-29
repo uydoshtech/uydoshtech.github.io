@@ -26,7 +26,7 @@
   var base = thisScript && thisScript.src
     ? thisScript.src.replace(/uydosh-i18n\.js.*$/, 'i18n/')
     : 'assets/i18n/';
-  var version = window.UYDOSH_BUILD?.id || '20260929-shortlist-carousel';
+  var version = window.UYDOSH_BUILD?.id || '20260929-group-tabs';
   var canWrite = document.readyState === 'loading';
   langs.forEach(function (code) {
     var src = base + code + '.js?v=' + version;

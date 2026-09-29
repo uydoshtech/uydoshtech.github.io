@@ -207,6 +207,40 @@
         document.getElementById('retry')?.addEventListener('click', retry);
       }
 
+      let activeGroupTab = 'description';
+
+      function groupTabsHtml(panels) {
+        const labels = { description: 'detail.group.tabDescription', compatibility: 'compat.groupTitle', housing: 'detail.group.tabHousing' };
+        return `<div class="group-tabs" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.group.tabs'))}">
+          ${Object.keys(panels).map(key => `<button type="button" role="tab" id="group-tab-${key}" data-group-tab="${key}" aria-controls="group-panel-${key}" aria-selected="${activeGroupTab === key}" tabindex="${activeGroupTab === key ? 0 : -1}">${UyDosh.escapeHtml(UyDosh.t(labels[key]))}</button>`).join('')}
+        </div>${Object.entries(panels).map(([key, html]) => `<section class="group-tab-panel" role="tabpanel" id="group-panel-${key}" aria-labelledby="group-tab-${key}" tabindex="0" ${activeGroupTab === key ? '' : 'hidden'}>${html}</section>`).join('')}`;
+      }
+
+      function bindGroupTabs() {
+        const tabs = [...rootEl.querySelectorAll('[data-group-tab]')];
+        function select(tab) {
+          activeGroupTab = tab.dataset.groupTab;
+          for (const item of tabs) {
+            const selected = item === tab;
+            item.setAttribute('aria-selected', String(selected));
+            item.tabIndex = selected ? 0 : -1;
+            document.getElementById(item.getAttribute('aria-controls')).hidden = !selected;
+          }
+        }
+        tabs.forEach((tab, index) => {
+          tab.addEventListener('click', () => select(tab));
+          tab.addEventListener('keydown', event => {
+            const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length
+              : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length
+              : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null;
+            if (next == null) return;
+            event.preventDefault();
+            select(tabs[next]);
+            tabs[next].focus();
+          });
+        });
+      }
+
       function render() {
         stopGalleryAutoplay();
         const l = state.listing;
@@ -336,6 +370,15 @@
         // `ownerToolbarHtml`'s "..." menu, so this avoids showing two edit entry points.
         const isAdminViewer = isAdmin && !isOwner;
 
+        const isGroupPage = Boolean(listingGroupContext(l)) || Number(listingTypeId) === 3;
+        const compatibilityHtml = isGroupPage && !isGroupCompatListing(l) ? '' : compatibilityTileHtml(l, isOwner);
+        const discoveryHtml = UyDoshListingDiscovery.html(l);
+        const contentHtml = isGroupPage ? groupTabsHtml({
+          description: `${groupSectionHtml(l)}${roomScanHtml}${descHtml}${mapHtml}${metaHtml}`,
+          compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.compatUnavailable'))}</p>`,
+          housing: discoveryHtml || `<p class="discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.housingUnavailable'))}</p>`,
+        }) : `${groupSectionHtml(l)}${roomScanHtml}${compatibilityHtml}${descHtml}${mapHtml}${discoveryHtml}${metaHtml}`;
+
         rootEl.innerHTML = `
           ${ownerToolbarHtml(isOwner, l.id, {
             hasRoomScan: Boolean(l.room_scan_glb_url),
@@ -356,14 +399,8 @@
               <div class="title-row">
                 <h1>${title}</h1>
               </div>
-              ${groupSectionHtml(l)}
               ${isOwner ? '' : claimBannerHtml()}
-              ${roomScanHtml}
-              ${compatibilityTileHtml(l, isOwner)}
-              ${descHtml}
-              ${mapHtml}
-              ${UyDoshListingDiscovery.html(l)}
-              ${metaHtml}
+              ${contentHtml}
               <div class="cta-row app-cta-row">
                 <a class="btn primary" href="uydosh://listing/${encodeURIComponent(l.id)}" data-i18n="detail.openInApp">${UyDosh.escapeHtml(UyDosh.t('detail.openInApp'))}</a>
                 <a class="btn" href="${APK_URL}" download="uydosh.apk" data-i18n="detail.downloadApk">${UyDosh.escapeHtml(UyDosh.t('detail.downloadApk'))}</a>
@@ -373,6 +410,7 @@
           </div>
         `;
 
+        bindGroupTabs();
         UyDoshListingDiscovery.bind(l);
         bindListingDescription(l);
         bindGallery();
