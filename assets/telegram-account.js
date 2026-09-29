@@ -33,6 +33,8 @@ const tabButtons = Array.from(document.querySelectorAll('[data-account-tab]'));
 const TAB_MINE = 'mine';
 const TAB_GROUPS = 'groups';
 const TAB_FAVORITES = 'favorites';
+const TAB_FOLLOWS = 'follows';
+const FOLLOWS_PAGE_SIZE = 50;
 
 function listingLooksGroupForming(listing) {
   const typeId = Number(listing?.listing_type_id ?? listing?.listing_type?.id);
@@ -45,6 +47,7 @@ function initialTabFromUrl() {
   try {
     const tab = new URLSearchParams(window.location.search).get('tab');
     if (tab === TAB_FAVORITES) return TAB_FAVORITES;
+    if (tab === TAB_FOLLOWS) return TAB_FOLLOWS;
     if (tab === TAB_MINE) return TAB_MINE;
     return TAB_GROUPS;
   } catch {
@@ -70,6 +73,21 @@ const state = {
   // False until GET /listings/group-forming/membership-limit says the user is
   // under group_forming_max_active_memberships. Owners count as participants.
   canCreateGroup: false,
+  followsSegment: 'following',
+  following: [],
+  followers: [],
+  followingTotal: 0,
+  followersTotal: 0,
+  followingPage: 0,
+  followersPage: 0,
+  followingPages: 0,
+  followersPages: 0,
+  followsError: false,
+  followsUnavailable: false,
+  followsLoaded: false,
+  followsLoading: false,
+  followToggleId: 0,
+  followNote: '',
 };
 
 function statusBadgeHtml(listing, lang) {
@@ -638,6 +656,7 @@ function renderActiveTab() {
   syncCreateGroupAction();
   if (state.activeTab === TAB_FAVORITES) renderFavorites();
   else if (state.activeTab === TAB_GROUPS) renderGroups();
+  else if (state.activeTab === TAB_FOLLOWS) renderFollows();
   else renderMine();
 }
 
@@ -649,7 +668,9 @@ function updateHeaderSubtitle(tab) {
     ? 'account.tabs.favorites'
     : tab === TAB_GROUPS
       ? 'account.tabs.groups'
-      : 'account.subtitle';
+      : tab === TAB_FOLLOWS
+        ? 'account.followsTitle'
+        : 'account.subtitle';
   subtitleEl.setAttribute('data-i18n', key);
   subtitleEl.textContent = UyDosh.t(key, UyDosh.getLang());
 }
@@ -661,6 +682,7 @@ function setActiveTab(tab) {
     btn.setAttribute('aria-selected', btn.getAttribute('data-account-tab') === tab ? 'true' : 'false');
   }
   updateHeaderSubtitle(tab);
+  if (tab === TAB_FOLLOWS && !state.followsLoaded && !state.followsLoading) loadFollows();
   renderActiveTab();
 }
 
@@ -699,6 +721,201 @@ async function loadFavorites() {
   } catch (err) {
     console.error('Failed to load favorites', err);
     state.favoritesError = true;
+  }
+}
+
+function readFollowPage(payload) {
+  const users = Array.isArray(payload?.users) ? payload.users : [];
+  const total = Number(payload?.total);
+  return {
+    users,
+    total: Number.isFinite(total) ? total : users.length,
+    page: Number(payload?.page) || (users.length ? 1 : 0),
+    totalPages: Number(payload?.totalPages) || 0,
+  };
+}
+
+function mergeFollowUsers(current, incoming) {
+  const seen = new Set(current.map((user) => Number(user.userId)));
+  const next = current.slice();
+  for (const user of incoming) {
+    const id = Number(user?.userId);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    next.push(user);
+  }
+  return next;
+}
+
+async function loadFollows({ segment = null, page = 1 } = {}) {
+  if (state.followsLoading) return;
+  state.followsLoading = true;
+  state.followsError = false;
+  if (page === 1 && !segment) {
+    state.followsUnavailable = false;
+  }
+  if (state.activeTab === TAB_FOLLOWS) renderFollows();
+  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+  const me = Number(UyDosh.getSessionUserId());
+  if (!sessionReady || !me) {
+    state.followsUnavailable = true;
+    state.followsLoading = false;
+    if (state.activeTab === TAB_FOLLOWS) renderFollows();
+    return;
+  }
+  try {
+    const wantFollowing = !segment || segment === 'following';
+    const wantFollowers = !segment || segment === 'followers';
+    const [following, followers] = await Promise.all([
+      wantFollowing ? UyDosh.fetchFollowing(me, { page, limit: FOLLOWS_PAGE_SIZE }) : null,
+      wantFollowers ? UyDosh.fetchFollowers(me, { page, limit: FOLLOWS_PAGE_SIZE }) : null,
+    ]);
+    if (following) {
+      const parsed = readFollowPage(following);
+      state.following = page > 1 ? mergeFollowUsers(state.following, parsed.users) : parsed.users;
+      state.followingTotal = parsed.total;
+      state.followingPage = parsed.page;
+      state.followingPages = parsed.totalPages;
+    }
+    if (followers) {
+      const parsed = readFollowPage(followers);
+      state.followers = page > 1 ? mergeFollowUsers(state.followers, parsed.users) : parsed.users;
+      state.followersTotal = parsed.total;
+      state.followersPage = parsed.page;
+      state.followersPages = parsed.totalPages;
+    }
+    state.followsLoaded = true;
+  } catch (err) {
+    console.error('Failed to load follows', err);
+    if (page === 1 && !segment) state.followsError = true;
+  } finally {
+    state.followsLoading = false;
+    if (state.activeTab === TAB_FOLLOWS) renderFollows();
+  }
+}
+
+function applyFollowChange(userId, isFollowing) {
+  const id = Number(userId);
+  const follower = state.followers.find((user) => Number(user.userId) === id);
+  const following = state.following.find((user) => Number(user.userId) === id);
+  if (follower) follower.isFollowing = isFollowing;
+  if (isFollowing) {
+    if (following) following.isFollowing = true;
+    else if (follower) {
+      state.following.unshift({ ...follower, isFollowing: true });
+      state.followingTotal += 1;
+    }
+    return;
+  }
+  if (following) {
+    state.following = state.following.filter((user) => Number(user.userId) !== id);
+    state.followingTotal = Math.max(0, state.followingTotal - 1);
+  }
+}
+
+function followAvatarHtml(user) {
+  const name = String(user?.name || '').trim();
+  const letter = Array.from(name)[0] || '?';
+  const raw = user?.avatarUrl || '';
+  const url = raw && typeof UyDosh.photoUrl === 'function' ? UyDosh.photoUrl(raw) : raw;
+  const img = url
+    ? `<img src="${UyDosh.escapeHtml(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove();" />`
+    : '';
+  return `<span class="follow-avatar" aria-hidden="true"><span>${UyDosh.escapeHtml(letter.toUpperCase())}</span>${img}</span>`;
+}
+
+function followRowHtml(user, lang) {
+  const id = Number(user?.userId);
+  const name = String(user?.name || '').trim() || UyDosh.t('complaints.anonymous', lang);
+  const backTo = `${UyDosh.MINI_APP_ACCOUNT_PATH}?tab=follows`;
+  const href = UyDosh.escapeHtml(UyDosh.profilePageUrl(id, { backTo }));
+  const following = user?.isFollowing === true;
+  const busy = state.followToggleId === id;
+  return `
+    <article class="follow-row">
+      <a class="follow-row-link" href="${href}">
+        ${followAvatarHtml(user)}
+        <span class="follow-name">${UyDosh.escapeHtml(name)}</span>
+      </a>
+      <button type="button" class="follow-btn${following ? ' is-on' : ''}" data-follow-toggle="${id}" ${busy ? 'disabled' : ''}>
+        ${UyDosh.escapeHtml(UyDosh.t(following ? 'profile.following' : 'profile.follow', lang))}
+      </button>
+    </article>`;
+}
+
+function renderFollows() {
+  const lang = UyDosh.getLang();
+  if (state.followsUnavailable || state.authError) {
+    showEmpty(UyDosh.t('create.errorAuth', lang));
+    return;
+  }
+  if (state.followsError) {
+    showEmpty(UyDosh.t('feed.error', lang));
+    return;
+  }
+  if (!state.followsLoaded && state.followsLoading) {
+    showList('<div class="gp-loading" aria-busy="true"><span class="loading-spinner" aria-hidden="true"></span></div>');
+    return;
+  }
+  const segment = state.followsSegment === 'followers' ? 'followers' : 'following';
+  const people = segment === 'followers' ? state.followers : state.following;
+  const total = segment === 'followers' ? state.followersTotal : state.followingTotal;
+  const page = segment === 'followers' ? state.followersPage : state.followingPage;
+  const pages = segment === 'followers' ? state.followersPages : state.followingPages;
+  const switchHtml = `
+    <div class="follows-switch" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.followsTitle', lang))}">
+      <button type="button" role="tab" data-follows-segment="following" aria-selected="${segment === 'following' ? 'true' : 'false'}">
+        ${UyDosh.escapeHtml(UyDosh.t('account.follows.following', lang))}
+        <span class="follows-count">${state.followingTotal}</span>
+      </button>
+      <button type="button" role="tab" data-follows-segment="followers" aria-selected="${segment === 'followers' ? 'true' : 'false'}">
+        ${UyDosh.escapeHtml(UyDosh.t('account.follows.followers', lang))}
+        <span class="follows-count">${state.followersTotal}</span>
+      </button>
+    </div>`;
+  const emptyKey = segment === 'followers' ? 'account.follows.emptyFollowers' : 'account.follows.emptyFollowing';
+  const rows = people.map((user) => followRowHtml(user, lang)).join('');
+  const empty = people.length ? '' : `<p class="follows-empty">${UyDosh.escapeHtml(UyDosh.t(emptyKey, lang))}</p>`;
+  const more = page < pages
+    ? `<button type="button" class="follows-more" data-follows-more="${segment}" ${state.followsLoading ? 'disabled' : ''}>${UyDosh.escapeHtml(UyDosh.t('account.follows.more', lang))}</button>`
+    : '';
+  const note = state.followNote
+    ? `<p class="follows-note" role="status">${UyDosh.escapeHtml(state.followNote)}</p>`
+    : '';
+  showList(`${switchHtml}${note}${rows || empty}${more}`);
+  for (const button of listEl.querySelectorAll('[data-follows-segment]')) {
+    button.addEventListener('click', () => {
+      const next = button.getAttribute('data-follows-segment');
+      if (next !== 'following' && next !== 'followers') return;
+      if (state.followsSegment === next) return;
+      state.followsSegment = next;
+      state.followNote = '';
+      UyDosh.haptic?.selection?.();
+      renderFollows();
+    });
+  }
+  listEl.querySelector('[data-follows-more]')?.addEventListener('click', () => {
+    loadFollows({ segment, page: page + 1 });
+  });
+  for (const button of listEl.querySelectorAll('[data-follow-toggle]')) {
+    button.addEventListener('click', async () => {
+      const id = Number(button.getAttribute('data-follow-toggle'));
+      if (!id || state.followToggleId) return;
+      state.followToggleId = id;
+      state.followNote = '';
+      renderFollows();
+      try {
+        const result = await UyDosh.toggleFollow(id);
+        applyFollowChange(id, result?.isFollowing === true);
+        state.followToggleId = 0;
+        renderFollows();
+      } catch (err) {
+        console.error('Failed to toggle follow', err);
+        state.followToggleId = 0;
+        state.followNote = UyDosh.t('account.follows.error', lang);
+        renderFollows();
+      }
+    });
   }
 }
 
@@ -753,7 +970,9 @@ async function boot() {
   // initData directly — so it still degrades to its own `myListingsError`
   // state in that case, independent of Favorites.)
 
-  await Promise.all([loadMyListings(), loadFavorites(), loadGroupChats()]);
+  const startup = [loadMyListings(), loadFavorites(), loadGroupChats()];
+  if (state.activeTab === TAB_FOLLOWS) startup.push(loadFollows());
+  await Promise.all(startup);
   await Promise.all([loadMemberGroupListings(), loadGroupCreateEligibility()]);
   loadingEl.hidden = true;
   renderActiveTab();

@@ -1318,6 +1318,18 @@ function toggleFollow(userId) {
   return fetchJsonAuth(`/follows/toggle/${encodeURIComponent(userId)}`, { method: "PUT" });
 }
 
+function fetchFollowing(userId, { page = 1, limit = 50 } = {}) {
+  return fetchJsonAuth(`/follows/following/${encodeURIComponent(userId)}`, {
+    params: { page, limit },
+  });
+}
+
+function fetchFollowers(userId, { page = 1, limit = 50 } = {}) {
+  return fetchJsonAuth(`/follows/followers/${encodeURIComponent(userId)}`, {
+    params: { page, limit },
+  });
+}
+
 /**
  * Partial profile update (only the fields set are changed). Note: per the
  * backend's update handler, `university_id: 0` clears the university —
@@ -1937,6 +1949,8 @@ Object.assign(window.UyDosh, {
   fetchProfile,
   checkIfFollowing,
   toggleFollow,
+  fetchFollowing,
+  fetchFollowers,
   updateProfile,
   fetchUniversitiesAll,
   fetchRegionsAll,
