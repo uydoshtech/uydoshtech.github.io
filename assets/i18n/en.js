@@ -3,6 +3,8 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    "discovery.previousOption": "Previous option",
+    "discovery.nextOption": "Next option",
     "profile.number.decrease": "Decrease",
     "profile.number.increase": "Increase",
     "location.allTashkent": "All of Tashkent",

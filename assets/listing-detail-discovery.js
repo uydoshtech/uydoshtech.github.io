@@ -127,11 +127,14 @@
   }
   function bindShortlist(group, details) {
     const body = details.querySelector('[data-shortlist-body]');
-    let loaded = false, busy = false, page = 0, pages = 1, items = [];
+    let loaded = false, busy = false, page = 0, pages = 1, items = [], activeIndex = 0;
     const back = detailUrl(group.id) + '#group-shortlist';
     function paint(message = '') {
       if (!details.isConnected) return;
-      body.innerHTML = `<p role="status">${e(message)}</p>${items.map(item => {
+      activeIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
+      body.innerHTML = `<p role="status">${e(message)}</p>
+      ${items.length > 1 ? `<div class="shortlist-carousel-controls"><button type="button" class="btn" data-shortlist-prev aria-label="${e(t('previousOption'))}">‹</button><span data-shortlist-position aria-live="polite"></span><button type="button" class="btn" data-shortlist-next aria-label="${e(t('nextOption'))}">›</button></div>` : ''}
+      <div class="shortlist-carousel" data-shortlist-carousel tabindex="0" aria-label="${e(t('shortlist'))}">${items.map(item => {
         const listing = item.listing;
         const title = listing ? (listing.title || `#${listing.id}`) : t('unavailable');
         const budget = listing ? D.budget(group, listing) : null;
@@ -153,9 +156,38 @@
             </div>
           </div>
         </article>`;
-      }).join('')}
+      }).join('')}</div>
       ${loaded && !items.length ? `<p>${e(t('empty'))}</p>` : ''}
       ${!loaded || page < pages ? `<button class="btn" type="button" data-shortlist-more ${busy ? 'disabled' : ''}>${e(t(loaded ? 'more' : 'retry'))}</button>` : ''}`;
+      const carousel = body.querySelector('[data-shortlist-carousel]');
+      const prev = body.querySelector('[data-shortlist-prev]');
+      const next = body.querySelector('[data-shortlist-next]');
+      const position = body.querySelector('[data-shortlist-position]');
+      const step = () => carousel.clientWidth + 12;
+      function updateControls() {
+        if (prev) prev.disabled = activeIndex === 0;
+        if (next) next.disabled = activeIndex >= items.length - 1;
+        if (position) position.textContent = `${activeIndex + 1} / ${items.length}`;
+      }
+      function move(delta) {
+        activeIndex = Math.max(0, Math.min(items.length - 1, activeIndex + delta));
+        carousel.scrollTo({ left: activeIndex * step(), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+        updateControls();
+      }
+      carousel.scrollLeft = activeIndex * step();
+      updateControls();
+      carousel.addEventListener('scroll', () => {
+        activeIndex = Math.max(0, Math.min(items.length - 1, Math.round(carousel.scrollLeft / step())));
+        updateControls();
+      }, { passive: true });
+      carousel.addEventListener('keydown', event => {
+        if (event.target !== carousel) return;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault(); move(event.key === 'ArrowLeft' ? -1 : 1);
+        }
+      });
+      prev?.addEventListener('click', () => move(-1));
+      next?.addEventListener('click', () => move(1));
       body.querySelector('[data-shortlist-more]')?.addEventListener('click', loadMore);
       for (const button of body.querySelectorAll('[data-shortlist-remove]')) {
         button.addEventListener('click', async () => {

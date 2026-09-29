@@ -4,6 +4,8 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    "discovery.previousOption": "Oldingi variant",
+    "discovery.nextOption": "Keyingi variant",
     "profile.number.decrease": "Kamaytirish",
     "profile.number.increase": "Oshirish",
     "location.allTashkent": "Butun Toshkent",
