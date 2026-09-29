@@ -1118,20 +1118,46 @@ header {
   position: absolute;
   top: 8px;
   left: 8px;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  padding: 5px 10px;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  padding: 3px 10px 3px 3px;
   border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--badge-type-color, var(--stroke)) 75%, transparent);
+  color: #fff;
+  background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 34%, rgba(8, 10, 14, 0.82));
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.01em;
   line-height: 1.15;
-  border: 1.5px solid var(--badge-type-color, var(--stroke));
-  color: #fff;
-  background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 68%, rgba(8, 10, 14, 0.92));
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+}
+.type-badge-glyph {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--badge-type-color, var(--stroke));
+  background: color-mix(in srgb, var(--badge-type-color, var(--muted)) 28%, rgba(8, 10, 14, 0.45));
+}
+.type-badge-glyph .chip-icon,
+.type-badge-glyph .chip-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.type-badge-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 /* When a listing is also featured, that ribbon already claims the
    top-left corner — stack the type badge underneath it instead of

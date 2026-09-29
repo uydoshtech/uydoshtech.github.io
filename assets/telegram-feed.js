@@ -1305,8 +1305,9 @@ function listingCardHtml(listing) {
     ? `<div class="featured-badge">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</div>`
     : '';
   const typeStyle = typeColor ? ` style="--badge-type-color:${typeColor}"` : '';
+  const typeIcon = UyDosh.listingTypeBadgeIcon(listing);
   const typeBadge = typeName
-    ? `<div class="type-badge"${typeStyle}>${UyDosh.escapeHtml(typeName)}</div>`
+    ? `<span class="type-badge" data-type="${Number(listingTypeId) || ''}"${typeStyle}>${typeIcon ? `<span class="type-badge-glyph">${typeIcon}</span>` : ''}<span class="type-badge-label">${UyDosh.escapeHtml(typeName)}</span></span>`
     : '';
   const amenityRow = UyDosh.amenityIconsRowHtml(listing.amenities, lang);
   const posted = listing.created_at
@@ -1519,7 +1520,8 @@ function hostelCardHtml(hostel) {
   const price = hostelMinPrice(hostel);
   const beds = hostelFreeBeds(hostel);
   const address = UyDosh.escapeHtml(hostel?.address || 'Ташкент');
-  const typeBadge = `<div class="type-badge" style="--badge-type-color:#a78bfa">${UyDosh.escapeHtml(UyDosh.t('filter.type.hostels', lang))}</div>`;
+  const hostelTypeLabel = UyDosh.escapeHtml(UyDosh.t('filter.type.hostels', lang));
+  const typeBadge = `<span class="type-badge" data-type="4" style="--badge-type-color:#a78bfa"><span class="type-badge-glyph">${UyDosh.filterListingTypeIcon(4)}</span><span class="type-badge-label">${hostelTypeLabel}</span></span>`;
   const thumb = `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${typeBadge}</div>`;
   const priceHtml = price
     ? `<div class="price">${UyDosh.escapeHtml(new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US').format(price))}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></div>`
