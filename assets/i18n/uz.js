@@ -494,6 +494,7 @@ I18N.uz = {
     'account.follows.emptyFollowers': 'Hali obunachilaringiz yo‘q.',
     'account.follows.more': 'Yana ko‘rsatish',
     'account.follows.error': 'Obunani yangilab bo‘lmadi. Qayta urinib ko‘ring.',
+    'account.follows.unfollowConfirm': '{name}dan obunani bekor qilasizmi?',
     'account.empty': 'Sizda hali e’lonlar yo‘q.',
     'account.groupsEmpty': 'Sizda hali guruh e’lonlari yo‘q.',
     'account.favoritesEmpty': 'Sizda hali sevimli e’lonlar yo‘q.',

@@ -901,6 +901,14 @@ function renderFollows() {
     button.addEventListener('click', async () => {
       const id = Number(button.getAttribute('data-follow-toggle'));
       if (!id || state.followToggleId) return;
+      const person = [...state.following, ...state.followers].find((user) => Number(user.userId) === id);
+      if (person?.isFollowing === true) {
+        const name = String(person.name || '').trim() || UyDosh.t('complaints.anonymous', lang);
+        const confirmed = await confirmDestructiveAction(
+          UyDosh.t('account.follows.unfollowConfirm', lang).replace('{name}', name),
+        );
+        if (!confirmed || state.followToggleId) return;
+      }
       state.followToggleId = id;
       state.followNote = '';
       renderFollows();

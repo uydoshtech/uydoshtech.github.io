@@ -493,6 +493,7 @@ I18N.ru = {
     'account.follows.emptyFollowers': 'У вас пока нет подписчиков.',
     'account.follows.more': 'Показать ещё',
     'account.follows.error': 'Не удалось обновить подписку. Попробуйте ещё раз.',
+    'account.follows.unfollowConfirm': 'Отписаться от {name}?',
     'account.empty': 'У вас пока нет объявлений.',
     'account.groupsEmpty': 'У вас пока нет групп.',
     'account.favoritesEmpty': 'У вас пока нет избранных объявлений.',

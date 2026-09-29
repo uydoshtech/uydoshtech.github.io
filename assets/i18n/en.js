@@ -493,6 +493,7 @@ I18N.en = {
     'account.follows.emptyFollowers': 'You don’t have any followers yet.',
     'account.follows.more': 'Show more',
     'account.follows.error': 'Could not update the follow. Please try again.',
+    'account.follows.unfollowConfirm': 'Unfollow {name}?',
     'account.empty': "You don't have any listings yet.",
     'account.groupsEmpty': "You don't have any group listings yet.",
     'account.favoritesEmpty': "You don't have any favorite listings yet.",
