@@ -219,7 +219,68 @@ function listingCardHtml(share) {
   `;
 }
 
-function messageHtml(message, { showDay }) {
+function messageReaderIds(message) {
+  if (Array.isArray(message?.read_by)) return message.read_by;
+  const rows = Array.isArray(message?.read_statuses) ? message.read_statuses : [];
+  return rows.map((row) => row?.user_id);
+}
+
+function readerPerson(userId) {
+  const id = Number(userId);
+  const member = state.membersById.get(id);
+  if (member) return member;
+  const listed = (state.conversation?.members || []).find((row) => Number(row?.user_id) === id);
+  if (listed) return listed;
+  if (id && id !== myUserId() && state.conversation?.other_user_name) {
+    return {
+      name: state.conversation.other_user_name,
+      avatar_url: state.conversation.other_user_avatar || '',
+    };
+  }
+  return null;
+}
+
+function readReceiptAnchors() {
+  const me = myUserId();
+  const latest = new Map();
+  for (const message of state.messages) {
+    if (String(message?.message_type || 'text').toLowerCase() === 'system') continue;
+    const messageId = Number(message?.id);
+    if (!messageId) continue;
+    const readers = messageReaderIds(message);
+    for (const raw of readers) {
+      const userId = Number(raw);
+      if (!userId || userId === me || userId === Number(message.sender_id)) continue;
+      if (messageId >= (latest.get(userId) || 0)) latest.set(userId, messageId);
+    }
+  }
+  const byMessage = new Map();
+  for (const [userId, messageId] of latest) {
+    const list = byMessage.get(messageId) || [];
+    list.push(userId);
+    byMessage.set(messageId, list);
+  }
+  return byMessage;
+}
+
+function readerAvatarHtml(userId) {
+  const member = readerPerson(userId);
+  const name = headerFirstName(member?.name);
+  const url = member?.avatar_url || '';
+  const letter = UyDosh.escapeHtml(Array.from(name)[0]?.toUpperCase() || '');
+  const inner = url
+    ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+    : letter;
+  const label = UyDosh.escapeHtml(name || String(userId));
+  return `<span class="chat-read-avatar" title="${label}" aria-label="${label}">${inner}</span>`;
+}
+
+function readAvatarsHtml(userIds) {
+  if (!userIds?.length) return '';
+  return `<div class="chat-read-avatars">${userIds.map((id) => readerAvatarHtml(id)).join('')}</div>`;
+}
+
+function messageHtml(message, { showDay, readers = [] }) {
   const type = message.message_type || 'text';
   const mine = Number(message.sender_id) === myUserId();
   const share = parseListingShare(message.content);
@@ -238,11 +299,14 @@ function messageHtml(message, { showDay }) {
   const row = `
     <div class="chat-bubble-row${mine ? ' mine' : ''}" data-message-id="${UyDosh.escapeHtml(String(message.id))}">
       <span class="chat-avatar" aria-hidden="true">${senderAvatar(message)}</span>
-      <div class="chat-bubble">
-        ${!mine && name ? `<div class="chat-sender">${UyDosh.escapeHtml(name)}</div>` : ''}
-        ${quoteHtml(message, mine)}
-        ${body}
-        <span class="chat-time">${UyDosh.escapeHtml(formatTime(message.created_at))}</span>
+      <div class="chat-bubble-col">
+        <div class="chat-bubble">
+          ${!mine && name ? `<div class="chat-sender">${UyDosh.escapeHtml(name)}</div>` : ''}
+          ${quoteHtml(message, mine)}
+          ${body}
+          <span class="chat-time">${UyDosh.escapeHtml(formatTime(message.created_at))}</span>
+        </div>
+        ${readAvatarsHtml(readers)}
       </div>
     </div>
   `;
@@ -276,9 +340,13 @@ function renderThread({ stick } = {}) {
   const shouldStick = stick || nearBottom();
   const rows = [];
   let lastDay = '';
+  const receipts = readReceiptAnchors();
   for (const message of state.messages) {
     const day = dayKey(message.created_at);
-    rows.push(messageHtml(message, { showDay: day && day !== lastDay }));
+    rows.push(messageHtml(message, {
+      showDay: day && day !== lastDay,
+      readers: receipts.get(Number(message.id)) || [],
+    }));
     lastDay = day;
   }
   if (!rows.length) {
@@ -292,7 +360,12 @@ function renderThread({ stick } = {}) {
   }
 }
 
+function readByKey(message) {
+  return messageReaderIds(message).map(Number).filter((id) => id > 0).sort((a, b) => a - b).join(',');
+}
+
 function mergeMessages(incoming, { prepend = false } = {}) {
+  const before = state.messages.map((message) => `${message.id}:${readByKey(message)}`).join('|');
   const byId = new Map(state.messages.map((m) => [m.id, m]));
   for (const message of incoming) {
     if (message?.id != null) byId.set(message.id, message);
@@ -300,8 +373,9 @@ function mergeMessages(incoming, { prepend = false } = {}) {
   const next = Array.from(byId.values()).sort((a, b) => Number(a.id) - Number(b.id));
   const grew = next.length > state.messages.length
     || (next.at(-1)?.id !== state.messages.at(-1)?.id);
+  const readsChanged = before !== next.map((message) => `${message.id}:${readByKey(message)}`).join('|');
   state.messages = next;
-  return grew || prepend;
+  return grew || prepend || readsChanged;
 }
 
 function unwrapMessages(payload) {
