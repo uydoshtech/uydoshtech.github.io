@@ -1585,6 +1585,9 @@ function listingGroupPath(listingId, suffix) {
   return `/listings/${encodeURIComponent(listingId)}/group${suffix}`;
 }
 
+function fetchGroupShortlistCount(groupId) {
+  return fetchJsonAuth(listingGroupPath(groupId, "/shortlist/count"));
+}
 function fetchGroupShortlist(groupId, page = 1) {
   return fetchJsonAuth(listingGroupPath(groupId, "/shortlist"), {
     params: { page, limit: 50, language: getLang() },
@@ -1902,6 +1905,7 @@ Object.assign(window.UyDosh, {
   createListingGroupJoinRequest,
   fetchListingGroupJoinRequests,
   fetchGroupShortlist,
+  fetchGroupShortlistCount,
   checkGroupShortlist,
   toggleGroupShortlist,
   removeGroupShortlist,

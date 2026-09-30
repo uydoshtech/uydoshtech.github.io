@@ -140,8 +140,8 @@
        * `ListingDetailScreen._buildActionMenuItems`, and the edit/delete row actions
        * in `telegram-account.js`) sits in the same row, pinned to the far right corner.
        */
-      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false, isAdmin = false, isActive = true } = {}) {
-        if (!isOwner) return '';
+      function ownerToolbarHtml(isOwner, listingId, { hasRoomScan = false, isAdmin = false, isActive = true, includeShare = false } = {}) {
+        if (!isOwner && !includeShare) return '';
         const editHref = `/telegram/create.html?id=${encodeURIComponent(listingId)}`;
         // Replace scan only when a GLB already exists; the empty-state add card
         // on the detail body covers first-time scans (see buildOwnerAddRoomScanHtml).
@@ -157,6 +157,19 @@
                   <span>${UyDosh.escapeHtml(UyDosh.t('detail.replaceRoomScan'))}</span>
                 </button>`
           : '';
+        // Same circle as the kebab. `iconShare(null)` skips the white default so
+        // the glyph inherits the button color (the photo share button stays white).
+        const shareButton = includeShare
+          ? `<button type="button" class="owner-menu-btn owner-toolbar-share" data-share-listing aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.share'))}">
+              ${UyDosh.iconShare(null)}
+            </button>`
+          : '';
+        if (!isOwner) {
+          return `
+          <div class="owner-toolbar-row">
+            <div class="owner-toolbar-actions">${shareButton}</div>
+          </div>`;
+        }
         return `
           <div class="owner-toolbar-row">
             <div class="owner-toolbar" data-owner-toolbar>
@@ -165,7 +178,9 @@
                 <span class="owner-toolbar-spinner" aria-hidden="true"></span>
               </span>
             </div>
-            <div class="owner-menu" data-owner-menu>
+            <div class="owner-toolbar-actions">
+              ${shareButton}
+              <div class="owner-menu" data-owner-menu>
               <button
                 type="button"
                 class="owner-menu-btn"
@@ -189,6 +204,7 @@
                   <span>${UyDosh.escapeHtml(UyDosh.t('account.delete'))}</span>
                 </button>
               </div>
+            </div>
             </div>
           </div>
         `;

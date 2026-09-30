@@ -293,13 +293,20 @@ function accountAvatarStackHtml(people) {
     + (extra > 0 ? `<span class="account-participants-avatar account-participants-more">+${extra}</span>` : '');
 }
 
+function housingOptionsCount(listing) {
+  const raw = listing?.group_shortlist_count ?? listing?.group_context?.group_shortlist_count;
+  if (raw == null || raw === '') return null;
+  const count = Number(raw);
+  return Number.isInteger(count) && count >= 0 ? count : null;
+}
+
 function housingOptionsRowHtml(listing) {
   const lang = UyDosh.getLang();
   const href = UyDosh.escapeHtml(
     `${UyDosh.listingPageUrl(listing.id, { backTo: UyDosh.MINI_APP_GROUPS_PATH })}#group-shortlist`,
   );
-  const count = Number(listing?.group_context?.group_shortlist_count ?? listing?.group_shortlist_count);
-  const countLabel = Number.isInteger(count) && count >= 0 ? ` · ${count}` : '';
+  const count = housingOptionsCount(listing);
+  const countLabel = count == null ? '' : ` · ${count}`;
   return `
         <a class="account-participants-pill account-housing-pill" href="${href}" data-haptic="selection">
           <span class="account-housing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/></svg></span>
@@ -987,6 +994,21 @@ async function loadMemberGroupListings() {
   state.memberGroupListings = fetched.filter(Boolean);
 }
 
+async function loadHousingOptionCounts() {
+  const listings = [...groupListings(), ...(state.memberGroupListings || [])]
+    .filter((listing) => housingOptionsCount(listing) == null && Number(listing?.id) > 0);
+  if (!listings.length || typeof UyDosh.fetchGroupShortlistCount !== 'function') return;
+  await Promise.all(listings.map(async (listing) => {
+    try {
+      const result = await UyDosh.fetchGroupShortlistCount(listing.id);
+      const count = Number(result?.count);
+      if (Number.isInteger(count) && count >= 0) listing.group_shortlist_count = count;
+    } catch (err) {
+      console.error('Failed to load housing option count', listing.id, err);
+    }
+  }));
+}
+
 async function loadGroupChats() {
   const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
   if (!sessionReady) return;
@@ -1023,6 +1045,7 @@ async function boot() {
   if (state.activeTab === TAB_FOLLOWS) startup.push(loadFollows());
   await Promise.all(startup);
   await Promise.all([loadMemberGroupListings(), loadGroupCreateEligibility()]);
+  await loadHousingOptionCounts();
   loadingEl.hidden = true;
   renderActiveTab();
 }

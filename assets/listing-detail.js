@@ -164,6 +164,18 @@
       const params = new URLSearchParams(location.search);
       const listingId = params.get('id');
 
+      /** True when this listing was opened from Моё → Группы (`back` is that tab). */
+      function openedFromMyGroups() {
+        let back = '';
+        try {
+          back = new URLSearchParams(location.search).get('back') || '';
+        } catch {
+          /* ignore */
+        }
+        const groups = UyDosh.MINI_APP_GROUPS_PATH || '/telegram/account.html?tab=groups';
+        return back === groups;
+      }
+
       if (listingId && !UyDosh.isMiniApp()) {
         UyDosh.tryOpenListingInApp(listingId);
       }
@@ -220,6 +232,9 @@
       }
 
       let activeGroupTab = 'description';
+      // The Groups card links here with #group-shortlist. That section lives
+      // inside the housing panel, which stays hidden until this tab is selected.
+      let openHousingTabFromHash = location.hash === '#group-shortlist';
 
       function groupTabsHtml(panels) {
         const labels = { description: 'detail.group.tabDescription', compatibility: 'detail.group.tabMembers', housing: 'detail.group.tabHousing' };
@@ -419,6 +434,15 @@
         const isAdminViewer = isAdmin && !isOwner;
 
         const isGroupPage = Boolean(listingGroupContext(l)) || Number(listingTypeId) === 3;
+        if (isGroupPage && openHousingTabFromHash) {
+          activeGroupTab = 'housing';
+          openHousingTabFromHash = false;
+        }
+        // Cover is only useful to someone browsing the feed. A group opened
+        // from Моё → Группы already knows which listing this is; the photo
+        // just pushes the title and actions down. Share moves onto the
+        // views / menu row (see ownerToolbarHtml includeShare).
+        const hideGroupCover = isGroupPage && openedFromMyGroups();
         const compatibilityHtml = isGroupPage && !isGroupCompatListing(l) ? '' : compatibilityTileHtml(l, isOwner);
         const discoveryHtml = UyDoshListingDiscovery.html(l);
         const titleHtml = `<div class="title-row"><h1>${title}</h1></div>`;
@@ -433,11 +457,12 @@
             hasRoomScan: Boolean(l.room_scan_glb_url),
             isAdmin,
             isActive: l.is_active !== false,
+            includeShare: hideGroupCover,
           })}
-          <div class="layout${isGroupPage ? ' group-layout' : ''}">
-            <div class="gallery-col">
+          <div class="layout${isGroupPage ? ' group-layout' : ''}${hideGroupCover ? ' group-layout-compact' : ''}">
+            ${hideGroupCover ? '' : `<div class="gallery-col">
               ${buildGalleryHtml()}
-            </div>
+            </div>`}
             <div class="details">
               ${(primaryBadges.length || secondaryBadges.length) ? `
                 <div class="badges-group">

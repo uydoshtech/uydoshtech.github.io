@@ -139,6 +139,13 @@
       /* Owner "..." menu — replaces a standalone edit button with a kebab
          trigger that reveals Edit/Delete, mirroring the mobile app's owner
          action sheet (see `ListingDetailScreen._buildActionMenuItems`). */
+      .owner-toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
       .owner-menu {
         position: relative;
         flex-shrink: 0;
@@ -1821,6 +1828,9 @@
 
 /* Match the photo-to-pills gap to the details column's 14px spacing. */
 .group-layout { row-gap: 14px; }
+/* Group page opened from Моё → Группы: the cover is omitted, so the
+   details column is the only grid track. */
+.group-layout-compact { grid-template-columns: minmax(0, 1fr); }
 /* Including the 14px flex gap: 7px above and 15px below the tabs. */
 .group-layout .group-tabs { margin-top: -7px; margin-bottom: 1px; }
 
