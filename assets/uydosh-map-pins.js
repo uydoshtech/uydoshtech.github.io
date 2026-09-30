@@ -179,9 +179,17 @@ function drawMapPinPersonOutline(ctx, centerX, centerY, iconSize) {
   ctx.restore();
 }
 
-function drawMapPinGlyph(ctx, iconKey, centerX, centerY, iconSize) {
-  if (iconKey === '2_absent') {
-    drawMapPinPersonOutline(ctx, centerX, centerY, iconSize);
+function roommateGlyphIsOutline(iconKey, style) {
+  if (iconKey === '2_absent') return true;
+  // After focus is removed the pin is the grey visited state. The filled
+  // person torso collapses into a white square at that size; the stroke
+  // stays a person with the grey pin showing through.
+  return iconKey === '2' && !!style?.visited && !style?.selected;
+}
+
+function drawMapPinGlyph(ctx, iconKey, centerX, centerY, iconSize, style) {
+  if (roommateGlyphIsOutline(iconKey, style)) {
+    drawMapPinPersonOutline(ctx, centerX, centerY, iconSize * 1.2);
     return;
   }
   const pathD =
@@ -254,7 +262,7 @@ function createMapPinIcon(pin, options = {}) {
   ctx.fillStyle = fillColor;
   ctx.fill();
 
-  drawMapPinGlyph(ctx, iconKey, center, center, pinSize * (style.selected ? 0.54 : 0.52));
+  drawMapPinGlyph(ctx, iconKey, center, center, pinSize * (style.selected ? 0.54 : 0.52), style);
 
   const result = {
     href: canvas.toDataURL('image/png'),
@@ -399,7 +407,7 @@ function createMapGroupPinIcon(group, options = {}) {
   const contentLeft = centerX - contentWidth / 2;
   ctx.fillText(label, contentLeft, centerY + 0.5);
 
-  drawMapPinGlyph(ctx, iconKey, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize);
+  drawMapPinGlyph(ctx, iconKey, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize, style);
 
   const result = {
     href: canvas.toDataURL('image/png'),

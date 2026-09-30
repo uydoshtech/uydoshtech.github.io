@@ -2254,15 +2254,63 @@
     return featureIds;
   }
 
+  /**
+   * Telegram's WebView often ignores ObjectManager.setObjectOptions when a pin
+   * loses focus. The placemark element keeps a plain square instead of the new
+   * bitmap (the grey roommate icon). Write the image onto that element directly.
+   * Square single pins are clipped to a circle; wide group pills are not.
+   */
+  function paintPlacemarkIconElement(instance, latitude, longitude, options) {
+    const href = options?.iconImageHref;
+    const map = instance?.map;
+    if (!href || !map) return;
+    const projection = map.options.get('projection');
+    const root = map.container?.getElement?.();
+    if (!projection || !root) return;
+    let pageX;
+    let pageY;
+    try {
+      const globalPixels = projection.toGlobalPixels([latitude, longitude], map.getZoom());
+      [pageX, pageY] = map.converter.globalToPage(globalPixels);
+    } catch {
+      return;
+    }
+    const [width, height] = options.iconImageSize || [28, 28];
+    let best = null;
+    let bestDist = 32;
+    for (const el of root.querySelectorAll('[class*="-image"]')) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 8 || rect.height < 8) continue;
+      const cx = rect.left + rect.width / 2 + window.pageXOffset;
+      const cy = rect.top + rect.height / 2 + window.pageYOffset;
+      const dist = Math.hypot(cx - pageX, cy - pageY);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = el;
+      }
+    }
+    if (!best) return;
+    if (best.tagName === 'IMG') {
+      best.src = href;
+    } else {
+      best.style.backgroundImage = `url("${href}")`;
+      best.style.backgroundRepeat = 'no-repeat';
+      best.style.backgroundPosition = 'center';
+      best.style.backgroundSize = `${width}px ${height}px`;
+    }
+    if (Math.abs(width - height) < 1) best.style.borderRadius = '50%';
+  }
+
   function applyFeatureIconOptions(instance, featureId, visualCtx) {
     const featureKey = String(featureId);
     const group = instance.groupsByFeatureId?.get(featureKey);
     if (group) {
-      const options = groupPlacemarkIconOptions(group, visualCtx);
-      if (instance.objectManager) {
-        instance.objectManager.objects.setObjectOptions(featureKey, options);
-        return;
-      }
+    const options = groupPlacemarkIconOptions(group, visualCtx);
+    if (instance.objectManager) {
+      instance.objectManager.objects.setObjectOptions(featureKey, options);
+      paintPlacemarkIconElement(instance, group.latitude, group.longitude, options);
+      return;
+    }
       const placemark = instance.placemarksById?.get(featureKey);
       placemark?.options.set(options);
       return;
@@ -2274,6 +2322,7 @@
     const options = placemarkIconOptions(pin, visualCtx);
     if (instance.objectManager) {
       instance.objectManager.objects.setObjectOptions(listingId, options);
+      paintPlacemarkIconElement(instance, pin.latitude, pin.longitude, options);
       return;
     }
     const placemark = instance.placemarksById?.get(String(featureId));
