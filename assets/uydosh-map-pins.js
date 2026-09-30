@@ -150,15 +150,44 @@ function resolveMapPinIconKey(pin) {
   return typeId > 0 ? String(typeId) : 'default';
 }
 
-function drawMapPinIconPath(ctx, pathD, centerX, centerY, iconSize, fillRule = 'nonzero') {
+function drawMapPinIconPath(ctx, pathD, centerX, centerY, iconSize) {
   const path = new Path2D(pathD);
   const scale = iconSize / 24;
   ctx.save();
   ctx.translate(centerX - iconSize / 2, centerY - iconSize / 2);
   ctx.scale(scale, scale);
   ctx.fillStyle = '#ffffff';
-  ctx.fill(path, fillRule);
+  ctx.fill(path);
   ctx.restore();
+}
+
+/** Hollow person for a roommate pin whose host is away.
+ *  Stroking the solid silhouette stays a person at pin size. The compound
+ *  person_outline path's holes collapse into a white square once the pin
+ *  shrinks back from the selected size after focus is removed. */
+function drawMapPinPersonOutline(ctx, centerX, centerY, iconSize) {
+  const path = new Path2D(LISTING_TYPE_MAP_PIN_ICON_PATHS[2]);
+  const scale = iconSize / 24;
+  ctx.save();
+  ctx.translate(centerX - iconSize / 2, centerY - iconSize / 2);
+  ctx.scale(scale, scale);
+  ctx.lineWidth = 3.2;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke(path);
+  ctx.restore();
+}
+
+function drawMapPinGlyph(ctx, iconKey, centerX, centerY, iconSize) {
+  if (iconKey === '2_absent') {
+    drawMapPinPersonOutline(ctx, centerX, centerY, iconSize);
+    return;
+  }
+  const pathD =
+    LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
+    LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
+  drawMapPinIconPath(ctx, pathD, centerX, centerY, iconSize);
 }
 
 function drawRoundRect(ctx, x, y, width, height, radius) {
@@ -187,6 +216,12 @@ function createMapPinIcon(pin, options = {}) {
   const iconKey = resolveMapPinIconKey(pin);
   const fillColor = mapPinFillColor(style);
   const pinSize = style.selected ? MAP_PIN_ICON_SIZE_SELECTED : MAP_PIN_ICON_SIZE;
+  // The bitmap box stays 28px for every state. Selected pins draw a larger
+  // circle inside it; unfocused pins draw the smaller one. Yandex resizes the
+  // placemark <img> when iconImageSize changes, and in the Telegram WebView
+  // that resize can stick as a plain square after focus is removed — the
+  // roommate glyph was the one that read as that square instead of the grey pin.
+  const canvasSize = MAP_PIN_ICON_SIZE_SELECTED;
   const cacheKey = `${iconKey}:${style.variant}:${pinSize}`;
   const cached = mapPinIconCache.get(cacheKey);
   if (cached) return cached;
@@ -194,11 +229,11 @@ function createMapPinIcon(pin, options = {}) {
   const canvas = document.createElement('canvas');
   // Draw at 1× logical px — Yandex Maps + Telegram WebView treat data-URL bitmaps
   // as iconImageSize in CSS px; a retina canvas makes pins ~devicePixelRatio too large.
-  canvas.width = pinSize;
-  canvas.height = pinSize;
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
-  const center = pinSize / 2;
+  const center = canvasSize / 2;
   const radius = pinSize * 0.39;
   const outlineWidth = style.selected ? 2 : 1.5;
   const shadowOffsetY = style.selected ? 2 : 1;
@@ -219,19 +254,12 @@ function createMapPinIcon(pin, options = {}) {
   ctx.fillStyle = fillColor;
   ctx.fill();
 
-  const pathD =
-    LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
-    LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
-  // person_outline is a ring (inner cutout). evenodd keeps that hole; nonzero
-  // can paint it solid, which is why the absent-host pin looked like the
-  // filled person and the greyed glyph disappeared.
-  const fillRule = iconKey === '2_absent' ? 'evenodd' : 'nonzero';
-  drawMapPinIconPath(ctx, pathD, center, center, pinSize * (style.selected ? 0.54 : 0.52), fillRule);
+  drawMapPinGlyph(ctx, iconKey, center, center, pinSize * (style.selected ? 0.54 : 0.52));
 
   const result = {
     href: canvas.toDataURL('image/png'),
-    size: [pinSize, pinSize],
-    offset: [-pinSize / 2, -pinSize / 2],
+    size: [canvasSize, canvasSize],
+    offset: [-canvasSize / 2, -canvasSize / 2],
     zIndex: style.selected ? 1000 : 100,
   };
   mapPinIconCache.set(cacheKey, result);
@@ -371,18 +399,7 @@ function createMapGroupPinIcon(group, options = {}) {
   const contentLeft = centerX - contentWidth / 2;
   ctx.fillText(label, contentLeft, centerY + 0.5);
 
-  const pathD =
-    LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
-    LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
-  const fillRule = iconKey === '2_absent' ? 'evenodd' : 'nonzero';
-  drawMapPinIconPath(
-    ctx,
-    pathD,
-    contentLeft + labelWidth + gap + iconSize / 2,
-    centerY,
-    iconSize,
-    fillRule,
-  );
+  drawMapPinGlyph(ctx, iconKey, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize);
 
   const result = {
     href: canvas.toDataURL('image/png'),
