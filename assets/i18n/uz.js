@@ -516,6 +516,7 @@ I18N.uz = {
     'account.deleteSuccess': 'E’lon o‘chirildi',
     'account.deleteError': 'E’lonni o‘chirib bo‘lmadi. Qayta urinib ko‘ring.',
     'account.participants': 'Ishtirokchilar',
+    'account.housingOptions': 'Uy variantlari',
     'account.participantProfiles': 'Ishtirokchilar profillari',
     'account.groupOfPeople': '{count} kishilik guruh',
     'account.lookingForRoommates': 'Qo‘shni qidirilmoqda',

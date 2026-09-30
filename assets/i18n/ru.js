@@ -515,6 +515,7 @@ I18N.ru = {
     'account.deleteSuccess': 'Объявление удалено',
     'account.deleteError': 'Не удалось удалить объявление. Попробуйте ещё раз.',
     'account.participants': 'Участники',
+    'account.housingOptions': 'Варианты жилья',
     'account.participantProfiles': 'Профили участников',
     'account.groupOfPeople': 'Группа из {count} человек',
     'account.lookingForRoommates': 'Ищем соседей',

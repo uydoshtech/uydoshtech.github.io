@@ -515,6 +515,7 @@ I18N.en = {
     'account.deleteSuccess': 'Listing deleted',
     'account.deleteError': 'Could not delete the listing. Please try again.',
     'account.participants': 'Participants',
+    'account.housingOptions': 'Housing Options',
     'account.participantProfiles': 'Participant profiles',
     'account.groupOfPeople': 'Group of {count} people',
     'account.lookingForRoommates': 'Looking for roommates',

@@ -218,6 +218,7 @@ function groupListingCardHtml(listing, conversation, { owner = true } = {}) {
       <div class="account-row-main">
         ${listingRowMainHtml(listing, { hidePhoto: true, ownerActions: owner })}
         ${participantsPillHtml(listing, conversation)}
+        ${housingOptionsRowHtml(listing)}
       </div>
       ${chat}
     </article>`;
@@ -290,6 +291,21 @@ function accountAvatarStackHtml(people) {
   const extra = people.length - maxFaces;
   return list.slice(0, maxFaces).map((person, index) => participantAvatarHtml(person, index)).join('')
     + (extra > 0 ? `<span class="account-participants-avatar account-participants-more">+${extra}</span>` : '');
+}
+
+function housingOptionsRowHtml(listing) {
+  const lang = UyDosh.getLang();
+  const href = UyDosh.escapeHtml(
+    `${UyDosh.listingPageUrl(listing.id, { backTo: UyDosh.MINI_APP_GROUPS_PATH })}#group-shortlist`,
+  );
+  const count = Number(listing?.group_context?.group_shortlist_count ?? listing?.group_shortlist_count);
+  const countLabel = Number.isInteger(count) && count >= 0 ? ` · ${count}` : '';
+  return `
+        <a class="account-participants-pill account-housing-pill" href="${href}" data-haptic="selection">
+          <span class="account-housing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/></svg></span>
+          <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.housingOptions', lang))}${countLabel}</span>
+          <span class="account-participants-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
+        </a>`;
 }
 
 function participantsPillHtml(listing, conversation) {
@@ -1052,7 +1068,7 @@ function bindParticipantsPills() {
 
 /**
  * A group card is a shortcut to its listing details. Nested links and buttons
- * retain their own actions: chat, participants, and the listing controls are
+ * retain their own actions: chat, housing options, participants, and the listing controls are
  * intentionally excluded from this card-level navigation.
  */
 function bindGroupCardDetailNavigation() {
