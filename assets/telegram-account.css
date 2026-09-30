@@ -168,6 +168,10 @@ header {
 }
 .follow-btn {
   appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   min-height: 32px;
   padding: 6px 10px;
@@ -185,13 +189,47 @@ header {
   color: var(--fg);
   border: 1px solid var(--stroke);
 }
-.follow-btn:disabled { opacity: 0.6; }
+.follow-btn:disabled:not(.is-busy) { opacity: 0.6; }
+.follow-btn.is-busy { cursor: default; }
+.follow-btn.is-busy .follow-btn-label { visibility: hidden; }
+.follow-btn-spinner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: follow-btn-spin 0.7s linear infinite;
+}
+@keyframes follow-btn-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .follow-btn-spinner { animation: none; }
+}
+.wrap:has(.follows-empty) {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: calc(100dvh - var(--uydosh-tabbar-height, 58px) - max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+}
+.wrap:has(.follows-empty) .account-list {
+  flex: 1;
+}
 .follows-empty,
 .follows-note {
   margin: 8px 0 0;
   text-align: center;
   color: var(--muted);
   font-size: 14px;
+}
+.follows-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 24px 12px;
 }
 .follows-more {
   align-self: center;

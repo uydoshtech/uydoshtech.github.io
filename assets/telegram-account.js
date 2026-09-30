@@ -837,8 +837,9 @@ function followRowHtml(user, lang) {
         ${followAvatarHtml(user)}
         <span class="follow-name">${UyDosh.escapeHtml(name)}</span>
       </a>
-      <button type="button" class="follow-btn${following ? ' is-on' : ''}" data-follow-toggle="${id}" ${busy ? 'disabled' : ''}>
-        ${UyDosh.escapeHtml(UyDosh.t(following ? 'profile.following' : 'profile.follow', lang))}
+      <button type="button" class="follow-btn${following ? ' is-on' : ''}${busy ? ' is-busy' : ''}" data-follow-toggle="${id}" ${busy ? 'disabled aria-busy="true"' : ''}>
+        <span class="follow-btn-label">${UyDosh.escapeHtml(UyDosh.t(following ? 'profile.following' : 'profile.follow', lang))}</span>
+        ${busy ? '<span class="follow-btn-spinner" aria-hidden="true"></span>' : ''}
       </button>
     </article>`;
 }

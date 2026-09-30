@@ -602,9 +602,10 @@ header {
 .feed-map-panel {
   display: none;
   position: relative;
-  min-height: 360px;
+  /* Fallback until syncFeedMapPanelHeight measures the real gap under the
+     header, filters, and tabs. min/max height are left unset so that
+     measurement can shrink or grow the map to the visible screen. */
   height: calc(100dvh - var(--uydosh-tg-sticky-top, 0px) - 220px);
-  max-height: 640px;
   border: 1px solid var(--stroke);
   border-radius: 16px;
   overflow: hidden;
@@ -614,6 +615,9 @@ header {
      resize that comes with it) — see touch-action note below for why
      that combination is the main cause of panning stutter. */
   overscroll-behavior: contain;
+}
+body.view-map {
+  overflow: hidden;
 }
 .feed-map-panel.active { display: block; }
 .feed-map-panel .map-container {

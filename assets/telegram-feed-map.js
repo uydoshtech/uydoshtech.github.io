@@ -65,16 +65,10 @@
     let prefetchedMapDataPromise = null;
 
     /**
-     * The map panel's CSS `height` is a `calc(100dvh - ... - <fixed px>)` guess
-     * (see telegram-shared.css) that assumes a constant header/filters/tabs
-     * height above it. That assumption breaks whenever the filters ribbon is
-     * expanded (extra chip rows), the header wraps, or the platform's dvh
-     * doesn't match the real visible viewport — the panel (and the pin
-     * tooltip anchored to its bottom) then extends past the actual bottom of
-     * the screen. Measure the real remaining space instead and pin the panel
-     * height to it, so the map — and anything anchored to its bottom edge —
-     * always stays within the visible viewport (including above the Mini App
-     * tab bar when that bar is mounted).
+     * Pin the map panel to the space actually left on screen: below the
+     * header, filters, and view tabs, and above the Mini App tab bar.
+     * A fixed CSS height (and its old min/max) let the zoom and layer
+     * controls fall past the bottom of the viewport.
      */
     function syncFeedMapPanelHeight() {
       if (!feedMapPanel || !feedMapPanel.classList.contains('active')) return;
@@ -90,9 +84,12 @@
       const bottomGap = tabbarHeight > 0
         ? tabbarHeight + 8
         : Math.max(16, insetBottom + 12);
-      const available = viewportHeight - top - bottomGap;
-      if (!Number.isFinite(available) || available <= 0) return;
+      const available = Math.floor(viewportHeight - top - bottomGap);
+      if (!Number.isFinite(available) || available < 120) return;
       feedMapPanel.style.height = `${available}px`;
+      if (feedMapEl && typeof UyDoshMap?.reflowMap === 'function') {
+        UyDoshMap.reflowMap(feedMapEl);
+      }
     }
 
     function scheduleSyncFeedMapPanelHeight() {

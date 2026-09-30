@@ -1774,7 +1774,7 @@ function fetchListingsForMap({
   return fetchJson("/listings/map", params);
 }
 
-const ASSET_CACHE_VERSION = window.UYDOSH_BUILD?.id || "20260929-district-fit";
+const ASSET_CACHE_VERSION = window.UYDOSH_BUILD?.id || "20260930-map-fit";
 const classicScriptLoads = new Map();
 
 function assetScriptUrl(fileName) {
