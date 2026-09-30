@@ -59,6 +59,11 @@ function iconPeople(color) {
 }
 
 function iconPerson(color) {
+  return chipIconFilled(color, LISTING_TYPE_MAP_PIN_ICON_PATHS[2]);
+}
+
+/** Hollow person — roommate listing whose host does not live there. */
+function iconPersonOutline(color) {
   return chipIconFilled(color, LISTING_TYPE_MAP_PIN_ICON_PATHS['2_absent']);
 }
 
@@ -113,7 +118,7 @@ function listingTypeBadgeIcon(listing, { pressed = false } = {}) {
   if (!listingTypeId) return '';
   const color = pressed ? '#fff' : listingTypeColor(listingTypeId);
   if (listingTypeId === 2 && isHostAbsent(listing)) {
-    return iconPerson(color);
+    return iconPersonOutline(color);
   }
   return filterListingTypeIcon(listingTypeId, { pressed });
 }

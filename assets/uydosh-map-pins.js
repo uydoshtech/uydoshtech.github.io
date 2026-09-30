@@ -19,7 +19,10 @@ const LISTING_TYPE_COLORS = {
 const LISTING_TYPE_MAP_PIN_ICON_PATHS = {
   1: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z',
   2: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
-  '2_absent': 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+  // roommate_needed + host_resident false. Material person_outline — the
+  // hollow glyph mobile uses so an absent host reads as greyed out next to
+  // the solid person (host lives there).
+  '2_absent': 'M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z',
   3: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 2.05 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
   4: 'M3 21V9l9-6 9 6v12h-6v-6H9v6H3zm3-2h1v-6h10v6h1v-8.9l-6-4-6 4V19z',
   default: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z',
@@ -147,14 +150,14 @@ function resolveMapPinIconKey(pin) {
   return typeId > 0 ? String(typeId) : 'default';
 }
 
-function drawMapPinIconPath(ctx, pathD, centerX, centerY, iconSize) {
+function drawMapPinIconPath(ctx, pathD, centerX, centerY, iconSize, fillRule = 'nonzero') {
   const path = new Path2D(pathD);
   const scale = iconSize / 24;
   ctx.save();
   ctx.translate(centerX - iconSize / 2, centerY - iconSize / 2);
   ctx.scale(scale, scale);
   ctx.fillStyle = '#ffffff';
-  ctx.fill(path);
+  ctx.fill(path, fillRule);
   ctx.restore();
 }
 
@@ -219,7 +222,11 @@ function createMapPinIcon(pin, options = {}) {
   const pathD =
     LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
     LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
-  drawMapPinIconPath(ctx, pathD, center, center, pinSize * (style.selected ? 0.54 : 0.52));
+  // person_outline is a ring (inner cutout). evenodd keeps that hole; nonzero
+  // can paint it solid, which is why the absent-host pin looked like the
+  // filled person and the greyed glyph disappeared.
+  const fillRule = iconKey === '2_absent' ? 'evenodd' : 'nonzero';
+  drawMapPinIconPath(ctx, pathD, center, center, pinSize * (style.selected ? 0.54 : 0.52), fillRule);
 
   const result = {
     href: canvas.toDataURL('image/png'),
@@ -367,7 +374,15 @@ function createMapGroupPinIcon(group, options = {}) {
   const pathD =
     LISTING_TYPE_MAP_PIN_ICON_PATHS[iconKey] ||
     LISTING_TYPE_MAP_PIN_ICON_PATHS.default;
-  drawMapPinIconPath(ctx, pathD, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize);
+  const fillRule = iconKey === '2_absent' ? 'evenodd' : 'nonzero';
+  drawMapPinIconPath(
+    ctx,
+    pathD,
+    contentLeft + labelWidth + gap + iconSize / 2,
+    centerY,
+    iconSize,
+    fillRule,
+  );
 
   const result = {
     href: canvas.toDataURL('image/png'),
