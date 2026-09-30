@@ -242,8 +242,17 @@ function peopleForAvatarStack(listing, members) {
   const fromMembers = Array.isArray(members) ? members : [];
   const chat = listing ? chatForListing(listing, state.groupChats || []) : null;
   const fromChat = participantsFromConversation(chat);
+  // A passed roster is the live membership. The chat cache can still list
+  // someone who was just removed, and merging it back made the header
+  // keep their name, face, and "group of N" count.
+  const liveIds = new Set(
+    fromMembers.map((person) => Number(person.user_id ?? person.id)).filter((id) => id > 0),
+  );
+  const chatPeople = Array.isArray(members)
+    ? fromChat.filter((person) => liveIds.has(Number(person.user_id ?? person.id)))
+    : fromChat;
   const byKey = new Map();
-  for (const person of [...fromChat, ...fromMembers]) {
+  for (const person of [...chatPeople, ...fromMembers]) {
     const id = Number(person.user_id ?? person.id);
     const key = id > 0 ? `id:${id}` : `name:${String(person.name || '').trim()}`;
     if (key === 'name:') continue;
@@ -258,6 +267,21 @@ function peopleForAvatarStack(listing, members) {
   }
   const rows = [...byKey.values()];
   return rows.length ? rows : fromMembers;
+}
+
+function dropRemovedMemberFromCaches(listingId, memberUserId) {
+  const id = Number(memberUserId);
+  const groupId = Number(listingId);
+  if (!(id > 0) || !(groupId > 0)) return;
+  for (const chat of state.groupChats || []) {
+    if (conversationListingId(chat) !== groupId || !Array.isArray(chat.members)) continue;
+    chat.members = chat.members.filter((member) => Number(member.user_id ?? member.id) !== id);
+  }
+  for (const listing of [...(state.myListings || []), ...(state.memberGroupListings || [])]) {
+    if (Number(listing?.id) !== groupId) continue;
+    const count = Number(listing.group_member_count);
+    if (Number.isFinite(count) && count > 0) listing.group_member_count = count - 1;
+  }
 }
 
 function accountAvatarStackHtml(people) {
@@ -1462,7 +1486,9 @@ function openRemoveConfirm(memberUserId, name) {
       participantsSheetState.members = participantsSheetState.members.filter(
         (m) => Number(m.user_id) !== memberUserId,
       );
+      dropRemovedMemberFromCaches(participantsSheetState.listingId, memberUserId);
       renderParticipantsSheet();
+      if (isAccountPage) renderActiveTab();
       document.dispatchEvent(new CustomEvent('uydosh-group-roster-changed', {
         detail: { listingId: participantsSheetState.listingId },
       }));

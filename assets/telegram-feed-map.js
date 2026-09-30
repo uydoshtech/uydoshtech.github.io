@@ -682,6 +682,10 @@
     }
 
     function onEnterMapView() {
+      // Measure immediately. The flex column above is the first paint;
+      // this pins the same leftover height in pixels once the tab bar
+      // exists, instead of waiting for a later resize.
+      scheduleSyncFeedMapPanelHeight();
       // Filters and language are unchanged since the last successful render —
       // reuse the still-live map instance instead of destroying and rebuilding
       // it (and re-fetching pins) on every List <-> Map tab switch. A real

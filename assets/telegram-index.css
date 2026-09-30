@@ -602,10 +602,6 @@ header {
 .feed-map-panel {
   display: none;
   position: relative;
-  /* Fallback until syncFeedMapPanelHeight measures the real gap under the
-     header, filters, and tabs. min/max height are left unset so that
-     measurement can shrink or grow the map to the visible screen. */
-  height: calc(100dvh - var(--uydosh-tg-sticky-top, 0px) - 220px);
   border: 1px solid var(--stroke);
   border-radius: 16px;
   overflow: hidden;
@@ -618,6 +614,44 @@ header {
 }
 body.view-map {
   overflow: hidden;
+}
+/* Fill whatever is left under the header, filters, and view tabs on the
+   first paint. A fixed calc() was taller than that gap whenever the
+   filters were expanded, so the map (and its controls) started below
+   the screen until a later resize measured the real space. */
+body.view-map .wrap,
+html.mini-app body.view-map .wrap {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  /* Beats the injected `html.mini-app .wrap` 32px padding, which left the
+     map running under the tab bar while the filters were expanded. */
+  padding-bottom: calc(
+    var(--uydosh-tabbar-height, 58px)
+    + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px))
+    + 8px
+  );
+}
+body.view-map main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+body.view-map .feed-map-panel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+body.view-map .feed-map-panel.active .map-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
 }
 .feed-map-panel.active { display: block; }
 .feed-map-panel .map-container {
