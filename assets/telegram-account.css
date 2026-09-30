@@ -291,6 +291,43 @@ header {
   flex: 1;
   min-width: 0;
 }
+.account-row-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.account-row-head--phase {
+  align-items: flex-start;
+}
+.account-phase-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.account-phase-pill[data-phase="forming"] {
+  color: #ffb74d;
+  background: color-mix(in srgb, #ff9800 24%, #1a2836);
+}
+.account-phase-pill[data-phase="housing"] {
+  color: #86efac;
+  background: color-mix(in srgb, #22c55e 24%, #1a2836);
+}
+.account-phase-pill[data-phase="landlord"] {
+  color: #93c5fd;
+  background: color-mix(in srgb, #60a5fa 24%, #1a2836);
+}
+.account-phase-pill[data-phase="closed"] {
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.1);
+}
 .account-row-head .account-row-meta {
   flex: 0 0 auto;
 }

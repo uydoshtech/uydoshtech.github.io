@@ -133,7 +133,7 @@ function renewLabelHtml(listing, lang) {
   return UyDosh.escapeHtml(UyDosh.t(key, lang).replace('{days}', String(days)));
 }
 
-function listingRowMainHtml(listing, { hidePhoto = false, ownerActions = true } = {}) {
+function listingRowMainHtml(listing, { hidePhoto = false, ownerActions = true, phasePill = false } = {}) {
   const lang = UyDosh.getLang();
   const title = UyDosh.escapeHtml(listing.title || '');
   const price = UyDosh.formatPrice(listing, lang);
@@ -161,8 +161,11 @@ function listingRowMainHtml(listing, { hidePhoto = false, ownerActions = true } 
         </div>`;
   return `
       <div class="account-row-stack">
-        <a class="account-row-head" href="${detailHref}">
-          <div class="account-row-title">${title}</div>
+        <a class="account-row-head${phasePill ? ' account-row-head--phase' : ''}" href="${detailHref}">
+          <div class="account-row-title-block">
+            <div class="account-row-title">${title}</div>
+            ${phasePill ? groupPhasePillHtml(listing, lang) : ''}
+          </div>
           <div class="account-row-meta">
             ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
             ${statusBadgeHtml(listing, lang)}
@@ -216,7 +219,7 @@ function groupListingCardHtml(listing, conversation, { owner = true } = {}) {
   return `
     <article class="account-card account-card--group" data-listing-row="${listing.id}" data-group-detail-href="${detailHref}">
       <div class="account-row-main">
-        ${listingRowMainHtml(listing, { hidePhoto: true, ownerActions: owner })}
+        ${listingRowMainHtml(listing, { hidePhoto: true, ownerActions: owner, phasePill: true })}
         ${participantsPillHtml(listing, conversation)}
         ${housingOptionsRowHtml(listing)}
       </div>
@@ -1123,6 +1126,24 @@ function memberRoleKey(member, listing, me) {
   if (member.role === 'owner' || userId === ownerId) return 'organizer';
   if (userId === me) return 'you';
   return 'participant';
+}
+
+function groupPhaseKey(listing) {
+  const phase = listing?.group_context?.group_progress?.phase;
+  if (phase === 'landlord_outreach' || phase === 'landlord_joined') return 'landlord';
+  if (phase === 'housing_search' || phase === 'shortlisting') return 'housing';
+  if (phase === 'closed') return 'closed';
+  if (phase === 'forming') return 'forming';
+  const target = Number(listing?.group_context?.group_size_target ?? listing?.group_size_target);
+  const filled = Number(listing?.group_context?.group_member_count ?? listing?.group_member_count);
+  if (Number.isFinite(target) && target > 0 && filled >= target) return 'housing';
+  return 'forming';
+}
+
+function groupPhasePillHtml(listing, lang) {
+  const label = groupStatusLabel(listing, lang);
+  if (!label) return '';
+  return `<span class="account-phase-pill" data-phase="${groupPhaseKey(listing)}">${UyDosh.escapeHtml(label)}</span>`;
 }
 
 function groupStatusLabel(listing, lang) {
