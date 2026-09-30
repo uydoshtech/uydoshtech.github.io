@@ -102,6 +102,7 @@ I18N.en = {
     'discovery.error': "Couldn’t update the shortlist. Try again.",
     'discovery.removeShort': "Remove",
     'discovery.remove': "Remove from shortlist",
+    'discovery.removeConfirm': "Remove “{title}” from housing options?",
     'discovery.saved': "Saved for your group.",
     'discovery.removed': "Removed from the group shortlist.",
     'discovery.retry': "Retry",

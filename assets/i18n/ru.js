@@ -102,6 +102,7 @@ I18N.ru = {
     'discovery.error': "Не удалось обновить список. Попробуйте снова.",
     'discovery.removeShort': "Убрать",
     'discovery.remove': "Убрать из списка",
+    'discovery.removeConfirm': "Убрать «{title}» из вариантов жилья?",
     'discovery.saved': "Сохранено для вашей группы.",
     'discovery.removed': "Удалено из списка группы.",
     'discovery.retry': "Повторить",

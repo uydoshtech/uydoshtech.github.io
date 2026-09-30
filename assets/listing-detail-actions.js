@@ -353,8 +353,12 @@
         if (!textEl) return;
         try {
           const data = await UyDosh.fetchListingViewCount(listingId);
-          const count = Number(data?.viewCount) || 0;
-          textEl.textContent = UyDosh.listingViewsCountText(count, UyDosh.getLang());
+          const count = Math.max(0, Math.trunc(Number(data?.viewCount) || 0));
+          textEl.textContent = String(count);
+          rootEl.querySelector('[data-owner-toolbar]')?.setAttribute(
+            'aria-label',
+            UyDosh.listingViewsCountText(count, UyDosh.getLang()),
+          );
         } catch (err) {
           console.error('Failed to load listing view count', err);
           const toolbarEl = rootEl.querySelector('[data-owner-toolbar]');

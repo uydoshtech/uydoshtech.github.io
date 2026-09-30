@@ -1170,9 +1170,56 @@ function isMiniAppRootRoute() {
  * from the left edge, so normal horizontal gestures within maps, carousels,
  * filters, and form controls remain untouched.
  */
+/**
+ * Telegram keeps the header BackButton in whatever state the previous page
+ * left it. A fresh load hides it in `initTelegramMiniApp`, then nested pages
+ * show it. An edge-swipe calls `history.back()`, and iOS restores the
+ * previous screen from the back-forward cache without running that startup
+ * again, so the button stays on a root tab. Re-apply the right visibility
+ * whenever a screen is shown, including that cached restore.
+ */
+function syncMiniAppBackButton() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg?.BackButton || !isMiniApp()) return;
+  const path = location.pathname || "";
+  if (/create\.html$/i.test(path) || /\/telegram\/create\/?$/i.test(path)) {
+    if (typeof updateTelegramBackButton === "function") {
+      updateTelegramBackButton();
+      return;
+    }
+  }
+  const hasBack = Boolean(new URLSearchParams(location.search).get("back"));
+  const show =
+    /listing\.html$/i.test(path) ||
+    /\/listing\/[^/]+\/?$/i.test(path) ||
+    /\/telegram\/chat\.html$/i.test(path) ||
+    /\/telegram\/profile\.html$/i.test(path) ||
+    /\/telegram\/hostels?\.html$/i.test(path) ||
+    /\/telegram\/hostel-create\.html$/i.test(path) ||
+    (/\/telegram\/account\.html$/i.test(path) && hasBack);
+  try {
+    if (show) tg.BackButton.show();
+    else tg.BackButton.hide();
+  } catch {
+    /* ignore */
+  }
+}
+
+function bindMiniAppBackButtonSync() {
+  if (window.__uydoshBackButtonSyncBound) return;
+  window.__uydoshBackButtonSyncBound = true;
+  window.addEventListener("pageshow", () => {
+    syncMiniAppBackButton();
+    // Some Telegram WebViews reapply header chrome just after the page is
+    // shown (same delay hostel pages use to reassert BackButton.show).
+    setTimeout(syncMiniAppBackButton, 200);
+  });
+}
+
 function bindMiniAppBackSwipe() {
   if (document.documentElement.dataset.uydoshBackSwipeBound) return;
   document.documentElement.dataset.uydoshBackSwipeBound = "1";
+  bindMiniAppBackButtonSync();
 
   let startX = 0;
   let startY = 0;

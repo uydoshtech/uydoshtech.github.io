@@ -391,6 +391,12 @@
         button.addEventListener('click', async () => {
           if (busy) return;
           const id = Number(button.dataset.shortlistRemove);
+          const row = items.find(candidate => Number(candidate.listing_id) === id);
+          const title = row?.listing?.title || (row?.listing?.id ? `#${row.listing.id}` : t('unavailable'));
+          const confirmed = typeof confirmTelegramAction === 'function'
+            ? await confirmTelegramAction(t('removeConfirm', { title }))
+            : window.confirm(t('removeConfirm', { title }));
+          if (!confirmed || busy) return;
           busy = true; paint();
           try {
             await UyDosh.removeGroupShortlist(group.id, id);

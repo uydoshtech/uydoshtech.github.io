@@ -103,6 +103,7 @@ I18N.uz = {
     'discovery.error': "Ro‘yxatni yangilab bo‘lmadi. Qayta urinib ko‘ring.",
     'discovery.removeShort': "Olib tashlash",
     'discovery.remove': "Ro‘yxatdan olib tashlash",
+    'discovery.removeConfirm': "«{title}» uy variantlaridan olib tashlansinmi?",
     'discovery.saved': "Guruhingiz uchun saqlandi.",
     'discovery.removed': "Guruh ro‘yxatidan olib tashlandi.",
     'discovery.retry': "Qayta urinish",
