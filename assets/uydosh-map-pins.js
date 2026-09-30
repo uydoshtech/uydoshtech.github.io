@@ -179,16 +179,16 @@ function drawMapPinPersonOutline(ctx, centerX, centerY, iconSize) {
   ctx.restore();
 }
 
-function roommateGlyphIsOutline(iconKey, style) {
-  if (iconKey === '2_absent') return true;
-  // After focus is removed the pin is the grey visited state. The filled
-  // person torso collapses into a white square at that size; the stroke
-  // stays a person with the grey pin showing through.
-  return iconKey === '2' && !!style?.visited && !style?.selected;
+function roommateGlyphIsOutline(iconKey) {
+  // Only an absent host uses the stroked person. A normal roommate pin,
+  // including the grey visited state after focus is removed, fills the same
+  // way a room pin fills its house. Switching that state to a stroke made
+  // the glyph collapse into a white square on the grey circle.
+  return iconKey === '2_absent';
 }
 
-function drawMapPinGlyph(ctx, iconKey, centerX, centerY, iconSize, style) {
-  if (roommateGlyphIsOutline(iconKey, style)) {
+function drawMapPinGlyph(ctx, iconKey, centerX, centerY, iconSize) {
+  if (roommateGlyphIsOutline(iconKey)) {
     drawMapPinPersonOutline(ctx, centerX, centerY, iconSize * 1.2);
     return;
   }
@@ -262,7 +262,7 @@ function createMapPinIcon(pin, options = {}) {
   ctx.fillStyle = fillColor;
   ctx.fill();
 
-  drawMapPinGlyph(ctx, iconKey, center, center, pinSize * (style.selected ? 0.54 : 0.52), style);
+  drawMapPinGlyph(ctx, iconKey, center, center, pinSize * (style.selected ? 0.54 : 0.52));
 
   const result = {
     href: canvas.toDataURL('image/png'),
@@ -407,7 +407,7 @@ function createMapGroupPinIcon(group, options = {}) {
   const contentLeft = centerX - contentWidth / 2;
   ctx.fillText(label, contentLeft, centerY + 0.5);
 
-  drawMapPinGlyph(ctx, iconKey, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize, style);
+  drawMapPinGlyph(ctx, iconKey, contentLeft + labelWidth + gap + iconSize / 2, centerY, iconSize);
 
   const result = {
     href: canvas.toDataURL('image/png'),
