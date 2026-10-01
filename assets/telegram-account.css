@@ -612,6 +612,10 @@ header {
 .account-favorite-btn:disabled { opacity: 0.6; cursor: default; }
 .account-favorite-btn .icon svg { width: 18px; height: 18px; display: block; }
 #account-list[hidden], #account-empty[hidden], #chats-list[hidden], #chats-empty[hidden], #loading[hidden] { display: none !important; }
+/* `.btn-link` sets `display: inline-flex`, which wins over the user-agent
+   `[hidden]` rule in the Telegram WebView. Without this, the "Publish"
+   empty-state CTA stays visible on the groups tab. */
+#account-empty-cta[hidden] { display: none !important; }
 
 .account-section-title {
   margin: 4px 2px 8px;

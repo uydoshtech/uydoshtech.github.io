@@ -310,41 +310,42 @@ function renderLandlordInvites(error = '') {
   const e = UyDosh.escapeHtml;
   const t = key => UyDosh.t('chat.invite.' + key);
   invitesEl.hidden = !landlordInvites.length && !error;
-  invitesEl.innerHTML = `${error ? `<p role="status">${e(error)}</p><button class="btn-link" data-invite-retry>${e(t('retry'))}</button>` : ''}${landlordInvites.map(invite => `<article class="landlord-invite-card">
-    <strong>${e(t('title'))}</strong>
-    <span>${e(invite.group_listing_title || '#' + invite.group_listing_id)}</span>
-    <a href="${e(UyDosh.listingPageUrl(invite.housing_listing_id))}">${e(invite.housing_listing_title || '#' + invite.housing_listing_id)}</a>
-    <p>${e(t('hint'))}</p>
-    <div class="landlord-invite-actions"><button class="btn-link" data-invite-accept="${Number(invite.invite_id)}" ${inviteBusy ? 'disabled' : ''}>${e(t('accept'))}</button><button class="btn-link" data-invite-decline="${Number(invite.invite_id)}" ${inviteBusy ? 'disabled' : ''}>${e(t('decline'))}</button></div>
-  </article>`).join('')}`;
+  const errorHtml = error
+    ? `<p class="landlord-invite-error" role="status">${e(error)}</p><button type="button" class="wizard-btn wizard-btn-next" data-invite-retry>${e(t('retry'))}</button>`
+    : '';
+  invitesEl.innerHTML = errorHtml + UyDosh.landlordInviteCardsHtml(landlordInvites, {
+    busy: inviteBusy,
+    backTo: UyDosh.MINI_APP_CHATS_PATH,
+  });
   invitesEl.querySelector('[data-invite-retry]')?.addEventListener('click', refreshLandlordInvites);
-  invitesEl.querySelectorAll('[data-invite-accept], [data-invite-decline]').forEach(button => button.addEventListener('click', async () => {
-    if (inviteBusy) return;
-    const accept = button.hasAttribute('data-invite-accept');
-    const id = Number(button.dataset.inviteAccept || button.dataset.inviteDecline);
-    const invite = landlordInvites.find(item => Number(item.invite_id) === id);
-    if (!invite) return;
-    inviteBusy = true; renderLandlordInvites();
-    try {
-      const response = await UyDosh.respondToLandlordInvite(invite.group_listing_id, id, accept);
+  UyDosh.bindLandlordInviteCards(invitesEl, {
+    getInvite: (id) => landlordInvites.find(item => Number(item.invite_id) === id),
+    isBusy: () => inviteBusy,
+    setBusy: (value) => { inviteBusy = value; },
+    rerender: () => renderLandlordInvites(),
+    removeInvite: (id) => {
       landlordInvites = landlordInvites.filter(item => Number(item.invite_id) !== id);
-      if (accept && response.conversation_id) location.href = UyDosh.chatPageUrl(response.conversation_id, { backTo: '/telegram/chats.html' });
-      inviteBusy = false;
-      renderLandlordInvites();
-      await refreshLandlordInvites();
-    } catch (err) {
-      inviteBusy = false;
+    },
+    onAccepted: (response) => {
+      location.href = UyDosh.chatPageUrl(response.conversation_id, { backTo: '/telegram/chats.html' });
+    },
+    onError: async () => {
       await refreshLandlordInvites();
       renderLandlordInvites(t('error'));
-    }
-  }));
+    },
+    after: () => refreshLandlordInvites(),
+  });
 }
 async function refreshLandlordInvites() {
   if (!invitesReady || inviteBusy || inviteLoading || document.hidden) return;
   inviteLoading = true;
   try {
     const response = await UyDosh.fetchPendingLandlordInvites();
-    if (!inviteBusy) { landlordInvites = Array.isArray(response.data) ? response.data : []; renderLandlordInvites(); }
+    if (!inviteBusy) {
+      landlordInvites = Array.isArray(response.data) ? response.data : [];
+      renderLandlordInvites();
+      UyDosh.refreshMiniAppTabbarUnread?.();
+    }
   } catch { if (!inviteBusy) renderLandlordInvites(UyDosh.t('chat.invite.error')); }
   finally { inviteLoading = false; }
 }

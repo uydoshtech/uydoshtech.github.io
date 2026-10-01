@@ -4,10 +4,13 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
-    "chat.invite.title": "Guruh chatiga taklif",
-    "chat.invite.hint": "Guruh uy-joyingizni muhokama qilmoqchi. Chatga kirish uchun taklifni qabul qiling.",
+    "chat.invite.title": "Sizni chatga taklif qilishdi",
+    "chat.invite.hint": "Uy-joy e’loningizni muhokama qilmoqchi",
     "chat.invite.accept": "Qabul qilish",
     "chat.invite.decline": "Rad etish",
+    "chat.invite.collapse": "Taklifni yig‘ish",
+    "chat.invite.expand": "Taklifni yoyish",
+    "chat.invite.viewGroup": "Guruhni ko‘rish",
     "chat.invite.error": "Taklifni yuklash yoki qayta ishlash amalga oshmadi. Ro‘yxatni yangilang.",
     "chat.invite.retry": "Qayta urinish",
 

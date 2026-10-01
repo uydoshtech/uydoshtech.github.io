@@ -535,6 +535,65 @@
         }
         if (isMiniApp) loadGroupJoinRequests();
         setDetailBackFabShown(true);
+        mountLandlordInviteBanner(l);
+      }
+
+      let landlordInviteCache = [];
+      let landlordInviteListingId = 0;
+      let landlordInviteBusy = false;
+      let landlordInviteRequest = 0;
+
+      function paintLandlordInviteBanner() {
+        const existing = document.getElementById('landlord-invite-banner');
+        if (!landlordInviteCache.length || typeof UyDosh.landlordInviteCardsHtml !== 'function') {
+          existing?.remove();
+          return;
+        }
+        const layout = rootEl.querySelector('.layout');
+        if (!layout) return;
+        const host = existing || document.createElement('div');
+        host.id = 'landlord-invite-banner';
+        host.className = 'landlord-invite-banner';
+        layout.before(host);
+        host.innerHTML = UyDosh.landlordInviteCardsHtml(landlordInviteCache, {
+          busy: landlordInviteBusy,
+          hideGroupLink: true,
+        });
+        UyDosh.bindLandlordInviteCards(host, {
+          getInvite: (id) => landlordInviteCache.find((item) => Number(item.invite_id) === id),
+          isBusy: () => landlordInviteBusy,
+          setBusy: (value) => { landlordInviteBusy = value; },
+          rerender: () => paintLandlordInviteBanner(),
+          removeInvite: (id) => {
+            landlordInviteCache = landlordInviteCache.filter((item) => Number(item.invite_id) !== id);
+          },
+          onAccepted: (response) => {
+            location.href = UyDosh.chatPageUrl(response.conversation_id, {
+              backTo: UyDosh.listingPageUrl(landlordInviteListingId),
+            });
+          },
+          after: () => { UyDosh.refreshMiniAppTabbarUnread?.(); },
+        });
+      }
+
+      async function mountLandlordInviteBanner(listing) {
+        const id = Number(listing?.id);
+        if (!UyDosh.isMiniApp() || !id || typeof UyDosh.fetchPendingLandlordInvites !== 'function') return;
+        if (typeof isGroupFormingListing === 'function' && !isGroupFormingListing(listing)) return;
+        if (landlordInviteListingId === id && landlordInviteCache.length) paintLandlordInviteBanner();
+        const token = ++landlordInviteRequest;
+        try {
+          const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+          if (!sessionReady || token !== landlordInviteRequest) return;
+          const response = await UyDosh.fetchPendingLandlordInvites();
+          if (token !== landlordInviteRequest) return;
+          const all = Array.isArray(response?.data) ? response.data : [];
+          landlordInviteListingId = id;
+          landlordInviteCache = all.filter((item) => Number(item.group_listing_id) === id);
+          paintLandlordInviteBanner();
+        } catch (err) {
+          console.error('Failed to load landlord invite banner', err);
+        }
       }
 
       function listingNeedsRoomScanUi(listing) {

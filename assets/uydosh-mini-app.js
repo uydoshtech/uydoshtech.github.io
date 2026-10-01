@@ -1008,6 +1008,12 @@ function miniAppTabbarHtml(activeId) {
 
 function mountMiniAppTabbar() {
   if (!shouldMountMiniAppTabbar()) return null;
+  if (!document.documentElement.dataset.uydoshTabbarUnreadBound) {
+    document.documentElement.dataset.uydoshTabbarUnreadBound = "1";
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshMiniAppTabbarUnread();
+    });
+  }
   const existing = document.querySelector(".mini-app-tabbar");
   if (existing) {
     ensureMiniAppTabbarStyles();
@@ -1058,18 +1064,38 @@ async function revealAdminHostelTools() {
 
 async function refreshMiniAppTabbarUnread() {
   const badge = document.querySelector("[data-tabbar-unread]");
-  if (!badge || typeof fetchUnreadMessageCount !== "function") return;
+  const unreadFn =
+    typeof fetchUnreadMessageCount === "function" ? fetchUnreadMessageCount : null;
+  const invitesFn =
+    typeof UyDosh?.fetchPendingLandlordInvites === "function"
+      ? UyDosh.fetchPendingLandlordInvites
+      : null;
+  if (!badge || (!unreadFn && !invitesFn)) return;
   try {
     const sessionReady = await ensureTelegramMiniAppSession();
     if (!sessionReady) return;
-    const payload = await fetchUnreadMessageCount();
-    const count =
-      Number(payload?.data?.unread_count ?? payload?.unread_count) || 0;
+    const [unreadResult, invitesResult] = await Promise.all([
+      unreadFn ? unreadFn().catch(() => null) : null,
+      invitesFn ? invitesFn().catch(() => null) : null,
+    ]);
+    let count = 0;
+    let known = false;
+    if (unreadResult) {
+      known = true;
+      count +=
+        Number(unreadResult?.data?.unread_count ?? unreadResult?.unread_count) || 0;
+    }
+    if (Array.isArray(invitesResult?.data)) {
+      known = true;
+      count += invitesResult.data.length;
+    }
+    if (!known) return;
     if (count > 0) {
       badge.hidden = false;
       badge.textContent = count > 99 ? "99+" : String(count);
     } else {
       badge.hidden = true;
+      badge.textContent = "";
     }
   } catch {
     /* ignore */
@@ -2825,6 +2851,7 @@ Object.assign(window.UyDosh, {
   mountMiniAppHeader,
   mountAllMiniAppHeaders,
   mountMiniAppTabbar,
+  refreshMiniAppTabbarUnread,
   miniAppHeaderHtml,
   MINI_APP_ACCOUNT_PATH,
   MINI_APP_GROUPS_PATH,

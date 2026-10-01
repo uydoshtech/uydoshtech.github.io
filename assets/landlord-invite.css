@@ -1,0 +1,135 @@
+.landlord-invite-banner { margin: 0 0 14px; }
+.landlord-invite-banner .landlord-invite-card { margin: 0; }
+.landlord-invite-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  margin: 12px 0 4px;
+  border: 1px solid color-mix(in srgb, var(--brand2) 70%, var(--stroke));
+  border-radius: 18px;
+  background: var(--card);
+  overflow-wrap: anywhere;
+}
+.landlord-invite-head {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.landlord-invite-head-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.landlord-invite-card .inbox-toggle {
+  margin-top: 2px;
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.landlord-invite-card .inbox-toggle svg { width: 18px; height: 18px; display: block; }
+.landlord-invite-card[data-expanded="true"] .inbox-chevron-down,
+.landlord-invite-card[data-expanded="false"] .inbox-chevron-up { display: none; }
+.landlord-invite-card[data-expanded="false"] .landlord-invite-body { display: none; }
+.landlord-invite-body { display: grid; gap: 8px; }
+.landlord-invite-card .inbox-avatars { display: flex; align-items: center; }
+.landlord-invite-card .inbox-avatars img,
+.landlord-invite-card .inbox-avatar-fallback {
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--card);
+  margin-left: -10px;
+  background: color-mix(in srgb, var(--brand2) 22%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+.landlord-invite-card .inbox-avatars img:first-child,
+.landlord-invite-card .inbox-avatar-fallback:first-child { margin-left: 0; }
+.landlord-invite-faces { margin-bottom: 2px; }
+.landlord-invite-kicker {
+  margin: 0;
+  color: var(--brand2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.landlord-invite-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.landlord-invite-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+.landlord-invite-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: fit-content;
+  color: var(--brand2);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.landlord-invite-group svg { width: 16px; height: 16px; display: block; }
+.landlord-invite-listing {
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.landlord-invite-error { margin: 0 0 10px; color: var(--muted); }
+.landlord-invite-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+.landlord-invite-accept,
+.landlord-invite-decline {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 20px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+.landlord-invite-accept { background: #16a34a; }
+.landlord-invite-decline { background: #dc2626; }
+.landlord-invite-accept:active,
+.landlord-invite-decline:active { opacity: 0.9; }
+.landlord-invite-accept:disabled,
+.landlord-invite-decline:disabled { opacity: 0.5; cursor: default; }
