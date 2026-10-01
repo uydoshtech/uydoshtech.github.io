@@ -574,6 +574,7 @@ I18N.en = {
     'account.roleOrganizer': 'Organizer',
     'account.roleYou': 'You',
     'account.roleParticipant': 'Participant',
+    'account.roleLandlord': 'Landlord',
     'account.leaveGroup': 'Leave group',
     'account.removeFromGroup': 'Remove from group',
     'account.removeFromGroupTitle': 'Remove from group?',

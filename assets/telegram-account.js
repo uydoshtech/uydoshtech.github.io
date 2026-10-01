@@ -1156,6 +1156,7 @@ function memberRoleKey(member, listing, me) {
   const userId = Number(member.user_id);
   const ownerId = Number(listing?.user_id ?? listing?.user?.id);
   if (member.role === 'owner' || userId === ownerId) return 'organizer';
+  if (member.role === 'landlord_guest') return 'landlord';
   if (userId === me) return 'you';
   return 'participant';
 }
@@ -1232,6 +1233,7 @@ function memberLifestyleHtml(member, roleKey) {
 function memberRoleLabel(roleKey, lang) {
   if (roleKey === 'you') return UyDosh.t('account.roleYou', lang);
   if (roleKey === 'organizer') return UyDosh.t('account.roleOrganizer', lang);
+  if (roleKey === 'landlord') return UyDosh.t('account.roleLandlord', lang);
   return UyDosh.t('account.roleParticipant', lang);
 }
 

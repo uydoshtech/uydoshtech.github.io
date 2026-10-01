@@ -574,6 +574,7 @@ I18N.ru = {
     'account.roleOrganizer': 'Организатор',
     'account.roleYou': 'Вы',
     'account.roleParticipant': 'Участник',
+    'account.roleLandlord': 'Арендодатель',
     'account.leaveGroup': 'Покинуть группу',
     'account.removeFromGroup': 'Удалить из группы',
     'account.removeFromGroupTitle': 'Удалить из группы?',

@@ -575,6 +575,7 @@ I18N.uz = {
     'account.roleOrganizer': 'Tashkilotchi',
     'account.roleYou': 'Siz',
     'account.roleParticipant': 'Ishtirokchi',
+    'account.roleLandlord': 'Uy egasi',
     'account.leaveGroup': 'Guruhdan chiqish',
     'account.removeFromGroup': 'Guruhdan chiqarish',
     'account.removeFromGroupTitle': 'Guruhdan chiqarilsinmi?',
