@@ -1907,3 +1907,5 @@ button.shortlist-rating-chip { cursor: pointer; }
 .shortlist-group-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .shortlist-group-actions .btn .icon { display: inline-flex; flex-shrink: 0; }
 .shortlist-group-actions .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+.shortlist-group-actions > .shortlist-invite-pending { color: #fb923c; }
