@@ -3,6 +3,13 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    "chat.invite.title": "Приглашение в групповой чат",
+    "chat.invite.hint": "Группа хочет обсудить ваше жильё. Примите приглашение, чтобы войти в чат.",
+    "chat.invite.accept": "Принять",
+    "chat.invite.decline": "Отклонить",
+    "chat.invite.error": "Не удалось загрузить или обработать приглашение. Обновите список.",
+    "chat.invite.retry": "Повторить",
+
     "detail.tabs.label": "Детали объявления",
     "detail.tabs.area": "Район и цены",
     "detail.tabs.scan": "3D-скан",

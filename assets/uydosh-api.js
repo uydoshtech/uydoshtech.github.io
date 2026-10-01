@@ -2007,3 +2007,6 @@ UyDosh.groupHomeRequest = (groupId, suffix = '', body) => fetchJsonAuth(
 
 UyDosh.inviteGroupLandlord = (groupId, listingId) => fetchJsonAuth(listingGroupPath(groupId, `/shortlist/${encodeURIComponent(listingId)}/landlord-invites`), { method: 'POST' });
 UyDosh.cancelGroupLandlordInvite = (groupId, inviteId) => fetchJsonAuth(listingGroupPath(groupId, `/landlord-invites/${encodeURIComponent(inviteId)}`), { method: 'DELETE' });
+
+UyDosh.fetchPendingLandlordInvites = () => fetchJsonAuth('/conversations/pending-landlord-invites');
+UyDosh.respondToLandlordInvite = (groupId, inviteId, accept) => fetchJsonAuth(listingGroupPath(groupId, `/landlord-invites/${encodeURIComponent(inviteId)}/${accept ? 'accept' : 'decline'}`), { method: 'POST' });

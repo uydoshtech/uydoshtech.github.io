@@ -3,6 +3,13 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    "chat.invite.title": "Group chat invitation",
+    "chat.invite.hint": "This group wants to discuss your housing. Accept to join the chat.",
+    "chat.invite.accept": "Accept",
+    "chat.invite.decline": "Decline",
+    "chat.invite.error": "Could not load or process the invitation. Refresh the list.",
+    "chat.invite.retry": "Retry",
+
     "detail.tabs.label": "Listing details",
     "detail.tabs.area": "Area & prices",
     "detail.tabs.scan": "3D scan",

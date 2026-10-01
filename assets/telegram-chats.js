@@ -304,10 +304,59 @@ function bindToggles() {
   });
 }
 
+const invitesEl = document.getElementById('landlord-invites');
+let landlordInvites = [], inviteBusy = false, inviteLoading = false, invitesReady = false;
+function renderLandlordInvites(error = '') {
+  const e = UyDosh.escapeHtml;
+  const t = key => UyDosh.t('chat.invite.' + key);
+  invitesEl.hidden = !landlordInvites.length && !error;
+  invitesEl.innerHTML = `${error ? `<p role="status">${e(error)}</p><button class="btn-link" data-invite-retry>${e(t('retry'))}</button>` : ''}${landlordInvites.map(invite => `<article class="landlord-invite-card">
+    <strong>${e(t('title'))}</strong>
+    <span>${e(invite.group_listing_title || '#' + invite.group_listing_id)}</span>
+    <a href="${e(UyDosh.listingPageUrl(invite.housing_listing_id))}">${e(invite.housing_listing_title || '#' + invite.housing_listing_id)}</a>
+    <p>${e(t('hint'))}</p>
+    <div class="landlord-invite-actions"><button class="btn-link" data-invite-accept="${Number(invite.invite_id)}" ${inviteBusy ? 'disabled' : ''}>${e(t('accept'))}</button><button class="btn-link" data-invite-decline="${Number(invite.invite_id)}" ${inviteBusy ? 'disabled' : ''}>${e(t('decline'))}</button></div>
+  </article>`).join('')}`;
+  invitesEl.querySelector('[data-invite-retry]')?.addEventListener('click', refreshLandlordInvites);
+  invitesEl.querySelectorAll('[data-invite-accept], [data-invite-decline]').forEach(button => button.addEventListener('click', async () => {
+    if (inviteBusy) return;
+    const accept = button.hasAttribute('data-invite-accept');
+    const id = Number(button.dataset.inviteAccept || button.dataset.inviteDecline);
+    const invite = landlordInvites.find(item => Number(item.invite_id) === id);
+    if (!invite) return;
+    inviteBusy = true; renderLandlordInvites();
+    try {
+      const response = await UyDosh.respondToLandlordInvite(invite.group_listing_id, id, accept);
+      landlordInvites = landlordInvites.filter(item => Number(item.invite_id) !== id);
+      if (accept && response.conversation_id) location.href = UyDosh.chatPageUrl(response.conversation_id, { backTo: '/telegram/chats.html' });
+      inviteBusy = false;
+      renderLandlordInvites();
+      await refreshLandlordInvites();
+    } catch (err) {
+      inviteBusy = false;
+      await refreshLandlordInvites();
+      renderLandlordInvites(t('error'));
+    }
+  }));
+}
+async function refreshLandlordInvites() {
+  if (!invitesReady || inviteBusy || inviteLoading || document.hidden) return;
+  inviteLoading = true;
+  try {
+    const response = await UyDosh.fetchPendingLandlordInvites();
+    if (!inviteBusy) { landlordInvites = Array.isArray(response.data) ? response.data : []; renderLandlordInvites(); }
+  } catch { if (!inviteBusy) renderLandlordInvites(UyDosh.t('chat.invite.error')); }
+  finally { inviteLoading = false; }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshLandlordInvites(); });
+window.addEventListener('pageshow', refreshLandlordInvites);
+setInterval(refreshLandlordInvites, 30000);
+
 async function boot() {
   UyDosh.applyI18n();
   document.addEventListener('uydosh:langchange', () => {
     UyDosh.applyI18n();
+    renderLandlordInvites();
   });
   bindToggles();
   const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
@@ -316,6 +365,8 @@ async function boot() {
     emptyTextEl.textContent = UyDosh.t('create.errorAuth');
     return;
   }
+  invitesReady = true;
+  refreshLandlordInvites();
   try {
     const data = await UyDosh.fetchUserConversations({ page: 1, limit: 50 });
     const list = data?.data?.conversations || data?.conversations || [];
