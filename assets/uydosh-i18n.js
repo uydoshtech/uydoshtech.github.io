@@ -13,7 +13,7 @@
   var base = thisScript && thisScript.src
     ? thisScript.src.replace(/uydosh-i18n\.js.*$/, 'i18n/')
     : 'assets/i18n/';
-  var version = window.UYDOSH_BUILD?.id || '20261001-my-posts-ru';
+  var version = window.UYDOSH_BUILD?.id || '20261001-home';
   var canWrite = document.readyState === 'loading';
   langs.forEach(function (code) {
     var src = base + code + '.js?v=' + version;

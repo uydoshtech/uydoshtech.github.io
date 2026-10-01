@@ -1786,7 +1786,7 @@
 /* Group detail tabs share the existing theme colors and fit narrow Mini Apps. */
 .group-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--group-tab-count, 3), minmax(0, 1fr));
   gap: 4px;
   margin: 16px 0;
   padding: 4px;
@@ -1891,3 +1891,8 @@ button.shortlist-rating-chip { cursor: pointer; }
 .shortlist-rating-reason.is-on { background: #e0a100; color: #fff; }
 .shortlist-rating-error { margin: 10px 0 0; color: #ef4444; }
 .shortlist-rating-submit { width: 100%; margin-top: 14px; }
+
+.group-home form, .group-home label, .home-chore { display: grid; gap: 10px; min-width: 0; }
+.group-home form, .home-chore { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--stroke); }
+.group-home input, .group-home select { width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--stroke); border-radius: 10px; background: var(--bg); color: var(--fg); font: inherit; }
+.home-chore span, .home-chore small { color: var(--muted); }

@@ -2000,3 +2000,7 @@ Object.assign(window.UyDosh, {
   withTimeout,
   waitForElementLayout,
 });
+
+UyDosh.groupHomeRequest = (groupId, suffix = '', body) => fetchJsonAuth(
+  listingGroupPath(groupId, '/home' + suffix), body === undefined ? {} : { method: 'POST', body },
+);

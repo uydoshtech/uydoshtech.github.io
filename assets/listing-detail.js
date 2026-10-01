@@ -237,8 +237,8 @@
       let openHousingTabFromHash = location.hash === '#group-shortlist';
 
       function groupTabsHtml(panels) {
-        const labels = { description: 'detail.group.tabDescription', compatibility: 'detail.group.tabMembers', housing: 'detail.group.tabHousing' };
-        return `<div class="group-tabs" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.group.tabs'))}">
+        const labels = { description: 'detail.group.tabDescription', compatibility: 'detail.group.tabMembers', housing: 'detail.group.tabHousing', home: 'home.title' };
+        return `<div class="group-tabs" style="--group-tab-count:${Object.keys(panels).length}" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.group.tabs'))}">
           ${Object.keys(panels).map(key => `<button type="button" role="tab" id="group-tab-${key}" data-group-tab="${key}" aria-controls="group-panel-${key}" aria-selected="${activeGroupTab === key}" tabindex="${activeGroupTab === key ? 0 : -1}">${UyDosh.escapeHtml(UyDosh.t(labels[key]))}</button>`).join('')}
         </div>${Object.entries(panels).map(([key, html]) => `<section class="group-tab-panel" role="tabpanel" id="group-panel-${key}" aria-labelledby="group-tab-${key}" tabindex="0" ${activeGroupTab === key ? '' : 'hidden'}>${html}</section>`).join('')}`;
       }
@@ -450,6 +450,7 @@
           description: `${titleHtml}${groupSectionHtml(l)}${roomScanHtml}${descHtml}${mapHtml}${metaHtml}`,
           compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.compatUnavailable'))}</p>`,
           housing: discoveryHtml || `<p class="discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.housingUnavailable'))}</p>`,
+          ...(listingGroupContext(l)?.is_owner || listingGroupContext(l)?.is_member ? { home: UyDoshGroupHome.html() } : {}),
         }) : `${groupSectionHtml(l)}${roomScanHtml}${compatibilityHtml}${descHtml}${mapHtml}${discoveryHtml}${metaHtml}`;
 
         rootEl.innerHTML = `
@@ -484,6 +485,7 @@
 
         bindGroupTabs();
         UyDoshListingDiscovery.bind(l);
+        UyDoshGroupHome.bind(l);
         bindListingDescription(l);
         bindGallery();
         bindMapSection();
