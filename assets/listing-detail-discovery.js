@@ -333,8 +333,8 @@
       const invite = context.is_owner && !pendingInvite && !items.some(i => i.pending_landlord_invite_id)
         && !progress?.active_landlord_user_id && (progress ? progress.can_invite_landlord : true);
       return `<div class="shortlist-group-actions">
-        ${pending ? `<span>${e(t('invitePending'))}</span>${context.is_owner ? `<button class="btn" data-revoke-landlord="${Number(pending)}">${e(t('revokeInvite'))}</button>` : ''}` : invite ? `<button class="btn" data-invite-landlord="${Number(item.listing_id)}">${e(t('inviteLandlord'))}</button>` : ''}
-        ${context.group_conversation_id ? `<button class="btn" data-discuss-housing="${Number(item.listing_id)}">${e(t('discussHousing'))}</button>` : ''}
+        ${pending ? `<span>${e(t('invitePending'))}</span>${context.is_owner ? `<button class="btn" data-revoke-landlord="${Number(pending)}">${e(t('revokeInvite'))}</button>` : ''}` : invite ? `<button class="btn" data-invite-landlord="${Number(item.listing_id)}">${UyDosh.iconChrome('personPlus')}<span>${e(t('inviteLandlord'))}</span></button>` : ''}
+        ${context.group_conversation_id ? `<button class="btn" data-discuss-housing="${Number(item.listing_id)}">${UyDosh.iconChrome('chatBubble')}<span>${e(t('discussHousing'))}</span></button>` : ''}
       </div>`;
     }
     const back = detailUrl(group.id) + '#group-shortlist';

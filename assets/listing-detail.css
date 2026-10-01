@@ -1903,3 +1903,7 @@ button.shortlist-rating-chip { cursor: pointer; }
 
 .listing-tab-panel:not([hidden]) { display: flex; flex-direction: column; gap: 14px; }
 .listing-tab-panel > * { min-width: 0; }
+
+.shortlist-group-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.shortlist-group-actions .btn .icon { display: inline-flex; flex-shrink: 0; }
+.shortlist-group-actions .btn svg { width: 20px; height: 20px; flex-shrink: 0; }

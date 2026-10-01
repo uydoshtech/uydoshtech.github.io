@@ -6,7 +6,7 @@ const source = fs.readFileSync('assets/listing-detail-discovery.js', 'utf8');
 const start = source.indexOf('    function actionHtml(item)');
 const code = source.slice(start, source.indexOf('    const back =', start));
 function html(context, extra = {}, item = { listing_id: 7, listing: {} }) {
-  const sandbox = { context, pendingInvite: null, pendingListing: null, items: [], e: String, t: k => k, ...extra };
+  const sandbox = { UyDosh: { iconChrome: name => `<span>${name}</span>` }, context, pendingInvite: null, pendingListing: null, items: [], e: String, t: k => k, ...extra };
   vm.runInNewContext(code + '\nresult = actionHtml(item);', Object.assign(sandbox, { item }));
   return sandbox.result;
 }
