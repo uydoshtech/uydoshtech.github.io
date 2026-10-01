@@ -321,11 +321,27 @@
     refreshShortlist = message => paint(message);
     const body = details.querySelector('[data-shortlist-body]');
     let loaded = false, busy = false, page = 0, pages = 1, items = [], activeIndex = 0;
+    let context = group.group_context || {};
+    let pendingInvite = context.group_progress?.pending_landlord_invite_id || null;
+    let pendingListing = context.group_progress?.pending_landlord_invite_listing_id || null;
+    let actionBusy = false;
+    const discussed = new Set();
+    function actionHtml(item) {
+      if (!item.listing) return '';
+      const progress = context.group_progress;
+      const pending = item.pending_landlord_invite_id || (Number(pendingListing) === Number(item.listing_id) ? pendingInvite : null);
+      const invite = context.is_owner && !pendingInvite && !items.some(i => i.pending_landlord_invite_id)
+        && !progress?.active_landlord_user_id && (progress ? progress.can_invite_landlord : true);
+      return `<div class="shortlist-group-actions">
+        ${pending ? `<span>${e(t('invitePending'))}</span>${context.is_owner ? `<button class="btn" data-revoke-landlord="${Number(pending)}">${e(t('revokeInvite'))}</button>` : ''}` : invite ? `<button class="btn" data-invite-landlord="${Number(item.listing_id)}">${e(t('inviteLandlord'))}</button>` : ''}
+        ${context.group_conversation_id ? `<button class="btn" data-discuss-housing="${Number(item.listing_id)}">${e(t('discussHousing'))}</button>` : ''}
+      </div>`;
+    }
     const back = detailUrl(group.id) + '#group-shortlist';
-    function paint(message = '') {
+    function paint(message = '', loading = false) {
       if (!details.isConnected) return;
       activeIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
-      body.innerHTML = `<p role="status">${e(message)}</p>
+      body.innerHTML = `${loading ? `<p role="status" aria-label="${e(t('loading'))}" aria-busy="true"><span class="loading-spinner loading-spinner-small" aria-hidden="true"></span></p>` : `<p role="status">${e(message)}</p>`}
       ${items.length > 1 ? `<div class="shortlist-carousel-dots" role="tablist" aria-label="${e(t('shortlist'))}">${items.map((_, index) => `<button type="button" class="shortlist-carousel-dot" role="tab" data-shortlist-dot="${index}" aria-label="${index + 1} / ${items.length}" aria-current="${index === activeIndex ? 'true' : 'false'}"></button>`).join('')}</div>` : ''}
       <div class="shortlist-carousel" data-shortlist-carousel tabindex="0" aria-label="${e(t('shortlist'))}">${items.map(item => {
         const listing = item.listing;
@@ -346,6 +362,7 @@
               ${area ? `<div class="discovery-shortlist-area"><span aria-hidden="true">${UyDosh.iconPin()}</span>${e(area)}</div>` : ''}
               <div class="discovery-shortlist-budget">${budgetHtml(group, listing, { showStatus: false })}</div>` : `<strong>${e(title)}</strong>`}
             ${ratingHtml(item)}
+            ${actionHtml(item)}
             <div class="discovery-shortlist-footer">
               ${savedByHtml(item.saved_by)}
               <button class="btn discovery-shortlist-remove" type="button" data-shortlist-remove="${Number(item.listing_id)}" ${busy ? 'disabled' : ''}><span aria-hidden="true">${UyDosh.iconTrash()}</span>${e(t('removeShort'))}</button>
@@ -354,7 +371,62 @@
         </article>`;
       }).join('')}</div>
       ${loaded && !items.length ? `<p>${e(t('empty'))}</p>` : ''}
-      ${!loaded || page < pages ? `<button class="btn" type="button" data-shortlist-more ${busy ? 'disabled' : ''}>${e(t(loaded ? 'more' : 'retry'))}</button>` : ''}`;
+      ${!busy && (!loaded || page < pages) ? `<button class="btn" type="button" data-shortlist-more ${busy ? 'disabled' : ''}>${e(t(loaded ? 'more' : 'retry'))}</button>` : ''}`;
+      body.querySelectorAll('[data-invite-landlord], [data-revoke-landlord], [data-discuss-housing]').forEach(button => {
+        button.disabled = actionBusy;
+        button.addEventListener('click', async () => {
+          if (actionBusy || busy) return;
+          actionBusy = true;
+          paint();
+          let message = '';
+          try {
+            if (button.dataset.discussHousing) {
+              const id = Number(button.dataset.discussHousing);
+              const listing = items.find(item => Number(item.listing_id) === id)?.listing;
+              if (!listing) throw new Error('Missing listing');
+              if (!discussed.has(id)) {
+                let owner = null;
+                try { owner = await UyDosh.fetchProfile(listing.user_id); } catch { /* optional author metadata */ }
+                const content = '[[uydosh:listing_share]]' + JSON.stringify({
+                  v: 1, listing_id: id, title: listing.title || `#${id}`, intro: t('discussIntro'),
+                  location: UyDosh.listingLocationLabel(listing, UyDosh.getLang()),
+                  metro: UyDosh.localized(listing.subway_station, UyDosh.getLang()),
+                  price_label: UyDosh.formatPrice(listing, UyDosh.getLang()),
+                  owner_user_id: listing.user_id, owner_name: owner?.name || null, owner_avatar_url: owner?.avatar_url || null,
+                });
+                await UyDosh.sendConversationMessage(context.group_conversation_id, content);
+                discussed.add(id);
+              }
+              location.href = UyDosh.chatPageUrl(context.group_conversation_id, { backTo: back });
+            } else {
+              if (button.dataset.inviteLandlord) {
+                const id = Number(button.dataset.inviteLandlord);
+                const result = await UyDosh.inviteGroupLandlord(group.id, id);
+                pendingInvite = result.invite_id || null;
+                pendingListing = id;
+                if (!pendingInvite && context.group_progress) context.group_progress.can_invite_landlord = false;
+                message = t('inviteSent');
+              } else {
+                const id = Number(button.dataset.revokeLandlord);
+                await UyDosh.cancelGroupLandlordInvite(group.id, id);
+                items.forEach(item => { if (Number(item.pending_landlord_invite_id) === id) item.pending_landlord_invite_id = null; });
+                pendingInvite = null; pendingListing = null;
+                if (context.group_progress) context.group_progress.can_invite_landlord = true;
+                message = t('inviteRevoked');
+              }
+            }
+          } catch (error) {
+            message = error?.status === 409 ? t('oneLandlord') : errorText(error);
+            // Refresh permission flags after a conflict or an uncertain response.
+            try {
+              const fresh = await UyDosh.fetchListing(group.id);
+              context = fresh.group_context || context;
+              pendingInvite = context.group_progress?.pending_landlord_invite_id || null;
+              pendingListing = context.group_progress?.pending_landlord_invite_listing_id || null;
+            } catch { /* keep the original error visible */ }
+          } finally { actionBusy = false; paint(message); }
+        });
+      });
       const carousel = body.querySelector('[data-shortlist-carousel]');
       const dots = [...body.querySelectorAll('[data-shortlist-dot]')];
       const step = () => carousel.clientWidth + 12;
@@ -416,7 +488,7 @@
     }
     async function loadMore() {
       if (busy) return;
-      busy = true; paint(t('loading'));
+      busy = true; paint('', true);
       try {
         if (!await UyDosh.ensureTelegramMiniAppSession()) throw { status: 401 };
         const result = await UyDosh.fetchGroupShortlist(group.id, page + 1);

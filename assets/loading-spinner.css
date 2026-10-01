@@ -10,3 +10,5 @@
 @keyframes uydosh-spin {
   to { transform: rotate(360deg); }
 }
+
+.loading-spinner-small { width: 24px; height: 24px; vertical-align: middle; }

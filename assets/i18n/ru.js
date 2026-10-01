@@ -3,6 +3,15 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    "discovery.inviteLandlord": "Пригласить арендодателя",
+    "discovery.invitePending": "Приглашение ожидает ответа",
+    "discovery.revokeInvite": "Отозвать приглашение",
+    "discovery.discussHousing": "Обсудить в чате",
+    "discovery.discussIntro": "Давайте обсудим этот вариант жилья.",
+    "discovery.inviteSent": "Приглашение отправлено",
+    "discovery.inviteRevoked": "Приглашение отозвано",
+    "discovery.oneLandlord": "Можно пригласить только одного арендодателя одновременно.",
+
     "discovery.previousOption": "Предыдущий вариант",
     "discovery.nextOption": "Следующий вариант",
     "profile.number.decrease": "Уменьшить",

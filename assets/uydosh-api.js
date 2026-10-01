@@ -2004,3 +2004,6 @@ Object.assign(window.UyDosh, {
 UyDosh.groupHomeRequest = (groupId, suffix = '', body) => fetchJsonAuth(
   listingGroupPath(groupId, '/home' + suffix), body === undefined ? {} : { method: 'POST', body },
 );
+
+UyDosh.inviteGroupLandlord = (groupId, listingId) => fetchJsonAuth(listingGroupPath(groupId, `/shortlist/${encodeURIComponent(listingId)}/landlord-invites`), { method: 'POST' });
+UyDosh.cancelGroupLandlordInvite = (groupId, inviteId) => fetchJsonAuth(listingGroupPath(groupId, `/landlord-invites/${encodeURIComponent(inviteId)}`), { method: 'DELETE' });

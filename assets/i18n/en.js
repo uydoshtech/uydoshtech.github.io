@@ -3,6 +3,15 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    "discovery.inviteLandlord": "Invite landlord",
+    "discovery.invitePending": "Invitation awaiting response",
+    "discovery.revokeInvite": "Revoke invitation",
+    "discovery.discussHousing": "Discuss in chat",
+    "discovery.discussIntro": "Let’s discuss this housing option.",
+    "discovery.inviteSent": "Invitation sent",
+    "discovery.inviteRevoked": "Invitation revoked",
+    "discovery.oneLandlord": "Only one landlord invitation can be active at a time.",
+
     "discovery.previousOption": "Previous option",
     "discovery.nextOption": "Next option",
     "profile.number.decrease": "Decrease",

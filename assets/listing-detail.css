@@ -1896,3 +1896,7 @@ button.shortlist-rating-chip { cursor: pointer; }
 .group-home form, .home-chore { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--stroke); }
 .group-home input, .group-home select { width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--stroke); border-radius: 10px; background: var(--bg); color: var(--fg); font: inherit; }
 .home-chore span, .home-chore small { color: var(--muted); }
+
+.shortlist-group-actions { display: grid; gap: 8px; min-width: 0; }
+.shortlist-group-actions .btn { width: 100%; white-space: normal; }
+.shortlist-group-actions > span { font-size: 13px; color: var(--muted); }

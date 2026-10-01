@@ -4,6 +4,15 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    "discovery.inviteLandlord": "Uy egasini taklif qilish",
+    "discovery.invitePending": "Taklif javob kutilmoqda",
+    "discovery.revokeInvite": "Taklifni bekor qilish",
+    "discovery.discussHousing": "Chatda muhokama qilish",
+    "discovery.discussIntro": "Keling, ushbu uy-joy variantini muhokama qilamiz.",
+    "discovery.inviteSent": "Taklif yuborildi",
+    "discovery.inviteRevoked": "Taklif bekor qilindi",
+    "discovery.oneLandlord": "Bir vaqtning o‘zida faqat bitta uy egasini taklif qilish mumkin.",
+
     "discovery.previousOption": "Oldingi variant",
     "discovery.nextOption": "Keyingi variant",
     "profile.number.decrease": "Kamaytirish",
