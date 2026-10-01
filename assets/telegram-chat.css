@@ -172,6 +172,7 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   display: flex;
   gap: 8px;
   max-width: 92%;
+  min-width: 0;
   align-items: flex-end;
 }
 .chat-swipe {
@@ -213,6 +214,9 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
 .chat-quote {
   margin: 0 0 6px;
   padding: 6px 8px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   border-radius: 8px;
   border-left: 3px solid var(--brand2);
   background: color-mix(in srgb, var(--fg) 8%, transparent);
@@ -379,6 +383,7 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
 
 .chat-bubble {
   min-width: 0;
+  max-width: 100%;
   padding: 8px 10px;
   border-radius: 14px;
   background: color-mix(in srgb, var(--brand2) 22%, transparent);
@@ -428,11 +433,18 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   word-break: break-word;
 }
 .chat-time {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
   margin-top: 4px;
   font-size: 10px;
   color: var(--muted);
-  text-align: right;
+}
+.chat-time svg {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
 }
 .chat-bubble-row.mine .chat-time {
   color: #475569;

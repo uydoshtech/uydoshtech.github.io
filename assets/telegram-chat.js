@@ -98,6 +98,8 @@ function formatTime(iso) {
   return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
+const CHAT_CLOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4.2l2.6 1.6"></path></svg>';
+
 function dayKey(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -314,7 +316,7 @@ function messageHtml(message, { showDay, readers = [] }) {
           ${!mine && name ? `<div class="chat-sender">${UyDosh.escapeHtml(name)}</div>` : ''}
           ${quoteHtml(message, mine)}
           ${body}
-          <span class="chat-time">${UyDosh.escapeHtml(formatTime(message.created_at))}</span>
+          <span class="chat-time">${CHAT_CLOCK_ICON}${UyDosh.escapeHtml(formatTime(message.created_at))}</span>
         </div>
         ${readAvatarsHtml(readers)}
       </div>
