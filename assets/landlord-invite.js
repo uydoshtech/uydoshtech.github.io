@@ -46,8 +46,8 @@
           ${groupLink}
           <a class="landlord-invite-listing" href="${e(UyDosh.listingPageUrl(invite.housing_listing_id, backTo ? { backTo } : {}))}">${e(invite.housing_listing_title || '#' + invite.housing_listing_id)}</a>
           <div class="landlord-invite-actions">
-            <button type="button" class="landlord-invite-accept" data-invite-accept="${id}" ${disabled}>${e(t('accept'))}</button>
             <button type="button" class="landlord-invite-decline" data-invite-decline="${id}" ${disabled}>${e(t('decline'))}</button>
+            <button type="button" class="landlord-invite-accept" data-invite-accept="${id}" ${disabled}>${e(t('accept'))}</button>
           </div>
         </div>
       </article>`;
