@@ -54,6 +54,7 @@ const swipe = {
   lock: null,
   pointerId: null,
   armed: false,
+  suppressClick: false,
 };
 
 function myUserId() {
@@ -613,6 +614,7 @@ function swipeResetVisual() {
 
 function swipeEnd(shouldReply) {
   const row = swipe.row;
+  const dragged = swipe.lock === 'h';
   const messageId = Number(row?.getAttribute('data-reply-id'));
   swipeResetVisual();
   swipe.row = null;
@@ -622,6 +624,11 @@ function swipeEnd(shouldReply) {
   swipe.pointerId = null;
   swipe.offset = 0;
   swipe.armed = false;
+  if (dragged) {
+    swipe.suppressClick = true;
+    setTimeout(() => { swipe.suppressClick = false; }, 400);
+  }
+  if (!shouldReply) return;
   const message = state.messages.find((m) => Number(m.id) === messageId);
   if (message) startReplyToMessage(message);
 }
@@ -717,17 +724,42 @@ document.addEventListener('uydosh:langchange', () => {
 
 boot();
 
-threadEl.addEventListener('click', event => {
-  const button = event.target.closest('[data-chat-rate]');
-  if (!button) return;
-  const message = state.messages.find(m => Number(m.id) === Number(button.dataset.chatRate));
-  if (!message) return;
+function openChatListingRating(message, initialStars) {
+  if (!message || typeof UyDoshListingDiscovery?.openRatingDialog !== 'function') return;
   const rating = message.listing_rating || {};
-  const item = { rating: { participants: [{ user_id: myUserId(), stars: rating.my_stars, reasons: rating.my_reasons, category_ratings: rating.my_category_ratings, verdict: rating.my_verdict }] } };
-  UyDoshListingDiscovery.openRatingDialog(item, Number(button.dataset.stars), async input => {
+  const item = {
+    rating: {
+      participants: [{
+        user_id: myUserId(),
+        stars: rating.my_stars,
+        reasons: rating.my_reasons,
+        category_ratings: rating.my_category_ratings,
+        verdict: rating.my_verdict,
+      }],
+    },
+  };
+  UyDoshListingDiscovery.openRatingDialog(item, initialStars, async input => {
     const response = await UyDosh.rateChatListing(message.id, input);
     if (response.data) mergeMessages([response.data]);
     renderThread();
     return response;
   });
+}
+
+threadEl.addEventListener('click', event => {
+  if (swipe.suppressClick) {
+    swipe.suppressClick = false;
+    event.preventDefault();
+    return;
+  }
+  const button = event.target.closest('[data-chat-rate]');
+  const card = event.target.closest('.chat-listing-card, .chat-listing-rating');
+  if (!button && !card) return;
+  const row = (button || card).closest('[data-message-id]');
+  const messageId = Number(button?.dataset.chatRate || row?.dataset.messageId);
+  const message = state.messages.find(m => Number(m.id) === messageId);
+  if (!message) return;
+  event.preventDefault();
+  const stars = button ? Number(button.dataset.stars) : Number(message.listing_rating?.my_stars) || 0;
+  openChatListingRating(message, stars);
 });
