@@ -1013,6 +1013,18 @@ async function loadMemberGroupListings() {
   state.memberGroupListings = fetched.filter(Boolean);
 }
 
+async function hydrateOwnedGroupProgress() {
+  const listings = groupListings().filter((listing) => !listing?.group_context?.group_progress && Number(listing?.id) > 0);
+  await Promise.all(listings.map(async (listing) => {
+    try {
+      const detail = await UyDosh.fetchListing(listing.id);
+      if (detail?.group_context) listing.group_context = detail.group_context;
+    } catch (err) {
+      console.error('Failed to load group progress', listing.id, err);
+    }
+  }));
+}
+
 async function loadHousingOptionCounts() {
   const listings = [...groupListings(), ...(state.memberGroupListings || [])]
     .filter((listing) => housingOptionsCount(listing) == null && Number(listing?.id) > 0);
@@ -1078,7 +1090,7 @@ async function boot() {
   const startup = [loadMyListings(), loadFavorites(), loadGroupChats()];
   if (state.activeTab === TAB_FOLLOWS) startup.push(loadFollows());
   await Promise.all(startup);
-  await Promise.all([loadMemberGroupListings(), loadGroupCreateEligibility()]);
+  await Promise.all([loadMemberGroupListings(), loadGroupCreateEligibility(), hydrateOwnedGroupProgress()]);
   await loadHousingOptionCounts();
   loadingEl.hidden = true;
   renderActiveTab();
@@ -1182,9 +1194,8 @@ function groupPhasePillHtml(listing, lang) {
 function groupStatusLabel(listing, lang) {
   const ctx = listing?.group_context;
   const phase = ctx?.group_progress?.phase;
-  if (phase === 'landlord_outreach' || phase === 'landlord_joined') {
-    return UyDosh.t('account.waitingLandlord', lang);
-  }
+  if (phase === 'landlord_joined') return UyDosh.t('account.landlordJoined', lang);
+  if (phase === 'landlord_outreach') return UyDosh.t('account.waitingLandlord', lang);
   if (phase === 'housing_search' || phase === 'shortlisting') {
     return UyDosh.t('account.lookingForHousing', lang);
   }

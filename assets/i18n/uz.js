@@ -572,6 +572,7 @@ I18N.uz = {
     'account.lookingForRoommates': 'Qo‘shni qidirilmoqda',
     'account.lookingForHousing': 'Uy qidirilmoqda',
     'account.waitingLandlord': 'Ijaraga beruvchi javobini kutamiz',
+    'account.landlordJoined': 'Ijara beruvchi chatda',
     'account.roleOrganizer': 'Tashkilotchi',
     'account.roleYou': 'Siz',
     'account.roleParticipant': 'Ishtirokchi',

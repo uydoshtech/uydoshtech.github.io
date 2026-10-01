@@ -571,6 +571,7 @@ I18N.en = {
     'account.lookingForRoommates': 'Looking for roommates',
     'account.lookingForHousing': 'Looking for housing',
     'account.waitingLandlord': 'Waiting for landlord’s response',
+    'account.landlordJoined': 'Landlord joined the chat',
     'account.roleOrganizer': 'Organizer',
     'account.roleYou': 'You',
     'account.roleParticipant': 'Participant',
