@@ -4,6 +4,10 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    "detail.tabs.label": "E’lon tafsilotlari",
+    "detail.tabs.area": "Hudud va narxlar",
+    "detail.tabs.scan": "3D skan",
+
     "discovery.inviteLandlord": "Uy egasini taklif qilish",
     "discovery.invitePending": "Taklif javob kutilmoqda",
     "discovery.revokeInvite": "Taklifni bekor qilish",

@@ -1900,3 +1900,6 @@ button.shortlist-rating-chip { cursor: pointer; }
 .shortlist-group-actions { display: grid; gap: 8px; min-width: 0; }
 .shortlist-group-actions .btn { width: 100%; white-space: normal; }
 .shortlist-group-actions > span { font-size: 13px; color: var(--muted); }
+
+.listing-tab-panel:not([hidden]) { display: flex; flex-direction: column; gap: 14px; }
+.listing-tab-panel > * { min-width: 0; }

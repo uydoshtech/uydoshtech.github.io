@@ -1588,9 +1588,9 @@ function listingGroupPath(listingId, suffix) {
 function fetchGroupShortlistCount(groupId) {
   return fetchJsonAuth(listingGroupPath(groupId, "/shortlist/count"));
 }
-function fetchGroupShortlist(groupId, page = 1) {
+function fetchGroupShortlist(groupId, page = 1, { limit = 50 } = {}) {
   return fetchJsonAuth(listingGroupPath(groupId, "/shortlist"), {
-    params: { page, limit: 50, language: getLang() },
+    params: { page, limit, language: getLang() },
   });
 }
 function checkGroupShortlist(groupId, listingId) {

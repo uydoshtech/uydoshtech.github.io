@@ -3,6 +3,10 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    "detail.tabs.label": "Детали объявления",
+    "detail.tabs.area": "Район и цены",
+    "detail.tabs.scan": "3D-скан",
+
     "discovery.inviteLandlord": "Пригласить арендодателя",
     "discovery.invitePending": "Приглашение ожидает ответа",
     "discovery.revokeInvite": "Отозвать приглашение",

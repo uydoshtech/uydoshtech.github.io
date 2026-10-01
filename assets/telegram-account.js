@@ -163,8 +163,8 @@ function listingRowMainHtml(listing, { hidePhoto = false, ownerActions = true, p
       <div class="account-row-stack">
         <a class="account-row-head${phasePill ? ' account-row-head--phase' : ''}" href="${detailHref}">
           <div class="account-row-title-block">
-            <div class="account-row-title">${title}</div>
             ${phasePill ? groupPhasePillHtml(listing, lang) : ''}
+            <div class="account-row-title">${title}</div>
           </div>
           <div class="account-row-meta">
             ${price ? `<span class="account-row-price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></span>` : ''}
@@ -303,6 +303,19 @@ function housingOptionsCount(listing) {
   return Number.isInteger(count) && count >= 0 ? count : null;
 }
 
+function housingAvatarStackHtml(listing) {
+  const previews = listing.housingOptionPreviews || [];
+  const count = housingOptionsCount(listing) ?? previews.length;
+  const slots = Math.min(5, Math.max(1, count));
+  const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/></svg>';
+  return `<span class="account-participants-avatars account-housing-avatars" aria-hidden="true">${Array.from({ length: slots }, (_, index) => {
+    const photo = previews[index] ? UyDosh.primaryPhoto(previews[index]) : null;
+    const url = photo ? UyDosh.photoUrl(photo) : '';
+    const remaining = index === 4 && count > 5 ? count - 5 : 0;
+    return `<span class="account-participants-avatar account-housing-avatar">${icon}${url ? `<img src="${UyDosh.escapeHtml(url)}" alt="" loading="lazy" onerror="this.remove();" />` : ''}${remaining ? `<span class="account-housing-more">+${remaining}</span>` : ''}</span>`;
+  }).join('')}</span>`;
+}
+
 function housingOptionsRowHtml(listing) {
   const lang = UyDosh.getLang();
   const href = UyDosh.escapeHtml(
@@ -311,8 +324,8 @@ function housingOptionsRowHtml(listing) {
   const count = housingOptionsCount(listing);
   const countLabel = count == null ? '' : ` · ${count}`;
   return `
-        <a class="account-participants-pill account-housing-pill" href="${href}" data-haptic="selection">
-          <span class="account-housing-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/></svg></span>
+        <a class="account-participants-pill account-housing-pill" data-housing-group="${Number(listing.id)}" href="${href}" data-haptic="selection">
+          ${housingAvatarStackHtml(listing)}
           <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.housingOptions', lang))}${countLabel}</span>
           <span class="account-participants-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
         </a>`;
@@ -1012,6 +1025,21 @@ async function loadHousingOptionCounts() {
   }));
 }
 
+async function loadHousingOptionPreviews() {
+  const listings = [...groupListings(), ...(state.memberGroupListings || [])];
+  await Promise.all(listings.filter(l => housingOptionsCount(l) !== 0).map(async listing => {
+    try {
+      const result = await UyDosh.fetchGroupShortlist(listing.id, 1, { limit: 5 });
+      listing.housingOptionPreviews = (result.data || []).slice(0, 5).map(item => item.listing);
+      if (Number.isInteger(result.total) && result.total >= 0) listing.group_shortlist_count = result.total;
+      if (state.activeTab === TAB_GROUPS) {
+        const link = listEl.querySelector(`[data-housing-group="${Number(listing.id)}"]`);
+        if (link) link.outerHTML = housingOptionsRowHtml(listing);
+      }
+    } catch { /* Count-based house icons remain usable if previews are unavailable. */ }
+  }));
+}
+
 async function loadGroupChats() {
   const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
   if (!sessionReady) return;
@@ -1051,6 +1079,7 @@ async function boot() {
   await loadHousingOptionCounts();
   loadingEl.hidden = true;
   renderActiveTab();
+  loadHousingOptionPreviews();
 }
 
 if (isAccountPage) boot();

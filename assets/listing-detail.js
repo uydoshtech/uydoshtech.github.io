@@ -231,20 +231,21 @@
         document.getElementById('retry')?.addEventListener('click', retry);
       }
 
-      let activeGroupTab = 'description';
+      let activeGroupTab = new URLSearchParams(location.search).get('view') === '3d' ? 'scan' : 'description';
       // The Groups card links here with #group-shortlist. That section lives
       // inside the housing panel, which stays hidden until this tab is selected.
       let openHousingTabFromHash = location.hash === '#group-shortlist';
 
-      function groupTabsHtml(panels) {
-        const labels = { description: 'detail.group.tabDescription', compatibility: 'detail.group.tabMembers', housing: 'detail.group.tabHousing', home: 'home.title' };
-        return `<div class="group-tabs" style="--group-tab-count:${Object.keys(panels).length}" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.group.tabs'))}">
+      function groupTabsHtml(panels, customLabels = null) {
+        if (!Object.hasOwn(panels, activeGroupTab)) activeGroupTab = Object.keys(panels)[0];
+        const labels = customLabels || { description: 'detail.group.tabDescription', compatibility: 'detail.group.tabMembers', housing: 'detail.group.tabHousing', home: 'home.title' };
+        return `<div class="group-tabs" style="--group-tab-count:${Object.keys(panels).length}" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t(customLabels ? 'detail.tabs.label' : 'detail.group.tabs'))}">
           ${Object.keys(panels).map(key => `<button type="button" role="tab" id="group-tab-${key}" data-group-tab="${key}" aria-controls="group-panel-${key}" aria-selected="${activeGroupTab === key}" tabindex="${activeGroupTab === key ? 0 : -1}">${UyDosh.escapeHtml(UyDosh.t(labels[key]))}</button>`).join('')}
-        </div>${Object.entries(panels).map(([key, html]) => `<section class="group-tab-panel" role="tabpanel" id="group-panel-${key}" aria-labelledby="group-tab-${key}" tabindex="0" ${activeGroupTab === key ? '' : 'hidden'}>${html}</section>`).join('')}`;
+        </div>${Object.entries(panels).map(([key, html]) => `<section class="group-tab-panel${customLabels ? ' listing-tab-panel' : ''}" role="tabpanel" id="group-panel-${key}" aria-labelledby="group-tab-${key}" tabindex="0" ${activeGroupTab === key ? '' : 'hidden'}>${html}</section>`).join('')}`;
       }
 
       async function openGroupMapByDefault() {
-        const panel = rootEl.querySelector('#group-panel-description');
+        const panel = rootEl.querySelector('#group-panel-area') || rootEl.querySelector('#group-panel-description');
         const section = panel?.querySelector('[data-map-section]');
         if (!section || panel.hidden || section.dataset.defaultOpened) return;
         section.dataset.defaultOpened = '1';
@@ -276,6 +277,16 @@
             document.getElementById(item.getAttribute('aria-controls')).hidden = !selected;
           }
           openGroupMapByDefault();
+          if (activeGroupTab === 'compatibility') {
+            const section = rootEl.querySelector('[data-compat-section]');
+            const body = section?.querySelector('[data-compat-body]');
+            if (body) {
+              body.hidden = false;
+              section.setAttribute('aria-expanded', 'true');
+              section.querySelector('[data-compat-toggle]')?.setAttribute('aria-expanded', 'true');
+            }
+          }
+          UyDosh.reflowActiveMaps?.();
         }
         tabs.forEach((tab, index) => {
           tab.addEventListener('click', () => select(tab));
@@ -451,7 +462,12 @@
           compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.compatUnavailable'))}</p>`,
           housing: discoveryHtml || `<p class="discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.housingUnavailable'))}</p>`,
           ...(listingGroupContext(l)?.is_owner || listingGroupContext(l)?.is_member ? { home: UyDoshGroupHome.html() } : {}),
-        }) : `${groupSectionHtml(l)}${roomScanHtml}${compatibilityHtml}${descHtml}${mapHtml}${discoveryHtml}${metaHtml}`;
+        }) : groupTabsHtml({
+          description: `${descHtml}${metaHtml}`,
+          ...(compatibilityHtml ? { compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('compat.notAvailable'))}</p>` } : {}),
+          area: `${mapHtml}${discoveryHtml}`,
+          ...(roomScanHtml ? { scan: roomScanHtml } : {}),
+        }, { description: 'detail.description', compatibility: 'compat.title', area: 'detail.tabs.area', scan: 'detail.tabs.scan' });
 
         rootEl.innerHTML = `
           ${ownerToolbarHtml(isOwner, l.id, {

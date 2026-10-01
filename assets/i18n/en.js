@@ -3,6 +3,10 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    "detail.tabs.label": "Listing details",
+    "detail.tabs.area": "Area & prices",
+    "detail.tabs.scan": "3D scan",
+
     "discovery.inviteLandlord": "Invite landlord",
     "discovery.invitePending": "Invitation awaiting response",
     "discovery.revokeInvite": "Revoke invitation",
