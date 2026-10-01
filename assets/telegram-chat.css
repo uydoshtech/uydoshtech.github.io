@@ -471,9 +471,40 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   margin-top: 2px;
 }
 .chat-listing-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
+}
+.chat-listing-card-price {
+  font-weight: 800;
+  color: var(--price-green, #35c26b);
+}
+.chat-bubble-row.mine .chat-listing-card-price {
+  color: var(--price-green, #35c26b);
+}
+.chat-listing-card-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.chat-listing-card-place .icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: #f44336;
+}
+.chat-listing-card-place .icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.chat-listing-card-place .icon svg * {
+  stroke: currentColor;
+  fill: none;
 }
 
 .chat-empty {

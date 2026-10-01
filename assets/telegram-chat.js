@@ -222,12 +222,16 @@ function listingCardHtml(share) {
   const href = UyDosh.escapeHtml(UyDosh.listingPageUrl(share.listing_id, {
     backTo: location.pathname + location.search,
   }));
-  const meta = [share.price_label, share.location || share.metro].filter(Boolean).join(' · ');
+  const price = share.price_label ? `<span class="chat-listing-card-price">${UyDosh.escapeHtml(share.price_label)}</span>` : '';
+  const placeName = share.location || share.metro || '';
+  const place = placeName
+    ? `<span class="chat-listing-card-place">${typeof UyDosh.iconPin === 'function' ? UyDosh.iconPin() : ''}<span>${UyDosh.escapeHtml(placeName)}</span></span>`
+    : '';
   return `
     <a class="chat-listing-card" href="${href}">
       <div class="chat-listing-card-kicker">${UyDosh.escapeHtml(UyDosh.t('chat.listingCard'))}</div>
       <div class="chat-listing-card-title">${UyDosh.escapeHtml(share.title)}</div>
-      ${meta ? `<div class="chat-listing-card-meta">${UyDosh.escapeHtml(meta)}</div>` : ''}
+      ${price || place ? `<div class="chat-listing-card-meta">${price}${place}</div>` : ''}
     </a>
   `;
 }
