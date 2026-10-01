@@ -93,7 +93,12 @@
     const initials = String(user.name).trim().split(/\s+/).slice(0, 2).map(part => Array.from(part)[0] || '').join('').toUpperCase();
     const avatar = `<span class="discovery-saver-avatar" aria-hidden="true"><span>${e(initials)}</span>${user.avatar_url ? `<img src="${e(UyDosh.photoUrl(user.avatar_url))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove();" />` : ''}</span>`;
     const person = `<span class="discovery-saver-person">${avatar}<span>${e(user.name)}</span></span>`;
-    return `<small class="discovery-saved-by">${e(t('savedBy', { name: '{person}' })).replace('{person}', person)}</small>`;
+    const gender = Number(user.gender);
+    const verbKey = UyDosh.getLang() !== 'ru' ? 'savedBy'
+      : gender === 2 ? 'savedByFemale'
+      : gender === 1 ? 'savedByMale'
+      : 'savedBy';
+    return `<small class="discovery-saved-by">${e(t(verbKey, { name: '{person}' })).replace('{person}', person)}</small>`;
   }
   async function bindSave(listing, section) {
     const body = section.querySelector('[data-group-save-body]');
@@ -204,7 +209,7 @@
     const chips = ordered.map(person => {
       const isMe = Number(person.user_id) === me;
       const name = isMe ? t('rating.you') : (person.name || '');
-      const stars = person.stars == null ? '' : starButtons(person.stars);
+      const stars = starButtons(person.stars);
       const editable = isMe && person.stars != null;
       const inner = `<span class="shortlist-rating-person">${e(name)}</span>${stars}`;
       return editable

@@ -131,6 +131,8 @@ I18N.ru = {
     'discovery.retry': "Повторить",
     'discovery.unavailable': "Объявление недоступно",
     'discovery.savedBy': "Добавил(а): {name}",
+    'discovery.savedByMale': "Добавил: {name}",
+    'discovery.savedByFemale': "Добавила: {name}",
     'discovery.empty': "Пока нет сохранённых вариантов. Найдите жильё и сохраните его для группы.",
     'discovery.more': "Загрузить ещё",
     'discovery.rating.group': "Оценка группы",
