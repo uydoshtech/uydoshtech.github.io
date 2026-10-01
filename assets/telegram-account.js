@@ -1242,7 +1242,7 @@ function canOwnerRemoveMember(member, listing, me) {
   const userId = Number(member.user_id);
   const ownerId = Number(listing?.user_id ?? listing?.user?.id);
   if (userId === me || userId === ownerId) return false;
-  if (member.role === 'owner' || member.role === 'landlord_guest') return false;
+  if (member.role === 'owner') return false;
   return true;
 }
 
