@@ -335,10 +335,13 @@ function participantsPillHtml(listing, conversation) {
   const lang = UyDosh.getLang();
   const people = peopleForAvatarStack(listing, participantsFromConversation(conversation));
   const avatars = accountAvatarStackHtml(people);
+  const rawCount = listing?.group_context?.group_member_count ?? listing?.group_member_count;
+  const reportedCount = rawCount == null ? NaN : Number(rawCount);
+  const count = Number.isInteger(reportedCount) && reportedCount >= 0 ? reportedCount : people.length;
   return `
         <button type="button" class="account-participants-pill" data-open-participants="${listing.id}" data-haptic="selection">
           <span class="account-participants-avatars">${avatars}</span>
-          <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))}</span>
+          <span class="account-participants-label">${UyDosh.escapeHtml(UyDosh.t('account.participants', lang))} · ${count}</span>
           <span class="account-participants-chevron" aria-hidden="true">${UyDosh.iconChrome?.('chevronRight') || ''}</span>
         </button>`;
 }
