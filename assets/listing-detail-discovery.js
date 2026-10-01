@@ -218,7 +218,7 @@
       ${summary ? `<p class="shortlist-rating-summary"><strong>${e(t('rating.summary'))}</strong> ${ratingSummaryHtml(summary, rating.participants)}</p>` : ''}
     </section>`;
   }
-  function openRatingDialog(item, initialStars) {
+  function openRatingDialog(item, initialStars, saveRating = null) {
     const mine = currentUserRating(item);
     const categories = Object.fromEntries(RATING_CATEGORIES.map(([code]) => {
       const saved = Number(mine?.category_ratings?.[code]);
@@ -311,15 +311,16 @@
       error.hidden = true;
       try {
         const categoryRatings = Object.fromEntries(Object.entries(categories).filter(([, value]) => value > 0));
-        const result = await UyDosh.rateGroupShortlist(shortlistGroupId, item.listing_id, {
+        const ratingInput = {
           stars: selected,
           reasons: [...reasons],
           categoryRatings,
           verdict: selected >= 5 ? 'yes' : selected >= 3 ? 'maybe' : 'no',
-        });
-        item.rating = result.rating || item.rating;
+        };
+        const result = saveRating ? await saveRating(ratingInput) : await UyDosh.rateGroupShortlist(shortlistGroupId, item.listing_id, ratingInput);
+        item.rating = result?.rating || item.rating;
         close();
-        refreshShortlist(t('rating.updated'));
+        if (!saveRating) refreshShortlist(t('rating.updated'));
       } catch (err) {
         submit.disabled = selected < 1;
         error.hidden = false;
@@ -530,5 +531,5 @@
     const save = rootEl.querySelector('[data-group-save]');
     if (save) bindSave(listing, save);
   }
-  window.UyDoshListingDiscovery = { html, bind, areaPricesHtml, budgetHtml };
+  window.UyDoshListingDiscovery = { html, bind, areaPricesHtml, budgetHtml, openRatingDialog };
 })();

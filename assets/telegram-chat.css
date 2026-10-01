@@ -530,3 +530,9 @@ html.mini-app-mobile body.chat-page .wrap.chat-wrap {
   margin-left: 2px;
 }
 .chat-send:disabled { opacity: 0.45; }
+
+.chat-listing-rating { margin-top: 10px; }
+.chat-rating-stars { display: flex; gap: 4px; }
+.chat-rating-stars button { border: 0; background: transparent; color: inherit; padding: 4px; font-size: 26px; cursor: pointer; min-height: 40px; }
+.chat-rating-stars button.is-on { color: #e0a100; }
+.chat-listing-rating small { opacity: .8; }

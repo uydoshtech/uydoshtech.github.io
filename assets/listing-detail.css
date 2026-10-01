@@ -1855,42 +1855,6 @@ html.has-group-housing-action .detail-admin-edit-fab {
 [data-shortlist-details],
 [data-shortlist-body] { min-width: 0; max-width: 100%; }
 .discovery-shortlist-footer > .discovery-saved-by { overflow-wrap: anywhere; }
-.shortlist-rating { display: grid; gap: 8px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--fg) 5%, transparent); }
-.shortlist-rating-head { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 13px; font-weight: 700; }
-.shortlist-stars { display: inline-flex; align-items: center; }
-.shortlist-star { display: inline-flex; padding: 2px; border: 0; background: none; color: var(--muted); line-height: 0; }
-.shortlist-star svg { width: 18px; height: 18px; display: block; }
-.shortlist-star svg path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
-.shortlist-star.is-on { color: #e0a100; }
-.shortlist-star.is-on svg path { fill: currentColor; stroke: none; }
-button.shortlist-star { cursor: pointer; }
-.shortlist-rating-prompt { display: grid; gap: 4px; padding: 8px 10px; border-radius: 12px; border: 1px solid color-mix(in srgb, #e0a100 28%, transparent); background: color-mix(in srgb, #e0a100 10%, transparent); }
-.shortlist-rating-prompt span { font-size: 13px; font-weight: 700; }
-.shortlist-rating-chips { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-.shortlist-rating-chip { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 0; border-radius: 12px; background: var(--card); color: inherit; font: inherit; text-align: left; }
-button.shortlist-rating-chip { cursor: pointer; }
-.shortlist-rating-chip .shortlist-star svg { width: 14px; height: 14px; }
-.shortlist-rating-person { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 700; }
-.shortlist-rating-summary { margin: 0; font-size: 13px; line-height: 1.35; color: var(--muted); }
-.shortlist-rating-summary > strong:first-child { display: block; margin-bottom: 2px; color: var(--fg); }
-.shortlist-rating-dialog { position: fixed; inset: 0; z-index: 200; display: grid; place-items: end center; padding: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; background: rgba(0, 0, 0, 0.55); }
-.shortlist-rating-sheet { width: min(520px, 100%); max-height: min(88vh, 760px); overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border: 1px solid var(--stroke); border-bottom: 0; border-radius: 20px 20px 0 0; background: var(--bg); color: var(--fg); box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.45); }
-.shortlist-rating-sheet-head { display: flex; align-items: flex-start; gap: 12px; }
-.shortlist-rating-sheet-head h2 { margin: 0; font-size: 22px; line-height: 1.1; }
-.shortlist-rating-sheet-head p { margin: 4px 0 0; font-size: 13px; }
-.shortlist-rating-close { margin-left: auto; border: 0; background: none; color: inherit; font-size: 28px; line-height: 1; cursor: pointer; }
-.shortlist-rating-category { display: grid; gap: 8px; margin-top: 8px; padding: 10px; border-radius: 10px; border: 1px solid var(--stroke); }
-.shortlist-rating-category strong { display: block; }
-.shortlist-rating-category span { color: var(--muted); font-size: 12px; }
-.shortlist-rating-category-score { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.shortlist-rating-category-score [data-rating-label] { font-size: 12px; font-weight: 800; color: var(--rating-accent, var(--fg)); }
-.shortlist-rating-reasons-title { margin: 14px 0 8px; font-weight: 700; }
-.shortlist-rating-reasons-title span { color: var(--muted); font-weight: 500; }
-.shortlist-rating-reasons { display: flex; flex-wrap: wrap; gap: 8px; }
-.shortlist-rating-reason { border: 0; border-radius: 999px; padding: 6px 10px; background: color-mix(in srgb, var(--fg) 8%, transparent); color: inherit; font: inherit; cursor: pointer; }
-.shortlist-rating-reason.is-on { background: #e0a100; color: #fff; }
-.shortlist-rating-error { margin: 10px 0 0; color: #ef4444; }
-.shortlist-rating-submit { width: 100%; margin-top: 14px; }
 
 .group-home form, .group-home label, .home-chore { display: grid; gap: 10px; min-width: 0; }
 .group-home form, .home-chore { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--stroke); }

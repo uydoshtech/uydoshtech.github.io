@@ -2010,3 +2010,5 @@ UyDosh.cancelGroupLandlordInvite = (groupId, inviteId) => fetchJsonAuth(listingG
 
 UyDosh.fetchPendingLandlordInvites = () => fetchJsonAuth('/conversations/pending-landlord-invites');
 UyDosh.respondToLandlordInvite = (groupId, inviteId, accept) => fetchJsonAuth(listingGroupPath(groupId, `/landlord-invites/${encodeURIComponent(inviteId)}/${accept ? 'accept' : 'decline'}`), { method: 'POST' });
+
+UyDosh.rateChatListing = (messageId, { stars, reasons, categoryRatings, verdict }) => fetchJsonAuth(`/messages/${encodeURIComponent(messageId)}/listing-rating`, { method: 'POST', body: { stars, reasons, category_ratings: categoryRatings, verdict } });

@@ -205,6 +205,16 @@ function clearReplyMode() {
   renderReplyBar();
 }
 
+function chatListingRatingHtml(message) {
+  const rating = message.listing_rating || {};
+  const count = Number(rating.count) || 0;
+  const average = Number(rating.average);
+  const label = count > 0 && Number.isFinite(average)
+    ? `${average.toFixed(1)} · ${UyDosh.t('discovery.rating.count').replace('{count}', count)}`
+    : UyDosh.t('discovery.rating.cta');
+  return `<div class="chat-listing-rating"><div class="chat-rating-stars" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('discovery.rating.cta'))}">${[1,2,3,4,5].map(star => `<button type="button" data-chat-rate="${Number(message.id)}" data-stars="${star}" aria-label="${UyDosh.escapeHtml(UyDosh.t('discovery.rating.star').replace('{n}', star))}" class="${star <= Number(rating.my_stars) ? 'is-on' : ''}">${star <= Number(rating.my_stars) ? '★' : '☆'}</button>`).join('')}</div><small>${UyDosh.escapeHtml(label)}</small></div>`;
+}
+
 function listingCardHtml(share) {
   const href = UyDosh.escapeHtml(UyDosh.listingPageUrl(share.listing_id, {
     backTo: location.pathname + location.search,
@@ -294,7 +304,7 @@ function messageHtml(message, { showDay, readers = [] }) {
   }
   const name = senderName(message);
   const body = share
-    ? `${share.intro ? `<div class="chat-text">${UyDosh.escapeHtml(share.intro)}</div>` : ''}${listingCardHtml(share)}`
+    ? `${share.intro ? `<div class="chat-text">${UyDosh.escapeHtml(share.intro)}</div>` : ''}${listingCardHtml(share)}${chatListingRatingHtml(message)}`
     : `<div class="chat-text">${UyDosh.escapeHtml(message.content || '')}</div>`;
   const row = `
     <div class="chat-bubble-row${mine ? ' mine' : ''}" data-message-id="${UyDosh.escapeHtml(String(message.id))}">
@@ -365,7 +375,7 @@ function readByKey(message) {
 }
 
 function mergeMessages(incoming, { prepend = false } = {}) {
-  const before = state.messages.map((message) => `${message.id}:${readByKey(message)}`).join('|');
+  const before = state.messages.map((message) => `${message.id}:${readByKey(message)}:${JSON.stringify(message.listing_rating || null)}`).join('|');
   const byId = new Map(state.messages.map((m) => [m.id, m]));
   for (const message of incoming) {
     if (message?.id != null) byId.set(message.id, message);
@@ -373,7 +383,7 @@ function mergeMessages(incoming, { prepend = false } = {}) {
   const next = Array.from(byId.values()).sort((a, b) => Number(a.id) - Number(b.id));
   const grew = next.length > state.messages.length
     || (next.at(-1)?.id !== state.messages.at(-1)?.id);
-  const readsChanged = before !== next.map((message) => `${message.id}:${readByKey(message)}`).join('|');
+  const readsChanged = before !== next.map((message) => `${message.id}:${readByKey(message)}:${JSON.stringify(message.listing_rating || null)}`).join('|');
   state.messages = next;
   return grew || prepend || readsChanged;
 }
@@ -704,3 +714,18 @@ document.addEventListener('uydosh:langchange', () => {
 });
 
 boot();
+
+threadEl.addEventListener('click', event => {
+  const button = event.target.closest('[data-chat-rate]');
+  if (!button) return;
+  const message = state.messages.find(m => Number(m.id) === Number(button.dataset.chatRate));
+  if (!message) return;
+  const rating = message.listing_rating || {};
+  const item = { rating: { participants: [{ user_id: myUserId(), stars: rating.my_stars, reasons: rating.my_reasons, category_ratings: rating.my_category_ratings, verdict: rating.my_verdict }] } };
+  UyDoshListingDiscovery.openRatingDialog(item, Number(button.dataset.stars), async input => {
+    const response = await UyDosh.rateChatListing(message.id, input);
+    if (response.data) mergeMessages([response.data]);
+    renderThread();
+    return response;
+  });
+});
