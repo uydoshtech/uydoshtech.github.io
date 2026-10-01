@@ -175,6 +175,22 @@
     const me = Number(UyDosh.getSessionUserId());
     return (item.rating?.participants || []).find(person => Number(person.user_id) === me) || null;
   }
+  function ratingSummaryHtml(summary, participants) {
+    const names = [...new Set((participants || []).flatMap(person => {
+      const name = String(person.name || '').trim();
+      return name ? [name, name.split(/\s+/)[0]] : [];
+    }))].filter(name => name.length > 1).sort((a, b) => b.length - a.length);
+    if (!names.length) return e(summary);
+    const escapePattern = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`(?<![\\p{L}\\p{N}_])(?:${names.map(escapePattern).join('|')})(?![\\p{L}\\p{N}_])`, 'giu');
+    let html = '', offset = 0;
+    for (const match of summary.matchAll(pattern)) {
+      html += e(summary.slice(offset, match.index)) + `<strong>${e(match[0])}</strong>`;
+      offset = match.index + match[0].length;
+    }
+    return html + e(summary.slice(offset));
+  }
+
   function ratingHtml(item) {
     const rating = item.rating || {};
     const count = Number(rating.count) || 0;
@@ -199,7 +215,7 @@
       <p class="shortlist-rating-head">${e(t('rating.group'))} · ${hasRating ? `<span class="shortlist-star is-on">${starSvg()}</span> ${e(average.toFixed(1))} · ${e(t('rating.count', { count }))}` : e(t('rating.none'))}</p>
       ${mine?.stars == null ? `<div class="shortlist-rating-prompt">${starButtons(0, { interactive: true, listingId: Number(item.listing_id) })}<span>${e(t('rating.cta'))}</span></div>` : ''}
       ${chips ? `<div class="shortlist-rating-chips">${chips}</div>` : ''}
-      ${summary ? `<p class="shortlist-rating-summary"><strong>${e(t('rating.summary'))}</strong> ${e(summary)}</p>` : ''}
+      ${summary ? `<p class="shortlist-rating-summary"><strong>${e(t('rating.summary'))}</strong> ${ratingSummaryHtml(summary, rating.participants)}</p>` : ''}
     </section>`;
   }
   function openRatingDialog(item, initialStars) {

@@ -1872,7 +1872,7 @@ button.shortlist-rating-chip { cursor: pointer; }
 .shortlist-rating-chip .shortlist-star svg { width: 14px; height: 14px; }
 .shortlist-rating-person { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 700; }
 .shortlist-rating-summary { margin: 0; font-size: 13px; line-height: 1.35; color: var(--muted); }
-.shortlist-rating-summary strong { display: block; margin-bottom: 2px; color: var(--fg); }
+.shortlist-rating-summary > strong:first-child { display: block; margin-bottom: 2px; color: var(--fg); }
 .shortlist-rating-dialog { position: fixed; inset: 0; z-index: 200; display: grid; place-items: end center; padding: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; background: rgba(0, 0, 0, 0.55); }
 .shortlist-rating-sheet { width: min(520px, 100%); max-height: min(88vh, 760px); overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border: 1px solid var(--stroke); border-bottom: 0; border-radius: 20px 20px 0 0; background: var(--bg); color: var(--fg); box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.45); }
 .shortlist-rating-sheet-head { display: flex; align-items: flex-start; gap: 12px; }
