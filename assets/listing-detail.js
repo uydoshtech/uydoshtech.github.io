@@ -102,7 +102,7 @@
           const housingSearch = rootEl.querySelector('[data-group-housing-search]')
             || detailContactBarEl.querySelector('[data-group-housing-search]');
           detailContactBarEl.innerHTML = `
-            <div class="detail-contact-bar-inner">
+            <div class="detail-contact-bar-inner${housingSearch ? ' detail-contact-bar-inner-row' : ''}">
               <a class="detail-contact-btn detail-contact-btn-group-chat" href="${UyDosh.escapeHtml(groupChat.href)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex-shrink:0"><path d="M4 5h16v11H9l-4 3.5V16H4V5Z"></path></svg>${UyDosh.escapeHtml(groupChat.label)}</a>
             </div>`;
           if (housingSearch) {

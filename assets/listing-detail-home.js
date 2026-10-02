@@ -32,7 +32,7 @@
         host.insertAdjacentHTML('beforeend', `<p>${e(t('intro'))}</p>${owner && canEdit ? `<form data-move-in>
           <label>${e(t('housing'))}<select name="housing_listing_id" required><option value="">${e(t('choose'))}</option></select></label>
           <label>${e(t('date'))}<input name="moved_in_on" type="date" value="${today()}" max="${today()}" required></label>
-          <button class="btn primary" type="submit">${e(t('confirm'))}</button></form>` : `<p>${e(t('ownerOnly'))}</p>`}`);
+          <button class="btn primary" type="submit">${UyDosh.iconCheck()}${e(t('confirm'))}</button></form>` : `<p>${e(t('ownerOnly'))}</p>`}`);
         const form = host.querySelector('form');
         if (form) {
           let page = 1;
@@ -61,14 +61,14 @@
         ${(data.chores || []).map(chore => `<article class="home-chore">
           <strong>${e(chore.title)}</strong><span>${e(members.find(m => Number(m.user_id) === Number(chore.assignee_id))?.name || `#${chore.assignee_id}`)} · ${e(chore.due_on)}</span>
           ${chore.repeat_days ? `<small>${e(t('repeat'))}: ${e(chore.repeat_days)} ${e(t('days'))}</small>` : ''}
-          ${chore.completed_at ? `<span>${e(t('done'))}</span>` : canEdit && (owner || Number(chore.assignee_id) === Number(UyDosh.getSessionUserId())) ? `<button class="btn" data-complete="${chore.id}">${e(t('complete'))}</button>` : ''}
+          ${chore.completed_at ? `<span>${e(t('done'))}</span>` : canEdit && (owner || Number(chore.assignee_id) === Number(UyDosh.getSessionUserId())) ? `<button class="btn" data-complete="${chore.id}">${UyDosh.iconCheck()}${e(t('complete'))}</button>` : ''}
         </article>`).join('') || `<p>${e(t('empty'))}</p>`}
         ${canEdit ? `<form data-chore><h3>${e(t('add'))}</h3>
           <label>${e(t('task'))}<input name="title" maxlength="160" required></label>
           <label>${e(t('assignee'))}<select name="assignee_id" required>${members.map(m => `<option value="${e(m.user_id)}">${e(m.name || `#${m.user_id}`)}</option>`).join('')}</select></label>
           <label>${e(t('due'))}<input name="due_on" type="date" value="${today()}" required></label>
           <label>${e(t('repeat'))}<select name="repeat_days"><option value="0">${e(t('once'))}</option><option value="1">${e(t('daily'))}</option><option value="7">${e(t('weekly'))}</option><option value="14">${e(t('fortnight'))}</option></select></label>
-          <p>${e(t('rotation'))}</p><button class="btn primary">${e(t('add'))}</button></form>` : ''}`);
+          <p>${e(t('rotation'))}</p><button class="btn primary">${UyDosh.iconPlus()}${e(t('add'))}</button></form>` : ''}`);
       const form = host.querySelector('[data-chore]');
       if (form) form.onsubmit = event => { event.preventDefault(); const fields = Object.fromEntries(new FormData(form)); save('/chores', { ...fields, assignee_id: Number(fields.assignee_id), repeat_days: Number(fields.repeat_days) }); };
       host.querySelectorAll('[data-complete]').forEach(button => button.onclick = () => {

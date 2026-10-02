@@ -78,7 +78,7 @@
     ${isGroup && D.canShortlist(listing) ? `<section class="map-section map-section-static discovery-section" id="group-shortlist">
       <h2>${e(t('shortlist'))}<span data-shortlist-count>${Number.isInteger(shortlistCount) && shortlistCount >= 0 ? ` · ${shortlistCount}` : ''}</span></h2>
       <p class="discovery-note">${e(t('shared'))}</p>
-      <a class="btn primary" data-group-housing-search href="${e(D.searchUrl(listing, { group: listing.id, housing: true }))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false" style="flex-shrink:0"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>${e(t('findHousing'))}</a>
+      <a class="btn primary" data-group-housing-search href="${e(D.searchUrl(listing, { group: listing.id, housing: true }))}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false" style="flex-shrink:0"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>${e(t('findHousingShort'))}</a>
       <div data-shortlist-details><div data-shortlist-body></div></div>
     </section>` : ''}
     ${group && isHousing ? `<section class="map-section map-section-static discovery-section" data-group-save>

@@ -1839,14 +1839,27 @@
   margin-bottom: 10px;
   text-decoration: none;
 }
+.detail-contact-bar-inner-row .detail-contact-btn-housing {
+  margin-bottom: 0;
+}
+.detail-contact-bar .detail-contact-bar-inner-row .detail-contact-btn {
+  gap: 6px;
+  padding: 12px 10px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.detail-contact-bar .detail-contact-bar-inner-row .detail-contact-btn svg {
+  width: 18px;
+  height: 18px;
+}
 html.mini-app.has-group-housing-action body .wrap {
-  padding-bottom: calc(154px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+  padding-bottom: calc(88px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
 }
 html.has-group-housing-action .detail-back-fab {
-  bottom: calc(141px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+  bottom: calc(75px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
 }
 html.has-group-housing-action .detail-admin-edit-fab {
-  bottom: calc(195px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+  bottom: calc(75px + 54px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
 }
 
 /* Keep the housing carousel's intrinsic width inside its tab and grid column. */
@@ -1860,6 +1873,10 @@ html.has-group-housing-action .detail-admin-edit-fab {
 .group-home form, .home-chore { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--stroke); }
 .group-home input, .group-home select { width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--stroke); border-radius: 10px; background: var(--bg); color: var(--fg); font: inherit; }
 .home-chore span, .home-chore small { color: var(--muted); }
+.group-home .btn { gap: 8px; }
+.group-home .btn .icon { display: inline-flex; flex-shrink: 0; }
+.group-home .btn .icon svg { width: 18px; height: 18px; display: block; }
+.group-home .btn .icon svg * { stroke: currentColor; fill: none; }
 
 .shortlist-group-actions { display: grid; gap: 8px; min-width: 0; }
 .shortlist-group-actions .btn { width: 100%; white-space: normal; }
