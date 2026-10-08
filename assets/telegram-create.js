@@ -1386,9 +1386,9 @@ function roommateLocationSectionHtml(lang) {
 
 function renderStep0(lang) {
   const typeOptions = [
-    { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
-    { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
-    { id: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
+    { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang), description: UyDosh.t('create.typeDescription.roomNeeded', lang) },
+    { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang), description: UyDosh.t('create.typeDescription.roommateNeeded', lang) },
+    { id: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang), description: UyDosh.t('create.typeDescription.groupForming', lang) },
   ];
   const cards = typeOptions.map((opt) => {
     const active = opt.id === state.form.listingTypeId;
@@ -1398,6 +1398,7 @@ function renderStep0(lang) {
         aria-pressed="${active}">
         <span class="listing-type-glyph" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>
         <span class="listing-type-label">${UyDosh.escapeHtml(opt.label)}</span>
+        <span class="listing-type-description">${UyDosh.escapeHtml(opt.description)}</span>
       </button>`;
   }).join('');
 
@@ -1410,7 +1411,7 @@ function renderStep0(lang) {
   return `
     <section class="panel active" data-step="0">
       <div class="field listing-type-field" data-validation-anchor="listingType">
-        <span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingType', lang))}</span>
+        <span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingAction', lang))}</span>
         <div class="listing-type-cards" role="group" aria-labelledby="listing-type-heading">${cards}</div>
       </div>
       ${locationSection}
