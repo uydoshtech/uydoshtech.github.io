@@ -394,6 +394,7 @@ function genderLabel(gender, lang) {
 
 /** Pre-fill title with preset hashtag; preserves manual edits like mobile create flow. */
 function updateDefaultTitle(lang = UyDosh.getLang()) {
+  if (state.form.listingTypeId === null) return;
   const generated = UyDosh.presetListingTitleText(
     state.form.listingTypeId,
     state.form.gender,
@@ -1408,7 +1409,7 @@ function renderStep0(lang) {
 
   return `
     <section class="panel active" data-step="0">
-      <div class="field listing-type-field" data-field="listingType">
+      <div class="field listing-type-field" data-validation-anchor="listingType">
         <span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingType', lang))}</span>
         <div class="listing-type-cards" role="group" aria-labelledby="listing-type-heading">${cards}</div>
       </div>
