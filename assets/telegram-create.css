@@ -95,79 +95,44 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
 .nearby-metro-field {
   margin-top: 10px;
 }
-.listing-type-field {
-  margin-bottom: 10px;
-}
-.listing-type-picker {
+.listing-type-field { margin-bottom: 10px; }
+.listing-type-cards { display: grid; gap: 10px; }
+.listing-type-card {
   appearance: none;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 4px 14px 4px 4px;
-  border: 1px solid var(--type-color, var(--brand2));
-  border-radius: 999px;
+  min-height: 72px;
+  padding: 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
   background: rgba(127, 127, 127, 0.06);
-  color: inherit;
+  color: var(--fg);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
-.listing-type-picker[data-selected-type="1"] { --type-color: #64B5F6; }
-.listing-type-picker[data-selected-type="2"] { --type-color: #FF9800; }
-.listing-type-picker:active {
-  opacity: 0.92;
+.listing-type-card.is-active {
+  border-color: var(--brand2);
+  background: color-mix(in srgb, var(--brand2) 12%, transparent);
+  box-shadow: inset 0 0 0 1px var(--brand2);
 }
-.listing-type-icons {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex: 0 0 auto;
-}
+.listing-type-card:focus-visible { outline: 2px solid var(--brand2); outline-offset: 3px; }
+.listing-type-card:active { opacity: 0.88; }
 .listing-type-glyph {
-  appearance: none;
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid var(--stroke);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.55;
 }
 .listing-type-glyph .chip-icon,
-.listing-type-glyph .chip-icon svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
-.listing-type-glyph[data-listing-type="1"] { --type-color: #64B5F6; }
-.listing-type-glyph[data-listing-type="2"] { --type-color: #FF9800; }
-.listing-type-glyph[data-listing-type="3"] { --type-color: #22c55e; }
-.listing-type-glyph.is-active {
-  opacity: 1;
-  border-color: var(--type-color, var(--brand2));
-  background: color-mix(in srgb, var(--type-color, var(--brand2)) 18%, transparent);
-}
-.listing-type-glyph:active {
-  opacity: 0.88;
-}
-.listing-type-label {
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--fg);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.listing-type-glyph .chip-icon svg { width: 24px; height: 24px; display: block; }
+.listing-type-label { min-width: 0; font-size: 14px; font-weight: 700; }
 /* Base `.chips`/`.chip` and metro-line ribbon styles (`.chip-line`,
    `.metro-m-badge`, `.chip-label-collapse` reveal animation) live in
    telegram-shared.css — shared with the feed filter ribbon. This page

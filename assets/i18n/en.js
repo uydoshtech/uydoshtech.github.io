@@ -395,6 +395,7 @@ I18N.en = {
     'create.step.details': 'Details',
     'create.step.description': 'Text & photos',
     'create.step.review': 'Review',
+    'create.chooseListingType': 'Choose a listing type',
     'create.listingType': 'Listing type',
     'create.locationMode': 'Search area',
     'create.locationMetro': 'Metro',

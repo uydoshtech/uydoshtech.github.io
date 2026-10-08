@@ -239,7 +239,7 @@ const state = {
   /// actually changed since (e.g. tabbing away without editing).
   addressGeocodedText: null,
   form: {
-    listingTypeId: LISTING_TYPE_ROOMMATE_NEEDED,
+    listingTypeId: null,
     locationMode: LOCATION_MODE_METRO,
     subwayLineId: 1,
     selectedStationIds: [],
@@ -349,7 +349,7 @@ function listingTypeCycleOrder() {
 
 function applyListingTypeId(nextTypeId) {
   const id = Number(nextTypeId);
-  if (!Number.isFinite(id) || id === state.form.listingTypeId) return;
+  if (!listingTypeCycleOrder().includes(id) || id === state.form.listingTypeId) return;
   state.form.listingTypeId = id;
   if (!supportsMultiLocation()) {
     state.form.selectedLocationIds = state.form.selectedLocationIds.slice(0, 1);
@@ -371,13 +371,6 @@ function applyListingTypeId(nextTypeId) {
     );
   }
   renderStep();
-}
-
-function cycleListingTypeId() {
-  const order = listingTypeCycleOrder();
-  const idx = order.indexOf(state.form.listingTypeId);
-  const next = order[(idx < 0 ? 0 : idx + 1) % order.length];
-  applyListingTypeId(next);
 }
 
 function listingTypeLabel(typeId, lang) {
@@ -912,7 +905,7 @@ function updateWizardFooter() {
   wizardNextLabelEl.removeAttribute('data-i18n');
 
   wizardBackBtn.disabled = state.submitting;
-  wizardNextBtn.disabled = state.submitting;
+  wizardNextBtn.disabled = state.submitting || state.form.listingTypeId === null;
   wizardNextSpinnerEl.hidden = !state.submitting;
   wizardNextIconEl.hidden = state.submitting || isLast;
 }
@@ -1396,35 +1389,28 @@ function renderStep0(lang) {
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { id: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
   ];
-  const selected = typeOptions.find((opt) => opt.id === state.form.listingTypeId) || typeOptions[0];
-  const glyphs = typeOptions.map((opt) => {
-    const active = opt.id === selected.id;
+  const cards = typeOptions.map((opt) => {
+    const active = opt.id === state.form.listingTypeId;
     return `
-      <span
-        class="listing-type-glyph${active ? ' is-active' : ''}"
-        data-listing-type="${opt.id}"
-        aria-hidden="true"
-      >${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>`;
+      <button type="button" class="listing-type-card${active ? ' is-active' : ''}"
+        data-listing-type="${opt.id}" data-haptic="selection"
+        aria-pressed="${active}">
+        <span class="listing-type-glyph" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>
+        <span class="listing-type-label">${UyDosh.escapeHtml(opt.label)}</span>
+      </button>`;
   }).join('');
 
-  const locationSection = isDemandSideType()
-    ? legacyLocationTabsHtml(lang)
-    : roommateLocationSectionHtml(lang);
+  const locationSection = state.form.listingTypeId === null
+    ? ''
+    : isDemandSideType()
+      ? legacyLocationTabsHtml(lang)
+      : roommateLocationSectionHtml(lang);
 
   return `
     <section class="panel active" data-step="0">
-      <div class="field listing-type-field">
-        <button
-          type="button"
-          class="listing-type-picker"
-          data-listing-type-cycle
-          data-selected-type="${selected.id}"
-          data-haptic="selection"
-          aria-label="${UyDosh.escapeHtml(`${UyDosh.t('create.listingType', lang)}: ${selected.label}`)}"
-        >
-          <span class="listing-type-icons">${glyphs}</span>
-          <span class="listing-type-label">${UyDosh.escapeHtml(selected.label)}</span>
-        </button>
+      <div class="field listing-type-field" data-field="listingType">
+        <span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingType', lang))}</span>
+        <div class="listing-type-cards" role="group" aria-labelledby="listing-type-heading">${cards}</div>
       </div>
       ${locationSection}
     </section>`;
@@ -2904,14 +2890,12 @@ function bindNearbyMetroEvents() {
 }
 
 function bindStepEvents() {
-  const typePicker = stepPanelsEl.querySelector('[data-listing-type-cycle]');
-  typePicker?.addEventListener('click', (event) => {
-    const glyph = event.target.closest('[data-listing-type]');
-    if (glyph && typePicker.contains(glyph)) {
-      applyListingTypeId(glyph.getAttribute('data-listing-type'));
-      return;
-    }
-    cycleListingTypeId();
+  stepPanelsEl.querySelectorAll('[data-listing-type]').forEach((button) => {
+    button.addEventListener('click', () => {
+      applyListingTypeId(button.getAttribute('data-listing-type'));
+      // Rendering replaces the cards; keep keyboard focus on the chosen one.
+      stepPanelsEl.querySelector(`[data-listing-type="${state.form.listingTypeId}"]`)?.focus();
+    });
   });
 
   stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {
@@ -3241,6 +3225,9 @@ function bindStepEvents() {
 function validateStep(step) {
   const lang = UyDosh.getLang();
   if (step === 0) {
+    if (!listingTypeCycleOrder().includes(state.form.listingTypeId)) {
+      return { message: UyDosh.t('create.chooseListingType', lang), anchor: 'listingType' };
+    }
     if (isDemandSideType()) {
       if (state.form.locationMode === LOCATION_MODE_METRO && state.form.selectedStationIds.length === 0) {
         return {
@@ -3723,7 +3710,7 @@ async function boot() {
         } catch (err) {
           console.warn('Could not check group membership limit', err);
         }
-        state.form.listingTypeId = LISTING_TYPE_GROUP_FORMING;
+        // A creation deep link must still require an explicit type choice.
         // Use the saved profile gender; let users choose if none is available.
         state.form.gender = null;
         try {

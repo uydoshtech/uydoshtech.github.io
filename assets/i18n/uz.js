@@ -396,6 +396,7 @@ I18N.uz = {
     'create.step.details': 'Tafsilotlar',
     'create.step.description': 'Matn va surat',
     'create.step.review': 'Tekshirish',
+    'create.chooseListingType': 'E’lon turini tanlang',
     'create.listingType': 'E’lon turi',
     'create.locationMode': 'Qidiruv hududi',
     'create.locationMetro': 'Metro',

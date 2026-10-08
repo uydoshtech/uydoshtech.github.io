@@ -397,6 +397,7 @@ I18N.ru = {
     'create.step.details': 'Детали',
     'create.step.description': 'Текст и фото',
     'create.step.review': 'Проверка',
+    'create.chooseListingType': 'Выберите тип объявления',
     'create.listingType': 'Тип объявления',
     'create.locationMode': 'Зона поиска',
     'create.locationMetro': 'Метро',
