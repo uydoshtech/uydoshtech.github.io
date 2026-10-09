@@ -1014,15 +1014,18 @@ function renderFollows() {
   const switchHtml = `
     <div class="follows-switch follows-switch-3" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.followsTitle', lang))}">
       <button type="button" role="tab" data-follows-segment="following" aria-selected="${segment === 'following' ? 'true' : 'false'}">
-        ${UyDosh.escapeHtml(UyDosh.t('account.follows.following', lang))}
+        <span class="follows-switch-icon" data-icon="person" aria-hidden="true"></span>
+        <span class="follows-switch-label">${UyDosh.escapeHtml(UyDosh.t('account.follows.following', lang))}</span>
         <span class="follows-count">${state.followingTotal}</span>
       </button>
       <button type="button" role="tab" data-follows-segment="followers" aria-selected="${segment === 'followers' ? 'true' : 'false'}">
-        ${UyDosh.escapeHtml(UyDosh.t('account.follows.followers', lang))}
+        <span class="follows-switch-icon" data-icon="users" aria-hidden="true"></span>
+        <span class="follows-switch-label">${UyDosh.escapeHtml(UyDosh.t('account.follows.followers', lang))}</span>
         <span class="follows-count">${state.followersTotal}</span>
       </button>
       <button type="button" role="tab" data-follows-segment="discover" aria-selected="${segment === 'discover' ? 'true' : 'false'}">
-        ${UyDosh.escapeHtml(UyDosh.t('account.follows.discover', lang))}
+        <span class="follows-switch-icon" data-icon="search" aria-hidden="true"></span>
+        <span class="follows-switch-label">${UyDosh.escapeHtml(UyDosh.t('account.follows.discover', lang))}</span>
       </button>
     </div>`;
   const searchHtml = segment === 'discover'

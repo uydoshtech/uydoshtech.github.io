@@ -93,8 +93,25 @@ header {
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
-.follows-switch-3 { grid-template-columns: 1fr 1fr 0.8fr; }
-.follows-switch-3 button { font-size: 12px; padding: 6px 4px; }
+.follows-switch-3 { grid-template-columns: 1.15fr 1.2fr 0.85fr; }
+.follows-switch-3 button { font-size: 12px; padding: 6px 8px; gap: 4px; }
+.follows-switch-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+.follows-switch-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.follows-switch-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .follows-search {
   width: 100%;
   box-sizing: border-box;
