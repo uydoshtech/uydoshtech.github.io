@@ -7,6 +7,7 @@ UyDosh.initTelegramMiniApp();
 const LOCATION_MODE_METRO = 'metro';
 const LOCATION_MODE_DISTRICT = 'district';
 const LOCATION_MODE_RADIUS = 'radius';
+const LOCATION_MODE_UNIVERSITY = 'university';
 const TITLE_MAX = 50;
 const DESCRIPTION_MAX = 1000;
 const PRICE_MIN = 10;
@@ -444,7 +445,7 @@ function hydrateFormFromListing(listing) {
 
   if (isDemandSideType() && listing.search_area) {
     state.form.searchArea = { ...listing.search_area };
-    state.form.locationMode = LOCATION_MODE_RADIUS;
+    state.form.locationMode = listing.search_area.universityId ? LOCATION_MODE_UNIVERSITY : LOCATION_MODE_RADIUS;
   }
   const minP = Number(listing.min_price);
   const maxP = Number(listing.max_price);
@@ -659,9 +660,9 @@ function genderReviewBadgeHtml(lang) {
 }
 
 function selectedLocationSummary(lang) {
-  if (state.form.locationMode === LOCATION_MODE_RADIUS && state.form.searchArea) {
+  if ((state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY) && state.form.searchArea) {
     const area = state.form.searchArea;
-    return `${UyDosh.t('create.locationRadius', lang)}: ${area.radiusKm} ${UyDosh.t('create.km', lang)} (${area.latitude.toFixed(4)}, ${area.longitude.toFixed(4)})`;
+    return `${area.universityName || UyDosh.t('create.locationRadius', lang)}: ${area.radiusKm} ${UyDosh.t('create.km', lang)} (${area.latitude.toFixed(4)}, ${area.longitude.toFixed(4)})`;
   }
   if (state.form.locationMode === LOCATION_MODE_METRO) {
     // Use the cross-line cache, not `state.stations` (only the currently
@@ -702,6 +703,7 @@ function truncateReviewValue(text, maxLength = REVIEW_VALUE_CLIP_LENGTH) {
  * chrome instead of bare text.
  */
 function selectedLocationReviewHtml(lang) {
+  if ((state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY)) return UyDosh.escapeHtml(selectedLocationSummary(lang));
   if (state.form.locationMode === LOCATION_MODE_METRO) {
     const stations = state.form.selectedStationIds
       .map((id) => state.stationCache[id])
@@ -916,7 +918,7 @@ function updateWizardFooter() {
   wizardNextLabelEl.removeAttribute('data-i18n');
 
   wizardBackBtn.disabled = state.submitting;
-  wizardNextBtn.disabled = state.submitting || state.form.listingTypeId === null;
+  wizardNextBtn.disabled = state.submitting || state.form.listingTypeId === null || (state.step === 0 && (state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY) && !state.searchAreaMapReady);
   wizardNextSpinnerEl.hidden = !state.submitting;
   wizardNextIconEl.hidden = state.submitting || isLast;
 }
@@ -1082,16 +1084,74 @@ let searchAreaCircle = null;
 let searchAreaLoadToken = 0;
 function disposeSearchAreaMap() {
   searchAreaLoadToken++;
+  state.searchAreaMapReady = false;
   if (searchAreaMap) searchAreaMap.destroy();
   searchAreaMap = null;
   searchAreaCircle = null;
 }
+let areaUniversities = null;
+let areaUniversitiesPromise = null;
+function universityAreaHtml(lang) {
+  return `<div class="field">
+    <label for="area-university-query">${UyDosh.escapeHtml(UyDosh.t('create.locationUniversity', lang))}</label>
+    <input id="area-university-query" type="search" placeholder="${UyDosh.escapeHtml(UyDosh.t('create.findUniversity', lang))}" />
+    <select id="area-university" size="5" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.locationUniversity', lang))}"></select>
+    <div id="area-university-status" role="status"></div>
+    <button type="button" id="area-university-retry" hidden>${UyDosh.escapeHtml(UyDosh.t('map.retry', lang))}</button>
+  </div>${state.form.searchArea?.universityId ? searchAreaHtml(lang) : ''}`;
+}
+function universityCoordinates(university) {
+  const latitude = Number(university.latitude), longitude = Number(university.longitude);
+  return university.latitude != null && university.longitude != null && Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? { latitude, longitude } : null;
+}
+async function bindUniversityArea() {
+  const select = stepPanelsEl.querySelector('#area-university');
+  if (!select) return;
+  const query = stepPanelsEl.querySelector('#area-university-query');
+  const status = stepPanelsEl.querySelector('#area-university-status');
+  const retry = stepPanelsEl.querySelector('#area-university-retry');
+  const lang = UyDosh.getLang();
+  const paint = () => {
+    const text = query.value.trim().toLocaleLowerCase();
+    const items = (areaUniversities || []).filter(u => [UyDosh.localized(u, lang), UyDosh.localizedShort(u, lang), u.name_ru, u.name_en, u.name_uz].some(name => String(name || '').toLocaleLowerCase().includes(text)));
+    select.innerHTML = items.map(u => `<option value="${Number(u.id)}" ${Number(u.id) === state.form.searchArea?.universityId ? 'selected' : ''} ${universityCoordinates(u) ? '' : 'disabled'}>${UyDosh.escapeHtml(UyDosh.localized(u, lang))}${universityCoordinates(u) ? '' : ' — ' + UyDosh.escapeHtml(UyDosh.t('create.universityNoCoordinates', lang))}</option>`).join('');
+    select.value = String(state.form.searchArea?.universityId || '');
+    status.textContent = items.length ? '' : UyDosh.t('profile.universityNotFound', lang);
+  };
+  query.addEventListener('input', paint);
+  select.addEventListener('change', () => {
+    const university = areaUniversities?.find(u => Number(u.id) === Number(select.value));
+    const coords = university && universityCoordinates(university);
+    if (!coords) return;
+    state.form.searchArea = { ...coords, radiusKm: state.form.searchArea?.radiusKm || 1, universityId: Number(university.id), universityName: UyDosh.localized(university, lang) };
+    renderStep();
+  });
+  retry.addEventListener('click', () => renderStep());
+  if (areaUniversities) { paint(); return; }
+  select.disabled = true;
+  status.textContent = UyDosh.t('map.loading', lang);
+  try {
+    if (!areaUniversitiesPromise) areaUniversitiesPromise = UyDosh.fetchUniversitiesAll(lang).then(data => {
+      if (!Array.isArray(data?.universities)) throw new Error('Invalid university response');
+      areaUniversities = data.universities;
+    }).finally(() => { areaUniversitiesPromise = null; });
+    await areaUniversitiesPromise;
+    if (!select.isConnected) return;
+    select.disabled = false;
+    paint();
+  } catch (error) {
+    if (!select.isConnected) return;
+    status.textContent = UyDosh.t('profile.errorLoad', lang);
+    retry.hidden = false;
+  }
+}
+
 function searchAreaHtml(lang) {
-  const radius = state.form.searchArea?.radiusKm || 5;
+  const radius = state.form.searchArea?.radiusKm || 1;
   return `<div class="field" data-validation-anchor="location">
     <label for="search-radius">${UyDosh.escapeHtml(UyDosh.t('create.radius', lang))}: <output id="search-radius-value">${radius}</output> ${UyDosh.escapeHtml(UyDosh.t('create.km', lang))}</label>
-    <input id="search-radius" type="range" min="5" max="10" step="1" value="${radius}" />
-    <div class="muted">${UyDosh.escapeHtml(UyDosh.t('create.radiusHint', lang))}</div>
+    <input id="search-radius" type="range" min="1" max="10" step="1" value="${radius}" />
+    <div class="muted">${UyDosh.escapeHtml(UyDosh.t(state.form.searchArea?.universityId ? 'create.universityRadiusHint' : 'create.radiusHint', lang))}</div>
     <div id="search-area-map" class="search-area-map"></div>
     <div id="search-area-error" role="status"></div>
   </div>`;
@@ -1102,7 +1162,7 @@ async function mountSearchAreaMap() {
   const token = ++searchAreaLoadToken;
   const input = stepPanelsEl.querySelector('#search-radius');
   input.addEventListener('input', () => {
-    const radius = Math.max(5, Math.min(10, Number(input.value)));
+    const radius = Math.max(1, Math.min(10, Number(input.value)));
     state.form.searchArea.radiusKm = radius;
     stepPanelsEl.querySelector('#search-radius-value').textContent = radius;
     searchAreaCircle?.geometry.setRadius(radius * 1000);
@@ -1118,7 +1178,9 @@ async function mountSearchAreaMap() {
       interactivityModel: 'default#transparent'
     });
     searchAreaMap.geoObjects.add(searchAreaCircle);
-    searchAreaMap.events.add('click', event => {
+    state.searchAreaMapReady = true;
+    updateWizardFooter();
+    if (!area.universityId) searchAreaMap.events.add('click', event => {
       const [latitude, longitude] = event.get('coords');
       state.form.searchArea = { latitude, longitude, radiusKm: state.form.searchArea.radiusKm };
       searchAreaCircle.geometry.setCoordinates([latitude, longitude]);
@@ -1134,6 +1196,7 @@ function legacyLocationTabsHtml(lang) {
     { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang), icon: UyDosh.iconMetro() },
     { mode: LOCATION_MODE_RADIUS, label: UyDosh.t('create.locationRadius', lang), icon: UyDosh.iconPin() },
     { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: UyDosh.iconPin() },
+    { mode: LOCATION_MODE_UNIVERSITY, label: UyDosh.t('create.locationUniversity', lang), icon: UyDosh.iconPin() },
   ].map((opt) => {
     return UyDosh.chipButtonHtml({
       attrs: { 'data-location-mode': opt.mode },
@@ -1150,8 +1213,8 @@ function legacyLocationTabsHtml(lang) {
   const lineChips = UyDosh.metroLineChipsHtml(state.form.subwayLineId, lang);
 
   let locationBody = '';
-  if (state.form.locationMode === LOCATION_MODE_RADIUS) {
-    locationBody = searchAreaHtml(lang);
+  if ((state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY)) {
+    locationBody = state.form.locationMode === LOCATION_MODE_UNIVERSITY ? universityAreaHtml(lang) : searchAreaHtml(lang);
   } else if (state.form.locationMode === LOCATION_MODE_METRO) {
     const stationLabel = supportsMultiStation()
       ? UyDosh.t('create.metroStations', lang)
@@ -2971,13 +3034,19 @@ function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.form.locationMode = btn.getAttribute('data-location-mode');
+      if (state.form.locationMode === LOCATION_MODE_UNIVERSITY && !state.form.searchArea?.universityId) state.form.searchArea = null;
+      if (state.form.locationMode === LOCATION_MODE_RADIUS && state.form.searchArea?.universityId) {
+        const { latitude, longitude, radiusKm } = state.form.searchArea;
+        state.form.searchArea = { latitude, longitude, radiusKm };
+      }
       if (state.form.locationMode === LOCATION_MODE_RADIUS && !state.form.searchArea) {
-        state.form.searchArea = { latitude: 41.3111, longitude: 69.2797, radiusKm: 5 };
+        state.form.searchArea = { latitude: 41.3111, longitude: 69.2797, radiusKm: 1 };
       }
       renderStep();
     });
   });
 
+  bindUniversityArea();
   bindAddressAutocomplete();
 
   stepPanelsEl.querySelector('[data-use-current-location]')?.addEventListener('click', async () => {
@@ -3302,7 +3371,7 @@ function validateStep(step) {
       return { message: UyDosh.t('create.chooseListingType', lang), anchor: 'listingType' };
     }
     if (isDemandSideType()) {
-      if (state.form.locationMode === LOCATION_MODE_RADIUS && !state.form.searchArea) {
+      if ((state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY) && (!state.form.searchArea || !state.searchAreaMapReady)) {
         return { message: UyDosh.t('create.errorLocationRequired', lang), anchor: 'location' };
       }
       if (state.form.locationMode === LOCATION_MODE_METRO && state.form.selectedStationIds.length === 0) {
@@ -3400,7 +3469,7 @@ async function submitListing() {
       price: priceForRequest(),
       minPrice: isDemandSideType() ? bounds.min : undefined,
       maxPrice: isDemandSideType() ? bounds.max : undefined,
-      searchArea: isDemandSideType() && state.form.locationMode === LOCATION_MODE_RADIUS ? state.form.searchArea : null,
+      searchArea: isDemandSideType() && (state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY) ? state.form.searchArea : null,
       description: state.form.description.trim(),
       gender: state.form.gender,
       groupSizeTarget: isGroupForming() ? state.form.groupSizeTarget : undefined,
@@ -3421,7 +3490,7 @@ async function submitListing() {
         : undefined,
     };
 
-    if (state.form.locationMode === LOCATION_MODE_RADIUS && isDemandSideType()) {
+    if ((state.form.locationMode === LOCATION_MODE_RADIUS || state.form.locationMode === LOCATION_MODE_UNIVERSITY) && isDemandSideType()) {
       body.subwayStationIds = [];
       body.locationIds = [];
     } else if (state.form.locationMode === LOCATION_MODE_METRO) {

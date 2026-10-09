@@ -175,7 +175,7 @@
       function buildMapSectionHtml(l, lang) {
         const districts = [...UyDosh.listingSearchDistricts(l)].sort((a, b) =>
           UyDosh.localizedShort(a, lang).localeCompare(UyDosh.localizedShort(b, lang), lang));
-        const locName = districts.length
+        const locName = l.search_area ? UyDosh.listingLocationLabel(l, lang) : districts.length
           ? `${UyDosh.t('location.searchArea', lang)} · ${UyDosh.listingLocationLabel(l, lang, { summary: true })}`
           : UyDosh.localized(l.location, lang);
         const metroLine = UyDosh.resolveMetroLine(l);

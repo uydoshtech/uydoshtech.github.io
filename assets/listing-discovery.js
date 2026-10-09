@@ -78,7 +78,7 @@
     const result = { mode: params.get('search'), group: positiveId(params.get('group')), exclude: positiveId(params.get('exclude')) };
     if (params.has('searchRadiusKm')) {
       const latitude = Number(params.get('searchLatitude')), longitude = Number(params.get('searchLongitude')), radiusKm = Number(params.get('searchRadiusKm'));
-      if (params.has('searchLatitude') && params.has('searchLongitude') && [latitude, longitude, radiusKm].every(Number.isFinite) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 && radiusKm >= 5 && radiusKm <= 10) result.searchArea = { latitude, longitude, radiusKm };
+      if (params.has('searchLatitude') && params.has('searchLongitude') && [latitude, longitude, radiusKm].every(Number.isFinite) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 && radiusKm >= 1 && radiusKm <= 10) result.searchArea = { latitude, longitude, radiusKm };
     }
     for (const key of ['listingTypeId', 'subwayStationId', 'locationId']) result[key] = positiveId(params.get(key));
     for (const key of ['locationIds', 'subwayStationIds']) result[key] = [...new Set((params.get(key) || '').split(',').map(positiveId).filter(Boolean))];
