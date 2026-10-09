@@ -7,11 +7,11 @@ test('map clicks move the circle; slider updates kilometres as metres; teardown 
  const button=()=>({isConnected:true,addEventListener(name,fn){this[name]=fn;},removeEventListener(){}});
  const less=button(),more=button();
  const input={value:'5',addEventListener(_,fn){this.input=fn;}}, output={}, error={},container={isConnected:true};
- let map,circle,pin; const handles=[];
+ let map,circle,pin; const handles=[]; const flags=[];
  class MapMock {constructor(container,options){map=this;this.controls=options.controls;this.geoObjects={add(){}};this.events={add:(_,fn)=>{this.click=fn;}};}destroy(){this.destroyed=true;}}
  class CircleMock {constructor(coords){circle=this;this.coords=coords;this.geometry={setRadius:n=>{this.radius=n;},setCoordinates:c=>{this.center=c;}};}}
- class PinMock {constructor(coords,properties,options){if(options?.draggable) handles.push(this);else pin=this;this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
- const c=vm.createContext({window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},state:{form:{searchArea:{latitude:41.31,longitude:69.28,radiusKm:1}}},stepPanelsEl:{querySelector:selector=>({'#search-area-map':container,'#search-radius':input,'#search-radius-value':output,'#search-area-error':error,'#search-radius-less':less,'#search-radius-more':more})[selector]},UyDosh:{getLang:()=> 'ru',loadYandexMapModule:async()=>({attachSearchAreaLayers:(container,map)=>{map.layersAttached=true;return ()=>map.destroy();},loadYandexScript:async()=>({Map:MapMock,Circle:CircleMock,Placemark:PinMock})})},updateWizardFooter(){}});
+ class PinMock {constructor(coords,properties,options){this.options=options;if(options?.zIndex===1100) handles.push(this);else if(options?.zIndex===1000) pin=this;else flags.push(this);this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
+ const c=vm.createContext({window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},state:{form:{searchArea:{latitude:41.31,longitude:69.28,radiusKm:1}}},stepPanelsEl:{querySelector:selector=>({'#search-area-map':container,'#search-radius':input,'#search-radius-value':output,'#search-area-error':error,'#search-radius-less':less,'#search-radius-more':more})[selector]},UyDosh:{t:key=>key,getLang:()=> 'ru',loadYandexMapModule:async()=>({attachSearchAreaLayers:(container,map)=>{map.layersAttached=true;return ()=>map.destroy();},loadYandexScript:async()=>({Map:MapMock,Circle:CircleMock,Placemark:PinMock})})},updateWizardFooter(){}});
  vm.runInContext(source.slice(source.indexOf('let searchAreaMap ='),source.indexOf('function legacyLocationTabsHtml')),c);
  await c.mountSearchAreaMap();assert.equal(c.state.searchAreaMapReady,true);assert.equal(circle.coords[1],1000);assert.equal(map.controls.length,0);assert.equal(map.layersAttached,true);assert.equal(pin.center[0],41.31);
  more.click({detail:0});assert.equal(c.state.form.searchArea.radiusKm,1.1);assert.equal(circle.radius,1100);
@@ -33,6 +33,13 @@ test('map clicks move the circle; slider updates kilometres as metres; teardown 
  map.click({get:()=>[40,68]});assert.equal(c.state.form.searchArea.latitude,centreBefore);
  handle.handlers.dragstart();handle.center=[c.state.form.searchArea.latitude,c.state.form.searchArea.longitude];
  handle.handlers.dragend();assert.equal(c.state.form.searchArea.radiusKm,1);
+ const radiusBeforeDrag=c.state.form.searchArea.radiusKm;
+ pin.handlers.dragstart();pin.center=[41.33,69.31];pin.handlers.drag();
+ assert.equal(c.state.form.searchArea.latitude,41.33);assert.equal(circle.center[1],69.31);
+ assert.equal(c.state.form.searchArea.radiusKm,radiusBeforeDrag);
+ assert.ok(Math.abs(c.searchAreaDistanceKm(c.state.form.searchArea,handles[0].center)-radiusBeforeDrag)<0.001);
+ pin.handlers.dragend();assert.equal(flags.length,1);assert.equal(flags[0].center[0],41.31139);
+ assert.equal(flags[0].options.draggable,false);
  c.disposeSearchAreaMap();assert.equal(map.destroyed,true);assert.equal(c.state.searchAreaMapReady,false);
 });
 
@@ -46,15 +53,16 @@ test('university coordinates reject missing and invalid values, accepting numeri
 });
 test('university map locks the centre while retaining the radius slider',async()=>{
  const input={value:'5',addEventListener(_,fn){this.input=fn;}},container={isConnected:true};
- let map,circle,pin; const handles=[];
+ let map,circle,pin; const handles=[]; const flags=[];
  class MapMock {constructor(container,options){map=this;this.controls=options.controls;this.geoObjects={add(){}};this.events={add:()=>{this.clickRegistered=true;}};}destroy(){}}
  class CircleMock {constructor(){circle=this;this.geometry={setRadius:n=>{this.radius=n;}};}}
- class PinMock {constructor(coords,properties,options){if(options?.draggable) handles.push(this);else pin=this;this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
- const c=vm.createContext({window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},state:{form:{searchArea:{latitude:41.31,longitude:69.28,radiusKm:1,universityId:12}}},stepPanelsEl:{querySelector:s=>s==='#search-area-map'?container:s==='#search-radius'?input:{addEventListener(){},removeEventListener(){}}},UyDosh:{getLang:()=> 'ru',loadYandexMapModule:async()=>({attachSearchAreaLayers:(container,map)=>{map.layersAttached=true;return ()=>map.destroy();},loadYandexScript:async()=>({Map:MapMock,Circle:CircleMock,Placemark:PinMock})})},updateWizardFooter(){}});
+ class PinMock {constructor(coords,properties,options){this.options=options;if(options?.zIndex===1100) handles.push(this);else if(options?.zIndex===1000) pin=this;else flags.push(this);this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
+ const c=vm.createContext({window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},state:{form:{searchArea:{latitude:41.31,longitude:69.28,radiusKm:1,universityId:12}}},stepPanelsEl:{querySelector:s=>s==='#search-area-map'?container:s==='#search-radius'?input:{addEventListener(){},removeEventListener(){}}},UyDosh:{t:key=>key,getLang:()=> 'ru',loadYandexMapModule:async()=>({attachSearchAreaLayers:(container,map)=>{map.layersAttached=true;return ()=>map.destroy();},loadYandexScript:async()=>({Map:MapMock,Circle:CircleMock,Placemark:PinMock})})},updateWizardFooter(){}});
  vm.runInContext(source.slice(source.indexOf('let searchAreaMap ='),source.indexOf('function legacyLocationTabsHtml')),c);
  await c.mountSearchAreaMap();
  assert.equal(pin.center[0],41.31);
  assert.equal(map.clickRegistered,undefined);
+ assert.equal(pin.options.draggable,false);assert.equal(pin.handlers.drag,undefined);
  input.value='8';input.input();assert.equal(circle.radius,8000);
  assert.equal(handles.length,4);
  const handle=handles[1];handle.handlers.dragstart();

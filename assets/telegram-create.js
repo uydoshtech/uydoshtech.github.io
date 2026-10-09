@@ -1208,6 +1208,15 @@ function setSearchAreaRadius(value, activeHandle = null) {
   searchAreaCircle?.geometry.setRadius(radius * 1000);
   positionSearchAreaHandles(activeHandle);
 }
+function moveSearchAreaCenter(coordinates) {
+  if (state.form.searchArea.universityId) return;
+  const [latitude, longitude] = coordinates;
+  state.form.searchArea = { ...state.form.searchArea, latitude, longitude };
+  searchAreaCircle.geometry.setCoordinates(coordinates);
+  searchAreaCenterPin.geometry.setCoordinates(coordinates);
+  positionSearchAreaHandles();
+}
+
 function addSearchAreaResizeHandles(ymaps) {
   searchAreaResizeHandles = Array.from({ length: 4 }, (_, index) => {
     // Small visible dot inside the existing 36px drag target.
@@ -1285,27 +1294,45 @@ async function mountSearchAreaMap() {
     const ymaps = await module.loadYandexScript(UyDosh.getLang());
     if (token !== searchAreaLoadToken || !container.isConnected) return;
     const area = state.form.searchArea;
-    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 10, controls: [] });
+    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 11, controls: [] });
     searchAreaMapCleanup = module.attachSearchAreaLayers(container, searchAreaMap, ymaps);
     searchAreaCircle = new ymaps.Circle([[area.latitude, area.longitude], area.radiusKm * 1000], {}, {
       fillColor: '#60a5fa', fillOpacity: 0.18, strokeColor: '#60a5fa', strokeWidth: 2,
       interactivityModel: 'default#transparent'
     });
     searchAreaMap.geoObjects.add(searchAreaCircle);
+    // Flag stays at the city landmark while the user's search circle can move.
+    const flagSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38"><path d="M5 35V4" stroke="white" stroke-width="5" stroke-linecap="round"/><path d="M5 35V4" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/><path d="M7 4h20l-5 7 5 7H7Z" fill="#2563eb" stroke="white" stroke-width="2"/></svg>';
+    searchAreaMap.geoObjects.add(new ymaps.Placemark([41.31139, 69.27972], {
+      hintContent: UyDosh.t('create.cityCenter')
+    }, {
+      iconLayout: 'default#image', iconImageHref: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(flagSvg)}`,
+      iconImageSize: [30, 38], iconImageOffset: [-5, -35], zIndex: 900,
+      draggable: false
+    }));
+    // Small translucent dot, with a larger invisible target for touch dragging.
+    const centerSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><circle cx="22" cy="22" r="6" fill="#2563eb" fill-opacity="0.55" stroke="white" stroke-opacity="0.7" stroke-width="2"/></svg>';
     searchAreaCenterPin = new ymaps.Placemark([area.latitude, area.longitude], {}, {
-      preset: 'islands#circleIcon', iconColor: '#2563eb', zIndex: 1000
+      iconLayout: 'default#image', iconImageHref: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(centerSvg)}`,
+      iconImageSize: [44, 44], iconImageOffset: [-22, -22],
+      draggable: !area.universityId, zIndex: 1000
     });
+    if (!area.universityId) {
+      searchAreaCenterPin.events.add('dragstart', () => { searchAreaDragging = true; });
+      searchAreaCenterPin.events.add('drag', () => moveSearchAreaCenter(searchAreaCenterPin.geometry.getCoordinates()));
+      searchAreaCenterPin.events.add('dragend', () => {
+        moveSearchAreaCenter(searchAreaCenterPin.geometry.getCoordinates());
+        searchAreaDragging = false;
+        searchAreaIgnoreClickUntil = Date.now() + 350;
+      });
+    }
     searchAreaMap.geoObjects.add(searchAreaCenterPin);
     addSearchAreaResizeHandles(ymaps);
     state.searchAreaMapReady = true;
     updateWizardFooter();
     if (!area.universityId) searchAreaMap.events.add('click', event => {
       if (searchAreaDragging || Date.now() < searchAreaIgnoreClickUntil) return;
-      const [latitude, longitude] = event.get('coords');
-      state.form.searchArea = { latitude, longitude, radiusKm: state.form.searchArea.radiusKm };
-      searchAreaCircle.geometry.setCoordinates([latitude, longitude]);
-      searchAreaCenterPin.geometry.setCoordinates([latitude, longitude]);
-      positionSearchAreaHandles();
+      moveSearchAreaCenter(event.get('coords'));
     });
   } catch (error) {
     if (token !== searchAreaLoadToken) return;
@@ -3162,7 +3189,7 @@ function bindStepEvents() {
         state.form.searchArea = { latitude, longitude, radiusKm };
       }
       if (state.form.locationMode === LOCATION_MODE_RADIUS && !state.form.searchArea) {
-        state.form.searchArea = { latitude: 41.3111, longitude: 69.2797, radiusKm: 1 };
+        state.form.searchArea = { latitude: 41.31139, longitude: 69.27972, radiusKm: 1 };
       }
       renderStep();
     });
