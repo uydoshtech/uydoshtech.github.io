@@ -22,12 +22,12 @@
 
   function visibleFriendMarkers(friends, filter, now) {
     const at = now instanceof Date ? now : new Date();
-    return (Array.isArray(friends) ? friends : []).filter((friend) => (
-      friend
-      && Number(friend.userId) > 0
-      && isFreshFriendLocation(friend.updatedAt, at)
-      && matchesFriendMapFilter(filter, friend.mutual)
-    ));
+    return (Array.isArray(friends) ? friends : []).filter((friend) => {
+      if (!friend || !(Number(friend.userId) > 0)) return false;
+      if (!isFreshFriendLocation(friend.updatedAt, at)) return false;
+      if (friend.self === true) return true;
+      return matchesFriendMapFilter(filter, friend.mutual);
+    });
   }
 
   function applyFriendLocationEvent(friends, event) {

@@ -45,6 +45,15 @@ test('an update replaces the previous point for that person', () => {
   assert.equal(next[0].latitude, 42.5);
 });
 
+test('your own live point stays on the map in both filters', () => {
+  const people = [
+    friend({ userId: 7, self: true, mutual: false }),
+    friend({ userId: 3, mutual: true }),
+  ];
+  assert.deepEqual(live.visibleFriendMarkers(people, 'mutual', now).map((row) => row.userId), [7, 3]);
+  assert.deepEqual(live.visibleFriendMarkers(people, 'followers', now).map((row) => row.userId), [7, 3]);
+});
+
 test('sharing is off unless the server says it is enabled', () => {
   assert.deepEqual(live.normalizeFriendLocationSettings(null), { enabled: false, audience: 'mutual' });
   assert.deepEqual(live.normalizeFriendLocationSettings({ enabled: true, audience: 'following' }), {

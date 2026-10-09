@@ -1951,6 +1951,16 @@ function notifyFriendLocationSettings(detail) {
   document.dispatchEvent(new CustomEvent("uydosh:friend-location-settings", { detail }));
 }
 
+function notifySelfLocation(latitude, longitude, updatedAt) {
+  document.dispatchEvent(new CustomEvent("uydosh:friend-location-self", {
+    detail: {
+      latitude,
+      longitude,
+      updatedAt: updatedAt || new Date().toISOString(),
+    },
+  }));
+}
+
 function readMiniAppLocation() {
   return new Promise((resolve, reject) => {
     const manager = window.Telegram?.WebApp?.LocationManager;
@@ -2047,7 +2057,8 @@ async function publishCurrentFriendLocation() {
     return;
   }
   try {
-    await publishFriendLiveLocation(position.latitude, position.longitude);
+    const result = await publishFriendLiveLocation(position.latitude, position.longitude);
+    notifySelfLocation(position.latitude, position.longitude, result?.updatedAt);
   } catch (err) {
     if (err?.status === 409 || err?.payload?.error === "sharing_disabled") {
       haltFriendBroadcastLoop();
@@ -2112,7 +2123,8 @@ async function enableFriendLocationSharing(audience) {
   });
   notifyFriendLocationSettings(settings);
   beginFriendBroadcastLoop();
-  await publishFriendLiveLocation(position.latitude, position.longitude);
+  const published = await publishFriendLiveLocation(position.latitude, position.longitude);
+  notifySelfLocation(position.latitude, position.longitude, published?.updatedAt);
   return settings;
 }
 

@@ -5,7 +5,6 @@
   const TASHKENT = [41.311151, 69.279737];
   const state = {
     active: false,
-    view: 'map',
     filter: 'followers',
     settings: { enabled: false, audience: 'mutual' },
     friends: [],
@@ -15,6 +14,7 @@
     loading: false,
     authed: true,
     busy: false,
+    shareExpanded: false,
     map: null,
     ymaps: null,
     markers: new Map(),
@@ -68,10 +68,14 @@
     const backTo = `${UyDosh.MINI_APP_ACCOUNT_PATH}?tab=friends`;
     const href = UyDosh.escapeHtml(UyDosh.profilePageUrl(id, { backTo }));
     const mutual = friend.mutual === true;
-    const badge = mutual
-      ? `<span class="friend-badge">${UyDosh.escapeHtml(UyDosh.t('account.friends.mutualBadge', lang))}</span>`
-      : '';
-    const followLabel = UyDosh.t(mutual ? 'profile.following' : 'profile.follow', lang);
+    const badge = friend.self
+      ? `<span class="friend-badge">${UyDosh.escapeHtml(UyDosh.t('account.friends.you', lang))}</span>`
+      : mutual
+        ? `<span class="friend-badge">${UyDosh.escapeHtml(UyDosh.t('account.friends.mutualBadge', lang))}</span>`
+        : '';
+    const follow = friend.self
+      ? ''
+      : `<button type="button" class="follow-btn${mutual ? ' is-on' : ''}" data-friend-follow="${id}">${UyDosh.escapeHtml(UyDosh.t(mutual ? 'profile.following' : 'profile.follow', lang))}</button>`;
     return `
       <article class="friend-card" data-friend-id="${id}">
         <a class="friend-card-link" href="${href}">
@@ -82,39 +86,46 @@
           </span>
           ${badge}
         </a>
-        <button type="button" class="follow-btn${mutual ? ' is-on' : ''}" data-friend-follow="${id}">
-          ${UyDosh.escapeHtml(followLabel)}
-        </button>
+        ${follow}
       </article>`;
+  }
+
+  function chromeIcon(name) {
+    if (typeof UyDosh.iconChrome === 'function') return UyDosh.iconChrome(name);
+    return '';
   }
 
   function mount(list) {
     list.innerHTML = `
       <section class="friends-panel" data-friends-root>
-        <div class="friends-share-card">
-          <label class="friends-share-toggle">
-            <input type="checkbox" data-friends-share />
-            <span data-i18n="account.friends.share"></span>
-          </label>
-          <p class="friends-status" data-friends-status></p>
-          <p class="friends-rule" data-i18n="account.friends.rule"></p>
-          <fieldset class="friends-audience">
-            <legend data-i18n="account.friends.audience"></legend>
-            <label>
-              <input type="radio" name="friend-audience" value="following" data-friends-audience-value="following" />
-              <span data-i18n="account.friends.audienceFollowing"></span>
+        <div class="friends-share-card" data-friends-share-card data-expanded="false">
+          <div class="friends-share-head">
+            <label class="friends-share-toggle">
+              <input type="checkbox" data-friends-share />
+              <span data-i18n="account.friends.share"></span>
             </label>
-            <label>
-              <input type="radio" name="friend-audience" value="mutual" data-friends-audience-value="mutual" />
-              <span data-i18n="account.friends.audienceMutual"></span>
-            </label>
-          </fieldset>
-          <p class="friends-permission" data-friends-permission hidden></p>
-          <button type="button" class="friends-settings" data-friends-open-settings hidden data-i18n="account.friends.openSettings"></button>
-        </div>
-        <div class="follows-switch" role="tablist" data-friends-views>
-          <button type="button" data-friends-view="map" data-i18n="account.friends.map"></button>
-          <button type="button" data-friends-view="list" data-i18n="account.friends.list"></button>
+            <button type="button" class="friends-share-chevron" data-friends-share-toggle aria-expanded="false" aria-controls="friends-share-body">
+              <span class="friends-chevron-down">${chromeIcon('chevronDown')}</span>
+              <span class="friends-chevron-up">${chromeIcon('chevronUp')}</span>
+            </button>
+          </div>
+          <div id="friends-share-body" class="friends-share-body" hidden>
+            <p class="friends-status" data-friends-status></p>
+            <p class="friends-rule" data-i18n="account.friends.rule"></p>
+            <fieldset class="friends-audience">
+              <legend data-i18n="account.friends.audience"></legend>
+              <label>
+                <input type="radio" name="friend-audience" value="following" data-friends-audience-value="following" />
+                <span data-i18n="account.friends.audienceFollowing"></span>
+              </label>
+              <label>
+                <input type="radio" name="friend-audience" value="mutual" data-friends-audience-value="mutual" />
+                <span data-i18n="account.friends.audienceMutual"></span>
+              </label>
+            </fieldset>
+            <p class="friends-permission" data-friends-permission hidden></p>
+            <button type="button" class="friends-settings" data-friends-open-settings hidden data-i18n="account.friends.openSettings"></button>
+          </div>
         </div>
         <div class="follows-switch" role="tablist" data-friends-filters>
           <button type="button" data-friends-filter="followers" data-i18n="account.friends.followers"></button>
@@ -140,11 +151,6 @@
       if (audience) void onAudienceChange(audience.value);
     });
     root.addEventListener('click', (event) => {
-      const view = event.target.closest('[data-friends-view]');
-      if (view) {
-        setView(view.getAttribute('data-friends-view'));
-        return;
-      }
       const filter = event.target.closest('[data-friends-filter]');
       if (filter) {
         const next = filter.getAttribute('data-friends-filter');
@@ -156,6 +162,11 @@
       }
       if (event.target.closest('[data-friends-retry]')) {
         void refresh();
+        return;
+      }
+      if (event.target.closest('[data-friends-share-toggle]')) {
+        state.shareExpanded = !state.shareExpanded;
+        paint();
         return;
       }
       if (event.target.closest('[data-friends-open-settings]')) {
@@ -170,24 +181,30 @@
         return;
       }
       const card = event.target.closest('[data-friend-id]');
-      if (card && state.view === 'map') {
+      if (card) {
         state.selectedId = Number(card.getAttribute('data-friend-id'));
         paint();
       }
     });
   }
 
-  function setView(view) {
-    if (view !== 'map' && view !== 'list') return;
-    state.view = view;
-    paint();
-    if (view === 'map') void ensureMap();
-  }
-
   function paint() {
     const root = rootEl();
     if (!root || !state.active) return;
     const lang = UyDosh.getLang();
+    const shareCard = root.querySelector('[data-friends-share-card]');
+    const shareToggle = root.querySelector('[data-friends-share-toggle]');
+    const shareBody = root.querySelector('#friends-share-body');
+    if (state.permission) state.shareExpanded = true;
+    if (shareCard) shareCard.setAttribute('data-expanded', state.shareExpanded ? 'true' : 'false');
+    if (shareBody) shareBody.hidden = !state.shareExpanded;
+    if (shareToggle) {
+      shareToggle.setAttribute('aria-expanded', state.shareExpanded ? 'true' : 'false');
+      shareToggle.setAttribute('aria-label', UyDosh.t(
+        state.shareExpanded ? 'account.friends.collapse' : 'account.friends.expand',
+        lang,
+      ));
+    }
     const share = root.querySelector('[data-friends-share]');
     if (share) {
       share.checked = state.settings.enabled === true;
@@ -213,10 +230,6 @@
       permission.textContent = state.permission ? UyDosh.t('account.friends.permission', lang) : '';
     }
     if (settingsBtn) settingsBtn.hidden = !state.permission;
-    for (const button of root.querySelectorAll('[data-friends-view]')) {
-      const on = button.getAttribute('data-friends-view') === state.view;
-      button.setAttribute('aria-selected', on ? 'true' : 'false');
-    }
     for (const button of root.querySelectorAll('[data-friends-filter]')) {
       const on = button.getAttribute('data-friends-filter') === state.filter;
       button.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -231,33 +244,18 @@
     const people = visibleFriends();
     const list = root.querySelector('[data-friends-list]');
     const map = root.querySelector('#friends-map');
-    const mapMode = state.view === 'map';
-    if (map) map.hidden = !mapMode;
+    if (map) map.hidden = false;
+    const selected = people.find((friend) => Number(friend.userId) === state.selectedId) || null;
     if (list) {
-      if (!people.length) {
-        list.hidden = false;
-        const emptyKey = state.filter === 'mutual' ? 'account.friends.emptyMutual' : 'account.friends.empty';
-        list.innerHTML = state.loading
-          ? '<div class="gp-loading" aria-busy="true"><span class="loading-spinner" aria-hidden="true"></span></div>'
-          : `<p class="follows-empty">${UyDosh.escapeHtml(UyDosh.t(emptyKey, lang))}</p>`;
-      } else if (mapMode) {
-        const selected = people.find((friend) => Number(friend.userId) === state.selectedId) || null;
-        list.innerHTML = selected ? cardHtml(selected, lang) : '';
-        list.hidden = !selected;
-      } else {
-        list.hidden = false;
-        list.innerHTML = people.map((friend) => cardHtml(friend, lang)).join('');
-      }
+      list.hidden = !selected;
+      list.innerHTML = selected ? cardHtml(selected, lang) : '';
     }
-    if (mapMode) syncMarkers(people);
-    if (state.map && mapMode) {
-      try { state.map.container.fitToViewport(); } catch { /* map still booting */ }
-    }
+    syncMarkers(people);
   }
 
   async function ensureMap() {
     const container = rootEl()?.querySelector('#friends-map');
-    if (!container || state.map || container.hidden) return;
+    if (!container || state.map) return;
     const token = ++state.mapToken;
     try {
       const mapApi = await UyDosh.loadYandexMapModule();
@@ -281,15 +279,27 @@
     }
   }
 
+  function telegramSelfAvatar() {
+    try {
+      return window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '';
+    } catch {
+      return '';
+    }
+  }
+
   function pinLayout(ymaps, friend, selected) {
     const name = String(friend?.name || '').trim();
     const letter = UyDosh.escapeHtml((Array.from(name)[0] || '?').toUpperCase());
-    const raw = friend?.avatarUrl || '';
+    const raw = friend.self
+      ? (telegramSelfAvatar() || friend.avatarUrl || '')
+      : (friend?.avatarUrl || '');
     const url = raw && typeof UyDosh.photoUrl === 'function' ? UyDosh.photoUrl(raw) : raw;
     const img = url
       ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" />`
       : '';
-    const html = `<div class="friend-map-pin${selected ? ' is-selected' : ''}"><span>${letter}</span>${img}</div>`;
+    const selfClass = friend.self ? ' is-self' : '';
+    const selectedClass = selected && !friend.self ? ' is-selected' : '';
+    const html = `<div class="friend-map-pin${selfClass}${selectedClass}"><span>${letter}</span>${img}</div>`;
     return ymaps.templateLayoutFactory.createClass(html);
   }
 
@@ -309,7 +319,7 @@
           iconLayout: pinLayout(ymaps, friend, selected),
           iconShape: { type: 'Circle', coordinates: [22, 22], radius: 22 },
           iconOffset: [-22, -22],
-          zIndex: selected ? 2000 : 1000,
+          zIndex: selected ? 2000 : friend.self ? 1600 : 1000,
         });
         placemark.events.add('click', () => {
           state.selectedId = id;
@@ -320,6 +330,7 @@
       } else {
         placemark.geometry.setCoordinates(coords);
         placemark.options.set('iconLayout', pinLayout(ymaps, friend, selected));
+        placemark.options.set('zIndex', selected ? 2000 : friend.self ? 1600 : 1000);
       }
     }
     for (const [id, placemark] of state.markers) {
@@ -358,23 +369,37 @@
     if (state.settings.enabled) state.permission = false;
   }
 
+  function mergeLocations(page) {
+    const incoming = (Array.isArray(page?.friends) ? page.friends : [])
+      .filter((friend) => friend && friend.self !== true);
+    const previousSelf = state.friends.find((friend) => friend.self === true) || null;
+    const selfSource = page?.self || (state.settings.enabled ? previousSelf : null);
+    if (!selfSource || !(Number(selfSource.userId) > 0)) return incoming;
+    const selfId = Number(selfSource.userId);
+    return incoming
+      .filter((friend) => Number(friend.userId) !== selfId)
+      .concat([{
+        ...selfSource,
+        self: true,
+        mutual: false,
+        avatarUrl: telegramSelfAvatar() || selfSource.avatarUrl || null,
+      }]);
+  }
+
   let refreshing = false;
 
   async function refresh() {
     if (!state.active || refreshing) return;
     refreshing = true;
     try {
-      state.loading = !state.friends.length;
       state.error = '';
-      paint();
       const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
       if (!state.active) return;
       if (!sessionReady) {
         state.authed = false;
-        state.loading = false;
         state.friends = [];
         paint();
-        if (state.view === 'map') void ensureMap();
+        void ensureMap();
         return;
       }
       state.authed = true;
@@ -386,14 +411,12 @@
       const draftAudience = state.settings.enabled ? null : state.settings.audience;
       applySettings(settings);
       if (!state.settings.enabled && draftAudience) state.settings.audience = draftAudience;
-      state.friends = Array.isArray(page?.friends) ? page.friends : [];
-      state.loading = false;
+      state.friends = mergeLocations(page);
       paint();
-      if (state.view === 'map') void ensureMap();
+      void ensureMap();
     } catch (err) {
       console.error('Failed to load friend locations', err);
       if (!state.active) return;
-      state.loading = false;
       state.error = 'load';
       paint();
     } finally {
@@ -483,14 +506,48 @@
       state.friends = api.applyFriendLocationEvent(state.friends, { type: 'remove', userId });
       if (state.selectedId === userId) state.selectedId = 0;
     } else if (event === 'upsert') {
-      state.friends = api.applyFriendLocationEvent(state.friends, { type: 'upsert', friend: payload });
+      const existing = state.friends.find((friend) => Number(friend.userId) === userId);
+      const friend = existing?.self
+        ? { ...payload, self: true, mutual: false, avatarUrl: telegramSelfAvatar() || existing.avatarUrl || payload.avatarUrl }
+        : payload;
+      state.friends = api.applyFriendLocationEvent(state.friends, { type: 'upsert', friend });
     }
+    paint();
+  }
+
+  function onSelfLocation(event) {
+    if (!state.active || !state.settings.enabled) return;
+    const detail = event.detail || {};
+    const userId = Number(typeof UyDosh.getSessionUserId === 'function' ? UyDosh.getSessionUserId() : 0);
+    const latitude = Number(detail.latitude);
+    const longitude = Number(detail.longitude);
+    if (!userId || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const existing = state.friends.find((friend) => Number(friend.userId) === userId);
+    const name = [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ').trim();
+    const api = liveApi();
+    const friend = {
+      userId,
+      name: existing?.name || name || null,
+      avatarUrl: telegramSelfAvatar() || existing?.avatarUrl || null,
+      latitude,
+      longitude,
+      updatedAt: detail.updatedAt || new Date().toISOString(),
+      mutual: false,
+      self: true,
+    };
+    state.friends = api
+      ? api.applyFriendLocationEvent(state.friends, { type: 'upsert', friend })
+      : state.friends.filter((row) => Number(row.userId) !== userId).concat([friend]);
     paint();
   }
 
   function onSettingsEvent(event) {
     if (!state.active) return;
     applySettings(event.detail, { permission: event.detail?.permission === true });
+    if (!state.settings.enabled) {
+      state.friends = state.friends.filter((friend) => friend.self !== true);
+    }
     paint();
   }
 
@@ -527,6 +584,7 @@
       state.unsubscribe = UyDosh.onFriendLiveLocation(onSocket);
     }
     document.addEventListener('uydosh:friend-location-settings', onSettingsEvent);
+    document.addEventListener('uydosh:friend-location-self', onSelfLocation);
     startPoll();
     void refresh();
   }
@@ -540,6 +598,7 @@
       state.unsubscribe = null;
     }
     document.removeEventListener('uydosh:friend-location-settings', onSettingsEvent);
+    document.removeEventListener('uydosh:friend-location-self', onSelfLocation);
     destroyMap();
   }
 
