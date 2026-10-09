@@ -300,9 +300,8 @@
     const api = liveApi();
     const age = api?.friendLocationAge(updatedAt, new Date());
     if (!age) return '';
-    if (age.unit === 'seconds') return UyDosh.t('account.friends.secondsAgo', lang).replace('{n}', String(age.n));
-    if (age.unit === 'minutes') return UyDosh.t('account.friends.minutesAgo', lang).replace('{n}', String(age.n));
-    return UyDosh.t('account.friends.justNow', lang);
+    if (age.unit === 'minutes') return UyDosh.t('account.friends.lastSeenMinutes', lang).replace('{n}', String(age.n));
+    return UyDosh.t('account.friends.lastSeenUnderMinute', lang);
   }
 
   function refreshReportedLabels() {
@@ -348,8 +347,8 @@
       if (!placemark) {
         placemark = new ymaps.Placemark(coords, {}, {
           iconLayout: pinLayout(ymaps, friend, selected),
-          iconShape: { type: 'Circle', coordinates: [36, 22], radius: 22 },
-          iconOffset: [-36, -22],
+          iconShape: { type: 'Circle', coordinates: [66, 22], radius: 22 },
+          iconOffset: [-66, -22],
           zIndex: selected ? 2000 : friend.self ? 1600 : 1000,
         });
         placemark.events.add('click', () => {
@@ -361,8 +360,8 @@
       } else {
         placemark.geometry.setCoordinates(coords);
         placemark.options.set('iconLayout', pinLayout(ymaps, friend, selected));
-        placemark.options.set('iconShape', { type: 'Circle', coordinates: [36, 22], radius: 22 });
-        placemark.options.set('iconOffset', [-36, -22]);
+        placemark.options.set('iconShape', { type: 'Circle', coordinates: [66, 22], radius: 22 });
+        placemark.options.set('iconOffset', [-66, -22]);
         placemark.options.set('zIndex', selected ? 2000 : friend.self ? 1600 : 1000);
       }
     }

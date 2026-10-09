@@ -66,15 +66,27 @@ test('the map filter separates followers, people you follow, and mutual', () => 
   assert.deepEqual(live.visibleFriendMarkers(people, 'mutual', now).map((row) => row.userId), [3]);
 });
 
+test('a friend stays at the last location for 5 minutes', () => {
+  const recent = friend({
+    updatedAt: new Date(now.getTime() - 4 * 60 * 1000).toISOString(),
+  });
+  assert.equal(live.visibleFriendMarkers([recent], 'followers', now).length, 1);
+  const expired = friend({
+    updatedAt: new Date(now.getTime() - live.FRIEND_LOCATION_TTL_MS - 1).toISOString(),
+  });
+  assert.deepEqual(live.visibleFriendMarkers([expired], 'followers', now), []);
+  assert.equal(live.FRIEND_LOCATION_TTL_MS, 5 * 60 * 1000);
+});
+
 test('a pin can say how long ago coordinates were reported', () => {
-  assert.deepEqual(live.friendLocationAge(now.toISOString(), now), { unit: 'now', n: 0 });
+  assert.deepEqual(live.friendLocationAge(now.toISOString(), now), { unit: 'underMinute', n: 0 });
   assert.deepEqual(
     live.friendLocationAge(new Date(now.getTime() - 20000).toISOString(), now),
-    { unit: 'seconds', n: 20 },
+    { unit: 'underMinute', n: 0 },
   );
   assert.deepEqual(
     live.friendLocationAge(new Date(now.getTime() - 90000).toISOString(), now),
-    { unit: 'minutes', n: 2 },
+    { unit: 'minutes', n: 1 },
   );
   assert.equal(live.friendLocationAge('nope', now), null);
   assert.equal(live.friendLocationAge(null, now), null);
