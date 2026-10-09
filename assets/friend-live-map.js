@@ -1,6 +1,6 @@
 // Display rules for the Mini App Friends map.
 // The server decides who granted access. This module only drops stale points
-// and applies the followers / mutual filter on that already-allowed list.
+// and applies the followers / following / mutual filter on that already-allowed list.
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -16,8 +16,12 @@
     return age <= ttl && age >= -5000;
   }
 
-  function matchesFriendMapFilter(filter, mutual) {
-    return filter === 'mutual' ? mutual === true : true;
+  function matchesFriendMapFilter(filter, friend) {
+    const iFollow = friend?.iFollow === true || friend?.mutual === true;
+    const followsMe = friend?.followsMe !== false;
+    if (filter === 'mutual') return iFollow && followsMe;
+    if (filter === 'following') return iFollow;
+    return followsMe;
   }
 
   function visibleFriendMarkers(friends, filter, now) {
@@ -26,7 +30,7 @@
       if (!friend || !(Number(friend.userId) > 0)) return false;
       if (!isFreshFriendLocation(friend.updatedAt, at)) return false;
       if (friend.self === true) return true;
-      return matchesFriendMapFilter(filter, friend.mutual);
+      return matchesFriendMapFilter(filter, friend);
     });
   }
 

@@ -569,6 +569,7 @@ I18N.ru = {
     'account.friends.map': 'Карта',
     'account.friends.list': 'Список',
     'account.friends.followers': 'Подписчики',
+    'account.friends.following': 'Я подписан',
     'account.friends.mutual': 'Взаимные',
     'account.friends.share': 'Показывать, где я',
     'account.friends.expand': 'Развернуть',

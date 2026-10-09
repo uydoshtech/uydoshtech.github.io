@@ -45,13 +45,25 @@ test('an update replaces the previous point for that person', () => {
   assert.equal(next[0].latitude, 42.5);
 });
 
-test('your own live point stays on the map in both filters', () => {
+test('your own live point stays on the map in every filter', () => {
   const people = [
     friend({ userId: 7, self: true, mutual: false }),
     friend({ userId: 3, mutual: true }),
   ];
   assert.deepEqual(live.visibleFriendMarkers(people, 'mutual', now).map((row) => row.userId), [7, 3]);
   assert.deepEqual(live.visibleFriendMarkers(people, 'followers', now).map((row) => row.userId), [7, 3]);
+  assert.deepEqual(live.visibleFriendMarkers(people, 'following', now).map((row) => row.userId), [7, 3]);
+});
+
+test('the map filter separates followers, people you follow, and mutual', () => {
+  const people = [
+    friend({ userId: 1, mutual: false, followsMe: true }),
+    friend({ userId: 3, mutual: true, followsMe: true }),
+    friend({ userId: 9, iFollow: true, mutual: false, followsMe: false }),
+  ];
+  assert.deepEqual(live.visibleFriendMarkers(people, 'followers', now).map((row) => row.userId), [1, 3]);
+  assert.deepEqual(live.visibleFriendMarkers(people, 'following', now).map((row) => row.userId), [3, 9]);
+  assert.deepEqual(live.visibleFriendMarkers(people, 'mutual', now).map((row) => row.userId), [3]);
 });
 
 test('sharing is off unless the server says it is enabled', () => {

@@ -568,6 +568,7 @@ I18N.uz = {
     'account.friends.map': 'Xarita',
     'account.friends.list': 'Ro‘yxat',
     'account.friends.followers': 'Obunachilar',
+    'account.friends.following': 'Obunaman',
     'account.friends.mutual': 'O‘zaro',
     'account.friends.share': 'Qayerdaligimni ko‘rsatish',
     'account.friends.expand': 'Yoyish',

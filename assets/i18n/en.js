@@ -567,6 +567,7 @@ I18N.en = {
     'account.friends.map': 'Map',
     'account.friends.list': 'List',
     'account.friends.followers': 'Followers',
+    'account.friends.following': 'Following',
     'account.friends.mutual': 'Mutual',
     'account.friends.share': 'Share where I am',
     'account.friends.expand': 'Expand',

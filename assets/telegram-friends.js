@@ -3,6 +3,12 @@
 // the sharer stops, or the viewer no longer has access.
 (function () {
   const TASHKENT = [41.311151, 69.279737];
+  const FILTERS = ['followers', 'following', 'mutual'];
+  const FILTER_ICONS = {
+    followers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="14" cy="8" r="3"></circle><path d="M8.2 19.2c.9-2.6 2.8-4 5.8-4s4.9 1.4 5.8 4"></path><path d="M2.5 12h5"></path><path d="M5.2 9.6 7.6 12 5.2 14.4"></path></svg>',
+    following: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"></circle><path d="M3.2 19.2c.9-2.6 2.8-4 5.8-4s4.9 1.4 5.8 4"></path><path d="M16.5 12h5"></path><path d="M19.2 9.6 21.6 12 19.2 14.4"></path></svg>',
+    mutual: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="9" r="2.4"></circle><circle cx="16" cy="9" r="2.4"></circle><path d="M3.6 18.6c.7-2.2 2.2-3.4 4.4-3.4s3.7 1.2 4.4 3.4"></path><path d="M11.6 18.6c.7-2.2 2.2-3.4 4.4-3.4s3.7 1.2 4.4 3.4"></path></svg>',
+  };
   const state = {
     active: false,
     filter: 'followers',
@@ -127,13 +133,14 @@
             <button type="button" class="friends-settings" data-friends-open-settings hidden data-i18n="account.friends.openSettings"></button>
           </div>
         </div>
-        <div class="follows-switch" role="tablist" data-friends-filters>
-          <button type="button" data-friends-filter="followers" data-i18n="account.friends.followers"></button>
-          <button type="button" data-friends-filter="mutual" data-i18n="account.friends.mutual"></button>
-        </div>
         <p class="friends-error" data-friends-error hidden></p>
         <button type="button" class="friends-retry" data-friends-retry hidden data-i18n="account.friends.retry"></button>
-        <div id="friends-map" class="friends-map" role="region"></div>
+        <div class="friends-map-wrap">
+          <div id="friends-map" class="friends-map" role="region"></div>
+          <button type="button" class="friends-map-filter" data-friends-filter-toggle>
+            <span class="friends-map-filter-icon" data-friends-filter-icon></span>
+          </button>
+        </div>
         <div class="friends-list" data-friends-list></div>
       </section>`;
     UyDosh.applyI18n(list);
@@ -151,13 +158,10 @@
       if (audience) void onAudienceChange(audience.value);
     });
     root.addEventListener('click', (event) => {
-      const filter = event.target.closest('[data-friends-filter]');
-      if (filter) {
-        const next = filter.getAttribute('data-friends-filter');
-        if (next === 'followers' || next === 'mutual') {
-          state.filter = next;
-          paint();
-        }
+      if (event.target.closest('[data-friends-filter-toggle]')) {
+        const index = FILTERS.indexOf(state.filter);
+        state.filter = FILTERS[(index + 1) % FILTERS.length];
+        paint();
         return;
       }
       if (event.target.closest('[data-friends-retry]')) {
@@ -230,10 +234,15 @@
       permission.textContent = state.permission ? UyDosh.t('account.friends.permission', lang) : '';
     }
     if (settingsBtn) settingsBtn.hidden = !state.permission;
-    for (const button of root.querySelectorAll('[data-friends-filter]')) {
-      const on = button.getAttribute('data-friends-filter') === state.filter;
-      button.setAttribute('aria-selected', on ? 'true' : 'false');
-    }
+    const filterButton = root.querySelector('[data-friends-filter-toggle]');
+    const filterIcon = root.querySelector('[data-friends-filter-icon]');
+    const filterKey = state.filter === 'mutual'
+      ? 'account.friends.mutual'
+      : state.filter === 'following'
+        ? 'account.friends.following'
+        : 'account.friends.followers';
+    if (filterButton) filterButton.setAttribute('aria-label', UyDosh.t(filterKey, lang));
+    if (filterIcon) filterIcon.innerHTML = FILTER_ICONS[state.filter] || FILTER_ICONS.followers;
     const error = root.querySelector('[data-friends-error]');
     const retry = root.querySelector('[data-friends-retry]');
     if (error) {
@@ -509,7 +518,11 @@
       const existing = state.friends.find((friend) => Number(friend.userId) === userId);
       const friend = existing?.self
         ? { ...payload, self: true, mutual: false, avatarUrl: telegramSelfAvatar() || existing.avatarUrl || payload.avatarUrl }
-        : payload;
+        : {
+          ...payload,
+          iFollow: payload?.iFollow === true || payload?.mutual === true,
+          followsMe: payload?.followsMe !== false,
+        };
       state.friends = api.applyFriendLocationEvent(state.friends, { type: 'upsert', friend });
     }
     paint();
