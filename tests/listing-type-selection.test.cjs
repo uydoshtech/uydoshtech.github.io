@@ -6,7 +6,7 @@ const source = fs.readFileSync('assets/telegram-create.js', 'utf8');
 function load() {
   const state = {form:{listingTypeId:null,selectedLocationIds:[],selectedStationIds:[],addressText:'',locationMode:'metro'},step:0};
   const element = () => ({classList:{toggle(){}},removeAttribute(){}});
-  const context = vm.createContext({state, LISTING_TYPE_ROOM_NEEDED:1,LISTING_TYPE_ROOMMATE_NEEDED:2,LISTING_TYPE_GROUP_FORMING:3,LOCATION_MODE_METRO:'metro',LOCATION_MODE_DISTRICT:'district',STEP_COUNT:4,
+  const context = vm.createContext({state, LISTING_TYPE_ROOM_NEEDED:1,LISTING_TYPE_ROOMMATE_NEEDED:2,LISTING_TYPE_GROUP_FORMING:3,LOCATION_MODE_METRO:'metro',LOCATION_MODE_RADIUS:'radius',LOCATION_MODE_DISTRICT:'district',STEP_COUNT:4,
     UyDosh:{getLang:()=> 'ru',t:key=>key,escapeHtml:s=>s,filterListingTypeIcon:()=>'<svg></svg>'},
     legacyLocationTabsHtml:()=>'<div id="search-location"></div>',roommateLocationSectionHtml:()=>'<input id="listing-address">',
     supportsMultiLocation:()=>true,updateDefaultTitle(){},renderStep(){},applyNearbyStations(){},updateTelegramBackButton(){},hideTelegramMainButton(){},

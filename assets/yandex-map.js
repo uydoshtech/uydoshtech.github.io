@@ -3306,6 +3306,15 @@
     return map;
   }
 
+  async function renderSearchRadiusMap(container, { latitude, longitude, radiusKm, lang } = {}) {
+    const map = await renderSinglePinMap(container, { latitude, longitude, lang, standardIcon: true, zoomControl: true });
+    const ymaps = await loadYandexScript(lang);
+    const circle = new ymaps.Circle([[latitude, longitude], radiusKm * 1000], {}, { fillColor: '#60a5fa', fillOpacity: 0.18, strokeColor: '#60a5fa', strokeWidth: 2 });
+    map.geoObjects.add(circle);
+    await map.setBounds(circle.geometry.getBounds(), { checkZoomRange: true, zoomMargin: 20 });
+    return map;
+  }
+
   window.UyDoshMap = {
     resolveListingMapCoordinates,
     loadYandexScript,
@@ -3316,6 +3325,7 @@
     yandexMapsLang,
     renderSinglePinMap,
     renderSearchDistrictMap,
+    renderSearchRadiusMap,
     setPinGuideLines,
     fetchPedestrianWalkTimes,
     renderPinsMap,

@@ -70,3 +70,12 @@ test('group search carries selected stations instead of legacy district', () => 
  const parsed = D.readSearch(D.searchUrl({...group, gender:2, location_id:4, search_subway_stations:[{id:2},{id:8}]}, {group:10,housing:true}).split('?')[1]);
  assert.equal(parsed.gender,2); assert.deepEqual(plain(parsed.subwayStationIds),[2,8]); assert.equal(parsed.locationId,null);
 });
+
+test('radius search round-trips and replaces old district and station filters', () => {
+ const search_area = {latitude:41.31,longitude:69.28,radiusKm:7};
+ const url = D.searchUrl({...group, search_area, subway_station:{id:4},search_locations:[{id:2}]},{housing:true});
+ const result = D.readSearch(url.slice(url.indexOf('?')));
+ assert.deepEqual(plain(result.searchArea),search_area);
+ assert.deepEqual(plain(result.locationIds),[]);
+ assert.equal(result.subwayStationId,null);
+});

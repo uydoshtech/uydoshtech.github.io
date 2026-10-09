@@ -41,16 +41,17 @@
               MAP_LOAD_TIMEOUT_MS,
               'Map module load timed out',
             );
+            const searchArea = state.listing?.search_area;
             const districts = UyDosh.listingSearchDistricts(state.listing);
             const coords = mapModule.resolveListingMapCoordinates(state.listing);
-            if (!coords && !districts.length) {
+            if (!searchArea && !coords && !districts.length) {
               container.innerHTML = `<div class="map-section-status">${UyDosh.escapeHtml(UyDosh.t('detail.mapUnavailable'))}</div>`;
               return;
             }
             container.innerHTML = '';
             await UyDosh.waitForElementLayout(container);
             const map = await UyDosh.withTimeout(
-              districts.length ? mapModule.renderSearchDistrictMap(container, {
+              searchArea ? mapModule.renderSearchRadiusMap(container, { ...searchArea, lang: UyDosh.getLang() }) : districts.length ? mapModule.renderSearchDistrictMap(container, {
                 locationIds: districts.map(d => Number(d.id)),
                 lang: UyDosh.getLang(),
               }) : mapModule.renderSinglePinMap(container, {

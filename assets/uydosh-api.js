@@ -1479,11 +1479,17 @@ function fetchListings({
   locationId,
   locationIds,
   subwayStationIds,
+  searchArea,
   createdWithinDays,
   sortBy,
   sortOrder,
 } = {}) {
   const params = { page, limit, isActive: "true" };
+  if (searchArea) {
+    params.searchLatitude = searchArea.latitude;
+    params.searchLongitude = searchArea.longitude;
+    params.searchRadiusKm = searchArea.radiusKm;
+  }
   if (locationIds?.length) params.locationIds = locationIds.join(",");
   if (subwayStationIds?.length) params.subwayStationIds = subwayStationIds.join(",");
   if (listingTypeId) params.listingTypeId = listingTypeId;
@@ -1759,9 +1765,15 @@ function fetchListingsForMap({
   locationId,
   locationIds,
   subwayStationIds,
+  searchArea,
   createdWithinDays,
 } = {}) {
   const params = { page, limit, isActive: "true" };
+  if (searchArea) {
+    params.searchLatitude = searchArea.latitude;
+    params.searchLongitude = searchArea.longitude;
+    params.searchRadiusKm = searchArea.radiusKm;
+  }
   if (locationIds?.length) params.locationIds = locationIds.join(",");
   if (subwayStationIds?.length) params.subwayStationIds = subwayStationIds.join(",");
   if (listingTypeId) params.listingTypeId = listingTypeId;

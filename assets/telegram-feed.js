@@ -330,6 +330,7 @@ const state = {
     has3dTour: discoverySearch?.has3dTour ?? storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
     subwayLineId: discoverySearch?.subwayLineId ?? storedFilters?.subwayLineId ?? METRO_LINE_ANY,
     locationIds: discoverySearch?.locationIds ?? [],
+    searchArea: discoverySearch?.searchArea ?? null,
     subwayStationIds: discoverySearch?.subwayStationIds ?? [],
     locationId: discoverySearch?.locationId ?? storedFilters?.locationId ?? DISTRICT_ANY,
     subwayStationId: discoverySearch?.subwayStationId ?? null,
@@ -602,6 +603,7 @@ function ensureFeedMap() {
           maxPrice: state.filters.maxPrice,
           locationIds: state.filters.locationIds,
           subwayStationIds: state.filters.subwayStationIds,
+          searchArea: state.filters.searchArea,
           locationId: locationQueryParam(),
           createdWithinDays: createdWithinDaysQueryParam(),
         }),
@@ -1007,6 +1009,7 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-subway-line-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      state.filters.searchArea = null;
       state.filters.locationIds = [];
       state.filters.subwayStationIds = [];
       state.filters.subwayStationId = null;
@@ -1030,6 +1033,7 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-district-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      state.filters.searchArea = null;
       state.filters.locationIds = [];
       state.filters.subwayStationIds = [];
       state.filters.subwayStationId = null;
@@ -1137,6 +1141,7 @@ function renderFilters() {
       state.filters.locationId = DISTRICT_ANY;
       state.filters.createdWithinDays = PERIOD_DEFAULT_DAYS;
       state.filters.priceSortOrder = null;
+      state.filters.searchArea = null;
       state.filters.locationIds = [];
       state.filters.subwayStationIds = [];
       state.filters.subwayStationId = null;
@@ -1570,6 +1575,7 @@ async function loadMore() {
           maxPrice: state.filters.maxPrice,
         locationIds: state.filters.locationIds,
         subwayStationIds: state.filters.subwayStationIds,
+          searchArea: state.filters.searchArea,
         locationId: locationQueryParam(),
         createdWithinDays: createdWithinDaysQueryParam(),
         sortBy: sortByQueryParam(),
