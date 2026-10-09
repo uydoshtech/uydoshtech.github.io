@@ -34,6 +34,7 @@ const TAB_MINE = 'mine';
 const TAB_GROUPS = 'groups';
 const TAB_FAVORITES = 'favorites';
 const TAB_FOLLOWS = 'follows';
+const TAB_FRIENDS = 'friends';
 const FOLLOWS_PAGE_SIZE = 50;
 
 function listingLooksGroupForming(listing) {
@@ -48,6 +49,7 @@ function initialTabFromUrl() {
     const tab = new URLSearchParams(window.location.search).get('tab');
     if (tab === TAB_FAVORITES) return TAB_FAVORITES;
     if (tab === TAB_FOLLOWS) return TAB_FOLLOWS;
+    if (tab === TAB_FRIENDS) return TAB_FRIENDS;
     if (tab === TAB_MINE) return TAB_MINE;
     return TAB_GROUPS;
   } catch {
@@ -720,9 +722,11 @@ async function loadGroupCreateEligibility() {
 
 function renderActiveTab() {
   syncCreateGroupAction();
+  if (state.activeTab !== TAB_FRIENDS) window.UyDoshFriends?.deactivate();
   if (state.activeTab === TAB_FAVORITES) renderFavorites();
   else if (state.activeTab === TAB_GROUPS) renderGroups();
   else if (state.activeTab === TAB_FOLLOWS) renderFollows();
+  else if (state.activeTab === TAB_FRIENDS) window.UyDoshFriends?.activate();
   else renderMine();
 }
 
@@ -736,7 +740,9 @@ function updateHeaderSubtitle(tab) {
       ? 'account.tabs.groups'
       : tab === TAB_FOLLOWS
         ? 'account.followsTitle'
-        : 'account.subtitle';
+        : tab === TAB_FRIENDS
+          ? 'account.friendsTitle'
+          : 'account.subtitle';
   subtitleEl.setAttribute('data-i18n', key);
   subtitleEl.textContent = UyDosh.t(key, UyDosh.getLang());
 }

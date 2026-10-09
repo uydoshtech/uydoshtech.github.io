@@ -231,6 +231,13 @@ async function connectMiniAppSessionSocket(instanceId) {
       auth: { instanceId },
       reconnection: true,
     });
+    _miniAppSocket.on("connect", () => ensureFriendSocketAuth());
+    _miniAppSocket.on("friend_location", (payload) =>
+      dispatchFriendLocation("upsert", payload),
+    );
+    _miniAppSocket.on("friend_location_removed", (payload) =>
+      dispatchFriendLocation("remove", payload),
+    );
     _miniAppSocket.on("session_revoked", (payload) =>
       _triggerMiniAppSessionRevoked("socket", payload),
     );
@@ -508,11 +515,16 @@ async function doAuthenticateTelegramMiniApp() {
  * Returns false when there's no usable Telegram identity to authenticate with.
  */
 async function ensureTelegramMiniAppSession() {
-  if (getSessionToken()) return true;
+  if (getSessionToken()) {
+    void syncFriendLocationBroadcast();
+    return true;
+  }
   if (!getTelegramInitData()) return false;
   try {
     await authenticateTelegramMiniApp();
-    return Boolean(getSessionToken());
+    const ready = Boolean(getSessionToken());
+    if (ready) void syncFriendLocationBroadcast();
+    return ready;
   } catch {
     return false;
   }
@@ -1879,6 +1891,250 @@ async function waitForElementLayout(el, { maxFrames = 24 } = {}) {
 }
 
 /** Lazy-load /assets/yandex-map.js (Yandex Maps JS API helpers). */
+const FRIEND_LOCATION_INTERVAL_MS = 15000;
+const friendLocationHandlers = new Set();
+let friendBroadcastWanted = false;
+let friendBroadcastPaused = false;
+let friendBroadcastTimer = null;
+let friendBroadcastLifecycle = false;
+let friendBroadcastTick = null;
+
+function dispatchFriendLocation(event, payload) {
+  const friend = payload && typeof payload === "object" ? payload : null;
+  for (const handler of friendLocationHandlers) {
+    try {
+      handler(event, friend);
+    } catch (err) {
+      console.error("[UyDosh] friend location handler failed", err);
+    }
+  }
+}
+
+function onFriendLiveLocation(handler) {
+  friendLocationHandlers.add(handler);
+  ensureFriendSocketAuth();
+  return () => friendLocationHandlers.delete(handler);
+}
+
+function ensureFriendSocketAuth() {
+  const token = getSessionToken();
+  if (!token || !_miniAppSocket?.connected) return;
+  _miniAppSocket.emit("friend_locations_subscribe", { token });
+}
+
+function fetchFriendLocationSettings() {
+  return fetchJsonAuth("/follows/live-location/settings");
+}
+
+function updateFriendLocationSettings(body) {
+  return fetchJsonAuth("/follows/live-location/settings", { method: "PUT", body });
+}
+
+function publishFriendLiveLocation(latitude, longitude) {
+  return fetchJsonAuth("/follows/live-location", {
+    method: "POST",
+    body: { latitude, longitude },
+  });
+}
+
+function clearFriendLiveLocation() {
+  return fetchJsonAuth("/follows/live-location", { method: "DELETE" });
+}
+
+function fetchFriendLiveLocations(filter) {
+  return fetchJsonAuth("/follows/live-locations", {
+    params: filter ? { filter } : undefined,
+  });
+}
+
+function notifyFriendLocationSettings(detail) {
+  document.dispatchEvent(new CustomEvent("uydosh:friend-location-settings", { detail }));
+}
+
+function readMiniAppLocation() {
+  return new Promise((resolve, reject) => {
+    const manager = window.Telegram?.WebApp?.LocationManager;
+    const inMiniApp = typeof isMiniApp === "function" && isMiniApp();
+    const finish = (data, deniedError) => {
+      const latitude = Number(data?.latitude);
+      const longitude = Number(data?.longitude);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        resolve({ latitude, longitude });
+        return;
+      }
+      reject(new Error(deniedError));
+    };
+    const fromTelegram = () => {
+      if (!manager?.isLocationAvailable) {
+        reject(new Error("location_unavailable"));
+        return;
+      }
+      manager.getLocation((data) => finish(data, "location_denied"));
+    };
+    if (manager && typeof manager.getLocation === "function" && (inMiniApp || manager.isLocationAvailable)) {
+      if (manager.isInited) fromTelegram();
+      else if (typeof manager.init === "function") manager.init(() => fromTelegram());
+      else reject(new Error("location_manager_missing"));
+      return;
+    }
+    if (inMiniApp) {
+      reject(new Error("location_manager_missing"));
+      return;
+    }
+    if (!navigator.geolocation) {
+      reject(new Error("location_unavailable"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => finish(position?.coords, "location_denied"),
+      () => reject(new Error("location_denied")),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 },
+    );
+  });
+}
+
+function haltFriendBroadcastLoop() {
+  friendBroadcastWanted = false;
+  if (friendBroadcastTimer) {
+    clearInterval(friendBroadcastTimer);
+    friendBroadcastTimer = null;
+  }
+}
+
+function pauseFriendBroadcast() {
+  friendBroadcastPaused = true;
+  if (friendBroadcastTimer) {
+    clearInterval(friendBroadcastTimer);
+    friendBroadcastTimer = null;
+  }
+}
+
+function beginFriendBroadcastLoop() {
+  friendBroadcastWanted = true;
+  friendBroadcastPaused = false;
+  if (document.visibilityState === "hidden") {
+    friendBroadcastPaused = true;
+    return;
+  }
+  if (friendBroadcastTimer) return;
+  const tick = () => {
+    friendBroadcastTick = publishCurrentFriendLocation();
+  };
+  tick();
+  friendBroadcastTimer = setInterval(tick, FRIEND_LOCATION_INTERVAL_MS);
+}
+
+function resumeFriendBroadcast() {
+  if (!friendBroadcastWanted) return;
+  friendBroadcastPaused = false;
+  beginFriendBroadcastLoop();
+}
+
+async function publishCurrentFriendLocation() {
+  if (!friendBroadcastWanted || friendBroadcastPaused) return;
+  let position;
+  try {
+    position = await readMiniAppLocation();
+  } catch (err) {
+    const reason = String(err?.message || "");
+    if (
+      reason === "location_denied" ||
+      reason === "location_unavailable" ||
+      reason === "location_manager_missing"
+    ) {
+      await stopFriendLocationSharing({ permission: true });
+    }
+    return;
+  }
+  try {
+    await publishFriendLiveLocation(position.latitude, position.longitude);
+  } catch (err) {
+    if (err?.status === 409 || err?.payload?.error === "sharing_disabled") {
+      haltFriendBroadcastLoop();
+      notifyFriendLocationSettings({ enabled: false, audience: "mutual" });
+    }
+  }
+}
+
+function installFriendBroadcastLifecycle() {
+  if (friendBroadcastLifecycle) return;
+  friendBroadcastLifecycle = true;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") pauseFriendBroadcast();
+    else resumeFriendBroadcast();
+  });
+  window.addEventListener("pagehide", () => {
+    if (!friendBroadcastWanted) return;
+    const token = getSessionToken();
+    if (!token) return;
+    fetch(`${API_BASE}/follows/live-location`, {
+      method: "DELETE",
+      keepalive: true,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch(() => {});
+  });
+  const tg = window.Telegram?.WebApp;
+  if (typeof tg?.onEvent === "function") {
+    tg.onEvent("deactivated", () => pauseFriendBroadcast());
+    tg.onEvent("activated", () => resumeFriendBroadcast());
+  }
+}
+
+async function syncFriendLocationBroadcast() {
+  installFriendBroadcastLifecycle();
+  ensureFriendSocketAuth();
+  if (!getSessionToken()) return null;
+  try {
+    const settings = await fetchFriendLocationSettings();
+    const normalized = {
+      enabled: settings?.enabled === true,
+      audience: settings?.audience === "following" ? "following" : "mutual",
+    };
+    if (normalized.enabled) beginFriendBroadcastLoop();
+    else haltFriendBroadcastLoop();
+    notifyFriendLocationSettings(normalized);
+    return normalized;
+  } catch (err) {
+    console.warn("[UyDosh] friend location sync failed", err);
+    return null;
+  }
+}
+
+async function enableFriendLocationSharing(audience) {
+  installFriendBroadcastLifecycle();
+  const position = await readMiniAppLocation();
+  const settings = await updateFriendLocationSettings({
+    enabled: true,
+    audience: audience === "following" ? "following" : "mutual",
+  });
+  notifyFriendLocationSettings(settings);
+  beginFriendBroadcastLoop();
+  await publishFriendLiveLocation(position.latitude, position.longitude);
+  return settings;
+}
+
+async function stopFriendLocationSharing(extra) {
+  haltFriendBroadcastLoop();
+  let settings = { enabled: false, audience: "mutual" };
+  try {
+    if (getSessionToken()) {
+      const current = await fetchFriendLocationSettings().catch(() => null);
+      settings = await updateFriendLocationSettings({
+        enabled: false,
+        audience: current?.audience,
+      });
+    }
+  } catch (err) {
+    console.warn("[UyDosh] failed to stop friend location sharing", err);
+  }
+  const detail = { ...settings, enabled: false, ...(extra || {}) };
+  notifyFriendLocationSettings(detail);
+  return detail;
+}
+
 function loadYandexMapModule() {
   if (window.UyDoshMap) return Promise.resolve(window.UyDoshMap);
   if (yandexMapModulePromise) return yandexMapModulePromise;
@@ -1967,6 +2223,15 @@ Object.assign(window.UyDosh, {
   toggleFollow,
   fetchFollowing,
   fetchFollowers,
+  fetchFriendLocationSettings,
+  updateFriendLocationSettings,
+  publishFriendLiveLocation,
+  clearFriendLiveLocation,
+  fetchFriendLiveLocations,
+  onFriendLiveLocation,
+  syncFriendLocationBroadcast,
+  enableFriendLocationSharing,
+  stopFriendLocationSharing,
   updateProfile,
   fetchUniversitiesAll,
   fetchRegionsAll,
