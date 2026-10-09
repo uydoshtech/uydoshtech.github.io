@@ -93,6 +93,21 @@ header {
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
+.follows-switch-3 { grid-template-columns: 1fr 1fr 0.8fr; }
+.follows-switch-3 button { font-size: 12px; padding: 6px 4px; }
+.follows-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}
+.follow-person { display: flex; flex-direction: column; min-width: 0; }
+.follow-handle { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .follows-switch button {
   appearance: none;
   display: inline-flex;

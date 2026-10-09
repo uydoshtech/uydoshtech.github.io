@@ -78,6 +78,12 @@ const state = {
   followsSegment: 'following',
   following: [],
   followers: [],
+  discover: [],
+  discoverTotal: 0,
+  discoverPage: 0,
+  discoverPages: 0,
+  discoverQuery: '',
+  discoverLoaded: false,
   followingTotal: 0,
   followersTotal: 0,
   followingPage: 0,
@@ -866,16 +872,67 @@ async function loadFollows({ segment = null, page = 1 } = {}) {
   }
 }
 
+let discoverRequest = 0;
+let discoverTimer = 0;
+
+async function loadDiscover({ page = 1, query = state.discoverQuery } = {}) {
+  const request = ++discoverRequest;
+  state.discoverLoading = true;
+  if (state.activeTab === TAB_FOLLOWS && state.followsSegment === 'discover') renderFollows();
+  const sessionReady = await UyDosh.ensureTelegramMiniAppSession();
+  if (!sessionReady || !Number(UyDosh.getSessionUserId())) {
+    state.followsUnavailable = true;
+    state.discoverLoading = false;
+    if (state.activeTab === TAB_FOLLOWS) renderFollows();
+    return;
+  }
+  try {
+    const payload = await UyDosh.fetchDiscoverableUsers({
+      page,
+      limit: 20,
+      q: String(query || '').trim(),
+    });
+    if (request !== discoverRequest) return;
+    const parsed = readFollowPage(payload);
+    state.discover = page > 1 ? mergeFollowUsers(state.discover, parsed.users) : parsed.users;
+    state.discoverTotal = parsed.total;
+    state.discoverPage = parsed.page;
+    state.discoverPages = parsed.totalPages;
+    state.discoverLoaded = true;
+    state.discoverQueryLoaded = String(query || '').trim();
+  } catch (err) {
+    console.error('Failed to find people to follow', err);
+    if (request !== discoverRequest) return;
+    state.discoverLoaded = true;
+    state.discoverQueryLoaded = String(query || '').trim();
+    state.followNote = UyDosh.t('feed.error', UyDosh.getLang());
+  } finally {
+    if (request === discoverRequest) {
+      state.discoverLoading = false;
+      if (state.activeTab === TAB_FOLLOWS) renderFollows();
+    }
+  }
+}
+
 function applyFollowChange(userId, isFollowing) {
   const id = Number(userId);
   const follower = state.followers.find((user) => Number(user.userId) === id);
   const following = state.following.find((user) => Number(user.userId) === id);
+  const discovered = state.discover.find((user) => Number(user.userId) === id);
   if (follower) follower.isFollowing = isFollowing;
+  if (discovered) discovered.isFollowing = isFollowing;
   if (isFollowing) {
     if (following) following.isFollowing = true;
-    else if (follower) {
-      state.following.unshift({ ...follower, isFollowing: true });
-      state.followingTotal += 1;
+    else {
+      const source = follower || discovered;
+      if (source) {
+        state.following.unshift({ ...source, isFollowing: true });
+        state.followingTotal += 1;
+      }
+    }
+    if (discovered && !state.discoverQuery.trim()) {
+      state.discover = state.discover.filter((user) => Number(user.userId) !== id);
+      state.discoverTotal = Math.max(0, state.discoverTotal - 1);
     }
     return;
   }
@@ -899,6 +956,7 @@ function followAvatarHtml(user) {
 function followRowHtml(user, lang) {
   const id = Number(user?.userId);
   const name = String(user?.name || '').trim() || UyDosh.t('complaints.anonymous', lang);
+  const handle = String(user?.username || '').replace(/^@+/, '');
   const backTo = `${UyDosh.MINI_APP_ACCOUNT_PATH}?tab=follows`;
   const href = UyDosh.escapeHtml(UyDosh.profilePageUrl(id, { backTo }));
   const following = user?.isFollowing === true;
@@ -907,7 +965,10 @@ function followRowHtml(user, lang) {
     <article class="follow-row">
       <a class="follow-row-link" href="${href}">
         ${followAvatarHtml(user)}
-        <span class="follow-name">${UyDosh.escapeHtml(name)}</span>
+        <span class="follow-person">
+          <span class="follow-name">${UyDosh.escapeHtml(name)}</span>
+          ${handle ? `<span class="follow-handle">@${UyDosh.escapeHtml(handle)}</span>` : ''}
+        </span>
       </a>
       <button type="button" class="follow-btn${following ? ' is-on' : ''}${busy ? ' is-busy' : ''}" data-follow-toggle="${id}" ${busy ? 'disabled aria-busy="true"' : ''}>
         <span class="follow-btn-label">${UyDosh.escapeHtml(UyDosh.t(following ? 'profile.following' : 'profile.follow', lang))}</span>
@@ -930,13 +991,28 @@ function renderFollows() {
     showList('<div class="gp-loading" aria-busy="true"><span class="loading-spinner" aria-hidden="true"></span></div>');
     return;
   }
-  const segment = state.followsSegment === 'followers' ? 'followers' : 'following';
-  const people = segment === 'followers' ? state.followers : state.following;
-  const total = segment === 'followers' ? state.followersTotal : state.followingTotal;
-  const page = segment === 'followers' ? state.followersPage : state.followingPage;
-  const pages = segment === 'followers' ? state.followersPages : state.followingPages;
+  const segment = state.followsSegment === 'followers'
+    ? 'followers'
+    : state.followsSegment === 'discover'
+      ? 'discover'
+      : 'following';
+  const people = segment === 'followers'
+    ? state.followers
+    : segment === 'discover'
+      ? state.discover
+      : state.following;
+  const page = segment === 'followers'
+    ? state.followersPage
+    : segment === 'discover'
+      ? state.discoverPage
+      : state.followingPage;
+  const pages = segment === 'followers'
+    ? state.followersPages
+    : segment === 'discover'
+      ? state.discoverPages
+      : state.followingPages;
   const switchHtml = `
-    <div class="follows-switch" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.followsTitle', lang))}">
+    <div class="follows-switch follows-switch-3" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t('account.followsTitle', lang))}">
       <button type="button" role="tab" data-follows-segment="following" aria-selected="${segment === 'following' ? 'true' : 'false'}">
         ${UyDosh.escapeHtml(UyDosh.t('account.follows.following', lang))}
         <span class="follows-count">${state.followingTotal}</span>
@@ -945,36 +1021,67 @@ function renderFollows() {
         ${UyDosh.escapeHtml(UyDosh.t('account.follows.followers', lang))}
         <span class="follows-count">${state.followersTotal}</span>
       </button>
+      <button type="button" role="tab" data-follows-segment="discover" aria-selected="${segment === 'discover' ? 'true' : 'false'}">
+        ${UyDosh.escapeHtml(UyDosh.t('account.follows.discover', lang))}
+      </button>
     </div>`;
-  const emptyKey = segment === 'followers' ? 'account.follows.emptyFollowers' : 'account.follows.emptyFollowing';
-  const rows = people.map((user) => followRowHtml(user, lang)).join('');
-  const empty = people.length ? '' : `<p class="follows-empty">${UyDosh.escapeHtml(UyDosh.t(emptyKey, lang))}</p>`;
-  const more = page < pages
-    ? `<button type="button" class="follows-more" data-follows-more="${segment}" ${state.followsLoading ? 'disabled' : ''}>${UyDosh.escapeHtml(UyDosh.t('account.follows.more', lang))}</button>`
+  const searchHtml = segment === 'discover'
+    ? `<input class="follows-search" type="search" enterkeyhint="search" data-follows-search value="${UyDosh.escapeHtml(state.discoverQuery)}" placeholder="${UyDosh.escapeHtml(UyDosh.t('account.follows.discoverPlaceholder', lang))}" />`
+    : '';
+  const emptyKey = segment === 'followers'
+    ? 'account.follows.emptyFollowers'
+    : segment === 'discover'
+      ? (state.discoverQuery.trim() ? 'account.follows.discoverEmpty' : 'account.follows.discoverNone')
+      : 'account.follows.emptyFollowing';
+  const waiting = segment === 'discover' && !state.discoverLoaded && state.discoverLoading;
+  const rows = waiting ? '<div class="gp-loading" aria-busy="true"><span class="loading-spinner" aria-hidden="true"></span></div>' : people.map((user) => followRowHtml(user, lang)).join('');
+  const empty = people.length || waiting ? '' : `<p class="follows-empty">${UyDosh.escapeHtml(UyDosh.t(emptyKey, lang))}</p>`;
+  const more = !waiting && page < pages
+    ? `<button type="button" class="follows-more" data-follows-more="${segment}" ${(state.followsLoading || state.discoverLoading) ? 'disabled' : ''}>${UyDosh.escapeHtml(UyDosh.t('account.follows.more', lang))}</button>`
     : '';
   const note = state.followNote
     ? `<p class="follows-note" role="status">${UyDosh.escapeHtml(state.followNote)}</p>`
     : '';
-  showList(`${switchHtml}${note}${rows || empty}${more}`);
+  const keepSearchFocus = document.activeElement?.matches?.('[data-follows-search]') === true;
+  showList(`${switchHtml}${searchHtml}${note}${rows || empty}${more}`);
+  const search = listEl.querySelector('[data-follows-search]');
+  if (search && keepSearchFocus) {
+    search.focus();
+    const end = search.value.length;
+    try { search.setSelectionRange(end, end); } catch { /* type=search on some browsers */ }
+  }
+  search?.addEventListener('input', () => {
+    state.discoverQuery = search.value;
+    window.clearTimeout(discoverTimer);
+    discoverTimer = window.setTimeout(() => {
+      const term = state.discoverQuery.trim().replace(/^@+/, '');
+      if (term.length === 1) return;
+      loadDiscover({ page: 1, query: state.discoverQuery });
+    }, 300);
+  });
   for (const button of listEl.querySelectorAll('[data-follows-segment]')) {
     button.addEventListener('click', () => {
       const next = button.getAttribute('data-follows-segment');
-      if (next !== 'following' && next !== 'followers') return;
+      if (next !== 'following' && next !== 'followers' && next !== 'discover') return;
       if (state.followsSegment === next) return;
       state.followsSegment = next;
       state.followNote = '';
       UyDosh.haptic?.selection?.();
       renderFollows();
+      if (next === 'discover' && state.discoverQueryLoaded !== state.discoverQuery.trim()) {
+        loadDiscover({ page: 1, query: state.discoverQuery });
+      }
     });
   }
   listEl.querySelector('[data-follows-more]')?.addEventListener('click', () => {
-    loadFollows({ segment, page: page + 1 });
+    if (segment === 'discover') loadDiscover({ page: page + 1, query: state.discoverQuery });
+    else loadFollows({ segment, page: page + 1 });
   });
   for (const button of listEl.querySelectorAll('[data-follow-toggle]')) {
     button.addEventListener('click', async () => {
       const id = Number(button.getAttribute('data-follow-toggle'));
       if (!id || state.followToggleId) return;
-      const person = [...state.following, ...state.followers].find((user) => Number(user.userId) === id);
+      const person = [...state.following, ...state.followers, ...state.discover].find((user) => Number(user.userId) === id);
       if (person?.isFollowing === true) {
         const name = String(person.name || '').trim() || UyDosh.t('complaints.anonymous', lang);
         const confirmed = await confirmDestructiveAction(

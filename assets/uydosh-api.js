@@ -1342,6 +1342,13 @@ function fetchFollowers(userId, { page = 1, limit = 50 } = {}) {
   });
 }
 
+function fetchDiscoverableUsers({ page = 1, limit = 20, q = "" } = {}) {
+  const params = { page, limit };
+  const query = String(q || "").trim();
+  if (query) params.q = query;
+  return fetchJsonAuth("/follows/discover", { params });
+}
+
 /**
  * Partial profile update (only the fields set are changed). Note: per the
  * backend's update handler, `university_id: 0` clears the university —
@@ -2235,6 +2242,7 @@ Object.assign(window.UyDosh, {
   toggleFollow,
   fetchFollowing,
   fetchFollowers,
+  fetchDiscoverableUsers,
   fetchFriendLocationSettings,
   updateFriendLocationSettings,
   publishFriendLiveLocation,
