@@ -153,6 +153,21 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
   .listing-type-label { font-size: 12px; }
   .listing-type-description { font-size: 11px; }
 }
+/* After an explicit choice, keep all three types available as text buttons. */
+.listing-type-field.is-compact { margin-bottom: 0; gap: 0; }
+.is-compact .listing-type-card {
+  min-height: 48px;
+  padding: 8px 6px;
+  justify-content: center;
+  border-radius: 10px;
+}
+/* Reclaim whitespace on every step without shrinking form controls. */
+.panel { gap: 12px; }
+.field { gap: 6px; }
+.progress { margin-bottom: 10px; }
+#listing-description { min-height: clamp(120px, 22dvh, 180px); }
+.address-map-preview { max-height: clamp(160px, 28dvh, 240px); }
+
 /* Base `.chips`/`.chip` and metro-line ribbon styles (`.chip-line`,
    `.metro-m-badge`, `.chip-label-collapse` reveal animation) live in
    telegram-shared.css — shared with the feed filter ribbon. This page
@@ -787,10 +802,10 @@ input[readonly] {
   border: 1px solid var(--stroke);
   border-radius: 16px;
   background: rgba(127, 127, 127, 0.06);
-  padding: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .review-row {
   display: flex;

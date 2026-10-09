@@ -62,3 +62,19 @@ test('creation links never silently select a type and edit hydration retains sto
  const hydrate=source.slice(source.indexOf('function hydrateFormFromListing('),source.indexOf('function hydrateFormFromListing(')+270);
  assert.match(hydrate,/state\.form\.listingTypeId = isDemandSideType\(typeId\)/);
 });
+
+test('descriptions and icons collapse only after selection, including returning to the step',()=>{
+ const c=load();
+ let html=c.renderStep0('ru');
+ assert.equal((html.match(/class="listing-type-description"/g)||[]).length,3);
+ assert.match(html,/create.chooseListingAction/);
+ for(const id of [1,2,3]) {
+  c.applyListingTypeId(id);
+  html=c.renderStep0('ru');
+  assert.match(html,/listing-type-field is-compact/);
+  assert.doesNotMatch(html,/listing-type-description|listing-type-glyph|create.chooseListingAction/);
+  assert.equal((html.match(/class="listing-type-label"/g)||[]).length,3);
+  c.state.step=1;c.state.step=0;
+  assert.equal(c.renderStep0('ru'),html);
+ }
+});

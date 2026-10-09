@@ -1385,6 +1385,7 @@ function roommateLocationSectionHtml(lang) {
 }
 
 function renderStep0(lang) {
+  const compact = state.form.listingTypeId !== null;
   const typeOptions = [
     { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang), description: UyDosh.t('create.typeDescription.roomNeeded', lang) },
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang), description: UyDosh.t('create.typeDescription.roommateNeeded', lang) },
@@ -1396,9 +1397,9 @@ function renderStep0(lang) {
       <button type="button" class="listing-type-card${active ? ' is-active' : ''}"
         data-listing-type="${opt.id}" data-haptic="selection"
         aria-pressed="${active}">
-        <span class="listing-type-glyph" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>
+        ${compact ? '' : `<span class="listing-type-glyph" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>`}
         <span class="listing-type-label">${UyDosh.escapeHtml(opt.label)}</span>
-        <span class="listing-type-description">${UyDosh.escapeHtml(opt.description)}</span>
+        ${compact ? '' : `<span class="listing-type-description">${UyDosh.escapeHtml(opt.description)}</span>`}
       </button>`;
   }).join('');
 
@@ -1410,9 +1411,9 @@ function renderStep0(lang) {
 
   return `
     <section class="panel active" data-step="0">
-      <div class="field listing-type-field" data-validation-anchor="listingType">
-        <span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingAction', lang))}</span>
-        <div class="listing-type-cards" role="group" aria-labelledby="listing-type-heading">${cards}</div>
+      <div class="field listing-type-field${compact ? ' is-compact' : ''}" data-validation-anchor="listingType">
+        ${compact ? '' : `<span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingAction', lang))}</span>`}
+        <div class="listing-type-cards" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}">${cards}</div>
       </div>
       ${locationSection}
     </section>`;
