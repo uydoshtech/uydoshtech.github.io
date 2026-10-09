@@ -1109,6 +1109,7 @@ let searchAreaMap = null;
 let searchAreaMapCleanup = null;
 let searchAreaCircle = null;
 let searchAreaCenterPin = null;
+let searchAreaRadiusLabel = null;
 let searchAreaResizeHandles = [];
 let searchAreaDragging = false;
 let searchAreaIgnoreClickUntil = 0;
@@ -1125,6 +1126,7 @@ function disposeSearchAreaMap() {
   searchAreaMap = null;
   searchAreaCircle = null;
   searchAreaCenterPin = null;
+  searchAreaRadiusLabel = null;
   searchAreaResizeHandles = [];
   searchAreaDragging = false;
   searchAreaIgnoreClickUntil = 0;
@@ -1163,7 +1165,7 @@ async function bindUniversityArea() {
     const university = areaUniversities?.find(u => Number(u.id) === Number(select.value));
     const coords = university && universityCoordinates(university);
     if (!coords) return;
-    state.form.searchArea = { ...coords, radiusKm: state.form.searchArea?.radiusKm || 1, universityId: Number(university.id), universityName: UyDosh.localized(university, lang) };
+    state.form.searchArea = { ...coords, radiusKm: state.form.searchArea?.radiusKm || 5, universityId: Number(university.id), universityName: UyDosh.localized(university, lang) };
     renderStep();
   });
   retry.addEventListener('click', () => renderStep());
@@ -1187,7 +1189,7 @@ async function bindUniversityArea() {
 }
 
 function searchAreaHtml(lang) {
-  const radius = state.form.searchArea?.radiusKm || 1;
+  const radius = state.form.searchArea?.radiusKm || 5;
   return `<div class="field" data-validation-anchor="location">
     <label for="search-radius">${UyDosh.escapeHtml(UyDosh.t('create.radius', lang))}: <output id="search-radius-value">${radius}</output> ${UyDosh.escapeHtml(UyDosh.t('create.km', lang))}</label>
     <div class="search-radius-controls">
@@ -1214,7 +1216,17 @@ function searchAreaDistanceKm(area, coordinates) {
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 6371 * 2 * Math.asin(Math.sqrt(Math.min(1, Math.max(0, a))));
 }
+function searchAreaRadiusLabelImage() {
+  const area = state.form.searchArea;
+  const unit = UyDosh.getLang() === 'ru' ? 'км' : 'km';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="86" height="30"><rect x="1" y="1" width="84" height="28" rx="9" fill="#0e2132" stroke="#60a5fa"/><text x="43" y="20" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="white">${area.radiusKm} ${unit}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
 function positionSearchAreaHandles(except = null) {
+  if (searchAreaRadiusLabel) {
+    searchAreaRadiusLabel.geometry.setCoordinates(searchAreaEdgeCoordinates(state.form.searchArea, 0));
+    searchAreaRadiusLabel.options.set('iconImageHref', searchAreaRadiusLabelImage());
+  }
   searchAreaResizeHandles.forEach((handle, index) => {
     if (handle !== except) handle.geometry.setCoordinates(searchAreaEdgeCoordinates(state.form.searchArea, index * Math.PI / 2));
   });
@@ -1320,7 +1332,7 @@ async function mountSearchAreaMap() {
     const ymaps = await module.loadYandexScript(UyDosh.getLang());
     if (token !== searchAreaLoadToken || !container.isConnected) return;
     const area = state.form.searchArea;
-    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 11, controls: [] });
+    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 12, controls: [] });
     searchAreaMapCleanup = module.attachSearchAreaLayers(container, searchAreaMap, ymaps);
     searchAreaCircle = new ymaps.Circle([[area.latitude, area.longitude], area.radiusKm * 1000], {}, {
       fillColor: '#60a5fa', fillOpacity: 0.18, strokeColor: '#60a5fa', strokeWidth: 2,
@@ -1363,6 +1375,18 @@ async function mountSearchAreaMap() {
     }
     searchAreaMap.geoObjects.add(searchAreaCenterPin);
     addSearchAreaResizeHandles(ymaps);
+    searchAreaRadiusLabel = new ymaps.Placemark(searchAreaEdgeCoordinates(area, 0), {}, {
+      iconLayout: 'default#image', iconImageHref: searchAreaRadiusLabelImage(),
+      iconImageSize: [86, 30], iconImageOffset: [-43, -42], zIndex: 950,
+      interactivityModel: 'default#transparent'
+    });
+    searchAreaMap.geoObjects.add(searchAreaRadiusLabel);
+    // Fill the available map with the saved circle, leaving space for its label.
+    const north = searchAreaEdgeCoordinates(area, 0), south = searchAreaEdgeCoordinates(area, Math.PI);
+    const east = searchAreaEdgeCoordinates(area, Math.PI / 2), west = searchAreaEdgeCoordinates(area, -Math.PI / 2);
+    searchAreaMap.setBounds([[south[0], west[1]], [north[0], east[1]]], {
+      checkZoomRange: true, preciseZoom: true, zoomMargin: [48, 24, 28, 24]
+    });
     state.searchAreaMapReady = true;
     updateWizardFooter();
     if (!area.universityId) searchAreaMap.events.add('click', event => {
@@ -3231,7 +3255,7 @@ function bindStepEvents() {
         state.form.searchArea = { latitude, longitude, radiusKm };
       }
       if (state.form.locationMode === LOCATION_MODE_RADIUS && !state.form.searchArea) {
-        state.form.searchArea = { latitude: 41.31139, longitude: 69.27972, radiusKm: 1 };
+        state.form.searchArea = { latitude: 41.31139, longitude: 69.27972, radiusKm: 5 };
       }
       renderStep();
     });

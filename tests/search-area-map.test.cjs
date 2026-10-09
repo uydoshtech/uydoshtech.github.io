@@ -7,14 +7,14 @@ test('map clicks move the circle; slider updates kilometres as metres; teardown 
  const button=()=>({isConnected:true,addEventListener(name,fn){this[name]=fn;},removeEventListener(){}});
  const less=button(),more=button();
  const input={value:'5',addEventListener(_,fn){this.input=fn;}}, output={}, error={},container={isConnected:true};
- let map,circle,pin; const handles=[]; const flags=[];
- class MapMock {constructor(container,options){map=this;this.controls=options.controls;this.geoObjects={add(){}};this.events={add:(_,fn)=>{this.click=fn;}};}destroy(){this.destroyed=true;}}
+ let map,circle,pin; const handles=[]; const flags=[]; const labels=[];
+ class MapMock {constructor(container,options){map=this;this.controls=options.controls;this.geoObjects={add(){}};this.events={add:(_,fn)=>{this.click=fn;}};}setBounds(bounds,options){this.bounds=bounds;this.fitOptions=options;}destroy(){this.destroyed=true;}}
  class CircleMock {constructor(coords,properties,options){circle=this;this.options=options;this.handlers={};this.events={add:(n,f)=>{this.handlers[n]=f;}};this.coords=coords;this.geometry={getCoordinates:()=>this.center,...{setRadius:n=>{this.radius=n;},setCoordinates:c=>{this.center=c;}}};}}
- class PinMock {constructor(coords,properties,options){this.options=options;if(options?.zIndex===1100) handles.push(this);else if(options?.zIndex===1000) pin=this;else flags.push(this);this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
+ class PinMock {constructor(coords,properties,options){this.options={...options,set(name,value){this[name]=value;}};if(options?.zIndex===1100) handles.push(this);else if(options?.zIndex===1000) pin=this;else if(options?.zIndex===950) labels.push(this);else flags.push(this);this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
  const c=vm.createContext({window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},state:{form:{searchArea:{latitude:41.31,longitude:69.28,radiusKm:1}}},stepPanelsEl:{querySelector:selector=>({'#search-area-map':container,'#search-radius':input,'#search-radius-value':output,'#search-area-error':error,'#search-radius-less':less,'#search-radius-more':more})[selector]},UyDosh:{t:key=>key,getLang:()=> 'ru',loadYandexMapModule:async()=>({attachSearchAreaLayers:(container,map)=>{map.layersAttached=true;return ()=>map.destroy();},loadYandexScript:async()=>({Map:MapMock,Circle:CircleMock,Placemark:PinMock})})},updateWizardFooter(){}});
  vm.runInContext(source.slice(source.indexOf('let searchAreaMap ='),source.indexOf('function legacyLocationTabsHtml')),c);
  await c.mountSearchAreaMap();assert.equal(c.state.searchAreaMapReady,true);assert.equal(circle.coords[1],1000);assert.equal(map.controls.length,0);assert.equal(map.layersAttached,true);assert.equal(pin.center[0],41.31);
- more.click({detail:0});assert.equal(c.state.form.searchArea.radiusKm,1.1);assert.equal(circle.radius,1100);
+ more.click({detail:0});assert.equal(c.state.form.searchArea.radiusKm,1.1);assert.equal(circle.radius,1100);assert.ok(decodeURIComponent(labels[0].options.iconImageHref).includes('1.1 км'));
  less.click({detail:0});assert.equal(c.state.form.searchArea.radiusKm,1);assert.equal(less.disabled,true);
  input.value='10';input.input();assert.equal(more.disabled,true);assert.equal(circle.radius,10000);assert.equal(c.state.form.searchArea.radiusKm,10);
  map.click({get:()=>[41.32,69.3]});assert.equal(c.state.form.searchArea.latitude,41.32);assert.equal(circle.center[1],69.3);assert.equal(pin.center[0],41.32);assert.equal(pin.center[1],69.3);
@@ -35,7 +35,7 @@ test('map clicks move the circle; slider updates kilometres as metres; teardown 
  handle.handlers.dragend();assert.equal(c.state.form.searchArea.radiusKm,1);
  const radiusBeforeDrag=c.state.form.searchArea.radiusKm;
  pin.handlers.dragstart();pin.center=[41.33,69.31];pin.handlers.drag();
- assert.equal(c.state.form.searchArea.latitude,41.33);assert.equal(circle.center[1],69.31);
+ assert.equal(c.state.form.searchArea.latitude,41.33);assert.equal(circle.center[1],69.31);assert.ok(Math.abs(c.searchAreaDistanceKm(c.state.form.searchArea,labels[0].center)-radiusBeforeDrag)<0.001);
  assert.equal(c.state.form.searchArea.radiusKm,radiusBeforeDrag);
  assert.ok(Math.abs(c.searchAreaDistanceKm(c.state.form.searchArea,handles[0].center)-radiusBeforeDrag)<0.001);
  pin.handlers.dragend();assert.equal(flags.length,1);assert.equal(flags[0].center[0],41.31139);
@@ -58,10 +58,10 @@ test('university coordinates reject missing and invalid values, accepting numeri
 });
 test('university map locks the centre while retaining the radius slider',async()=>{
  const input={value:'5',addEventListener(_,fn){this.input=fn;}},container={isConnected:true};
- let map,circle,pin; const handles=[]; const flags=[];
- class MapMock {constructor(container,options){map=this;this.controls=options.controls;this.geoObjects={add(){}};this.events={add:()=>{this.clickRegistered=true;}};}destroy(){}}
+ let map,circle,pin; const handles=[]; const flags=[]; const labels=[];
+ class MapMock {constructor(container,options){map=this;this.controls=options.controls;this.geoObjects={add(){}};this.events={add:()=>{this.clickRegistered=true;}};}setBounds(bounds,options){this.bounds=bounds;this.fitOptions=options;}destroy(){}}
  class CircleMock {constructor(coords,properties,options){circle=this;this.options=options;this.geometry={setRadius:n=>{this.radius=n;}};}}
- class PinMock {constructor(coords,properties,options){this.options=options;if(options?.zIndex===1100) handles.push(this);else if(options?.zIndex===1000) pin=this;else flags.push(this);this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
+ class PinMock {constructor(coords,properties,options){this.options={...options,set(name,value){this[name]=value;}};if(options?.zIndex===1100) handles.push(this);else if(options?.zIndex===1000) pin=this;else if(options?.zIndex===950) labels.push(this);else flags.push(this);this.center=coords;this.geometry={setCoordinates:c=>{this.center=c;},getCoordinates:()=>this.center};this.handlers={};this.events={add:(name,fn)=>{this.handlers[name]=fn;}}}}
  const c=vm.createContext({window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},state:{form:{searchArea:{latitude:41.31,longitude:69.28,radiusKm:1,universityId:12}}},stepPanelsEl:{querySelector:s=>s==='#search-area-map'?container:s==='#search-radius'?input:{addEventListener(){},removeEventListener(){}}},UyDosh:{t:key=>key,getLang:()=> 'ru',loadYandexMapModule:async()=>({attachSearchAreaLayers:(container,map)=>{map.layersAttached=true;return ()=>map.destroy();},loadYandexScript:async()=>({Map:MapMock,Circle:CircleMock,Placemark:PinMock})})},updateWizardFooter(){}});
  vm.runInContext(source.slice(source.indexOf('let searchAreaMap ='),source.indexOf('function legacyLocationTabsHtml')),c);
  await c.mountSearchAreaMap();
