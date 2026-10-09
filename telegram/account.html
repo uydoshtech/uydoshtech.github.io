@@ -13,7 +13,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
     <link rel="stylesheet" href="../assets/loading-spinner.css?v=20260929-shared-spinner" />
     <link rel="stylesheet" href="../assets/telegram-shared.css?v=20260930-groups-tab" />
-    <link rel="stylesheet" href="../assets/telegram-account.css?v=20261009-follow-icons" />
+    <link rel="stylesheet" href="../assets/telegram-account.css?v=20261010-friend-card" />
   </head>
   <body>
     <div class="wrap">
@@ -23,6 +23,10 @@
       ></header>
 
       <div class="view-tabs view-tabs-account" role="tablist" aria-label="Account">
+        <button type="button" class="view-tab" role="tab" data-account-tab="friends" data-haptic="selection" aria-selected="false">
+          <span class="view-tab-icon" aria-hidden="true" data-icon="friends"></span>
+          <span data-i18n="account.tabs.friends">Друзья</span>
+        </button>
         <button type="button" class="view-tab" role="tab" data-account-tab="groups" data-haptic="selection" aria-selected="true">
           <span class="view-tab-icon" aria-hidden="true" data-icon="users"></span>
           <span data-i18n="account.tabs.groups">Мои группы</span>
@@ -38,10 +42,6 @@
         <button type="button" class="view-tab" role="tab" data-account-tab="follows" data-haptic="selection" aria-selected="false">
           <span class="view-tab-icon" aria-hidden="true" data-icon="person"></span>
           <span data-i18n="account.tabs.follows">Подписки</span>
-        </button>
-        <button type="button" class="view-tab" role="tab" data-account-tab="friends" data-haptic="selection" aria-selected="false">
-          <span class="view-tab-icon" aria-hidden="true" data-icon="friends"></span>
-          <span data-i18n="account.tabs.friends">Друзья</span>
         </button>
       </div>
 
@@ -71,7 +71,7 @@
     <script src="../assets/uydosh-badges.js?v=20260930-absent-outline" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20260930-back-swipe" defer></script>
     <script src="../assets/uydosh-profile-match.js?v=20260928-1"></script>
-    <script src="../assets/telegram-friends.js?v=20261009-friends-last-seen" defer></script>
+    <script src="../assets/telegram-friends.js?v=20261010-friend-card" defer></script>
     <script src="../assets/telegram-account.js?v=20261009-follow-icons" defer></script>
   </body>
 </html>

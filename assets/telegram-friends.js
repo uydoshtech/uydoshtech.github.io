@@ -21,6 +21,8 @@
     authed: true,
     busy: false,
     shareExpanded: false,
+    profiles: new Map(),
+    profileLoads: new Set(),
     map: null,
     ymaps: null,
     markers: new Map(),
@@ -84,16 +86,103 @@
       : `<button type="button" class="follow-btn${mutual ? ' is-on' : ''}" data-friend-follow="${id}">${UyDosh.escapeHtml(UyDosh.t(mutual ? 'account.friends.unfollow' : 'profile.follow', lang))}</button>`;
     return `
       <article class="friend-card" data-friend-id="${id}">
-        <a class="friend-card-link" href="${href}">
-          ${avatarHtml(friend)}
-          <span class="friend-card-text">
-            <span class="friend-name">${UyDosh.escapeHtml(name)}</span>
-            <span class="friend-live">${UyDosh.escapeHtml(UyDosh.t('account.friends.live', lang))}</span>
-          </span>
-          ${badge}
-        </a>
-        ${follow}
+        <div class="friend-card-row">
+          <a class="friend-card-link" href="${href}">
+            ${avatarHtml(friend)}
+            <span class="friend-card-text">
+              <span class="friend-name">${UyDosh.escapeHtml(name)}</span>
+              <span class="friend-live">${UyDosh.escapeHtml(UyDosh.t('account.friends.live', lang))}</span>
+            </span>
+            ${badge}
+          </a>
+          ${follow}
+        </div>
+        ${lifestyleHtml(state.profiles.get(id), lang)}
       </article>`;
+  }
+
+  function lifestyleHtml(profile, lang) {
+    if (!profile) return '';
+    const items = [];
+    const push = (icon, label) => {
+      if (!icon || !label) return;
+      const text = UyDosh.escapeHtml(label);
+      items.push(`<span class="friend-life-icon" title="${text}" aria-label="${text}">${chromeIcon(icon)}</span>`);
+    };
+    const dayIcon = { morning: 'sun', evening: 'sunset', night: 'moon' };
+    const day = (key, labelKey) => {
+      const value = profile[key];
+      const icon = dayIcon[value];
+      if (!icon) return;
+      push(icon, `${UyDosh.t(labelKey, lang)}: ${UyDosh.t(`profile.lifestyle.${value}`, lang)}`);
+    };
+    const scale = (key, icon, labelKey, names) => {
+      const n = Number(profile[key]);
+      if (!Number.isInteger(n) || n < 1 || n > names.length) return;
+      push(icon, `${UyDosh.t(labelKey, lang)}: ${UyDosh.t(`profile.lifestyle.${names[n - 1]}`, lang)}`);
+    };
+    const named = (key, icon, labelKey, names) => {
+      const slug = names[profile[key]];
+      if (!slug) return;
+      push(icon, `${UyDosh.t(labelKey, lang)}: ${UyDosh.t(`profile.lifestyle.${slug}`, lang)}`);
+    };
+    day('wakeup_time', 'profile.lifestyle.wakeupTime');
+    day('sleep_time', 'profile.lifestyle.sleepTime');
+    scale('cleanliness', 'sparkles', 'profile.lifestyle.cleanliness', ['veryMessy', 'messy', 'average', 'clean', 'veryClean']);
+    scale('noise_level', 'volume', 'profile.lifestyle.noiseLevel', ['veryQuiet', 'quiet', 'average', 'loud', 'veryLoud']);
+    scale('sociability', 'chatBubble', 'profile.lifestyle.sociability', ['veryIntroverted', 'introverted', 'balanced', 'extroverted', 'veryExtroverted']);
+    if (profile.guests_allowed === true || profile.guests_allowed === false) {
+      push(
+        profile.guests_allowed ? 'users' : 'xCircle',
+        `${UyDosh.t('profile.lifestyle.guestsAllowed', lang)}: ${UyDosh.t(profile.guests_allowed ? 'profile.lifestyle.guestsYes' : 'profile.lifestyle.guestsNo', lang)}`,
+      );
+    }
+    named('smoking_preference', profile.smoking_preference === 'non-smoker' ? 'smokeFree' : 'cigarette', 'profile.lifestyle.smokingPreference', {
+      'non-smoker': 'nonSmoker',
+      occasional: 'occasionalSmoker',
+      regular: 'regularSmoker',
+    });
+    named('alcohol_preference', profile.alcohol_preference === 'non-drinker' ? 'noDrink' : 'wineGlass', 'profile.lifestyle.alcoholPreference', {
+      'non-drinker': 'nonDrinker',
+      occasional: 'occasionalDrinker',
+      regular: 'regularDrinker',
+    });
+    if (profile.cooking_habits === true || profile.cooking_habits === false) {
+      push(
+        profile.cooking_habits ? 'cookingPot' : 'takeout',
+        `${UyDosh.t('profile.lifestyle.cookingHabits', lang)}: ${UyDosh.t(profile.cooking_habits ? 'profile.lifestyle.cook' : 'profile.lifestyle.dontCook', lang)}`,
+      );
+    }
+    const petIcon = {
+      dont_like_pets: 'xCircle',
+      like_pets: 'heartOutline',
+      have_cat: 'cat',
+      have_dog: 'dog',
+    }[profile.pets_preference];
+    named('pets_preference', petIcon, 'profile.lifestyle.petsPreference', {
+      dont_like_pets: 'dontLikePets',
+      like_pets: 'likePets',
+      have_cat: 'haveCat',
+      have_dog: 'haveDog',
+    });
+    if (!items.length) return '';
+    return `<div class="friend-life">${items.join('')}</div>`;
+  }
+
+  function ensureProfile(userId) {
+    const id = Number(userId);
+    if (!id || state.profiles.has(id) || state.profileLoads.has(id)) return;
+    if (typeof UyDosh.fetchProfile !== 'function') return;
+    state.profileLoads.add(id);
+    UyDosh.fetchProfile(id).then((profile) => {
+      state.profiles.set(id, profile && typeof profile === 'object' ? profile : null);
+    }).catch((err) => {
+      console.error('Failed to load friend profile', err);
+      state.profiles.set(id, null);
+    }).finally(() => {
+      state.profileLoads.delete(id);
+      if (state.active && state.selectedId === id) paint();
+    });
   }
 
   function chromeIcon(name) {
@@ -112,6 +201,7 @@
             <span class="friends-map-filter-icon" data-friends-filter-icon></span>
           </button>
         </div>
+        <div class="friends-list" data-friends-list hidden></div>
         <div class="friends-share-card" data-friends-share-card data-expanded="false">
           <div class="friends-share-head">
             <label class="friends-share-toggle">
@@ -141,7 +231,6 @@
             <button type="button" class="friends-settings" data-friends-open-settings hidden data-i18n="account.friends.openSettings"></button>
           </div>
         </div>
-        <div class="friends-list" data-friends-list></div>
       </section>`;
     UyDosh.applyI18n(list);
     bind(list.querySelector('[data-friends-root]'));
@@ -255,6 +344,7 @@
     const map = root.querySelector('#friends-map');
     if (map) map.hidden = false;
     const selected = people.find((friend) => Number(friend.userId) === state.selectedId) || null;
+    if (selected) ensureProfile(selected.userId);
     if (list) {
       list.hidden = !selected;
       list.innerHTML = selected ? cardHtml(selected, lang) : '';
