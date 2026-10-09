@@ -1079,6 +1079,32 @@ function nearbyStationsHtml(lang) {
  * use any of this; see `roommateLocationSectionHtml` for their single
  * merged address + auto-detected-nearest-metro step instead.
  */
+let districtSelectionPreview = null;
+let districtSelectionLoadToken = 0;
+function disposeDistrictSelectionPreview() {
+  districtSelectionLoadToken++;
+  districtSelectionPreview?.destroy();
+  districtSelectionPreview = null;
+}
+async function mountDistrictSelectionPreview() {
+  const container = stepPanelsEl.querySelector('#district-selection-map');
+  if (!container) return;
+  const status = stepPanelsEl.querySelector('#district-selection-map-status');
+  const token = ++districtSelectionLoadToken;
+  status.textContent = UyDosh.t('map.loading');
+  try {
+    const module = await UyDosh.loadYandexMapModule();
+    if (token !== districtSelectionLoadToken || !container.isConnected) return;
+    const preview = await module.createDistrictSelectionPreview(container, { lang: UyDosh.getLang() });
+    if (token !== districtSelectionLoadToken || !container.isConnected) { preview?.destroy(); return; }
+    districtSelectionPreview = preview;
+    preview?.update(state.form.selectedLocationIds);
+    status.textContent = '';
+  } catch (error) {
+    if (token === districtSelectionLoadToken && container.isConnected) status.textContent = UyDosh.t('detail.mapLoadError');
+  }
+}
+
 let searchAreaMap = null;
 let searchAreaMapCleanup = null;
 let searchAreaCircle = null;
@@ -1298,7 +1324,9 @@ async function mountSearchAreaMap() {
     searchAreaMapCleanup = module.attachSearchAreaLayers(container, searchAreaMap, ymaps);
     searchAreaCircle = new ymaps.Circle([[area.latitude, area.longitude], area.radiusKm * 1000], {}, {
       fillColor: '#60a5fa', fillOpacity: 0.18, strokeColor: '#60a5fa', strokeWidth: 2,
-      interactivityModel: 'default#transparent'
+      draggable: !area.universityId,
+      interactivityModel: area.universityId ? 'default#transparent' : 'default#geoObject',
+      cursor: area.universityId ? 'default' : 'grab', zIndex: 800, zIndexDrag: 800
     });
     searchAreaMap.geoObjects.add(searchAreaCircle);
     // Flag stays at the city landmark while the user's search circle can move.
@@ -1318,6 +1346,13 @@ async function mountSearchAreaMap() {
       draggable: !area.universityId, zIndex: 1000
     });
     if (!area.universityId) {
+      searchAreaCircle.events.add('dragstart', () => { searchAreaDragging = true; });
+      searchAreaCircle.events.add('drag', () => moveSearchAreaCenter(searchAreaCircle.geometry.getCoordinates()));
+      searchAreaCircle.events.add('dragend', () => {
+        moveSearchAreaCenter(searchAreaCircle.geometry.getCoordinates());
+        searchAreaDragging = false;
+        searchAreaIgnoreClickUntil = Date.now() + 350;
+      });
       searchAreaCenterPin.events.add('dragstart', () => { searchAreaDragging = true; });
       searchAreaCenterPin.events.add('drag', () => moveSearchAreaCenter(searchAreaCenterPin.geometry.getCoordinates()));
       searchAreaCenterPin.events.add('dragend', () => {
@@ -1417,6 +1452,10 @@ function legacyLocationTabsHtml(lang) {
       <div class="field${districtField.className}" data-validation-anchor="location">
         <div class="field-label">${UyDosh.escapeHtml(districtLabel)}</div>
         <div class="station-list station-list-grid">${(selectAllLocationsRow + districtItems) || `<div class="status">…</div>`}</div>
+      </div>
+      <div class="field">
+        <div id="district-selection-map" class="search-area-map" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.districts', lang))}"></div>
+        <div id="district-selection-map-status" role="status"></div>
       </div>`;
   }
 
@@ -2439,12 +2478,14 @@ function renderStep() {
   else html = renderStep3(lang);
 
   disposeSearchAreaMap();
+  disposeDistrictSelectionPreview();
   stepPanelsEl.innerHTML = html;
   bindStepEvents();
   updateWizardFooter();
   sizeLocationList();
   updateAddressMapPreview();
   mountSearchAreaMap();
+  mountDistrictSelectionPreview();
 }
 
 /**
@@ -3035,6 +3076,7 @@ function updateStationSelectionUi() {
 }
 
 function updateLocationSelectionUi() {
+  districtSelectionPreview?.update(state.form.selectedLocationIds);
   const selected = new Set(state.form.selectedLocationIds.map(Number));
   let allSelected = state.locations.length > 0;
   stepPanelsEl.querySelectorAll('[data-location-id]').forEach((btn) => {

@@ -404,7 +404,7 @@ I18N.uz = {
     'create.locationRadius': 'Xaritada',
     'create.radius': 'Radius',
     'create.km': 'km',
-    'create.radiusHint': 'Xaritani bosing yoki doira markazini torting. Radiusni o‘zgartirish uchun chetdagi nuqtalarni torting.',
+    'create.radiusHint': 'Xaritani bosing yoki doirani ichidagi istalgan nuqtadan torting. Radiusni o‘zgartirish uchun chetdagi nuqtalarni torting.',
     'create.radiusMapError': 'Xarita yuklanmadi. Metro yoki tumanni tanlang yoki xaritani qayta oching.',
     'create.locationUniversity': 'Universitet',
     'create.findUniversity': 'Universitetni topish',

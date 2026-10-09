@@ -3338,7 +3338,35 @@
     return () => destroyMap(container);
   }
 
+  async function createDistrictSelectionPreview(container, { lang } = {}) {
+    const ymaps = await loadYandexScript(lang);
+    const districts = await loadDistrictBoundaries();
+    if (container.isConnected === false) return null;
+    const map = new ymaps.Map(container, { center: [41.31139, 69.27972], zoom: 11, controls: [] });
+    const collection = new ymaps.GeoObjectCollection();
+    map.geoObjects.add(collection);
+    let destroyed = false;
+    return {
+      update(locationIds) {
+        if (destroyed) return;
+        const ids = new Set(locationIds.map(Number));
+        collection.removeAll();
+        let bounds = null;
+        for (const district of districts) {
+          if (!ids.has(Number(district.locationId))) continue;
+          collection.add(createDistrictPolygon(ymaps, district, 'emphasized'));
+          const label = createDistrictLabelPlacemark(ymaps, district, lang);
+          if (label) collection.add(label);
+          bounds = mergeBounds(bounds, boundsFromRing(district.outerRing));
+        }
+        if (bounds) map.setBounds(toYandexBounds(bounds), { checkZoomRange: true, preciseZoom: true, zoomMargin: 24 });
+      },
+      destroy() { destroyed = true; map.destroy(); },
+    };
+  }
+
   window.UyDoshMap = {
+    createDistrictSelectionPreview,
     attachSearchAreaLayers,
     resolveListingMapCoordinates,
     loadYandexScript,

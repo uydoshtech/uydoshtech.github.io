@@ -403,7 +403,7 @@ I18N.en = {
     'create.locationRadius': 'On map',
     'create.radius': 'Radius',
     'create.km': 'km',
-    'create.radiusHint': 'Tap the map or drag the centre of the circle. Drag an edge dot to change the radius.',
+    'create.radiusHint': 'Tap the map or drag anywhere inside the circle. Drag an edge dot to change the radius.',
     'create.radiusMapError': 'Map could not load. Choose metro or district, or reopen the map.',
     'create.locationUniversity': 'University',
     'create.findUniversity': 'Find a university',
