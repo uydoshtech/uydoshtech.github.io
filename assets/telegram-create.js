@@ -1080,16 +1080,22 @@ function nearbyStationsHtml(lang) {
  * merged address + auto-detected-nearest-metro step instead.
  */
 let searchAreaMap = null;
+let searchAreaMapCleanup = null;
 let searchAreaCircle = null;
 let searchAreaCenterPin = null;
 let searchAreaResizeHandles = [];
 let searchAreaDragging = false;
 let searchAreaIgnoreClickUntil = 0;
 let searchAreaLoadToken = 0;
+let searchRadiusButtonCleanups = [];
 function disposeSearchAreaMap() {
+  searchRadiusButtonCleanups.forEach(cleanup => cleanup());
+  searchRadiusButtonCleanups = [];
   searchAreaLoadToken++;
   state.searchAreaMapReady = false;
-  if (searchAreaMap) searchAreaMap.destroy();
+  if (searchAreaMapCleanup) searchAreaMapCleanup();
+  else if (searchAreaMap) searchAreaMap.destroy();
+  searchAreaMapCleanup = null;
   searchAreaMap = null;
   searchAreaCircle = null;
   searchAreaCenterPin = null;
@@ -1204,8 +1210,8 @@ function setSearchAreaRadius(value, activeHandle = null) {
 }
 function addSearchAreaResizeHandles(ymaps) {
   searchAreaResizeHandles = Array.from({ length: 4 }, (_, index) => {
-    const arrow = index % 2 ? '↔' : '↕';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><circle cx="18" cy="18" r="15" fill="#2563eb" stroke="white" stroke-width="3"/><text x="18" y="24" text-anchor="middle" fill="white" font-size="23">${arrow}</text></svg>`;
+    // Small visible dot inside the existing 36px drag target.
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><circle cx="18" cy="18" r="6" fill="#2563eb" stroke="white" stroke-width="2"/></svg>`;
     const handle = new ymaps.Placemark(searchAreaEdgeCoordinates(state.form.searchArea, index * Math.PI / 2), {}, {
       draggable: true, iconLayout: 'default#image',
       iconImageHref: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
@@ -1225,20 +1231,62 @@ function addSearchAreaResizeHandles(ymaps) {
   });
 }
 
+function bindSearchRadiusButton(button, direction) {
+  if (!button) return;
+  let timer = null;
+  let suppressClick = false;
+  const listeners = [];
+  const listen = (target, event, handler) => {
+    target.addEventListener(event, handler);
+    listeners.push(() => target.removeEventListener(event, handler));
+  };
+  const stop = () => {
+    if (timer !== null) clearTimeout(timer);
+    timer = null;
+  };
+  const step = () => {
+    if (button.disabled || !button.isConnected) return false;
+    setSearchAreaRadius(state.form.searchArea.radiusKm + direction * 0.1);
+    return !button.disabled;
+  };
+  const repeat = () => {
+    timer = null;
+    if (step()) timer = setTimeout(repeat, 80);
+  };
+  listen(button, 'pointerdown', event => {
+    if (event.button !== 0 || event.isPrimary === false || button.disabled) return;
+    stop();
+    suppressClick = true;
+    button.setPointerCapture(event.pointerId);
+    if (step()) timer = setTimeout(repeat, 350);
+  });
+  for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) listen(button, event, stop);
+  listen(window, 'blur', stop);
+  listen(document, 'visibilitychange', () => { if (document.hidden) stop(); });
+  listen(button, 'contextmenu', event => { event.preventDefault(); stop(); });
+  listen(button, 'click', event => {
+    // Pointer presses already applied their first step; keyboard clicks still work.
+    if (!suppressClick || event.detail === 0) step();
+    suppressClick = false;
+  });
+  searchRadiusButtonCleanups.push(() => { stop(); listeners.forEach(remove => remove()); });
+}
+
 async function mountSearchAreaMap() {
   const container = stepPanelsEl.querySelector('#search-area-map');
   if (!container || !state.form.searchArea) return;
   const token = ++searchAreaLoadToken;
   const input = stepPanelsEl.querySelector('#search-radius');
   input.addEventListener('input', () => setSearchAreaRadius(Number(input.value)));
-  stepPanelsEl.querySelector('#search-radius-less')?.addEventListener('click', () => setSearchAreaRadius(state.form.searchArea.radiusKm - 0.1));
-  stepPanelsEl.querySelector('#search-radius-more')?.addEventListener('click', () => setSearchAreaRadius(state.form.searchArea.radiusKm + 0.1));
+  bindSearchRadiusButton(stepPanelsEl.querySelector('#search-radius-less'), -1);
+  bindSearchRadiusButton(stepPanelsEl.querySelector('#search-radius-more'), 1);
   try {
     const module = await UyDosh.loadYandexMapModule();
     const ymaps = await module.loadYandexScript(UyDosh.getLang());
     if (token !== searchAreaLoadToken || !container.isConnected) return;
     const area = state.form.searchArea;
-    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 10, controls: ['zoomControl'] });
+    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 10, controls: [] });
+    searchAreaMapCleanup = module.attachSearchAreaLayers(container, searchAreaMap, ymaps);
     searchAreaCircle = new ymaps.Circle([[area.latitude, area.longitude], area.radiusKm * 1000], {}, {
       fillColor: '#60a5fa', fillOpacity: 0.18, strokeColor: '#60a5fa', strokeWidth: 2,
       interactivityModel: 'default#transparent'

@@ -3315,7 +3315,31 @@
     return map;
   }
 
+  // Reuse the feed's district and metro toggles on the search-area picker.
+  function attachSearchAreaLayers(container, map, ymaps) {
+    const instance = {
+      map,
+      districtLayer: {
+        visible: false, highlightedLocationId: null, allDistricts: null,
+        labelObjects: null, collection: new ymaps.GeoObjectCollection(), syncToken: 0,
+      },
+      metroLayer: {
+        mode: 'off', objectsByLine: null, collection: new ymaps.GeoObjectCollection(),
+        selection: { stationId: null, collection: new ymaps.GeoObjectCollection() },
+      },
+    };
+    map.geoObjects.add(instance.districtLayer.collection);
+    map.geoObjects.add(instance.metroLayer.collection);
+    map.geoObjects.add(instance.metroLayer.selection.collection);
+    activeMaps.set(container, instance);
+    trackedContainers.add(container);
+    attachLayerControls(container, instance);
+    map.events.add('boundschange', () => refreshDistrictLabelVisibility(instance));
+    return () => destroyMap(container);
+  }
+
   window.UyDoshMap = {
+    attachSearchAreaLayers,
     resolveListingMapCoordinates,
     loadYandexScript,
     resetYandexMapsLoader,
