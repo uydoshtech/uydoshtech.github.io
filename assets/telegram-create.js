@@ -6,6 +6,7 @@ UyDosh.initTelegramMiniApp();
 // `const` with the same name throws a SyntaxError that aborts this entire script.
 const LOCATION_MODE_METRO = 'metro';
 const LOCATION_MODE_DISTRICT = 'district';
+const LOCATION_MODE_RADIUS = 'radius';
 const TITLE_MAX = 50;
 const DESCRIPTION_MAX = 1000;
 const PRICE_MIN = 10;
@@ -240,6 +241,7 @@ const state = {
   addressGeocodedText: null,
   form: {
     listingTypeId: null,
+    searchArea: null,
     locationMode: LOCATION_MODE_METRO,
     subwayLineId: 1,
     selectedStationIds: [],
@@ -440,6 +442,10 @@ function hydrateFormFromListing(listing) {
     state.form.subwayLineId = Number(primaryLine) || 1;
   }
 
+  if (isDemandSideType() && listing.search_area) {
+    state.form.searchArea = { ...listing.search_area };
+    state.form.locationMode = LOCATION_MODE_RADIUS;
+  }
   const minP = Number(listing.min_price);
   const maxP = Number(listing.max_price);
   if (Number.isFinite(minP) && Number.isFinite(maxP) && minP > 0 && maxP > 0) {
@@ -653,6 +659,10 @@ function genderReviewBadgeHtml(lang) {
 }
 
 function selectedLocationSummary(lang) {
+  if (state.form.locationMode === LOCATION_MODE_RADIUS && state.form.searchArea) {
+    const area = state.form.searchArea;
+    return `${UyDosh.t('create.locationRadius', lang)}: ${area.radiusKm} ${UyDosh.t('create.km', lang)} (${area.latitude.toFixed(4)}, ${area.longitude.toFixed(4)})`;
+  }
   if (state.form.locationMode === LOCATION_MODE_METRO) {
     // Use the cross-line cache, not `state.stations` (only the currently
     // displayed line), so stations picked on a different line still show
@@ -1067,9 +1077,62 @@ function nearbyStationsHtml(lang) {
  * use any of this; see `roommateLocationSectionHtml` for their single
  * merged address + auto-detected-nearest-metro step instead.
  */
+let searchAreaMap = null;
+let searchAreaCircle = null;
+let searchAreaLoadToken = 0;
+function disposeSearchAreaMap() {
+  searchAreaLoadToken++;
+  if (searchAreaMap) searchAreaMap.destroy();
+  searchAreaMap = null;
+  searchAreaCircle = null;
+}
+function searchAreaHtml(lang) {
+  const radius = state.form.searchArea?.radiusKm || 5;
+  return `<div class="field" data-validation-anchor="location">
+    <label for="search-radius">${UyDosh.escapeHtml(UyDosh.t('create.radius', lang))}: <output id="search-radius-value">${radius}</output> ${UyDosh.escapeHtml(UyDosh.t('create.km', lang))}</label>
+    <input id="search-radius" type="range" min="5" max="10" step="1" value="${radius}" />
+    <div class="muted">${UyDosh.escapeHtml(UyDosh.t('create.radiusHint', lang))}</div>
+    <div id="search-area-map" class="search-area-map"></div>
+    <div id="search-area-error" role="status"></div>
+  </div>`;
+}
+async function mountSearchAreaMap() {
+  const container = stepPanelsEl.querySelector('#search-area-map');
+  if (!container || !state.form.searchArea) return;
+  const token = ++searchAreaLoadToken;
+  const input = stepPanelsEl.querySelector('#search-radius');
+  input.addEventListener('input', () => {
+    const radius = Math.max(5, Math.min(10, Number(input.value)));
+    state.form.searchArea.radiusKm = radius;
+    stepPanelsEl.querySelector('#search-radius-value').textContent = radius;
+    searchAreaCircle?.geometry.setRadius(radius * 1000);
+  });
+  try {
+    const module = await UyDosh.loadYandexMapModule();
+    const ymaps = await module.loadYandexScript(UyDosh.getLang());
+    if (token !== searchAreaLoadToken || !container.isConnected) return;
+    const area = state.form.searchArea;
+    searchAreaMap = new ymaps.Map(container, { center: [area.latitude, area.longitude], zoom: 10, controls: ['zoomControl'] });
+    searchAreaCircle = new ymaps.Circle([[area.latitude, area.longitude], area.radiusKm * 1000], {}, {
+      fillColor: '#60a5fa', fillOpacity: 0.18, strokeColor: '#60a5fa', strokeWidth: 2,
+      interactivityModel: 'default#transparent'
+    });
+    searchAreaMap.geoObjects.add(searchAreaCircle);
+    searchAreaMap.events.add('click', event => {
+      const [latitude, longitude] = event.get('coords');
+      state.form.searchArea = { latitude, longitude, radiusKm: state.form.searchArea.radiusKm };
+      searchAreaCircle.geometry.setCoordinates([latitude, longitude]);
+    });
+  } catch (error) {
+    if (token !== searchAreaLoadToken) return;
+    stepPanelsEl.querySelector('#search-area-error').textContent = UyDosh.t('create.radiusMapError');
+  }
+}
+
 function legacyLocationTabsHtml(lang) {
   const modeChips = [
     { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang), icon: UyDosh.iconMetro() },
+    { mode: LOCATION_MODE_RADIUS, label: UyDosh.t('create.locationRadius', lang), icon: UyDosh.iconPin() },
     { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: UyDosh.iconPin() },
   ].map((opt) => {
     return UyDosh.chipButtonHtml({
@@ -1087,7 +1150,9 @@ function legacyLocationTabsHtml(lang) {
   const lineChips = UyDosh.metroLineChipsHtml(state.form.subwayLineId, lang);
 
   let locationBody = '';
-  if (state.form.locationMode === LOCATION_MODE_METRO) {
+  if (state.form.locationMode === LOCATION_MODE_RADIUS) {
+    locationBody = searchAreaHtml(lang);
+  } else if (state.form.locationMode === LOCATION_MODE_METRO) {
     const stationLabel = supportsMultiStation()
       ? UyDosh.t('create.metroStations', lang)
       : UyDosh.t('create.metroStation', lang);
@@ -2161,11 +2226,13 @@ function renderStep() {
   else if (state.step === 2) html = renderStep2(lang);
   else html = renderStep3(lang);
 
+  disposeSearchAreaMap();
   stepPanelsEl.innerHTML = html;
   bindStepEvents();
   updateWizardFooter();
   sizeLocationList();
   updateAddressMapPreview();
+  mountSearchAreaMap();
 }
 
 /**
@@ -2904,6 +2971,9 @@ function bindStepEvents() {
   stepPanelsEl.querySelectorAll('[data-location-mode]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.form.locationMode = btn.getAttribute('data-location-mode');
+      if (state.form.locationMode === LOCATION_MODE_RADIUS && !state.form.searchArea) {
+        state.form.searchArea = { latitude: 41.3111, longitude: 69.2797, radiusKm: 5 };
+      }
       renderStep();
     });
   });
@@ -3232,6 +3302,9 @@ function validateStep(step) {
       return { message: UyDosh.t('create.chooseListingType', lang), anchor: 'listingType' };
     }
     if (isDemandSideType()) {
+      if (state.form.locationMode === LOCATION_MODE_RADIUS && !state.form.searchArea) {
+        return { message: UyDosh.t('create.errorLocationRequired', lang), anchor: 'location' };
+      }
       if (state.form.locationMode === LOCATION_MODE_METRO && state.form.selectedStationIds.length === 0) {
         return {
           message: UyDosh.t('create.errorLocationRequired', lang),
@@ -3327,6 +3400,7 @@ async function submitListing() {
       price: priceForRequest(),
       minPrice: isDemandSideType() ? bounds.min : undefined,
       maxPrice: isDemandSideType() ? bounds.max : undefined,
+      searchArea: isDemandSideType() && state.form.locationMode === LOCATION_MODE_RADIUS ? state.form.searchArea : null,
       description: state.form.description.trim(),
       gender: state.form.gender,
       groupSizeTarget: isGroupForming() ? state.form.groupSizeTarget : undefined,
@@ -3347,7 +3421,10 @@ async function submitListing() {
         : undefined,
     };
 
-    if (state.form.locationMode === LOCATION_MODE_METRO) {
+    if (state.form.locationMode === LOCATION_MODE_RADIUS && isDemandSideType()) {
+      body.subwayStationIds = [];
+      body.locationIds = [];
+    } else if (state.form.locationMode === LOCATION_MODE_METRO) {
       if (supportsMultiStation() && state.form.selectedStationIds.length > 0) {
         // The first pick is persisted as the primary station; its own line
         // (not necessarily the line currently shown in the UI) travels with

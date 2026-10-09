@@ -277,6 +277,7 @@ function listingSearchDistricts(listing) {
 }
 
 function listingLocationLabel(listing, lang, { summary = false } = {}) {
+  if (listing?.search_area) return `${t('create.locationRadius', lang)} · ${listing.search_area.radiusKm} ${t('create.km', lang)}`;
   const districts = listingSearchDistricts(listing);
   if (!districts.length) return localizedShort(listing?.location, lang);
   // IDs match the bundled Tashkent district boundary catalogue.

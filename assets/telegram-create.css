@@ -1423,3 +1423,5 @@ input[readonly] {
    `.wizard-btn-icon`/`.wizard-btn-spinner` styles live in
    telegram-shared.css, shared with the profile page's Save button. */
 #loading[hidden], #form-root[hidden], #success-root[hidden], #wizard-footer[hidden], #scan-upsell[hidden] { display: none !important; }
+
+.search-area-map { height: clamp(220px, 38dvh, 340px); border: 1px solid var(--stroke); border-radius: 12px; overflow: hidden; }
