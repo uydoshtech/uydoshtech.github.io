@@ -1220,6 +1220,24 @@ header {
   font-weight: 800;
 }
 .friend-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.friend-map-pin-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+}
+.friend-map-pin-time {
+  margin-top: 3px;
+  max-width: 72px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(6, 21, 37, 0.88);
+  color: #fff;
+  font: 700 10px/14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .friend-map-pin {
   box-sizing: border-box;
   width: 44px;

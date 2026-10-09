@@ -66,6 +66,21 @@ test('the map filter separates followers, people you follow, and mutual', () => 
   assert.deepEqual(live.visibleFriendMarkers(people, 'mutual', now).map((row) => row.userId), [3]);
 });
 
+test('a pin can say how long ago coordinates were reported', () => {
+  assert.deepEqual(live.friendLocationAge(now.toISOString(), now), { unit: 'now', n: 0 });
+  assert.deepEqual(
+    live.friendLocationAge(new Date(now.getTime() - 20000).toISOString(), now),
+    { unit: 'seconds', n: 20 },
+  );
+  assert.deepEqual(
+    live.friendLocationAge(new Date(now.getTime() - 90000).toISOString(), now),
+    { unit: 'minutes', n: 2 },
+  );
+  assert.equal(live.friendLocationAge('nope', now), null);
+  assert.equal(live.friendLocationAge(null, now), null);
+  assert.equal(live.friendLocationAge('', now), null);
+});
+
 test('sharing is off unless the server says it is enabled', () => {
   assert.deepEqual(live.normalizeFriendLocationSettings(null), { enabled: false, audience: 'mutual' });
   assert.deepEqual(live.normalizeFriendLocationSettings({ enabled: true, audience: 'following' }), {

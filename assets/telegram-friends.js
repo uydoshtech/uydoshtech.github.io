@@ -81,7 +81,7 @@
         : '';
     const follow = friend.self
       ? ''
-      : `<button type="button" class="follow-btn${mutual ? ' is-on' : ''}" data-friend-follow="${id}">${UyDosh.escapeHtml(UyDosh.t(mutual ? 'profile.following' : 'profile.follow', lang))}</button>`;
+      : `<button type="button" class="follow-btn${mutual ? ' is-on' : ''}" data-friend-follow="${id}">${UyDosh.escapeHtml(UyDosh.t(mutual ? 'account.friends.unfollow' : 'profile.follow', lang))}</button>`;
     return `
       <article class="friend-card" data-friend-id="${id}">
         <a class="friend-card-link" href="${href}">
@@ -104,6 +104,14 @@
   function mount(list) {
     list.innerHTML = `
       <section class="friends-panel" data-friends-root>
+        <p class="friends-error" data-friends-error hidden></p>
+        <button type="button" class="friends-retry" data-friends-retry hidden data-i18n="account.friends.retry"></button>
+        <div class="friends-map-wrap">
+          <div id="friends-map" class="friends-map" role="region"></div>
+          <button type="button" class="friends-map-filter" data-friends-filter-toggle>
+            <span class="friends-map-filter-icon" data-friends-filter-icon></span>
+          </button>
+        </div>
         <div class="friends-share-card" data-friends-share-card data-expanded="false">
           <div class="friends-share-head">
             <label class="friends-share-toggle">
@@ -132,14 +140,6 @@
             <p class="friends-permission" data-friends-permission hidden></p>
             <button type="button" class="friends-settings" data-friends-open-settings hidden data-i18n="account.friends.openSettings"></button>
           </div>
-        </div>
-        <p class="friends-error" data-friends-error hidden></p>
-        <button type="button" class="friends-retry" data-friends-retry hidden data-i18n="account.friends.retry"></button>
-        <div class="friends-map-wrap">
-          <div id="friends-map" class="friends-map" role="region"></div>
-          <button type="button" class="friends-map-filter" data-friends-filter-toggle>
-            <span class="friends-map-filter-icon" data-friends-filter-icon></span>
-          </button>
         </div>
         <div class="friends-list" data-friends-list></div>
       </section>`;
@@ -296,6 +296,26 @@
     }
   }
 
+  function reportedAgo(updatedAt, lang) {
+    const api = liveApi();
+    const age = api?.friendLocationAge(updatedAt, new Date());
+    if (!age) return '';
+    if (age.unit === 'seconds') return UyDosh.t('account.friends.secondsAgo', lang).replace('{n}', String(age.n));
+    if (age.unit === 'minutes') return UyDosh.t('account.friends.minutesAgo', lang).replace('{n}', String(age.n));
+    return UyDosh.t('account.friends.justNow', lang);
+  }
+
+  function refreshReportedLabels() {
+    if (!state.active) return;
+    const lang = UyDosh.getLang();
+    for (const node of document.querySelectorAll('#friends-map .friend-map-pin-time')) {
+      const at = node.getAttribute('data-reported-at');
+      if (!at) continue;
+      const next = reportedAgo(at, lang);
+      if (next && node.textContent !== next) node.textContent = next;
+    }
+  }
+
   function pinLayout(ymaps, friend, selected) {
     const name = String(friend?.name || '').trim();
     const letter = UyDosh.escapeHtml((Array.from(name)[0] || '?').toUpperCase());
@@ -308,7 +328,9 @@
       : '';
     const selfClass = friend.self ? ' is-self' : '';
     const selectedClass = selected && !friend.self ? ' is-selected' : '';
-    const html = `<div class="friend-map-pin${selfClass}${selectedClass}"><span>${letter}</span>${img}</div>`;
+    const when = reportedAgo(friend.updatedAt, UyDosh.getLang());
+    const stamp = UyDosh.escapeHtml(String(friend.updatedAt || ''));
+    const html = `<div class="friend-map-pin-stack"><div class="friend-map-pin${selfClass}${selectedClass}"><span>${letter}</span>${img}</div><span class="friend-map-pin-time" data-reported-at="${stamp}">${UyDosh.escapeHtml(when)}</span></div>`;
     return ymaps.templateLayoutFactory.createClass(html);
   }
 
@@ -326,8 +348,8 @@
       if (!placemark) {
         placemark = new ymaps.Placemark(coords, {}, {
           iconLayout: pinLayout(ymaps, friend, selected),
-          iconShape: { type: 'Circle', coordinates: [22, 22], radius: 22 },
-          iconOffset: [-22, -22],
+          iconShape: { type: 'Circle', coordinates: [36, 22], radius: 22 },
+          iconOffset: [-36, -22],
           zIndex: selected ? 2000 : friend.self ? 1600 : 1000,
         });
         placemark.events.add('click', () => {
@@ -339,6 +361,8 @@
       } else {
         placemark.geometry.setCoordinates(coords);
         placemark.options.set('iconLayout', pinLayout(ymaps, friend, selected));
+        placemark.options.set('iconShape', { type: 'Circle', coordinates: [36, 22], radius: 22 });
+        placemark.options.set('iconOffset', [-36, -22]);
         placemark.options.set('zIndex', selected ? 2000 : friend.self ? 1600 : 1000);
       }
     }
@@ -578,12 +602,22 @@
       }
       void refresh();
     }, 12000);
+    if (!state.agoTimer) {
+      state.agoTimer = setInterval(() => {
+        if (!state.active || document.visibilityState === 'hidden') return;
+        refreshReportedLabels();
+      }, 5000);
+    }
   }
 
   function stopPoll() {
     if (state.pollTimer) {
       clearInterval(state.pollTimer);
       state.pollTimer = null;
+    }
+    if (state.agoTimer) {
+      clearInterval(state.agoTimer);
+      state.agoTimer = null;
     }
   }
 

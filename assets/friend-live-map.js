@@ -16,6 +16,17 @@
     return age <= ttl && age >= -5000;
   }
 
+  function friendLocationAge(updatedAt, now) {
+    if (updatedAt == null || updatedAt === '') return null;
+    const time = new Date(updatedAt).getTime();
+    const at = now instanceof Date ? now : new Date();
+    if (!Number.isFinite(time)) return null;
+    const seconds = Math.max(0, Math.round((at.getTime() - time) / 1000));
+    if (seconds < 15) return { unit: 'now', n: 0 };
+    if (seconds < 60) return { unit: 'seconds', n: seconds };
+    return { unit: 'minutes', n: Math.max(1, Math.round(seconds / 60)) };
+  }
+
   function matchesFriendMapFilter(filter, friend) {
     const iFollow = friend?.iFollow === true || friend?.mutual === true;
     const followsMe = friend?.followsMe !== false;
@@ -54,6 +65,7 @@
   return {
     FRIEND_LOCATION_TTL_MS,
     isFreshFriendLocation,
+    friendLocationAge,
     matchesFriendMapFilter,
     visibleFriendMarkers,
     applyFriendLocationEvent,
