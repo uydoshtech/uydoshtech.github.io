@@ -409,6 +409,8 @@ I18N.en = {
     'create.findUniversity': 'Find a university',
     'create.universityRadiusHint': 'The selected university is the centre. Drag an edge handle or use the slider to change the radius.',
     'create.universityNoCoordinates': 'No coordinates',
+    'create.radiusDecrease': 'Decrease radius by 100 m',
+    'create.radiusIncrease': 'Increase radius by 100 m',
     'create.listingType': 'Listing type',
     'create.locationMode': 'Search area',
     'create.locationMetro': 'Metro',

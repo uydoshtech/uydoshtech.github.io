@@ -411,6 +411,8 @@ I18N.ru = {
     'create.findUniversity': 'Найти университет',
     'create.universityRadiusHint': 'Центр круга — выбранный университет. Потяните за маркеры на краю круга или измените радиус ползунком.',
     'create.universityNoCoordinates': 'Нет координат',
+    'create.radiusDecrease': 'Уменьшить радиус на 100 м',
+    'create.radiusIncrease': 'Увеличить радиус на 100 м',
     'create.listingType': 'Тип объявления',
     'create.locationMode': 'Зона поиска',
     'create.locationMetro': 'Метро',

@@ -1425,3 +1425,15 @@ input[readonly] {
 #loading[hidden], #form-root[hidden], #success-root[hidden], #wizard-footer[hidden], #scan-upsell[hidden] { display: none !important; }
 
 .search-area-map { height: clamp(220px, 38dvh, 340px); border: 1px solid var(--stroke); border-radius: 12px; overflow: hidden; }
+
+.search-radius-controls { display: flex; align-items: center; gap: 8px; }
+.search-radius-controls input { flex: 1; min-width: 0; width: 0; }
+.search-radius-step {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 44px; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--stroke); border-radius: 12px;
+  background: transparent; color: var(--fg); cursor: pointer;
+}
+.search-radius-step svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.search-radius-step:disabled { opacity: 0.3; cursor: default; }
+.search-radius-step:focus-visible { outline: 2px solid var(--brand2); outline-offset: 2px; }

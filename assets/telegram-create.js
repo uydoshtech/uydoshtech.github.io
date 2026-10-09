@@ -1158,7 +1158,11 @@ function searchAreaHtml(lang) {
   const radius = state.form.searchArea?.radiusKm || 1;
   return `<div class="field" data-validation-anchor="location">
     <label for="search-radius">${UyDosh.escapeHtml(UyDosh.t('create.radius', lang))}: <output id="search-radius-value">${radius}</output> ${UyDosh.escapeHtml(UyDosh.t('create.km', lang))}</label>
-    <input id="search-radius" type="range" min="1" max="10" step="0.1" value="${radius}" />
+    <div class="search-radius-controls">
+      <button type="button" id="search-radius-less" class="search-radius-step" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.radiusDecrease', lang))}" ${radius <= 1 ? 'disabled' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+      <input id="search-radius" type="range" min="1" max="10" step="0.1" value="${radius}" />
+      <button type="button" id="search-radius-more" class="search-radius-step" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.radiusIncrease', lang))}" ${radius >= 10 ? 'disabled' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    </div>
     <div id="search-area-map" class="search-area-map"></div>
     <div class="muted">${UyDosh.escapeHtml(UyDosh.t(state.form.searchArea?.universityId ? 'create.universityRadiusHint' : 'create.radiusHint', lang))}</div>
     <div id="search-area-error" role="status"></div>
@@ -1191,6 +1195,10 @@ function setSearchAreaRadius(value, activeHandle = null) {
   if (input) input.value = String(radius);
   const output = stepPanelsEl.querySelector('#search-radius-value');
   if (output) output.textContent = radius;
+  const less = stepPanelsEl.querySelector('#search-radius-less');
+  const more = stepPanelsEl.querySelector('#search-radius-more');
+  if (less) less.disabled = radius <= 1;
+  if (more) more.disabled = radius >= 10;
   searchAreaCircle?.geometry.setRadius(radius * 1000);
   positionSearchAreaHandles(activeHandle);
 }
@@ -1223,6 +1231,8 @@ async function mountSearchAreaMap() {
   const token = ++searchAreaLoadToken;
   const input = stepPanelsEl.querySelector('#search-radius');
   input.addEventListener('input', () => setSearchAreaRadius(Number(input.value)));
+  stepPanelsEl.querySelector('#search-radius-less')?.addEventListener('click', () => setSearchAreaRadius(state.form.searchArea.radiusKm - 0.1));
+  stepPanelsEl.querySelector('#search-radius-more')?.addEventListener('click', () => setSearchAreaRadius(state.form.searchArea.radiusKm + 0.1));
   try {
     const module = await UyDosh.loadYandexMapModule();
     const ymaps = await module.loadYandexScript(UyDosh.getLang());
@@ -1258,9 +1268,9 @@ async function mountSearchAreaMap() {
 function legacyLocationTabsHtml(lang) {
   const modeChips = [
     { mode: LOCATION_MODE_METRO, label: UyDosh.t('create.locationMetro', lang), icon: UyDosh.iconMetro() },
-    { mode: LOCATION_MODE_RADIUS, label: UyDosh.t('create.locationRadius', lang), icon: UyDosh.iconPin() },
-    { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: UyDosh.iconPin() },
-    { mode: LOCATION_MODE_UNIVERSITY, label: UyDosh.t('create.locationUniversity', lang), icon: UyDosh.iconPin() },
+    { mode: LOCATION_MODE_RADIUS, label: UyDosh.t('create.locationRadius', lang), icon: `<span class="icon" aria-hidden="true">${UyDosh.iconChrome('foldedMap')}</span>` },
+    { mode: LOCATION_MODE_DISTRICT, label: UyDosh.t('create.locationDistrict', lang), icon: `<span class="icon" aria-hidden="true">${UyDosh.iconChrome('districtBoundary')}</span>` },
+    { mode: LOCATION_MODE_UNIVERSITY, label: UyDosh.t('create.locationUniversity', lang), icon: `<span class="icon" aria-hidden="true">${UyDosh.iconChrome('graduationCap')}</span>` },
   ].map((opt) => {
     return UyDosh.chipButtonHtml({
       attrs: { 'data-location-mode': opt.mode },

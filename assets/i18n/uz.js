@@ -410,6 +410,8 @@ I18N.uz = {
     'create.findUniversity': 'Universitetni topish',
     'create.universityRadiusHint': 'Tanlangan universitet — markaz. Radiusni doira chetidagi belgilar yoki slayder orqali o‘zgartiring.',
     'create.universityNoCoordinates': 'Koordinatalar yo‘q',
+    'create.radiusDecrease': 'Radiusni 100 m kamaytirish',
+    'create.radiusIncrease': 'Radiusni 100 m oshirish',
     'create.listingType': 'E’lon turi',
     'create.locationMode': 'Qidiruv hududi',
     'create.locationMetro': 'Metro',
