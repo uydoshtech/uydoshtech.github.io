@@ -1397,7 +1397,7 @@ function renderStep0(lang) {
       <button type="button" class="listing-type-card${active ? ' is-active' : ''}"
         data-listing-type="${opt.id}" data-haptic="selection"
         aria-pressed="${active}">
-        ${compact ? '' : `<span class="listing-type-glyph" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>`}
+        <span class="listing-type-glyph" aria-hidden="true">${UyDosh.filterListingTypeIcon(opt.id, { pressed: false })}</span>
         <span class="listing-type-label">${UyDosh.escapeHtml(opt.label)}</span>
         ${compact ? '' : `<span class="listing-type-description">${UyDosh.escapeHtml(opt.description)}</span>`}
       </button>`;

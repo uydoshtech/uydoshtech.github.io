@@ -153,13 +153,25 @@ html.mini-app header.uydosh-mini-app-header .nav-menu {
   .listing-type-label { font-size: 12px; }
   .listing-type-description { font-size: 11px; }
 }
-/* After an explicit choice, keep all three types available as text buttons. */
+/* After an explicit choice, keep icons and labels in compact buttons. */
 .listing-type-field.is-compact { margin-bottom: 0; gap: 0; }
 .is-compact .listing-type-card {
   min-height: 48px;
+  gap: 4px;
   padding: 8px 6px;
   justify-content: center;
   border-radius: 10px;
+}
+.is-compact .listing-type-glyph {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 0;
+}
+.is-compact .listing-type-glyph .chip-icon,
+.is-compact .listing-type-glyph .chip-icon svg {
+  width: 22px;
+  height: 22px;
 }
 /* Reclaim whitespace on every step without shrinking form controls. */
 .panel { gap: 12px; }
