@@ -51,9 +51,10 @@ function initialTabFromUrl() {
     if (tab === TAB_FOLLOWS) return TAB_FOLLOWS;
     if (tab === TAB_FRIENDS) return TAB_FRIENDS;
     if (tab === TAB_MINE) return TAB_MINE;
-    return TAB_GROUPS;
+    if (tab === TAB_GROUPS) return TAB_GROUPS;
+    return TAB_FRIENDS;
   } catch {
-    return TAB_GROUPS;
+    return TAB_FRIENDS;
   }
 }
 

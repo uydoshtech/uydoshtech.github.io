@@ -73,8 +73,6 @@
   function cardHtml(friend, lang) {
     const id = Number(friend.userId);
     const name = String(friend?.name || '').trim() || UyDosh.t('complaints.anonymous', lang);
-    const backTo = `${UyDosh.MINI_APP_ACCOUNT_PATH}?tab=friends`;
-    const href = UyDosh.escapeHtml(UyDosh.profilePageUrl(id, { backTo }));
     const mutual = friend.mutual === true;
     const badge = friend.self
       ? `<span class="friend-badge">${UyDosh.escapeHtml(UyDosh.t('account.friends.you', lang))}</span>`
@@ -87,14 +85,14 @@
     return `
       <article class="friend-card" data-friend-id="${id}">
         <div class="friend-card-row">
-          <a class="friend-card-link" href="${href}">
+          <button type="button" class="friend-card-link" data-friend-profile="${id}">
             ${avatarHtml(friend)}
             <span class="friend-card-text">
               <span class="friend-name">${UyDosh.escapeHtml(name)}</span>
               <span class="friend-live">${UyDosh.escapeHtml(UyDosh.t('account.friends.live', lang))}</span>
             </span>
             ${badge}
-          </a>
+          </button>
           ${follow}
         </div>
         ${lifestyleHtml(state.profiles.get(id), lang)}
@@ -236,6 +234,48 @@
     bind(list.querySelector('[data-friends-root]'));
   }
 
+  let profileDialog = null;
+
+  function openProfile(userId) {
+    if (!(userId > 0) || profileDialog) return;
+    const lang = UyDosh.getLang();
+    const dialog = document.createElement('dialog');
+    dialog.className = 'friend-profile-dialog';
+    dialog.setAttribute('aria-label', UyDosh.t('profile.title', lang));
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'friend-profile-close';
+    close.textContent = '×';
+    close.setAttribute('aria-label', UyDosh.t('build.close', lang));
+    const frame = document.createElement('iframe');
+    frame.title = UyDosh.t('profile.title', lang);
+    const url = new URL(UyDosh.profilePageUrl(userId), location.origin);
+    url.searchParams.set('embedded', '1');
+    frame.src = url.href;
+    dialog.append(close, frame);
+    document.body.append(dialog);
+    profileDialog = dialog;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    close.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    frame.addEventListener('load', () => {
+      frame.contentDocument?.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); dialog.close(); }
+      });
+    });
+    dialog.addEventListener('close', () => {
+      document.body.style.overflow = previousOverflow;
+      profileDialog = null;
+      dialog.remove();
+      if (state.active) void refresh();
+    }, { once: true });
+    dialog.showModal();
+    close.focus();
+  }
+
   function bind(root) {
     root.addEventListener('change', (event) => {
       const share = event.target.closest('[data-friends-share]');
@@ -276,7 +316,7 @@
       const card = event.target.closest('[data-friend-id]');
       if (card) {
         state.selectedId = Number(card.getAttribute('data-friend-id'));
-        paint();
+        openProfile(state.selectedId);
       }
     });
   }
@@ -729,6 +769,7 @@
   }
 
   function deactivate() {
+    profileDialog?.close();
     if (!state.active && !state.map) return;
     state.active = false;
     stopPoll();

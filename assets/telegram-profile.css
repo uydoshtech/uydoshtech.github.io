@@ -539,3 +539,11 @@ html.mini-app body.profile-readonly {
 .profile-number-stepper input::-webkit-inner-spin-button, .profile-number-stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .profile-number-stepper:focus-within { outline: 2px solid #60a5fa; outline-offset: 2px; }
 @media (max-width: 360px) { .profile-number-stepper button { flex-basis: 32px; } }
+
+html.profile-embedded { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.profile-embedded body { padding: 0; min-height: 100%; }
+.profile-embedded [data-uydosh-mini-app-header] { display: none; }
+.profile-embedded .wrap { padding-top: 0; padding-bottom: 24px; }
+
+.profile-embedded .pv-card { background: var(--card); border-color: var(--stroke); }
+.profile-embedded .pv-row + .pv-row { border-color: var(--stroke); }

@@ -4,13 +4,22 @@
 // Depends on uydosh-core.js, uydosh-api.js, uydosh-i18n.js, uydosh-icons.js,
 // uydosh-mini-app.js. Load last.
 
-UyDosh.initTelegramMiniApp();
+const embeddedProfile = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
+if (embeddedProfile) {
+  document.documentElement.classList.add('profile-embedded');
+  const parentTheme = window.parent.getComputedStyle(window.parent.document.documentElement);
+  for (const token of ['--bg', '--fg', '--muted', '--card', '--stroke', '--brand', '--brand2']) {
+    document.documentElement.style.setProperty(token, parentTheme.getPropertyValue(token));
+  }
+} else {
+  UyDosh.initTelegramMiniApp();
+}
 
 // Reached from the account menu on any page — the header's BackButton
 // defaults to hidden (see `initTelegramMiniApp`), so show it here and send
 // the user back to wherever a `?back=` deep link points, falling back to
 // the feed (same pattern as listing.html/telegram-account.js).
-if (UyDosh.isMiniApp()) {
+if (!embeddedProfile && UyDosh.isMiniApp()) {
   const webApp = window.Telegram?.WebApp;
   webApp?.BackButton?.show();
   webApp?.BackButton?.onClick(() => {
@@ -1217,7 +1226,7 @@ async function boot() {
     }
   } else {
     state.userId = viewUserId;
-    await UyDosh.ensureTelegramMiniAppSession();
+    if (!embeddedProfile) await UyDosh.ensureTelegramMiniAppSession();
     const viewerId = Number(UyDosh.getSessionUserId());
     state.isSelf = Number.isFinite(viewerId) && viewerId === viewUserId;
     if (!state.isSelf) {
