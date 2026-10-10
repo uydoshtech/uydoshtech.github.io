@@ -26,6 +26,16 @@
     return { unit: 'minutes', n: Math.floor(seconds / 60) };
   }
 
+  // Presentation only: location ages and API values remain in minutes.
+  function formatLocationDuration(minutes, translate) {
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    const parts = [];
+    if (hours > 0) parts.push(translate('account.friends.durationHours').replace('{n}', String(hours)));
+    if (remainder > 0 || hours === 0) parts.push(translate('account.friends.durationMinutes').replace('{n}', String(remainder)));
+    return parts.join(' ');
+  }
+
   function matchesFriendMapFilter(filter, friend) {
     const iFollow = friend?.iFollow === true || friend?.mutual === true;
     const followsMe = friend?.followsMe !== false;
@@ -65,6 +75,7 @@
     FRIEND_LOCATION_TTL_MS,
     isFreshFriendLocation,
     friendLocationAge,
+    formatLocationDuration,
     matchesFriendMapFilter,
     visibleFriendMarkers,
     applyFriendLocationEvent,

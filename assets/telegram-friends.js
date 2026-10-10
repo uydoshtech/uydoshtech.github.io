@@ -390,7 +390,10 @@
     const api = liveApi();
     const age = api?.friendLocationAge(updatedAt, new Date());
     if (!age) return '';
-    if (age.unit === 'minutes') return UyDosh.t('account.friends.lastSeenMinutes', lang).replace('{n}', String(age.n));
+    if (age.unit === 'minutes') {
+      const duration = api.formatLocationDuration(age.n, (key) => UyDosh.t(key, lang));
+      return UyDosh.t('account.friends.lastSeenDuration', lang).replace('{duration}', duration);
+    }
     return UyDosh.t('account.friends.lastSeenUnderMinute', lang);
   }
 
