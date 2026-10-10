@@ -1092,19 +1092,15 @@ function renderReadOnlyProfile() {
   const langValue = `${langMeta.flag} ${langMeta.native}`;
   const about = String(profile.about_me || '').trim();
 
-  const employedField = LIFESTYLE_FIELDS.find((f) => f.key === 'employed');
-  const wakeField = LIFESTYLE_FIELDS.find((f) => f.key === 'wakeup_time');
-  const sleepField = LIFESTYLE_FIELDS.find((f) => f.key === 'sleep_time');
-  const cleanField = LIFESTYLE_FIELDS.find((f) => f.key === 'cleanliness');
-  const employedLabel = lifestyleFieldValueLabel(employedField, profile.employed, lang);
-  const employedShort = profile.employed === true
-    ? UyDosh.t('profile.studentYes', lang)
-    : profile.employed === false
-      ? UyDosh.t('profile.studentNo', lang)
-      : employedLabel;
-  const wakeLabel = lifestyleFieldValueLabel(wakeField, profile.wakeup_time, lang);
-  const sleepLabel = lifestyleFieldValueLabel(sleepField, profile.sleep_time, lang);
-  const cleanLabel = lifestyleFieldValueLabel(cleanField, profile.cleanliness, lang);
+  const lifestyleRow = (field) => {
+    const value = profile[field.key];
+    const option = field.options.find((item) => item.value != null && String(item.value) === String(value));
+    return viewRowHtml({
+      icon: field.icon || option?.icon || 'person',
+      label: UyDosh.t(field.labelKey, lang),
+      value: lifestyleFieldValueLabel(field, value, lang),
+    });
+  };
 
   const basicRows = [
     viewRowHtml({ icon: 'person', label: UyDosh.t('profile.nameOrNickname', lang), value: name }),
@@ -1157,14 +1153,16 @@ function renderReadOnlyProfile() {
     viewRowHtml({ icon: 'sparkles', label: UyDosh.t('profile.looking.priorities', lang), value: dimList(profile.top_priorities) }),
   ].join('');
 
-  const lifeRows = [
-    viewRowHtml({ icon: 'checkCircle', label: UyDosh.t('profile.work', lang), value: employedShort }),
-    `<div class="pv-grid">${
-      viewRowHtml({ icon: 'sun', label: UyDosh.t('profile.lifestyle.wakeupTime', lang), value: wakeLabel })
-      + viewRowHtml({ icon: 'moon', label: UyDosh.t('profile.lifestyle.sleepTime', lang), value: sleepLabel })
-    }</div>`,
-    viewRowHtml({ icon: 'sparkles', label: UyDosh.t('profile.lifestyle.cleanliness', lang), value: cleanLabel }),
-  ].join('');
+  // Use the same field definitions as the editor so completed answers are
+  // also visible in both the standalone profile and the map popup.
+  const lifeRows = LIFESTYLE_FIELDS.map((field) => {
+    if (field.key === 'sleep_time') return '';
+    if (field.key === 'wakeup_time') {
+      const sleep = LIFESTYLE_FIELDS.find((item) => item.key === 'sleep_time');
+      return `<div class="pv-grid">${lifestyleRow(field)}${lifestyleRow(sleep)}</div>`;
+    }
+    return lifestyleRow(field);
+  }).join('');
 
   const followButton = state.readOnly && !state.isSelf ? `
     <button type="button" class="pv-follow${state.following ? ' is-on' : ''}" data-follow ${state.followBusy ? 'disabled' : ''}>
