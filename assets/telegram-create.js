@@ -1198,7 +1198,6 @@ function searchAreaHtml(lang) {
       <button type="button" id="search-radius-more" class="search-radius-step" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.radiusIncrease', lang))}" ${radius >= 10 ? 'disabled' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     </div>
     <div id="search-area-map" class="search-area-map"></div>
-    <div class="muted">${UyDosh.escapeHtml(UyDosh.t(state.form.searchArea?.universityId ? 'create.universityRadiusHint' : 'create.radiusHint', lang))}</div>
     <div id="search-area-error" role="status"></div>
   </div>`;
 }
