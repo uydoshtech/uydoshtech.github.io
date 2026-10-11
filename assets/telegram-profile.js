@@ -757,7 +757,9 @@ function bindEvents() {
     const input = document.getElementById('profile-profession');
     if (!list || !input) return;
     const field = LIFESTYLE_FIELDS.find((item) => item.key === 'profession');
-    const options = field.options.filter((opt) => opt.value && UyDosh.t(opt.labelKey).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    const normalized = query.trim().toLocaleLowerCase();
+    const options = field.options.filter((opt) => opt.value &&
+      `${UyDosh.t(opt.labelKey)} ${opt.value === 'smm' ? 'смм smm social media' : ''}`.toLocaleLowerCase().includes(normalized));
     list.innerHTML = options.map((opt) => `<button type="button" class="station-item profession-option" data-profession="${opt.value}" aria-pressed="${state.lifestyle.profession === opt.value}"><span aria-hidden="true">${UyDosh.iconChrome(opt.icon)}</span>${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`).join('');
     list.hidden = !options.length;
     input.setAttribute('aria-expanded', String(!list.hidden));
@@ -767,6 +769,9 @@ function bindEvents() {
   });
   employmentFieldsEl.addEventListener('input', (e) => {
     if (e.target.id !== 'profile-profession') return;
+    const selected = LIFESTYLE_FIELDS.find((field) => field.key === 'profession').options
+      .find((option) => option.value === state.lifestyle.profession && option.value);
+    if (selected && e.target.value === UyDosh.t(selected.labelKey)) return;
     state.lifestyle.profession = null;
     e.target.setCustomValidity('');
     e.target.closest('.profession-search-wrap').classList.remove('is-picked');
@@ -779,14 +784,26 @@ function bindEvents() {
     if (list) list.hidden = true;
     document.getElementById('profile-profession')?.setAttribute('aria-expanded', 'false');
   };
+  // Keep focus on the input until click commits the suggestion. Some mobile
+  // WebViews otherwise blur with relatedTarget=null and hide it before click.
+  employmentFieldsEl.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-profession]')) e.preventDefault();
+  });
   employmentFieldsEl.addEventListener('click', (e) => {
     const option = e.target.closest('[data-profession]');
     if (!option) return;
-    state.lifestyle.profession = option.dataset.profession;
+    const selected = LIFESTYLE_FIELDS.find((field) => field.key === 'profession').options
+      .find((item) => item.value === option.dataset.profession);
+    if (!selected) return;
+    const input = document.getElementById('profile-profession');
+    state.lifestyle.profession = selected.value;
+    input.value = UyDosh.t(selected.labelKey);
+    input.setCustomValidity('');
+    input.closest('.profession-search-wrap').classList.add('is-picked');
+    employmentFieldsEl.querySelector('[data-profession-icon]').innerHTML = UyDosh.iconChrome(selected.icon);
     showFormError('');
-    renderLifestyleFields();
-    document.getElementById('profile-profession')?.focus();
     closeProfessions();
+    input.blur();
   });
   employmentFieldsEl.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeProfessions();
