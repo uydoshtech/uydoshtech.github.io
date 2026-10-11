@@ -711,8 +711,9 @@ function render() {
     }
   }
 
+  // Employment fields live on Basic and must render on initial load too.
+  renderLifestyleFields();
   if (state.activeTab === TAB_LIFESTYLE) {
-    renderLifestyleFields();
     renderLookingFor();
   }
 
