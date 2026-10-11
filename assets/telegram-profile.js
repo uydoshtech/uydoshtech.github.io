@@ -1159,7 +1159,8 @@ function renderReadOnlyProfile() {
     if (field.key === 'sleep_time') return '';
     if (field.key === 'wakeup_time') {
       const sleep = LIFESTYLE_FIELDS.find((item) => item.key === 'sleep_time');
-      return `<div class="pv-grid">${lifestyleRow(field)}${lifestyleRow(sleep)}</div>`;
+      const rows = lifestyleRow(field) + lifestyleRow(sleep);
+      return rows ? `<div class="pv-grid">${rows}</div>` : '';
     }
     return lifestyleRow(field);
   }).join('');
@@ -1171,11 +1172,13 @@ function renderReadOnlyProfile() {
   viewRootEl.innerHTML = `
     <div class="pv-avatar-wrap"><div class="pv-avatar">${avatarInner}</div></div>
     ${followButton}
-    <div class="pv-card">${basicRows}</div>
-    <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.tabs.lifestyle', lang))}</div>
-    <div class="pv-card">${lifeRows}</div>
-    <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.looking.title', lang))}</div>
-    <div class="pv-card">${lookingRows}</div>`;
+    ${basicRows ? `<div class="pv-card">${basicRows}</div>` : ''}
+    ${lifeRows ? `
+      <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.tabs.lifestyle', lang))}</div>
+      <div class="pv-card">${lifeRows}</div>` : ''}
+    ${lookingRows ? `
+      <div class="pv-card-title">${UyDosh.escapeHtml(UyDosh.t('profile.looking.title', lang))}</div>
+      <div class="pv-card">${lookingRows}</div>` : ''}`;
 }
 
 function showReadOnlyProfile() {
