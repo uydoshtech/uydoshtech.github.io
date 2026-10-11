@@ -59,6 +59,9 @@ header {
   text-decoration: none;
 }
 .btn-link:active { opacity: 0.9; }
+#account-empty-cta { gap: 8px; }
+.account-empty-cta-icon { display: inline-flex; flex-shrink: 0; }
+.account-empty-cta-icon svg { display: block; width: 20px; height: 20px; }
 .view-tabs-account {
   overflow-x: auto;
   flex-wrap: nowrap;
@@ -256,6 +259,23 @@ header {
 }
 .wrap:has(.follows-empty) .account-list {
   flex: 1;
+}
+/* Both the initial page loader and the follows loader occupy the remaining
+   viewport below the header/tabs and above the fixed bottom navigation. */
+.wrap:has(> #loading:not(.error):not([hidden])),
+.wrap:has(> #account-list:not([hidden]) > .gp-loading) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--uydosh-fixed-footer-height, 66px) - max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+}
+#loading:not(.error):not([hidden]),
+#account-list:has(> .gp-loading) {
+  flex: 1;
+  min-height: 0;
+}
+#account-list > .gp-loading {
+  flex: 1;
+  align-items: center;
 }
 .follows-empty,
 .follows-note {
@@ -1120,7 +1140,18 @@ header {
 .account-housing-more { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #061525bb; color: white; font-size: 11px; }
 .account-housing-pill .account-participants-label { min-width: 0; overflow-wrap: anywhere; }
 
-.friends-panel { display: flex; flex-direction: column; gap: 10px; }
+/* Fill the space above the fixed navigation, allowing short screens and
+   expanded controls to scroll naturally once the map reaches its minimum. */
+.wrap:has(.friends-panel) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--uydosh-fixed-footer-height, 66px) - max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+}
+.wrap:has(.friends-panel) > header,
+.wrap:has(.friends-panel) > .view-tabs { flex-shrink: 0; }
+.account-list:has(.friends-panel) { flex: 1; }
+.friends-panel { display: flex; flex: 1; flex-direction: column; gap: 10px; }
+.friends-panel > :not(.friends-map-wrap) { flex-shrink: 0; }
 .friends-share-card,
 .friend-card {
   border: 1px solid var(--stroke);
@@ -1184,9 +1215,10 @@ header {
   font-weight: 700;
   cursor: pointer;
 }
-.friends-map-wrap { position: relative; }
+.friends-map-wrap { position: relative; display: flex; flex: 1; min-height: 240px; }
 .friends-map {
-  height: min(52vh, 420px);
+  flex: 1;
+  min-width: 0;
   min-height: 240px;
   border-radius: 16px;
   overflow: hidden;

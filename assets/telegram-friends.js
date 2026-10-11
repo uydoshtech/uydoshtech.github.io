@@ -24,6 +24,7 @@
     profiles: new Map(),
     profileLoads: new Set(),
     map: null,
+    mapResizeObserver: null,
     ymaps: null,
     markers: new Map(),
     fitted: false,
@@ -411,6 +412,12 @@
       });
       syncMarkers(visibleFriends());
       state.map.container.fitToViewport();
+      if (typeof ResizeObserver === 'function') {
+        state.mapResizeObserver = new ResizeObserver(() => {
+          state.map?.container.fitToViewport();
+        });
+        state.mapResizeObserver.observe(container);
+      }
     } catch (err) {
       console.error('Failed to load friends map', err);
       state.error = 'map';
@@ -518,6 +525,8 @@
 
   function destroyMap() {
     state.mapToken += 1;
+    state.mapResizeObserver?.disconnect();
+    state.mapResizeObserver = null;
     try { state.map?.destroy(); } catch { /* already gone */ }
     state.map = null;
     state.ymaps = null;

@@ -147,6 +147,40 @@ const LIFESTYLE_FIELDS = [
     ],
   },
   {
+    key: 'profession',
+    labelKey: 'profile.profession',
+    type: 'select',
+    options: [
+      { value: null, labelKey: 'profile.profession.choose' },
+      { value: 'sales', labelKey: 'profile.profession.sales' },
+      { value: 'retail', labelKey: 'profile.profession.retail' },
+      { value: 'cashier', labelKey: 'profile.profession.cashier' },
+      { value: 'call_center', labelKey: 'profile.profession.call_center' },
+      { value: 'support', labelKey: 'profile.profession.support' },
+      { value: 'courier', labelKey: 'profile.profession.courier' },
+      { value: 'driver', labelKey: 'profile.profession.driver' },
+      { value: 'waiter', labelKey: 'profile.profession.waiter' },
+      { value: 'barista', labelKey: 'profile.profession.barista' },
+      { value: 'cook', labelKey: 'profile.profession.cook' },
+      { value: 'administrator', labelKey: 'profile.profession.administrator' },
+      { value: 'office_manager', labelKey: 'profile.profession.office_manager' },
+      { value: 'accountant', labelKey: 'profile.profession.accountant' },
+      { value: 'teacher', labelKey: 'profile.profession.teacher' },
+      { value: 'translator', labelKey: 'profile.profession.translator' },
+      { value: 'developer', labelKey: 'profile.profession.developer' },
+      { value: 'qa', labelKey: 'profile.profession.qa' },
+      { value: 'designer', labelKey: 'profile.profession.designer' },
+      { value: 'smm', labelKey: 'profile.profession.smm' },
+      { value: 'marketer', labelKey: 'profile.profession.marketer' },
+      { value: 'content', labelKey: 'profile.profession.content' },
+      { value: 'hr', labelKey: 'profile.profession.hr' },
+      { value: 'beauty', labelKey: 'profile.profession.beauty' },
+      { value: 'fitness', labelKey: 'profile.profession.fitness' },
+      { value: 'logistics', labelKey: 'profile.profession.logistics' },
+      { value: 'other', labelKey: 'profile.profession.other' },
+    ],
+  },
+  {
     key: 'wakeup_time',
     labelKey: 'profile.lifestyle.wakeupTime',
     icon: 'sun',
@@ -567,6 +601,13 @@ function chipIconHtml(icon) {
 function renderLifestyleFields() {
   lifestyleFieldsEl.innerHTML = LIFESTYLE_FIELDS.map((field) => {
     const current = state.lifestyle[field.key];
+    if (field.key === 'profession' && state.lifestyle.employed !== true) return '';
+    if (field.type === 'select') {
+      return `<div class="field"><label class="field-label" for="profile-profession">${fieldLabelHtml(field)}</label>
+        <select id="profile-profession" class="profile-lang-select" data-lifestyle-select="${field.key}">
+          ${field.options.map((opt) => `<option value="${opt.value ?? ''}" ${current === opt.value ? 'selected' : ''}>${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</option>`).join('')}
+        </select></div>`;
+    }
 
     if (field.type === 'scale') {
       const scaleOptions = field.options.filter((opt) => opt.value !== null);
@@ -701,6 +742,16 @@ function bindEvents() {
       render();
     });
   }
+
+  lifestyleFieldsEl.addEventListener('change', (e) => {
+    const select = e.target.closest('[data-lifestyle-select]');
+    if (!select) return;
+    const field = LIFESTYLE_FIELDS.find((f) => f.key === select.dataset.lifestyleSelect);
+    const option = field?.options.find((opt) => (opt.value ?? '') === select.value);
+    if (!option) return;
+    state.lifestyle[field.key] = option.value;
+    showFormError('');
+  });
 
   lifestyleFieldsEl.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-lifestyle-key]');
@@ -936,6 +987,7 @@ async function onSave() {
       ? { role: roleToSave(state.serverRole, state.selectedRole) }
       : {}),
     ...state.lifestyle,
+    profession: state.lifestyle.employed === true ? state.lifestyle.profession : null,
     birth_year: birthYear,
     pref_age_min: prefAgeMin,
     pref_age_max: prefAgeMax,
@@ -1093,6 +1145,7 @@ function renderReadOnlyProfile() {
   const about = String(profile.about_me || '').trim();
 
   const lifestyleRow = (field) => {
+    if (field.key === 'profession' && profile.employed !== true) return '';
     const value = profile[field.key];
     const option = field.options.find((item) => item.value != null && String(item.value) === String(value));
     return viewRowHtml({
@@ -1167,7 +1220,8 @@ function renderReadOnlyProfile() {
 
   const followButton = state.readOnly && !state.isSelf ? `
     <button type="button" class="pv-follow${state.following ? ' is-on' : ''}" data-follow ${state.followBusy ? 'disabled' : ''}>
-      ${UyDosh.escapeHtml(UyDosh.t(state.following ? 'profile.following' : 'profile.follow', lang))}
+      ${state.following ? `<span class="pv-follow-icon" aria-hidden="true">${UyDosh.iconCheck()}</span>` : ''}
+      <span>${UyDosh.escapeHtml(UyDosh.t(state.following ? 'profile.following' : 'profile.follow', lang))}</span>
     </button>` : '';
   viewRootEl.innerHTML = `
     <div class="pv-avatar-wrap"><div class="pv-avatar">${avatarInner}</div></div>

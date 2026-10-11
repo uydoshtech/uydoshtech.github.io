@@ -466,6 +466,9 @@ input[type="number"]:focus {
   font-weight: 700;
   cursor: pointer;
 }
+.pv-follow { gap: 8px; }
+.pv-follow-icon { display: inline-flex; flex-shrink: 0; }
+.pv-follow-icon svg { display: block; width: 20px; height: 20px; }
 .pv-follow.is-on {
   background: transparent;
   color: var(--fg);
