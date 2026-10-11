@@ -550,3 +550,14 @@ html.profile-embedded { height: 100%; overflow-y: auto; overscroll-behavior: con
 
 .profile-embedded .pv-card { background: var(--card); border-color: var(--stroke); }
 .profile-embedded .pv-row + .pv-row { border-color: var(--stroke); }
+
+.profession-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+}

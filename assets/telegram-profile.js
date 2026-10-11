@@ -54,6 +54,8 @@ const universityListEl = document.getElementById('university-list');
 const aboutMeInputEl = document.getElementById('about-me-input');
 const nameInputEl = document.getElementById('name-input');
 const lifestyleFieldsEl = document.getElementById('lifestyle-fields');
+const employmentFieldsEl = document.getElementById('employment-fields');
+const isEmploymentField = (field) => ['employed', 'profession'].includes(field.key);
 const lookingGenderChipsEl = document.getElementById('looking-gender-chips');
 const lookingOverlapChipsEl = document.getElementById('looking-overlap-chips');
 const lookingDealbreakerChipsEl = document.getElementById('looking-dealbreaker-chips');
@@ -599,12 +601,12 @@ function chipIconHtml(icon) {
 }
 
 function renderLifestyleFields() {
-  lifestyleFieldsEl.innerHTML = LIFESTYLE_FIELDS.map((field) => {
+  const renderField = (field) => {
     const current = state.lifestyle[field.key];
     if (field.key === 'profession' && state.lifestyle.employed !== true) return '';
     if (field.type === 'select') {
       return `<div class="field"><label class="field-label" for="profile-profession">${fieldLabelHtml(field)}</label>
-        <select id="profile-profession" class="profile-lang-select" data-lifestyle-select="${field.key}">
+        <select id="profile-profession" class="profession-select" data-lifestyle-select="${field.key}">
           ${field.options.map((opt) => `<option value="${opt.value ?? ''}" ${current === opt.value ? 'selected' : ''}>${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</option>`).join('')}
         </select></div>`;
     }
@@ -651,7 +653,9 @@ function renderLifestyleFields() {
         <div class="field-label">${fieldLabelHtml(field)}</div>
         <div class="chips">${chips}</div>
       </div>`;
-  }).join('');
+  };
+  employmentFieldsEl.innerHTML = LIFESTYLE_FIELDS.filter(isEmploymentField).map(renderField).join('');
+  lifestyleFieldsEl.innerHTML = LIFESTYLE_FIELDS.filter((field) => !isEmploymentField(field)).map(renderField).join('');
 }
 
 function setActiveTab(tab) {
@@ -743,7 +747,7 @@ function bindEvents() {
     });
   }
 
-  lifestyleFieldsEl.addEventListener('change', (e) => {
+  employmentFieldsEl.addEventListener('change', (e) => {
     const select = e.target.closest('[data-lifestyle-select]');
     if (!select) return;
     const field = LIFESTYLE_FIELDS.find((f) => f.key === select.dataset.lifestyleSelect);
@@ -753,7 +757,7 @@ function bindEvents() {
     showFormError('');
   });
 
-  lifestyleFieldsEl.addEventListener('click', (e) => {
+  const handleFieldClick = (e) => {
     const btn = e.target.closest('[data-lifestyle-key]');
     if (!btn) return;
     const field = LIFESTYLE_FIELDS.find((f) => f.key === btn.getAttribute('data-lifestyle-key'));
@@ -762,7 +766,9 @@ function bindEvents() {
     state.lifestyle[field.key] = option.value;
     showFormError('');
     render();
-  });
+  };
+  lifestyleFieldsEl.addEventListener('click', handleFieldClick);
+  employmentFieldsEl.addEventListener('click', handleFieldClick);
 
   // Sliders update the value text in place instead of calling render() on
   // every 'input' tick — replacing the <input type="range"> DOM node
@@ -1156,6 +1162,7 @@ function renderReadOnlyProfile() {
   };
 
   const basicRows = [
+    ...LIFESTYLE_FIELDS.filter(isEmploymentField).map(lifestyleRow),
     viewRowHtml({ icon: 'person', label: UyDosh.t('profile.nameOrNickname', lang), value: name }),
     viewRowHtml({
       icon: 'person',
@@ -1208,7 +1215,7 @@ function renderReadOnlyProfile() {
 
   // Use the same field definitions as the editor so completed answers are
   // also visible in both the standalone profile and the map popup.
-  const lifeRows = LIFESTYLE_FIELDS.map((field) => {
+  const lifeRows = LIFESTYLE_FIELDS.filter((field) => !isEmploymentField(field)).map((field) => {
     if (field.key === 'sleep_time') return '';
     if (field.key === 'wakeup_time') {
       const sleep = LIFESTYLE_FIELDS.find((item) => item.key === 'sleep_time');
