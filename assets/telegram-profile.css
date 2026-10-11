@@ -551,13 +551,8 @@ html.profile-embedded { height: 100%; overflow-y: auto; overscroll-behavior: con
 .profile-embedded .pv-card { background: var(--card); border-color: var(--stroke); }
 .profile-embedded .pv-row + .pv-row { border-color: var(--stroke); }
 
-.profession-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--stroke);
-  border-radius: 12px;
-  background: var(--card);
-  color: var(--fg);
-  font: inherit;
-  font-size: 16px;
-}
+
+.profession-option { display: flex; align-items: center; gap: 10px; }
+.profession-option > span { display: inline-flex; flex-shrink: 0; color: var(--brand2); }
+.profession-option svg { width: 20px; height: 20px; }
+#profession-options[hidden] { display: none; }

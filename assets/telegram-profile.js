@@ -154,32 +154,32 @@ const LIFESTYLE_FIELDS = [
     type: 'select',
     options: [
       { value: null, labelKey: 'profile.profession.choose' },
-      { value: 'sales', labelKey: 'profile.profession.sales' },
-      { value: 'retail', labelKey: 'profile.profession.retail' },
-      { value: 'cashier', labelKey: 'profile.profession.cashier' },
-      { value: 'call_center', labelKey: 'profile.profession.call_center' },
-      { value: 'support', labelKey: 'profile.profession.support' },
-      { value: 'courier', labelKey: 'profile.profession.courier' },
-      { value: 'driver', labelKey: 'profile.profession.driver' },
-      { value: 'waiter', labelKey: 'profile.profession.waiter' },
-      { value: 'barista', labelKey: 'profile.profession.barista' },
-      { value: 'cook', labelKey: 'profile.profession.cook' },
-      { value: 'administrator', labelKey: 'profile.profession.administrator' },
-      { value: 'office_manager', labelKey: 'profile.profession.office_manager' },
-      { value: 'accountant', labelKey: 'profile.profession.accountant' },
-      { value: 'teacher', labelKey: 'profile.profession.teacher' },
-      { value: 'translator', labelKey: 'profile.profession.translator' },
-      { value: 'developer', labelKey: 'profile.profession.developer' },
-      { value: 'qa', labelKey: 'profile.profession.qa' },
-      { value: 'designer', labelKey: 'profile.profession.designer' },
-      { value: 'smm', labelKey: 'profile.profession.smm' },
-      { value: 'marketer', labelKey: 'profile.profession.marketer' },
-      { value: 'content', labelKey: 'profile.profession.content' },
-      { value: 'hr', labelKey: 'profile.profession.hr' },
-      { value: 'beauty', labelKey: 'profile.profession.beauty' },
-      { value: 'fitness', labelKey: 'profile.profession.fitness' },
-      { value: 'logistics', labelKey: 'profile.profession.logistics' },
-      { value: 'other', labelKey: 'profile.profession.other' },
+      { value: 'sales', icon: 'briefcase', labelKey: 'profile.profession.sales' },
+      { value: 'retail', icon: 'takeout', labelKey: 'profile.profession.retail' },
+      { value: 'cashier', icon: 'calculator', labelKey: 'profile.profession.cashier' },
+      { value: 'call_center', icon: 'headset', labelKey: 'profile.profession.call_center' },
+      { value: 'support', icon: 'chatBubble', labelKey: 'profile.profession.support' },
+      { value: 'courier', icon: 'truck', labelKey: 'profile.profession.courier' },
+      { value: 'driver', icon: 'truck', labelKey: 'profile.profession.driver' },
+      { value: 'waiter', icon: 'cookingPot', labelKey: 'profile.profession.waiter' },
+      { value: 'barista', icon: 'coffee', labelKey: 'profile.profession.barista' },
+      { value: 'cook', icon: 'cookingPot', labelKey: 'profile.profession.cook' },
+      { value: 'administrator', icon: 'person', labelKey: 'profile.profession.administrator' },
+      { value: 'office_manager', icon: 'briefcase', labelKey: 'profile.profession.office_manager' },
+      { value: 'accountant', icon: 'calculator', labelKey: 'profile.profession.accountant' },
+      { value: 'teacher', icon: 'graduationCap', labelKey: 'profile.profession.teacher' },
+      { value: 'translator', icon: 'globe', labelKey: 'profile.profession.translator' },
+      { value: 'developer', icon: 'code', labelKey: 'profile.profession.developer' },
+      { value: 'qa', icon: 'checkCircle', labelKey: 'profile.profession.qa' },
+      { value: 'designer', icon: 'palette', labelKey: 'profile.profession.designer' },
+      { value: 'smm', icon: 'chatBubble', labelKey: 'profile.profession.smm' },
+      { value: 'marketer', icon: 'megaphone', labelKey: 'profile.profession.marketer' },
+      { value: 'content', icon: 'camera', labelKey: 'profile.profession.content' },
+      { value: 'hr', icon: 'users', labelKey: 'profile.profession.hr' },
+      { value: 'beauty', icon: 'scissors', labelKey: 'profile.profession.beauty' },
+      { value: 'fitness', icon: 'dumbbell', labelKey: 'profile.profession.fitness' },
+      { value: 'logistics', icon: 'truck', labelKey: 'profile.profession.logistics' },
+      { value: 'other', icon: 'briefcase', labelKey: 'profile.profession.other' },
     ],
   },
   {
@@ -605,10 +605,14 @@ function renderLifestyleFields() {
     const current = state.lifestyle[field.key];
     if (field.key === 'profession' && state.lifestyle.employed !== true) return '';
     if (field.type === 'select') {
+      const selected = field.options.find((opt) => opt.value === current && opt.value);
       return `<div class="field"><label class="field-label" for="profile-profession">${fieldLabelHtml(field)}</label>
-        <select id="profile-profession" class="profession-select" required data-lifestyle-select="${field.key}">
-          ${field.options.map((opt) => `<option value="${opt.value ?? ''}" ${current === opt.value ? 'selected' : ''}>${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</option>`).join('')}
-        </select></div>`;
+        <div class="university-search-wrap profession-search-wrap${selected ? ' is-picked' : ''}">
+          <span class="icon university-search-icon" data-profession-icon aria-hidden="true">${UyDosh.iconChrome(selected?.icon || 'briefcase')}</span>
+          <input type="text" id="profile-profession" required autocomplete="off" aria-controls="profession-options" aria-expanded="false"
+            value="${UyDosh.escapeHtml(selected ? UyDosh.t(selected.labelKey) : '')}" placeholder="${UyDosh.escapeHtml(UyDosh.t('profile.profession.choose'))}" />
+          <div id="profession-options" class="station-list" hidden></div>
+        </div></div>`;
     }
 
     if (field.type === 'scale') {
@@ -747,15 +751,54 @@ function bindEvents() {
     });
   }
 
-  employmentFieldsEl.addEventListener('change', (e) => {
-    const select = e.target.closest('[data-lifestyle-select]');
-    if (!select) return;
-    const field = LIFESTYLE_FIELDS.find((f) => f.key === select.dataset.lifestyleSelect);
-    const option = field?.options.find((opt) => (opt.value ?? '') === select.value);
-    if (!option) return;
-    state.lifestyle[field.key] = option.value;
-    select.setCustomValidity('');
+  const showProfessions = (query = '') => {
+    const list = document.getElementById('profession-options');
+    const input = document.getElementById('profile-profession');
+    if (!list || !input) return;
+    const field = LIFESTYLE_FIELDS.find((item) => item.key === 'profession');
+    const options = field.options.filter((opt) => opt.value && UyDosh.t(opt.labelKey).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    list.innerHTML = options.map((opt) => `<button type="button" class="station-item profession-option" data-profession="${opt.value}" aria-pressed="${state.lifestyle.profession === opt.value}"><span aria-hidden="true">${UyDosh.iconChrome(opt.icon)}</span>${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</button>`).join('');
+    list.hidden = !options.length;
+    input.setAttribute('aria-expanded', String(!list.hidden));
+  };
+  employmentFieldsEl.addEventListener('focusin', (e) => {
+    if (e.target.id === 'profile-profession') { showProfessions(); e.target.select(); }
+  });
+  employmentFieldsEl.addEventListener('input', (e) => {
+    if (e.target.id !== 'profile-profession') return;
+    state.lifestyle.profession = null;
+    e.target.setCustomValidity('');
+    e.target.closest('.profession-search-wrap').classList.remove('is-picked');
+    employmentFieldsEl.querySelector('[data-profession-icon]').innerHTML = UyDosh.iconChrome('briefcase');
     showFormError('');
+    showProfessions(e.target.value);
+  });
+  const closeProfessions = () => {
+    const list = document.getElementById('profession-options');
+    if (list) list.hidden = true;
+    document.getElementById('profile-profession')?.setAttribute('aria-expanded', 'false');
+  };
+  employmentFieldsEl.addEventListener('click', (e) => {
+    const option = e.target.closest('[data-profession]');
+    if (!option) return;
+    state.lifestyle.profession = option.dataset.profession;
+    showFormError('');
+    renderLifestyleFields();
+    document.getElementById('profile-profession')?.focus();
+    closeProfessions();
+  });
+  employmentFieldsEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeProfessions();
+    if (e.key === 'ArrowDown' && e.target.id === 'profile-profession') {
+      e.preventDefault(); showProfessions(e.target.value);
+      document.querySelector('[data-profession]')?.focus();
+    }
+  });
+  employmentFieldsEl.addEventListener('focusout', (e) => {
+    if (!e.relatedTarget?.closest('.profession-search-wrap')) closeProfessions();
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('.profession-search-wrap')) closeProfessions();
   });
 
   const handleFieldClick = (e) => {
