@@ -693,6 +693,7 @@ I18N.ru = {
     'profile.tabs.lifestyle': 'Образ жизни',
     'profile.lifestyle.notSpecified': 'Не указано',
     'profile.lifestyle.moreComingSoon': 'Скоро добавим в профиль ещё больше полей.',
+    'profile.errorProfessionRequired': "Выберите профессию, если вы работаете.",
     'profile.profession': "Профессия",
     'profile.profession.choose': "Выберите профессию",
     'profile.profession.sales': "Менеджер по продажам",

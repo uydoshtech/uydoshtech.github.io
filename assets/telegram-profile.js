@@ -606,7 +606,7 @@ function renderLifestyleFields() {
     if (field.key === 'profession' && state.lifestyle.employed !== true) return '';
     if (field.type === 'select') {
       return `<div class="field"><label class="field-label" for="profile-profession">${fieldLabelHtml(field)}</label>
-        <select id="profile-profession" class="profession-select" data-lifestyle-select="${field.key}">
+        <select id="profile-profession" class="profession-select" required data-lifestyle-select="${field.key}">
           ${field.options.map((opt) => `<option value="${opt.value ?? ''}" ${current === opt.value ? 'selected' : ''}>${UyDosh.escapeHtml(UyDosh.t(opt.labelKey))}</option>`).join('')}
         </select></div>`;
     }
@@ -754,6 +754,7 @@ function bindEvents() {
     const option = field?.options.find((opt) => (opt.value ?? '') === select.value);
     if (!option) return;
     state.lifestyle[field.key] = option.value;
+    select.setCustomValidity('');
     showFormError('');
   });
 
@@ -932,6 +933,25 @@ function bindEvents() {
 
 async function onSave() {
   if (state.saving) return;
+
+  if (state.lifestyle.employed === true) {
+    const field = LIFESTYLE_FIELDS.find((item) => item.key === 'profession');
+    const selected = field.options.some((option) => option.value != null
+      && option.value === state.lifestyle.profession);
+    if (!selected) {
+      setActiveTab(TAB_BASIC);
+      const message = UyDosh.t('profile.errorProfessionRequired');
+      showFormError(message);
+      const select = document.getElementById('profile-profession');
+      if (select) {
+        select.setCustomValidity(message);
+        select.focus();
+        select.reportValidity();
+      }
+      return;
+    }
+  }
+
 
   if (state.isStudent === null) {
     showFormError(UyDosh.t('profile.errorStudentRequired'));

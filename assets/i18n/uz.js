@@ -692,6 +692,7 @@ I18N.uz = {
     'profile.tabs.lifestyle': 'Turmush tarzi',
     'profile.lifestyle.notSpecified': 'Ko‘rsatilmagan',
     'profile.lifestyle.moreComingSoon': 'Tez orada profilga yana ma’lumotlar qo‘shamiz.',
+    'profile.errorProfessionRequired': "Agar ishlayotgan bo‘lsangiz, kasbingizni tanlang.",
     'profile.profession': "Kasb",
     'profile.profession.choose': "Kasbni tanlang",
     'profile.profession.sales': "Sotuv menejeri",

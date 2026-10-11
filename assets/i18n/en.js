@@ -691,6 +691,7 @@ I18N.en = {
     'profile.tabs.lifestyle': 'Lifestyle',
     'profile.lifestyle.notSpecified': 'Not specified',
     'profile.lifestyle.moreComingSoon': "We'll add more profile fields soon.",
+    'profile.errorProfessionRequired': "Choose a profession if you are working.",
     'profile.profession': "Profession",
     'profile.profession.choose': "Choose a profession",
     'profile.profession.sales': "Sales manager",
