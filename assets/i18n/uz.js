@@ -670,7 +670,7 @@ I18N.uz = {
     'profile.studentYes': 'Ha',
     'profile.studentNo': 'Yo‘q',
     'profile.universityLabel': 'Universitet',
-    'profile.universitySearchPlaceholder': 'Universitetni qidirish…',
+    'profile.universitySearchPlaceholder': 'Universitetni tanlang',
     'profile.universityNotFound': 'Hech narsa topilmadi',
     'profile.universityNotSelected': 'Universitetni tanlang',
     'profile.errorStudentRequired': 'Savolga javob bering',

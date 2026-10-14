@@ -671,7 +671,7 @@ I18N.ru = {
     'profile.studentYes': 'Да',
     'profile.studentNo': 'Нет',
     'profile.universityLabel': 'Университет',
-    'profile.universitySearchPlaceholder': 'Поиск университета…',
+    'profile.universitySearchPlaceholder': 'Выберите университет',
     'profile.universityNotFound': 'Ничего не найдено',
     'profile.universityNotSelected': 'Выберите университет',
     'profile.errorStudentRequired': 'Ответьте на вопрос',

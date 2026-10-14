@@ -669,7 +669,7 @@ I18N.en = {
     'profile.studentYes': 'Yes',
     'profile.studentNo': 'No',
     'profile.universityLabel': 'University',
-    'profile.universitySearchPlaceholder': 'Search university…',
+    'profile.universitySearchPlaceholder': 'Choose a university',
     'profile.universityNotFound': 'Nothing found',
     'profile.universityNotSelected': 'Select your university',
     'profile.errorStudentRequired': 'Please answer this question',

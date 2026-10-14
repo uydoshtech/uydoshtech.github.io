@@ -556,3 +556,33 @@ html.profile-embedded { height: 100%; overflow-y: auto; overscroll-behavior: con
 .profession-option > span { display: inline-flex; flex-shrink: 0; color: var(--brand2); }
 .profession-option svg { width: 20px; height: 20px; }
 #profession-options[hidden] { display: none; }
+
+.profession-dropdown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px 12px 42px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.profession-chevron { display: inline-flex; flex-shrink: 0; }
+.profession-chevron svg { width: 20px; height: 20px; }
+.profession-search-wrap.is-picked .profession-dropdown {
+  font-weight: 700;
+  border-color: color-mix(in srgb, var(--brand2) 35%, var(--stroke));
+  background: color-mix(in srgb, var(--brand2) 8%, transparent);
+}
+.profession-dropdown:focus-visible { outline: 2px solid var(--brand2); outline-offset: 2px; }
+.profession-dropdown[aria-invalid="true"] { border-color: var(--error, #f87171); }
+
+#university-search[readonly] { cursor: pointer; padding-right: 42px; caret-color: transparent; }
+.university-dropdown-chevron { position: absolute; right: 12px; top: 12px; display: inline-flex; pointer-events: none; }
+.university-dropdown-chevron svg { width: 20px; height: 20px; }

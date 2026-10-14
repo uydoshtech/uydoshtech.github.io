@@ -90,10 +90,17 @@
               <input
                 type="text"
                 id="university-search"
+                readonly
+                inputmode="none"
+                role="combobox"
+                aria-autocomplete="none"
+                aria-controls="university-list"
+                aria-expanded="false"
                 data-i18n="profile.universitySearchPlaceholder"
                 data-i18n-attr="placeholder"
                 autocomplete="off"
               />
+              <span class="university-dropdown-chevron" aria-hidden="true" data-icon="chevronDown"></span>
               <div class="station-list" id="university-list" hidden></div>
             </div>
           </div>
