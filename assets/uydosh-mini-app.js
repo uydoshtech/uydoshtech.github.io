@@ -649,7 +649,7 @@ function accountMenuHtml() {
       data-i18n="profile.menuLabel"
       data-i18n-attr="aria-label"
     >
-      <span class="account-menu-avatar${avatarUrl ? " has-avatar" : ""}" aria-hidden="true">${avatarInner}</span>
+      <span class="account-menu-avatar has-profile-halo${avatarUrl ? " has-avatar" : ""}" aria-hidden="true">${avatarInner}</span>
       <span class="account-menu-edit-badge" aria-hidden="true">${UyDosh.iconPencil()}</span>
     </a>`;
 }
@@ -1563,6 +1563,14 @@ function ensureMiniAppSafeAreaStyles() {
       border: 1.5px solid var(--stroke, rgba(127, 127, 127, 0.45));
       background: rgba(127, 127, 127, 0.08);
       color: var(--muted, rgba(255, 255, 255, 0.7));
+    }
+    /* Enabled for every header avatar for now. Later, toggle this class
+       based on profile completeness without changing the halo styling. */
+    html.mini-app .account-menu-avatar.has-profile-halo {
+      border-color: #4ade80;
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3),
+                  0 0 10px 3px rgba(34, 197, 94, 0.55),
+                  0 0 22px 6px rgba(34, 197, 94, 0.22);
     }
     html.mini-app .account-menu-avatar svg {
       width: 20px;
