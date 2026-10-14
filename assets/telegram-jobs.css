@@ -1,0 +1,23 @@
+.jobs-main { padding: 16px var(--feed-content-gutter, 20px) 32px; max-width: 780px; margin: auto; }
+.jobs-main h1 { font-size: 28px; margin: 8px 0; }
+.jobs-subtitle, .jobs-source, .job-meta, .job-snippet, .job-salary-note { color: var(--muted); line-height: 1.5; }
+.jobs-subtitle { margin: 0 0 24px; }
+.jobs-filter { display: grid; gap: 8px; font-weight: 600; }
+.jobs-filter select, .jobs-button { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--stroke); border-radius: 12px; min-height: 44px; padding: 10px 12px; }
+.jobs-filter select { width: 100%; }
+.jobs-list { display: grid; gap: 12px; }
+.job-card { border: 1px solid var(--stroke); border-radius: 18px; background: var(--card); padding: 20px; overflow-wrap: anywhere; }
+.job-card h2 { font-size: 18px; line-height: 1.4; margin: 0 0 10px; }
+.job-salary { font-weight: 700; margin: 8px 0 0; }
+.job-salary-note { font-size: 12px; margin: 4px 0 12px; }
+.job-meta { font-size: 14px; margin: 6px 0; }
+.job-snippet { font-size: 14px; margin: 12px 0; }
+.job-link { display: inline-block; color: var(--fg); font-weight: 600; padding: 12px 0 0; text-underline-offset: 4px; }
+.jobs-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 20px; }
+.jobs-pagination span { text-align: center; font-size: 13px; }
+.jobs-button { cursor: pointer; }
+.jobs-button:disabled { opacity: .4; cursor: default; }
+.jobs-source { text-align: center; font-size: 12px; margin: 28px 0 0; }
+.jobs-source a { color: inherit; }
+.jobs-main [hidden] { display: none !important; }
+.jobs-main :focus-visible { outline: 2px solid var(--brand2, #60a5fa); outline-offset: 3px; }

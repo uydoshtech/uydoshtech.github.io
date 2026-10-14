@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="uz" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>UyDosh — Jobs</title>
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script src="../assets/theme-init.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <link rel="stylesheet" href="../assets/loading-spinner.css" />
+    <link rel="stylesheet" href="../assets/telegram-shared.css" />
+    <link rel="stylesheet" href="../assets/telegram-jobs.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header data-uydosh-mini-app-header></header>
+      <main class="jobs-main">
+        <h1 data-i18n="jobs.title"></h1>
+        <p class="jobs-subtitle" data-i18n="jobs.subtitle"></p>
+        <label class="jobs-filter" for="job-category">
+          <span data-i18n="jobs.category"></span>
+          <select id="job-category">
+            <option value="all" data-i18n="jobs.all"></option>
+            <option value="no-experience" data-i18n="jobs.no-experience"></option>
+            <option value="junior" data-i18n="jobs.junior"></option>
+            <option value="part-time" data-i18n="jobs.part-time"></option>
+            <option value="internships" data-i18n="jobs.internships"></option>
+            <option value="remote" data-i18n="jobs.remote"></option>
+          </select>
+        </label>
+        <p id="jobs-status" role="status" aria-live="polite"></p>
+        <button id="jobs-retry" class="jobs-button" type="button" hidden data-i18n="jobs.retry"></button>
+        <div id="jobs-list" class="jobs-list" aria-busy="false"></div>
+        <nav id="jobs-pagination" class="jobs-pagination" aria-label="Pagination" hidden>
+          <button id="jobs-previous" class="jobs-button" type="button" data-i18n="jobs.previous"></button>
+          <span id="jobs-page"></span>
+          <button id="jobs-next" class="jobs-button" type="button" data-i18n="jobs.next"></button>
+        </nav>
+        <p class="jobs-source"><a href="https://hh.uz" target="_blank" rel="noopener noreferrer" data-i18n="jobs.source"></a></p>
+      </main>
+    </div>
+    <script src="../assets/uydosh-core.js"></script>
+    <script src="../assets/uydosh-i18n.js"></script>
+    <script src="../assets/uydosh-api.js" defer></script>
+    <script src="../assets/uydosh-icons.js" defer></script>
+    <script src="../assets/uydosh-mini-app.js" defer></script>
+    <script src="../assets/telegram-jobs.js" defer></script>
+  </body>
+</html>

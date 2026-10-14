@@ -608,6 +608,7 @@ function accountMenuDisplayName() {
 function accountShortcutItemsHtml() {
   return `
     <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome("plus")}<span data-i18n="create.postListing"></span></a>
+    <a role="menuitem" href="/telegram/jobs.html">${UyDosh.iconChrome("fileText")}<span data-i18n="jobs.title"></span></a>
     <a role="menuitem" href="${MINI_APP_HOSTELS_PATH}">${UyDosh.iconChrome("house")}<span>Хостелы</span></a>
     <a role="menuitem" href="${MINI_APP_HOSTEL_CREATE_PATH}" data-admin-hostel-create hidden>${UyDosh.iconChrome("plus")}<span>Добавить хостел</span></a>
     <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}?tab=mine">${UyDosh.iconChrome("house")}<span data-i18n="account.tabs.mine"></span></a>
