@@ -280,7 +280,14 @@ function peopleForAvatarStack(listing, members) {
       avatar_url: person.avatar_url || prev.avatar_url,
     });
   }
-  const rows = [...byKey.values()];
+  // Inbox previews may omit roles; the listing context identifies the active
+  // landlord independently of the full participants-sheet roster.
+  const landlordId = Number(listing?.group_context?.group_progress?.active_landlord_user_id);
+  const rows = [...byKey.values()].map(person => (
+    landlordId > 0 && Number(person.user_id ?? person.id) === landlordId
+      ? { ...person, role: 'landlord_guest' }
+      : person
+  ));
   return rows.length ? rows : fromMembers;
 }
 
@@ -1434,7 +1441,11 @@ function participantsSheetHtml(listing, members, lang) {
   const names = people.map((m) => String(m.name || '').trim()).filter(Boolean).join(', ');
   const count = people.length || members.length;
   const avatars = accountAvatarStackHtml(people);
-  const cards = members.map((member) => memberCardHtml(member, listing, lang)).join('');
+  const landlordId = Number(listing?.group_context?.group_progress?.active_landlord_user_id);
+  const isLandlord = member => member.role === 'landlord_guest' ||
+    (landlordId > 0 && Number(member.user_id ?? member.id) === landlordId);
+  const orderedMembers = [...members.filter(isLandlord), ...members.filter(member => !isLandlord(member))];
+  const cards = orderedMembers.map((member) => memberCardHtml(member, listing, lang)).join('');
   return `
     <div class="gp-backdrop" data-gp-close></div>
     <div class="gp-sheet" role="dialog" aria-modal="true" aria-labelledby="gp-sheet-title">

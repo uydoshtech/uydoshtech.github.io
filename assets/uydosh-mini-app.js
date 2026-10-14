@@ -1580,23 +1580,27 @@ function ensureMiniAppSafeAreaStyles() {
       box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3),
                   0 0 10px 3px rgba(34, 197, 94, 0.55),
                   0 0 22px 6px rgba(34, 197, 94, 0.22);
-      animation: profile-halo-glow 2.6s ease-in-out infinite;
     }
-    @keyframes profile-halo-glow {
-      0%, 100% {
-        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.22),
-                    0 0 7px 2px rgba(34, 197, 94, 0.35),
-                    0 0 16px 4px rgba(34, 197, 94, 0.14);
-      }
-      50% {
-        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.42),
-                    0 0 14px 4px rgba(34, 197, 94, 0.7),
-                    0 0 26px 8px rgba(34, 197, 94, 0.3);
-      }
+    /* Animate a separate outer ring with compositor-friendly properties.
+       It sits outside the clipped portrait, so the face stays still. */
+    html.mini-app .account-menu-trigger:has(.has-profile-halo)::before {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border: 2px solid #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 12px 3px rgba(34, 197, 94, 0.65);
+      pointer-events: none;
+      animation: profile-halo-pulse 1.8s ease-out infinite;
+    }
+    @keyframes profile-halo-pulse {
+      0% { transform: scale(1); opacity: 0.95; }
+      75%, 100% { transform: scale(1.32); opacity: 0; }
     }
     @media (prefers-reduced-motion: reduce) {
-      html.mini-app .account-menu-avatar.has-profile-halo {
+      html.mini-app .account-menu-trigger:has(.has-profile-halo)::before {
         animation: none;
+        display: none;
       }
     }
     html.mini-app .account-menu-avatar svg {
