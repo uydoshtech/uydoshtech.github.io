@@ -1351,3 +1351,50 @@ button.friend-card-link { border: 0; background: none; padding: 0; color: inheri
 /* Fade the clipped profile edge so scrolled card borders do not look like
    an underline beneath the close button. */
 .friend-profile-dialog iframe { display: block; width: 100%; height: calc(100% - 44px); border: 0; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8px); mask-image: linear-gradient(to bottom, transparent, #000 8px); }
+
+/* Match the active Mini App theme, including manual and Telegram switches. */
+html.mini-app-header-light .account-participants-pill {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+html.mini-app-header-light .account-participants-label {
+  color: #334155;
+}
+html.mini-app-header-light .account-participants-chevron,
+html.mini-app-header-light .gp-chevron {
+  color: #64748b;
+}
+html.mini-app-header-light .account-housing-icon {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+html.mini-app-header-light .account-housing-avatar {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+html.mini-app-header-light .account-participants-more {
+  background: #cbd5e1;
+  color: #334155;
+}
+html.mini-app-header-light .gp-sheet {
+  background: #f6f7fb;
+  color: #0f172a;
+}
+html.mini-app-header-light .gp-member,
+html.mini-app-header-light .gp-member-front {
+  background: #e2e8f0;
+}
+html.mini-app-header-light .gp-card-avatar .account-participants-avatar {
+  border-color: #e2e8f0;
+}
+html.mini-app-header-light .gp-handle {
+  background: #94a3b8;
+}
+html.mini-app-header-light .gp-status-pill {
+  border-color: #94a3b8;
+  color: #334155;
+}
+html.mini-app-header-light .gp-match.is-good { color: #15803d; }
+html.mini-app-header-light .gp-match.is-ok { color: #9a3412; }
+html.mini-app-header-light .gp-match.is-bad,
+html.mini-app-header-light .gp-leave { color: #b91c1c; }

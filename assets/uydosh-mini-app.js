@@ -1412,6 +1412,15 @@ function ensureMiniAppSafeAreaStyles() {
     /* Light-theme header (lighter skyline variant, see 'mini-app-header-light'
        above) — "Dosh" and the tagline read better dark here, even though the
        header's photo is still dark-blue-tinted overall. */
+    html.mini-app-header-light header .brand img {
+      content: url("/images/uydosh-logo-black-u.svg");
+    }
+    html.mini-app {
+      --spinner-logo: url("/images/uydosh-logo.svg?v=20260715-1");
+    }
+    html.mini-app.mini-app-header-light {
+      --spinner-logo: url("/images/uydosh-logo-black-u.svg");
+    }
     html.mini-app-header-light header .brand .brand-dosh {
       color: rgba(0, 0, 0, 0.92);
     }
@@ -1571,6 +1580,24 @@ function ensureMiniAppSafeAreaStyles() {
       box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3),
                   0 0 10px 3px rgba(34, 197, 94, 0.55),
                   0 0 22px 6px rgba(34, 197, 94, 0.22);
+      animation: profile-halo-glow 2.6s ease-in-out infinite;
+    }
+    @keyframes profile-halo-glow {
+      0%, 100% {
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.22),
+                    0 0 7px 2px rgba(34, 197, 94, 0.35),
+                    0 0 16px 4px rgba(34, 197, 94, 0.14);
+      }
+      50% {
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.42),
+                    0 0 14px 4px rgba(34, 197, 94, 0.7),
+                    0 0 26px 8px rgba(34, 197, 94, 0.3);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html.mini-app .account-menu-avatar.has-profile-halo {
+        animation: none;
+      }
     }
     html.mini-app .account-menu-avatar svg {
       width: 20px;
