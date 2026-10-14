@@ -1398,3 +1398,11 @@ html.mini-app-header-light .gp-match.is-good { color: #15803d; }
 html.mini-app-header-light .gp-match.is-ok { color: #9a3412; }
 html.mini-app-header-light .gp-match.is-bad,
 html.mini-app-header-light .gp-leave { color: #b91c1c; }
+
+/* Landlord identity stays visible above overlapping participant portraits. */
+.account-participants-avatar.account-participants-avatar--landlord,
+.gp-summary-avatars .account-participants-avatar--landlord,
+.gp-card-avatar .account-participants-avatar.account-participants-avatar--landlord {
+  border: 3px solid #fbbf24;
+  box-shadow: 0 0 0 1px #92400e, 0 0 8px rgba(245, 158, 11, 0.5);
+}

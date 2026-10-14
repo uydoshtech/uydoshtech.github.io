@@ -242,13 +242,15 @@ function participantsFromConversation(conversation) {
 }
 
 function participantAvatarHtml(person, index) {
+  const isLandlord = person?.role === 'landlord_guest';
   const url = person?.avatar_url || '';
   const initial = Array.from(String(person?.name || '').trim())[0] || '';
   const letter = UyDosh.escapeHtml(initial.toUpperCase());
   const inner = url
     ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
     : (letter || UyDosh.iconChrome?.('person') || '');
-  return `<span class="account-participants-avatar" style="z-index:${index + 1}" aria-hidden="true">${inner}</span>`;
+  const roleLabel = isLandlord ? UyDosh.escapeHtml(UyDosh.t('account.roleLandlord')) : '';
+  return `<span class="account-participants-avatar${isLandlord ? ' account-participants-avatar--landlord' : ''}" style="z-index:${isLandlord ? 10 : index + 1}"${isLandlord ? ` role="img" aria-label="${roleLabel}" title="${roleLabel}"` : ' aria-hidden="true"'}>${inner}</span>`;
 }
 
 function peopleForAvatarStack(listing, members) {
