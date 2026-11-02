@@ -1536,6 +1536,26 @@ function fetchHostels({ districtId, gender } = {}) {
 function fetchHostel(id) {
   return fetchJson(`/hostels/${encodeURIComponent(id)}`);
 }
+
+/** Paginated user list used by the Mini App admin screen. Same endpoint as the app. */
+function fetchAdminUsers({ pageNumber = 1, pageSize = 20 } = {}) {
+  return fetchJsonAuth("/users", { params: { pageNumber, pageSize } });
+}
+
+/** Telegram visitors who have reported a device location. Admin only. */
+function fetchAdminTelegramLocationUsers({ q, page = 1, limit = 30 } = {}) {
+  return fetchJsonAuth("/admin/telegram-mini-app-locations/users", {
+    params: { q, page, limit },
+  });
+}
+
+/** Location trail for one Telegram user id. Admin only. */
+function fetchAdminTelegramLocationHistory(telegramUserId, { page = 1, limit = 200 } = {}) {
+  return fetchJsonAuth(
+    `/admin/telegram-mini-app-locations/users/${encodeURIComponent(telegramUserId)}/history`,
+    { params: { page, limit } },
+  );
+}
 function fetchHostelForAdminEdit(id) {
   return fetchJsonAuth(`/admin/hostels/${encodeURIComponent(id)}`);
 }
@@ -2300,6 +2320,9 @@ Object.assign(window.UyDosh, {
   getSessionUserId,
   getSessionUserRole,
   isAdmin,
+  fetchAdminUsers,
+  fetchAdminTelegramLocationUsers,
+  fetchAdminTelegramLocationHistory,
   loadYandexMapModule,
   loadClassicScript,
   assetScriptUrl,

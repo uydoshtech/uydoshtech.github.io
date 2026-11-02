@@ -45,3 +45,91 @@
   color: var(--muted);
   font-size: 12px;
 }
+.admin-page .status {
+  margin: 20px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+.admin-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+}
+.admin-back {
+  display: inline-flex;
+  margin: 0 0 12px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+.admin-back[hidden],
+.admin-search[hidden],
+.admin-directory[hidden] {
+  display: none;
+}
+.admin-directory {
+  display: grid;
+  gap: 10px;
+}
+.admin-card {
+  display: block;
+  padding: 14px 15px;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--fg);
+  text-decoration: none;
+}
+.admin-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.admin-card-title b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.admin-card-side {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.admin-card-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-online {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+}
+.admin-phone {
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-retry {
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 700;
+}

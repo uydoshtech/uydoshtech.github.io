@@ -723,6 +723,21 @@ function navDrawerHtml() {
         </div>
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
+          <div data-admin-drawer hidden>
+            <div class="account-menu-divider" role="separator"></div>
+            ${navDrawerSectionHtml(
+              "nav-drawer-admin-panel",
+              "nav.admin",
+              "shield",
+              navDrawerSectionHtml(
+                "nav-drawer-admin-users-panel",
+                "nav.adminUsers",
+                "users",
+                `<a role="menuitem" href="/telegram/admin-users.html">${UyDosh.iconChrome("person")}<span data-i18n="nav.adminUserList"></span></a>
+                <a role="menuitem" href="/telegram/admin-locations.html">${UyDosh.iconChrome("mapPin")}<span data-i18n="nav.adminLocations"></span></a>`,
+              ),
+            )}
+          </div>
           <div class="account-menu-divider" role="separator"></div>
           ${navDrawerSectionHtml(
             "nav-drawer-app-panel",
@@ -1059,6 +1074,9 @@ async function revealAdminHostelTools() {
   try {
     if (!(await ensureTelegramMiniAppSession()) || !isAdmin()) return;
     document.querySelectorAll("[data-admin-hostel-create]").forEach((el) => {
+      el.hidden = false;
+    });
+    document.querySelectorAll("[data-admin-drawer]").forEach((el) => {
       el.hidden = false;
     });
     // Switch the grid before revealing the fifth item. Revealing it first
