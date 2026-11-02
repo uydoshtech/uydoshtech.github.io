@@ -1201,12 +1201,12 @@ body.view-map .feed-map-panel.active .map-container {
 .featured-badge + .type-badge {
   top: 36px;
 }
-/* 3D room-scan badge — sits in the thumb's one unclaimed corner (top-left
-   is featured/type, bottom-center is the photo-count dots). Matches the
+/* 3D room-scan badge — sits under the owner avatar (top-right). Top-left
+   is featured/type, bottom-center is the photo-count dots. Matches the
    mobile app's Room3dIconBadge glyph (isometric cube). */
 .threed-badge {
   position: absolute;
-  top: 8px;
+  top: 52px;
   right: 8px;
   display: inline-flex;
   align-items: center;
@@ -1228,6 +1228,32 @@ body.view-map .feed-map-panel.active .map-container {
 .threed-badge svg * {
   stroke: currentColor;
   fill: none;
+}
+.owner-avatar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  background: rgba(8, 10, 14, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.owner-avatar svg { width: 20px; height: 20px; display: block; }
+.card .thumb .owner-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .card .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 .card .title-row {

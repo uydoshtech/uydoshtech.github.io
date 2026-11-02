@@ -327,6 +327,16 @@
         });
       }
 
+      /**
+       * Templated posts store "🆔 ID: 1453". The detail heading keeps the
+       * icon and the number; the "ID:" label is display-only noise.
+       */
+      function detailDisplayTitle(raw) {
+        const title = String(raw || '').trim();
+        const idTitle = title.match(/^((?:\p{Extended_Pictographic}\uFE0F?\s*)*)id\s*[:：]\s*(\d+)\s*$/iu);
+        return idTitle ? `${idTitle[1]}${idTitle[2]}` : title;
+      }
+
       function render() {
         stopGalleryAutoplay();
         const l = state.listing;
@@ -334,12 +344,13 @@
         const lang = UyDosh.getLang();
         document.documentElement.lang = lang;
 
-        const title = UyDosh.escapeHtml(l.title || '');
-        document.title = `UyDosh — ${l.title || '#' + l.id}`;
+        const visibleTitle = detailDisplayTitle(l.title);
+        const title = UyDosh.escapeHtml(visibleTitle);
+        document.title = `UyDosh — ${visibleTitle || '#' + l.id}`;
         const ogTitle = document.getElementById('og-title');
         const ogDesc = document.getElementById('og-desc');
         const ogImage = document.getElementById('og-image');
-        if (ogTitle) ogTitle.setAttribute('content', `UyDosh — ${l.title || ''}`);
+        if (ogTitle) ogTitle.setAttribute('content', `UyDosh — ${visibleTitle}`);
         const desc = UyDosh.localizedDescription(l, lang);
         if (ogDesc && desc) ogDesc.setAttribute('content', desc.slice(0, 160));
         const primary = UyDosh.primaryPhoto(l);

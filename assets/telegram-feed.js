@@ -1303,6 +1303,28 @@ function feedCardTitle(listing) {
   return rooms ? `Сдаётся ${rooms}-комнатная квартира` : title;
 }
 
+/**
+ * Owner portrait in the photo's top-right corner. The handle comes from the
+ * listing contact, or from the owner's Telegram username on the feed payload.
+ * A person glyph stays underneath so a missing photo still reads as an avatar.
+ */
+function listingOwnerAvatarHtml(listing) {
+  const fromContact = typeof UyDosh.listingContactTelegram === 'function'
+    ? UyDosh.listingContactTelegram(listing)
+    : '';
+  const fromUser = String(listing?.user?.telegram_username || '').trim().replace(/^@+/, '');
+  const handle = fromContact || fromUser;
+  const url = handle && typeof UyDosh.telegramAvatarUrl === 'function'
+    ? UyDosh.telegramAvatarUrl(handle)
+    : '';
+  const label = UyDosh.t('detail.author');
+  const fallback = typeof UyDosh.iconChrome === 'function' ? UyDosh.iconChrome('person') : '';
+  const photo = url
+    ? `<img src="${UyDosh.escapeHtml(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove();" />`
+    : '';
+  return `<span class="owner-avatar" role="img" aria-label="${UyDosh.escapeHtml(label)}">${fallback}${photo}</span>`;
+}
+
 function listingCardHtml(listing) {
   const lang = UyDosh.getLang();
   const photo = UyDosh.primaryPhoto(listing);
@@ -1353,15 +1375,15 @@ function listingCardHtml(listing) {
       </div></div>`
     : '';
   const photoDots = UyDosh.cardPhotoDotsHtml(listing);
-  // Top-right is the only unclaimed thumb corner: top-left already carries
-  // featured/type badges and bottom-center carries the photo-count dots.
+  // Top-right is the owner avatar. The 3D marker drops below it (see CSS).
+  const ownerAvatar = listingOwnerAvatarHtml(listing);
   const threeDBadge = UyDosh.threeDTourBadgeHtml(listing, lang);
   const placeholderSrc = !photoSrc ? UyDosh.noPhotoPlaceholderImageUrl(listing) : '';
   const thumb = photoSrc
-    ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${featured}${typeBadge}${threeDBadge}${photoDots}</div>`
+    ? `<div class="thumb"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${featured}${typeBadge}${ownerAvatar}${threeDBadge}${photoDots}</div>`
     : placeholderSrc
-      ? `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="${title}" />${featured}${typeBadge}${threeDBadge}</div>`
-      : `<div class="thumb empty">${featured}${typeBadge}${threeDBadge}</div>`;
+      ? `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(placeholderSrc)}" alt="${title}" />${featured}${typeBadge}${ownerAvatar}${threeDBadge}</div>`
+      : `<div class="thumb empty">${featured}${typeBadge}${ownerAvatar}${threeDBadge}</div>`;
 
   return `
     <a class="card" href="${UyDosh.escapeHtml(discoveryListingUrl(listing.id))}">
