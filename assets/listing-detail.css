@@ -1708,6 +1708,9 @@
   border-color: var(--brand2); background: color-mix(in srgb, var(--brand2) 14%, transparent);
 }
 .description-languages button:disabled { opacity: .5; cursor: wait; }
+.description-languages button.description-language-flag {
+  width: 36px; padding: 0; font-size: 18px; line-height: 1;
+}
 .description-languages button:focus-visible { outline: 2px solid var(--brand2); outline-offset: 2px; }
 .description-translation-status { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
 
@@ -1836,6 +1839,7 @@
   .map-section-extra .description-header h2 { font-size: 14px; }
   .description-languages { gap: 3px; }
   .description-languages button { padding: 6px; font-size: 11px; }
+  .description-languages button.description-language-flag { width: 32px; padding: 0; font-size: 16px; }
 }
 
 /* Match the photo-to-pills gap to the details column's 14px spacing. */

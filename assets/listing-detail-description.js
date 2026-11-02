@@ -19,12 +19,26 @@ function listingDescriptionState(listing, fallback) {
   return listingDescriptionStates.get(listing);
 }
 
+const DESCRIPTION_LANGUAGE_FLAGS = {
+  uz: { flag: '🇺🇿', name: 'Oʻzbekcha' },
+  ru: { flag: '🇷🇺', name: 'Русский' },
+  en: { flag: '🇬🇧', name: 'English' },
+};
+
+function descriptionLanguageButton(code) {
+  if (code === 'original') {
+    return `<button type="button" data-description-language="original" aria-pressed="false">${UyDosh.escapeHtml(UyDosh.t('detail.translation.original'))}</button>`;
+  }
+  const language = DESCRIPTION_LANGUAGE_FLAGS[code];
+  return `<button type="button" class="description-language-flag" data-description-language="${code}" aria-pressed="false" aria-label="${UyDosh.escapeHtml(language.name)}">${language.flag}</button>`;
+}
+
 function listingDescriptionHtml(listing, fallback) {
   const model = listingDescriptionState(listing, fallback);
   return `<div class="map-section-extra map-section-description" data-description-section>
     <div class="description-header">
     <div class="description-languages" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('detail.translation.label'))}" hidden>
-      ${['original', 'uz', 'ru', 'en'].map(code => `<button type="button" data-description-language="${code}" aria-pressed="false">${code === 'original' ? UyDosh.escapeHtml(UyDosh.t('detail.translation.original')) : code.toUpperCase()}</button>`).join('')}
+      ${['original', 'uz', 'ru', 'en'].map(descriptionLanguageButton).join('')}
     </div>
     </div>
     <div class="description">${UyDosh.escapeHtml(model.cache[model.selected])}</div>
