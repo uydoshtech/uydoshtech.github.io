@@ -366,6 +366,9 @@ const LISTING_TYPE_GROUP_FORMING = 3;
 // A hostel is catalogued separately from user listings, but participates as
 // an explicitly selected fourth type in the shared feed/map filter.
 const LISTING_TYPE_HOSTEL = 4;
+// Whole-apartment rent (`listing_types.code = apartment_rent`). Id 5 matches
+// the migration so it does not collide with the hostel filter id.
+const LISTING_TYPE_APARTMENT_RENT = 5;
 
 const GENDER_ANY = 0;
 const GENDER_MALE = 1;
@@ -880,6 +883,7 @@ Object.assign(window.UyDosh, {
   LISTING_TYPE_ROOMMATE_NEEDED,
   LISTING_TYPE_GROUP_FORMING,
   LISTING_TYPE_HOSTEL,
+  LISTING_TYPE_APARTMENT_RENT,
   GENDER_ANY,
   GENDER_MALE,
   GENDER_FEMALE,

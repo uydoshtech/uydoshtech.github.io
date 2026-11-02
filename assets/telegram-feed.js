@@ -233,7 +233,8 @@ function readUrlListingTypeId() {
       id === LISTING_TYPE_ROOM_NEEDED ||
       id === LISTING_TYPE_ROOMMATE_NEEDED ||
       id === LISTING_TYPE_GROUP_FORMING ||
-      id === LISTING_TYPE_HOSTEL
+      id === LISTING_TYPE_HOSTEL ||
+      id === LISTING_TYPE_APARTMENT_RENT
     ) {
       return id;
     }
@@ -690,6 +691,7 @@ function renderFilters() {
   const typeOptions = [
     { value: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
     { value: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
+    { value: LISTING_TYPE_APARTMENT_RENT, label: UyDosh.t('filter.type.apartmentRent', lang) },
     { value: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
     { value: LISTING_TYPE_HOSTEL, label: UyDosh.t('filter.type.hostels', lang) },
   ];

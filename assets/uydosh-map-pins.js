@@ -13,6 +13,7 @@ const LISTING_TYPE_COLORS = {
   2: '#FF9800', // roommate_needed
   3: '#22c55e', // group_forming
   4: '#a78bfa', // hostel
+  5: '#2DD4BF', // apartment_rent
 };
 
 /** Material-style SVG paths for listing-type map pin glyphs (viewBox 0 0 24 24). */
@@ -25,6 +26,7 @@ const LISTING_TYPE_MAP_PIN_ICON_PATHS = {
   '2_absent': 'M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z',
   3: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 2.05 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
   4: 'M3 21V9l9-6 9 6v12h-6v-6H9v6H3zm3-2h1v-6h10v6h1v-8.9l-6-4-6 4V19z',
+  5: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z',
   default: 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z',
 };
 
@@ -134,6 +136,7 @@ function resolveListingTypeIdFromPin(pin) {
   if (code === 'room_needed') return 1;
   if (code === 'roommate_needed') return 2;
   if (code === 'group_forming') return 3;
+  if (code === 'apartment_rent') return 5;
   return 0;
 }
 

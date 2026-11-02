@@ -390,6 +390,7 @@ I18N.ru = {
     'filter.type.all': 'Все',
     'filter.type.roomNeeded': 'Ищу жильё',
     'filter.type.roommateNeeded': 'Ищем соседа',
+    'filter.type.apartmentRent': 'Сдаётся квартира',
     'filter.type.groupForming': 'Собираем группу',
     'filter.type.hostels': 'Хостелы',
     'filter.type.aria': 'Тип объявления',

@@ -389,6 +389,7 @@ I18N.uz = {
     'filter.type.all': 'Hammasi',
     'filter.type.roomNeeded': 'Uy qidiryapman',
     'filter.type.roommateNeeded': 'Xonadosh qidiramiz',
+    'filter.type.apartmentRent': 'Kvartira ijaraga',
     'filter.type.groupForming': 'Guruh yigamiz',
     'filter.type.hostels': 'Hostellar',
     'filter.type.aria': 'E’lon turi',
