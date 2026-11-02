@@ -428,6 +428,7 @@ I18N.uz = {
     'create.step.review': 'Tekshirish',
     'create.chooseListingAction': 'Nima qilmoqchi ekaningizni tanlang.',
     'create.typeDescription.roomNeeded': 'O‘zingiz uchun kvartira yoki xona topish',
+    'create.typeDescription.apartmentRent': 'Kvartirani butunlay ijaraga berish',
     'create.typeDescription.roommateNeeded': 'Birga yashash uchun xonadosh topish',
     'create.typeDescription.groupForming': 'Birga uy ijaraga olish uchun guruh tuzish',
     'create.chooseListingType': 'E’lon turini tanlang',

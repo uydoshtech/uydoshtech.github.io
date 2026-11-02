@@ -230,7 +230,6 @@ function readUrlListingTypeId() {
     const id = Number(raw);
     if (
       id === LISTING_TYPE_ALL ||
-      id === LISTING_TYPE_ROOM_NEEDED ||
       id === LISTING_TYPE_ROOMMATE_NEEDED ||
       id === LISTING_TYPE_GROUP_FORMING ||
       id === LISTING_TYPE_HOSTEL ||
@@ -250,7 +249,9 @@ function readStoredFilters() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return {
-      listingTypeId: Number(parsed.listingTypeId) || LISTING_TYPE_ALL,
+      listingTypeId: Number(parsed.listingTypeId) === LISTING_TYPE_ROOM_NEEDED
+        ? LISTING_TYPE_ALL
+        : (Number(parsed.listingTypeId) || LISTING_TYPE_ALL),
       gender: Number(parsed.gender) || GENDER_ANY,
       withPhoto:
         parsed.withPhotoExplicit === true
@@ -689,7 +690,6 @@ function renderFilters() {
   renderDiscoveryBanner();
   const lang = UyDosh.getLang();
   const typeOptions = [
-    { value: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang) },
     { value: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { value: LISTING_TYPE_APARTMENT_RENT, label: UyDosh.t('filter.type.apartmentRent', lang) },
     { value: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },

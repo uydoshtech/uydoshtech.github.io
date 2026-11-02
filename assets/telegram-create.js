@@ -287,7 +287,7 @@ function stepTitles(lang) {
 /** Demand-side types (room-needed + group-forming): search area, budget
  * range, no street address — mirrors Flutter's listing-type branching. */
 function isDemandSideType(typeId = state.form.listingTypeId) {
-  return typeId === LISTING_TYPE_ROOM_NEEDED || typeId === LISTING_TYPE_GROUP_FORMING;
+  return typeId === LISTING_TYPE_GROUP_FORMING;
 }
 
 function isGroupForming(typeId = state.form.listingTypeId) {
@@ -347,7 +347,7 @@ function formatPriceReviewHtml(lang) {
 }
 
 function listingTypeCycleOrder() {
-  return [LISTING_TYPE_ROOM_NEEDED, LISTING_TYPE_ROOMMATE_NEEDED, LISTING_TYPE_GROUP_FORMING];
+  return [LISTING_TYPE_ROOMMATE_NEEDED, LISTING_TYPE_APARTMENT_RENT, LISTING_TYPE_GROUP_FORMING];
 }
 
 function applyListingTypeId(nextTypeId) {
@@ -377,8 +377,8 @@ function applyListingTypeId(nextTypeId) {
 }
 
 function listingTypeLabel(typeId, lang) {
-  if (typeId === LISTING_TYPE_ROOM_NEEDED) return UyDosh.t('filter.type.roomNeeded', lang);
   if (typeId === LISTING_TYPE_GROUP_FORMING) return UyDosh.t('filter.type.groupForming', lang);
+  if (typeId === LISTING_TYPE_APARTMENT_RENT) return UyDosh.t('filter.type.apartmentRent', lang);
   return UyDosh.t('filter.type.roommateNeeded', lang);
 }
 
@@ -1726,8 +1726,8 @@ function roommateLocationSectionHtml(lang) {
 function renderStep0(lang) {
   const compact = state.form.listingTypeId !== null;
   const typeOptions = [
-    { id: LISTING_TYPE_ROOM_NEEDED, label: UyDosh.t('filter.type.roomNeeded', lang), description: UyDosh.t('create.typeDescription.roomNeeded', lang) },
     { id: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang), description: UyDosh.t('create.typeDescription.roommateNeeded', lang) },
+    { id: LISTING_TYPE_APARTMENT_RENT, label: UyDosh.t('filter.type.apartmentRent', lang), description: UyDosh.t('create.typeDescription.apartmentRent', lang) },
     { id: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang), description: UyDosh.t('create.typeDescription.groupForming', lang) },
   ];
   const cards = typeOptions.map((opt) => {

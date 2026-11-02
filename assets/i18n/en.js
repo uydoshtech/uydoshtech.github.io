@@ -427,6 +427,7 @@ I18N.en = {
     'create.step.review': 'Review',
     'create.chooseListingAction': 'Choose what you would like to do.',
     'create.typeDescription.roomNeeded': 'Find an apartment or room for yourself',
+    'create.typeDescription.apartmentRent': 'Rent out a whole apartment',
     'create.typeDescription.roommateNeeded': 'Find roommates to share your home',
     'create.typeDescription.groupForming': 'Form a group to rent a home together',
     'create.chooseListingType': 'Choose a listing type',

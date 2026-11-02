@@ -429,6 +429,7 @@ I18N.ru = {
     'create.step.review': 'Проверка',
     'create.chooseListingAction': 'Выберите, что именно вы хотите сделать.',
     'create.typeDescription.roomNeeded': 'Найти квартиру или комнату для себя',
+    'create.typeDescription.apartmentRent': 'Сдать квартиру целиком',
     'create.typeDescription.roommateNeeded': 'Найти соседа/соседей для совместного проживания',
     'create.typeDescription.groupForming': 'Собрать группу для совместной аренды жилья',
     'create.chooseListingType': 'Выберите тип объявления',
