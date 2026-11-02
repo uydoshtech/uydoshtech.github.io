@@ -80,6 +80,8 @@ I18N.ru = {
     'nav.menuLabel': 'Меню',
     'nav.joinRequestsPending': 'Есть заявки в группу',
     'nav.more': 'Ещё',
+    'nav.section.housing': 'Жильё',
+    'nav.section.app': 'Приложение',
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
     'tabbar.housing': 'Жильё',

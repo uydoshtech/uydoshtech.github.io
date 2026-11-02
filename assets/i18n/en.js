@@ -80,6 +80,8 @@ I18N.en = {
     'nav.menuLabel': 'Menu',
     'nav.joinRequestsPending': 'Pending group join requests',
     'nav.more': 'More',
+    'nav.section.housing': 'Housing',
+    'nav.section.app': 'App',
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
     'tabbar.housing': 'Housing',

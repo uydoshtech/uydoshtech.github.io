@@ -521,6 +521,9 @@ header {
   height: 16px;
   display: block;
 }
+.gender-switch.is-disabled { opacity: 0.4; }
+.gender-switch.is-disabled .gender-switch-segment { cursor: default; pointer-events: none; }
+.chips-compact .chip-gender.is-disabled { opacity: 0.4; pointer-events: none; }
 .gender-switch-segment:active { opacity: 0.88; }
 .gender-switch-segment[aria-pressed="true"] {
   color: var(--brand);

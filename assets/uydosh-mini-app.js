@@ -597,18 +597,33 @@ function accountMenuDisplayName() {
   }
 }
 
+/** One drawer row that reveals its links when the chevron is tapped. */
+function navDrawerSectionHtml(id, labelKey, iconName, itemsHtml) {
+  return `
+    <button
+      type="button"
+      class="nav-drawer-more-toggle"
+      data-nav-drawer-section-toggle
+      aria-expanded="false"
+      aria-controls="${id}"
+    >
+      ${UyDosh.iconChrome(iconName)}<span data-i18n="${labelKey}"></span>
+      <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome("chevronDown")}</span>
+    </button>
+    <div class="nav-drawer-more-panel" id="${id}" data-nav-drawer-section-panel hidden>
+      ${itemsHtml}
+    </div>`;
+}
+
 /**
- * The user's own account shortcuts — profile, listings, favorites, create,
- * theme toggle — shared verbatim by both header dropdowns (see
- * accountMenuHtml() and navMenuHtml() below) so they always stay in sync.
- * Each instance's badge/theme-toggle elements are bound/refreshed
- * independently since every consumer of `[data-uydosh-theme-toggle]` /
- * `[data-profile-menu-badge]` already iterates with querySelectorAll.
+ * Account shortcuts for the nav drawer. Housing and the install links live
+ * in collapsed sections (see navDrawerHtml) so the closed menu stays short.
+ * Badge and theme-toggle elements are still found by the existing
+ * querySelectorAll binders.
  */
 function accountShortcutItemsHtml() {
-  return `
+  const housingItems = `
     <a role="menuitem" href="${MINI_APP_CREATE_PATH}">${UyDosh.iconChrome("plus")}<span data-i18n="create.postListing"></span></a>
-    <a role="menuitem" href="/telegram/jobs.html">${UyDosh.iconChrome("fileText")}<span data-i18n="jobs.title"></span></a>
     <a role="menuitem" href="${MINI_APP_HOSTELS_PATH}">${UyDosh.iconChrome("house")}<span>Хостелы</span></a>
     <a role="menuitem" href="${MINI_APP_HOSTEL_CREATE_PATH}" data-admin-hostel-create hidden>${UyDosh.iconChrome("plus")}<span>Добавить хостел</span></a>
     <a role="menuitem" href="${MINI_APP_ACCOUNT_PATH}?tab=mine">${UyDosh.iconChrome("house")}<span data-i18n="account.tabs.mine"></span></a>
@@ -616,7 +631,10 @@ function accountShortcutItemsHtml() {
       ${UyDosh.iconChrome("users")}<span data-i18n="account.tabs.groups"></span>
       <span class="account-menu-badge" data-join-request-menu-badge hidden aria-hidden="true"></span>
     </a>
-    <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome("heartOutline")}<span data-i18n="account.tabs.favorites"></span></a>
+    <a role="menuitem" href="${MINI_APP_FAVORITES_PATH}">${UyDosh.iconChrome("heartOutline")}<span data-i18n="account.tabs.favorites"></span></a>`;
+  return `
+    ${navDrawerSectionHtml("nav-drawer-housing-panel", "nav.section.housing", "house", housingItems)}
+    <a role="menuitem" href="/telegram/jobs.html">${UyDosh.iconChrome("fileText")}<span data-i18n="jobs.title"></span></a>
     <a role="menuitem" href="${MINI_APP_PROFILE_PATH}" data-profile-menu-item>
       ${UyDosh.iconChrome("graduationCap")}<span data-i18n="profile.menuLabel"></span>
       <span class="account-menu-badge" data-profile-menu-badge hidden aria-hidden="true"></span>
@@ -683,14 +701,9 @@ function navMenuHtml() {
  * Left slide-out drawer opened by the hamburger trigger above — mounted once
  * on `document.body` (not inside the header) so it renders as a true
  * full-viewport overlay regardless of the header's own position/overflow.
- * Holds the account shortcuts (see accountShortcutItemsHtml()), the native
- * app download links (App Store / Android APK — kept flat/always visible
- * since they're a promo, not app-level plumbing), then a collapsed "More"
- * disclosure (see setNavDrawerMoreExpanded()) holding the app-level links
- * that otherwise have no entry point inside the Mini App (privacy, terms,
- * delete account, contact) — the public site exposes those via its own nav
- * instead. Only that last group is tucked behind a toggle, so the drawer's
- * default height stays short.
+ * Holds the account shortcuts (see accountShortcutItemsHtml()). Housing,
+ * the native app downloads, and the legal links each sit behind a chevron
+ * so the closed drawer stays a short list.
  */
 function navDrawerHtml() {
   const avatarUrl = accountMenuAvatarUrl();
@@ -711,26 +724,24 @@ function navDrawerHtml() {
         <div class="nav-drawer-body" role="menu">
           ${accountShortcutItemsHtml()}
           <div class="account-menu-divider" role="separator"></div>
-          <a role="menuitem" href="${MINI_APP_APP_STORE_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-app-store>${UyDosh.iconChrome("apple")}<span data-i18n="nav.appStore"></span></a>
-          <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome("android")}<span data-i18n="nav.androidApk"></span></a>
+          ${navDrawerSectionHtml(
+            "nav-drawer-app-panel",
+            "nav.section.app",
+            "sparkles",
+            `<a role="menuitem" href="${MINI_APP_APP_STORE_HREF}" target="_blank" rel="noopener noreferrer" data-get-app-app-store>${UyDosh.iconChrome("apple")}<span data-i18n="nav.appStore"></span></a>
+            <a role="menuitem" href="${MINI_APP_ANDROID_APK_HREF}" download="uydosh.apk" data-get-app-android-apk>${UyDosh.iconChrome("android")}<span data-i18n="nav.androidApk"></span></a>`,
+          )}
           <div class="account-menu-divider" role="separator"></div>
-          <button
-            type="button"
-            class="nav-drawer-more-toggle"
-            data-nav-drawer-more-toggle
-            aria-expanded="false"
-            aria-controls="nav-drawer-more-panel"
-          >
-            ${UyDosh.iconChrome("moreHorizontal")}<span data-i18n="nav.more"></span>
-            <span class="nav-drawer-more-chevron" aria-hidden="true">${UyDosh.iconChrome("chevronDown")}</span>
-          </button>
-          <div class="nav-drawer-more-panel" id="nav-drawer-more-panel" data-nav-drawer-more-panel hidden>
-            <a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome("shield")}<span data-i18n="nav.privacy"></span></a>
+          ${navDrawerSectionHtml(
+            "nav-drawer-more-panel",
+            "nav.more",
+            "moreHorizontal",
+            `<a role="menuitem" href="${MINI_APP_PRIVACY_PATH}">${UyDosh.iconChrome("shield")}<span data-i18n="nav.privacy"></span></a>
             <a role="menuitem" href="${MINI_APP_TERMS_PATH}">${UyDosh.iconChrome("fileText")}<span data-i18n="nav.terms"></span></a>
             <a role="menuitem" href="${MINI_APP_CONTACT_HREF}">${UyDosh.iconChrome("mail")}<span data-i18n="nav.contact"></span></a>
             <div class="account-menu-divider" role="separator"></div>
-            <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome("trash")}<span data-i18n="nav.delete"></span></a>
-          </div>
+            <a role="menuitem" href="${MINI_APP_DELETE_ACCOUNT_PATH}" class="account-menu-item-danger">${UyDosh.iconChrome("trash")}<span data-i18n="nav.delete"></span></a>`,
+          )}
         </div>
       </div>
     </div>`;
@@ -767,8 +778,8 @@ function closeNavDrawer() {
     if (!backdrop.classList.contains("is-open")) {
       backdrop.hidden = true;
       backdrop.setAttribute("aria-hidden", "true");
-      // Reset the "More" disclosure so the drawer always reopens collapsed.
-      setNavDrawerMoreExpanded(backdrop, false);
+      // Sections always reopen collapsed.
+      collapseNavDrawerSections(backdrop);
     }
   }, NAV_DRAWER_TRANSITION_MS);
   for (const trigger of document.querySelectorAll(
@@ -778,13 +789,13 @@ function closeNavDrawer() {
   }
 }
 
-/** Toggles the "More" (privacy/terms/contact/delete account) disclosure inside the drawer. */
-function setNavDrawerMoreExpanded(backdrop, expanded) {
-  const toggle = backdrop.querySelector("[data-nav-drawer-more-toggle]");
-  const panel = backdrop.querySelector("[data-nav-drawer-more-panel]");
-  if (!toggle || !panel) return;
-  toggle.setAttribute("aria-expanded", String(expanded));
-  panel.hidden = !expanded;
+/** Collapses every chevron section so the drawer reopens as a short list. */
+function collapseNavDrawerSections(backdrop) {
+  for (const toggle of backdrop.querySelectorAll("[data-nav-drawer-section-toggle]")) {
+    toggle.setAttribute("aria-expanded", "false");
+    const panel = backdrop.querySelector(`#${toggle.getAttribute("aria-controls")}`);
+    if (panel) panel.hidden = true;
+  }
 }
 
 /** Lazily creates (once per page) and wires up the nav drawer + its hamburger trigger(s). */
@@ -815,15 +826,16 @@ function ensureNavDrawerMounted() {
   backdrop.addEventListener("click", (e) => {
     if (e.target === backdrop) closeNavDrawer();
   });
-  // The "More" toggle expands/collapses its own panel in place — it must not
-  // also close the whole drawer, unlike every other button below.
-  backdrop
-    .querySelector("[data-nav-drawer-more-toggle]")
-    ?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const expanded = e.currentTarget.getAttribute("aria-expanded") === "true";
-      setNavDrawerMoreExpanded(backdrop, !expanded);
-    });
+  // A section chevron expands its own panel in place and must not close the drawer.
+  backdrop.addEventListener("click", (e) => {
+    const toggle = e.target.closest("[data-nav-drawer-section-toggle]");
+    if (!toggle || !backdrop.contains(toggle)) return;
+    e.stopPropagation();
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    const panel = backdrop.querySelector(`#${toggle.getAttribute("aria-controls")}`);
+    if (panel) panel.hidden = expanded;
+  });
   // Nav items (`<a>`) close the drawer implicitly by navigating away; button
   // items (e.g. the theme toggle) don't navigate, so close explicitly. The
   // App Store / APK links are `<a>`s too, but `target="_blank"` / `download`
@@ -837,7 +849,7 @@ function ensureNavDrawerMounted() {
     }
     if (
       e.target.closest(
-        "button:not([data-nav-drawer-more-toggle]), [data-get-app-app-store], [data-get-app-android-apk]",
+        "button:not([data-nav-drawer-section-toggle]), [data-get-app-app-store], [data-get-app-android-apk]",
       )
     ) {
       closeNavDrawer();

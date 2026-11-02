@@ -81,6 +81,8 @@ I18N.uz = {
     'nav.menuLabel': 'Menyu',
     'nav.joinRequestsPending': 'Guruhga so‘rovlar kutmoqda',
     'nav.more': 'Yana',
+    'nav.section.housing': 'Uy-joy',
+    'nav.section.app': 'Ilova',
     'nav.appStore': 'App Store — iOS',
     'nav.androidApk': 'Android beta (APK)',
     'tabbar.housing': 'Uy-joy',

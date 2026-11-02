@@ -375,7 +375,7 @@ function hasActiveFilters() {
   const f = state.filters;
   return (
     f.listingTypeId !== LISTING_TYPE_ALL ||
-    f.gender !== GENDER_ANY ||
+    (genderFilterApplies() && f.gender !== GENDER_ANY) ||
     f.withPhoto !== DEFAULT_WITH_PHOTO ||
     f.has3dTour !== DEFAULT_HAS_3D_TOUR ||
     f.subwayLineId !== METRO_LINE_ANY ||
@@ -472,7 +472,13 @@ function isHostelsOnlyFilter() {
   return state.filters.listingTypeId === LISTING_TYPE_HOSTEL;
 }
 
+/** Apartment-for-rent listings are not gendered, so the control stays put but does not filter. */
+function genderFilterApplies() {
+  return state.filters.listingTypeId !== LISTING_TYPE_APARTMENT_RENT;
+}
+
 function genderQueryParam() {
+  if (!genderFilterApplies()) return undefined;
   const id = state.filters.gender;
   return id > 0 ? id : undefined;
 }
@@ -519,7 +525,7 @@ function sortOrderQueryParam() {
 function logSearchEvent() {
   UyDosh.logMiniAppEvent('search', {
     listing_type_id: state.filters.listingTypeId,
-    gender: state.filters.gender,
+    gender: genderQueryParam() ?? GENDER_ANY,
     with_photo: state.filters.withPhoto ? 'true' : 'false',
     has_3d_tour: state.filters.has3dTour ? 'true' : 'false',
     subway_line_id: state.filters.subwayLineId,
@@ -690,8 +696,8 @@ function renderFilters() {
   renderDiscoveryBanner();
   const lang = UyDosh.getLang();
   const typeOptions = [
-    { value: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { value: LISTING_TYPE_APARTMENT_RENT, label: UyDosh.t('filter.type.apartmentRent', lang) },
+    { value: LISTING_TYPE_ROOMMATE_NEEDED, label: UyDosh.t('filter.type.roommateNeeded', lang) },
     { value: LISTING_TYPE_GROUP_FORMING, label: UyDosh.t('filter.type.groupForming', lang) },
     { value: LISTING_TYPE_HOSTEL, label: UyDosh.t('filter.type.hostels', lang) },
   ];
@@ -715,6 +721,7 @@ function renderFilters() {
   const typeChipCompact = listingTypeCycleChipHtml(typeOptions, lang, { compact: true });
 
   const selectedGender = state.filters.gender;
+  const genderApplies = genderFilterApplies();
   const genderSegments = genderOptions.map((opt) => UyDosh.chipButtonHtml({
     className: 'gender-switch-segment',
     attrs: { 'data-gender': opt.value },
@@ -725,9 +732,10 @@ function renderFilters() {
   })).join('');
   const genderSwitch = `
     <div
-      class="gender-switch"
+      class="gender-switch${genderApplies ? '' : ' is-disabled'}"
       data-selected="${selectedGender}"
       role="group"
+      aria-disabled="${genderApplies ? 'false' : 'true'}"
       aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.gender.aria', lang))}"
     >
       <span class="gender-switch-thumb" aria-hidden="true"></span>
@@ -744,7 +752,7 @@ function renderFilters() {
   const genderCycleOption = genderOptions.find((opt) => opt.value === selectedGender);
   const genderCycleLabel = genderCycleOption?.label ?? UyDosh.t('filter.gender.any', lang);
   const genderChipCompact = UyDosh.chipButtonHtml({
-    className: 'chip chip-icon-only chip-gender',
+    className: `chip chip-icon-only chip-gender${genderApplies ? '' : ' is-disabled'}`,
     attrs: {
       'data-gender-cycle': true,
       // Set only while a gender is picked so the existing
@@ -1061,6 +1069,7 @@ function renderFilters() {
   // must not get this toggle handler on top of its cycle handler below.
   filtersEl.querySelectorAll('[data-gender]:not([data-gender-cycle])').forEach((btn) => {
     btn.addEventListener('click', () => {
+      if (!genderFilterApplies()) return;
       const next = Number(btn.getAttribute('data-gender'));
       const toggledOff = state.filters.gender === next;
       state.filters.gender = toggledOff ? GENDER_ANY : next;
@@ -1073,6 +1082,7 @@ function renderFilters() {
 
   filtersEl.querySelectorAll('[data-gender-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      if (!genderFilterApplies()) return;
       // any -> male -> female -> any, mirroring nextDistrictId/nextMetroLineId.
       const current = state.filters.gender;
       state.filters.gender = current === GENDER_ANY
