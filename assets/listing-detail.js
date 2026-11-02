@@ -489,8 +489,8 @@
           ...(listingGroupContext(l)?.is_owner || listingGroupContext(l)?.is_member ? { home: UyDoshGroupHome.html() } : {}),
         }) : groupTabsHtml({
           description: `${descHtml}${metaHtml}`,
-          ...(compatibilityHtml ? { compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('compat.notAvailable'))}</p>` } : {}),
           area: `${mapHtml}${discoveryHtml}`,
+          ...(compatibilityHtml ? { compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('compat.notAvailable'))}</p>` } : {}),
           ...(roomScanHtml ? { scan: roomScanHtml } : {}),
         }, { description: 'detail.description', compatibility: 'compat.title', area: 'detail.tabs.area', scan: 'detail.tabs.scan' });
 

@@ -1358,14 +1358,16 @@
       }
 
       /**
-       * Owner/admin "Add 3D scan" card when the listing has no GLB yet.
+       * Owner "Add 3D scan" card when the listing has no GLB yet.
        * Same App Clip session flow as the post-publish upsell
        * (`room-scan-clip.js`). Hidden for demand-side types (no room to
        * scan) and on iPhones that clearly can't scan.
        */
-      function buildOwnerAddRoomScanHtml(l, { isOwner, isAdmin = false } = {}) {
+      function buildOwnerAddRoomScanHtml(l, { isOwner } = {}) {
         if (!UyDosh.isMiniApp?.()) return '';
-        if (!isOwner && !isAdmin) return '';
+        // A viewer of someone else's listing gets no 3D tab when there is no
+        // scan. The add-scan card is only for the owner.
+        if (!isOwner) return '';
         if (!UyDosh.isListingEligibleForRoomScan?.(l)) return '';
         if (!UyDosh.shouldShowRoomScanClipCta?.()) return '';
         const lang = UyDosh.getLang();
