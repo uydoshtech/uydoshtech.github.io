@@ -493,7 +493,11 @@
         // just pushes the title and actions down. Share moves onto the
         // views / menu row (see ownerToolbarHtml includeShare).
         const hideGroupCover = isGroupPage && openedFromMyGroups();
-        const compatibilityHtml = isGroupPage && !isGroupCompatListing(l) ? '' : compatibilityTileHtml(l, isOwner);
+        const isApartmentRent = Number(listingTypeId) === LISTING_TYPE_APARTMENT_RENT
+          || l.listing_type?.code === 'apartment_rent';
+        const compatibilityHtml = isApartmentRent || (isGroupPage && !isGroupCompatListing(l))
+          ? ''
+          : compatibilityTileHtml(l, isOwner);
         const discoveryHtml = UyDoshListingDiscovery.html(l);
         const titleHtml = `<div class="title-row"><h1>${title}</h1></div>`;
         const contentHtml = isGroupPage ? groupTabsHtml({
@@ -569,7 +573,7 @@
           bindOwnerAddRoomScan(l.id);
         }
         if (isMiniApp) loadComplaintsWarning(l);
-        if (isMiniApp && (!isOwner || isGroupCompatListing(l))) {
+        if (isMiniApp && !isApartmentRent && (!isOwner || isGroupCompatListing(l))) {
           bindCompatibilitySection();
           loadCompatibilityTile(l, isOwner);
         }
