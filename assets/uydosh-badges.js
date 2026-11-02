@@ -51,6 +51,10 @@ function iconHome(color) {
   return chipIconFilled(color, 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z');
 }
 
+function iconApartment(color) {
+  return chipIconFilled(color, LISTING_TYPE_MAP_PIN_ICON_PATHS[5]);
+}
+
 function iconPeople(color) {
   return chipIconFilled(
     color,
@@ -108,7 +112,7 @@ function filterListingTypeIcon(listingTypeId, { pressed = false } = {}) {
     case 4:
       return iconHome(color);
     case 5:
-      return iconHome(color);
+      return iconApartment(color);
     default:
       return '';
   }
