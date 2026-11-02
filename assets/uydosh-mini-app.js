@@ -1971,6 +1971,14 @@ function ensureMiniAppSafeAreaStyles() {
       background: linear-gradient(135deg, #25C06D, #1FAE60);
       box-shadow: 0 10px 28px rgba(37, 192, 109, 0.35);
     }
+    .detail-contact-btn-chat {
+      background: var(--brand2, #22c55e);
+      box-shadow: 0 10px 28px color-mix(in srgb, var(--brand2, #22c55e) 40%, transparent);
+    }
+    .detail-contact-btn-chat:disabled {
+      opacity: 0.7;
+      cursor: progress;
+    }
     a.detail-contact-btn-group-chat {
       background: var(--brand2, #22c55e);
       box-shadow: 0 10px 28px color-mix(in srgb, var(--brand2, #22c55e) 40%, transparent);

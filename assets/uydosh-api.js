@@ -1709,6 +1709,16 @@ function fetchMyGroupMembershipLimit() {
   return fetchJsonAuth("/listings/group-forming/membership-limit");
 }
 
+function createListingConversation(listingId, ownerUserId) {
+  return fetchJsonAuth("/conversations", {
+    method: "POST",
+    body: {
+      listing_id: Number(listingId),
+      participant_id: Number(ownerUserId),
+    },
+  });
+}
+
 function fetchUserConversations({ page = 1, limit = 50 } = {}) {
   return fetchJsonAuth("/conversations", { params: { page, limit } });
 }
@@ -2204,6 +2214,7 @@ Object.assign(window.UyDosh, {
   leaveListingGroup,
   removeListingGroupMember,
   fetchMyGroupMembershipLimit,
+  createListingConversation,
   fetchUserConversations,
   fetchConversation,
   fetchConversationMembers,

@@ -79,6 +79,25 @@
       const detailAdminEditFabEl = document.getElementById('detail-admin-edit-fab');
       let adminEditFabBound = false;
 
+      async function openOwnerChat(listing, ownerId) {
+        try {
+          const ready = await UyDosh.ensureTelegramMiniAppSession();
+          if (!ready) return;
+          const response = await UyDosh.createListingConversation(Number(listing.id), ownerId);
+          const conversationId = response?.data?.id;
+          if (!conversationId) throw new Error('missing conversation');
+          location.href = UyDosh.chatPageUrl(conversationId, {
+            backTo: UyDosh.listingPageUrl(listing.id),
+          });
+        } catch (err) {
+          console.error('Failed to open owner chat', err);
+          const message = UyDosh.t('detail.contactChatError');
+          const tg = window.Telegram?.WebApp;
+          if (typeof tg?.showAlert === 'function') tg.showAlert(message);
+          else alert(message);
+        }
+      }
+
       function hideDetailContactBar() {
         // Also hides the admin-only edit FAB — both need a currently-loaded
         // listing, so every caller here (not-found/error pages, pre-fetch reset)
@@ -121,16 +140,22 @@
         }
         const handle = UyDosh.listingContactTelegram(listing);
         const phone = UyDosh.listingContactPhone(listing);
-        if (!handle && !phone) {
+        const ownerId = Number(listing?.user_id ?? listing?.user?.id);
+        const canChat = !isOwner && Number.isFinite(ownerId) && ownerId > 0;
+        if (!handle && !phone && !canChat) {
           hideDetailContactBar();
           return;
         }
-        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle, phone);
+        detailContactBarEl.innerHTML = UyDosh.detailContactBarHtml(handle, phone, { chat: canChat });
         detailContactBarEl.hidden = false;
         detailContactBarEl.setAttribute('aria-hidden', 'false');
         document.documentElement.classList.add('has-detail-contact');
         const prefillText = handle ? buildListingContactMessage(listing, UyDosh.getLang()) : '';
-        UyDosh.bindDetailContactBar(detailContactBarEl, { listingId: listing?.id, prefillText });
+        UyDosh.bindDetailContactBar(detailContactBarEl, {
+          listingId: listing?.id,
+          prefillText,
+          onChat: () => openOwnerChat(listing, ownerId),
+        });
         UyDosh.applyI18n(detailContactBarEl);
       }
 

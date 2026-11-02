@@ -1275,11 +1275,37 @@ function resetAndLoad({ skipFiltersRender = false } = {}) {
   if (state.view === 'list') loadMore();
 }
 
+const FEED_ID_TITLE = /^(?:\p{Extended_Pictographic}\uFE0F?\s*)*id\s*[:：]\s*\d+\s*$/iu;
+
+/** Room count written in the post: "Количество комнат: 3" or "СДАЁТСЯ | 3-КОМНАТНАЯ". */
+function roomCountFromListingText(text) {
+  const stated = text.match(/количество\s+комнат\s*[:：]\s*(\d+)/iu);
+  if (stated) return stated[1];
+  const headline = text.match(/сда[её]тся\s*\|\s*(\d+)\s*-\s*комнатн/iu);
+  if (headline) return headline[1];
+  const adjective = text.match(/(\d+)\s*-\s*комнатн/iu);
+  return adjective ? adjective[1] : null;
+}
+
+/**
+ * Feed card headline. Templated posts keep "ID: 1453" as the stored title
+ * (the detail screen still shows it); the card says how many rooms the post lists.
+ */
+function feedCardTitle(listing) {
+  const title = String(listing?.title || '').trim();
+  if (!FEED_ID_TITLE.test(title)) return title;
+  const description = String(
+    listing.description || listing.description_ru || listing.description_uz || listing.description_en || '',
+  );
+  const rooms = roomCountFromListingText(description);
+  return rooms ? `Сдаётся ${rooms}-комнатная квартира` : title;
+}
+
 function listingCardHtml(listing) {
   const lang = UyDosh.getLang();
   const photo = UyDosh.primaryPhoto(listing);
   const photoSrc = photo ? UyDosh.photoUrl(photo) : '';
-  const title = UyDosh.escapeHtml(listing.title || '');
+  const title = UyDosh.escapeHtml(feedCardTitle(listing));
   const price = UyDosh.formatPrice(listing, lang);
   const typeName = UyDosh.listingTypeBadgeLabel(listing, lang);
   const listingTypeId = listing.listing_type_id ?? listing.listing_type?.id;

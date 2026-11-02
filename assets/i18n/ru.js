@@ -292,6 +292,8 @@ I18N.ru = {
     'detail.gallery.photo': 'Фото',
     'detail.contactTelegram': 'Telegram',
     'detail.contactPhone': 'Позвонить',
+    'detail.contactChat': 'Написать',
+    'detail.contactChatError': 'Не удалось открыть чат. Попробуйте ещё раз.',
     'detail.adminEdit': 'Изменить (админ)',
     'detail.contactMessage': 'Здравствуйте! Пишу по вашему объявлению:',
     'detail.share': 'Поделиться',

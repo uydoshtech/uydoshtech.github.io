@@ -210,14 +210,14 @@ header {
    filter differs from its default. */
 .filters-reset {
   appearance: none;
-  border: 1px solid var(--stroke);
+  border: 1px solid color-mix(in srgb, var(--error, #f87171) 70%, transparent);
   background: rgba(127, 127, 127, 0.08);
   border-radius: 999px;
   width: 32px;
   height: 32px;
   padding: 0;
   margin-left: auto;
-  color: var(--muted);
+  color: var(--error, #f87171);
   cursor: pointer;
   display: inline-flex;
   align-items: center;

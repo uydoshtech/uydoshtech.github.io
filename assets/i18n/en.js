@@ -290,6 +290,8 @@ I18N.en = {
     'detail.gallery.photo': 'Photo',
     'detail.contactTelegram': 'Contact on Telegram',
     'detail.contactPhone': 'Call',
+    'detail.contactChat': 'Message',
+    'detail.contactChatError': 'Could not open the chat. Try again.',
     'detail.adminEdit': 'Edit (admin)',
     'detail.contactMessage': 'Hi! I\u2019m messaging about your listing:',
     'detail.share': 'Share',

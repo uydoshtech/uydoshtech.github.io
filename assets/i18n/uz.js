@@ -291,6 +291,8 @@ I18N.uz = {
     'detail.gallery.photo': 'Rasm',
     'detail.contactTelegram': 'Telegram orqali bog‘lanish',
     'detail.contactPhone': 'Qo‘ng‘iroq qilish',
+    'detail.contactChat': 'Yozish',
+    'detail.contactChatError': 'Chatni ochib bo‘lmadi. Qayta urinib ko‘ring.',
     'detail.adminEdit': 'Tahrirlash (admin)',
     'detail.contactMessage': 'Salom! Sizning e’loningiz bo‘yicha yozyapman:',
     'detail.share': 'Ulashish',

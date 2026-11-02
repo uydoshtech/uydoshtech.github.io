@@ -956,11 +956,23 @@ async function shareListingLink(url, text, photoUrls, mapPreviewUrl, linkPreview
  * call. See `bindDetailAdminEditFab` below for the separate admin-only "Edit (admin)"
  * floating button, which lives above the sticky back button instead of in this bar.
  */
-function detailContactBarHtml(username, phone) {
+function detailContactChatIcon() {
+  return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex-shrink:0"><path d="M4 5h16v11H9l-4 3.5V16H4V5Z"></path></svg>`;
+}
+
+function detailContactBarHtml(username, phone, { chat = false } = {}) {
   const cleanHandle = normalizeTelegramUsername(username);
   const cleanPhone = normalizePhoneNumber(phone);
-  if (!cleanHandle && !cleanPhone) return '';
+  if (!cleanHandle && !cleanPhone && !chat) return '';
 
+  const chatBtn = chat
+    ? `
+      <button type="button" class="detail-contact-btn detail-contact-btn-chat" data-detail-contact-chat>
+        ${detailContactChatIcon()}
+        <span data-i18n="detail.contactChat">${escapeHtml(t('detail.contactChat'))}</span>
+      </button>
+    `
+    : '';
   const telegramBtn = cleanHandle
     ? `
       <button type="button" class="detail-contact-btn" data-detail-contact-telegram data-telegram-username="${escapeHtml(cleanHandle)}">
@@ -978,16 +990,28 @@ function detailContactBarHtml(username, phone) {
     `
     : '';
 
-  const rowClass = [cleanHandle, cleanPhone].filter(Boolean).length > 1 ? ' detail-contact-bar-inner-row' : '';
+  const rowClass = [chat, cleanHandle, cleanPhone].filter(Boolean).length > 1 ? ' detail-contact-bar-inner-row' : '';
   return `
     <div class="detail-contact-bar-inner${rowClass}">
+      ${chatBtn}
       ${telegramBtn}
       ${phoneBtn}
     </div>
   `;
 }
 
-function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCall } = {}) {
+function bindDetailContactBar(container, { listingId, prefillText, onOpen, onCall, onChat } = {}) {
+  const chatBtn = container?.querySelector('[data-detail-contact-chat]');
+  chatBtn?.addEventListener('click', () => {
+    if (chatBtn.disabled || typeof onChat !== 'function') return;
+    chatBtn.disabled = true;
+    Promise.resolve(onChat())
+      .catch(() => {})
+      .finally(() => {
+        chatBtn.disabled = false;
+      });
+  });
+
   const telegramBtn = container?.querySelector('[data-detail-contact-telegram]');
   telegramBtn?.addEventListener('click', () => {
     const handle = telegramBtn.getAttribute('data-telegram-username');
