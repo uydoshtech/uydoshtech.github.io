@@ -264,11 +264,22 @@
       // inside the housing panel, which stays hidden until this tab is selected.
       let openHousingTabFromHash = location.hash === '#group-shortlist';
 
+      function listingTabIconHtml(key) {
+        if (key === 'description') return UyDosh.iconArticle();
+        if (key === 'area') return UyDosh.iconPin();
+        if (key === 'compatibility') return `<span class="icon" aria-hidden="true">${UyDosh.iconChrome('person')}</span>`;
+        if (key === 'scan') return UyDosh.iconCube();
+        return '';
+      }
+
       function groupTabsHtml(panels, customLabels = null) {
         if (!Object.hasOwn(panels, activeGroupTab)) activeGroupTab = Object.keys(panels)[0];
         const labels = customLabels || { description: 'detail.group.tabDescription', compatibility: 'detail.group.tabMembers', housing: 'detail.group.tabHousing', home: 'home.title' };
         return `<div class="group-tabs" style="--group-tab-count:${Object.keys(panels).length}" role="tablist" aria-label="${UyDosh.escapeHtml(UyDosh.t(customLabels ? 'detail.tabs.label' : 'detail.group.tabs'))}">
-          ${Object.keys(panels).map(key => `<button type="button" role="tab" id="group-tab-${key}" data-group-tab="${key}" aria-controls="group-panel-${key}" aria-selected="${activeGroupTab === key}" tabindex="${activeGroupTab === key ? 0 : -1}">${UyDosh.escapeHtml(UyDosh.t(labels[key]))}</button>`).join('')}
+          ${Object.keys(panels).map(key => {
+            const icon = customLabels ? listingTabIconHtml(key) : '';
+            return `<button type="button" role="tab" id="group-tab-${key}" data-group-tab="${key}" aria-controls="group-panel-${key}" aria-selected="${activeGroupTab === key}" tabindex="${activeGroupTab === key ? 0 : -1}">${icon}<span>${UyDosh.escapeHtml(UyDosh.t(labels[key]))}</span></button>`;
+          }).join('')}
         </div>${Object.entries(panels).map(([key, html]) => `<section class="group-tab-panel${customLabels ? ' listing-tab-panel' : ''}" role="tabpanel" id="group-panel-${key}" aria-labelledby="group-tab-${key}" tabindex="0" ${activeGroupTab === key ? '' : 'hidden'}>${html}</section>`).join('')}`;
       }
 

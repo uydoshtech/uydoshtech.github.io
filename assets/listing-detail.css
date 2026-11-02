@@ -1810,6 +1810,10 @@
   background: var(--card);
 }
 .group-tabs [role="tab"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-width: 0;
   min-height: 48px;
   padding: 10px 6px;
@@ -1823,6 +1827,9 @@
   overflow-wrap: anywhere;
   cursor: pointer;
 }
+.group-tabs [role="tab"] .icon { color: inherit !important; flex: 0 0 auto; }
+.group-tabs [role="tab"] .icon svg { width: 16px; height: 16px; display: block; }
+.group-tabs [role="tab"] .icon svg * { stroke: currentColor; fill: none; }
 .group-tabs [aria-selected="true"] {
   color: var(--fg);
   background: var(--card);
