@@ -128,6 +128,7 @@
                 ${mainHtml}
               </div>
               ${shareButtonHtml()}
+              ${adminDeleteButtonHtml()}
               ${favoriteButtonHtml()}
               ${reportButtonHtml()}
             </div>
@@ -179,6 +180,7 @@
               ${counter}
             </div>
             ${shareButtonHtml()}
+            ${adminDeleteButtonHtml()}
             ${favoriteButtonHtml()}
             ${reportButtonHtml()}
             ${dots}

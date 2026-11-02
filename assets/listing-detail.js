@@ -79,6 +79,9 @@
       const detailAdminEditFabEl = document.getElementById('detail-admin-edit-fab');
       let adminEditFabBound = false;
 
+      // The 1:1 owner chat stays wired up. Flip this to show the footer button again.
+      const SHOW_OWNER_DIRECT_CHAT = false;
+
       async function openOwnerChat(listing, ownerId) {
         try {
           const ready = await UyDosh.ensureTelegramMiniAppSession();
@@ -141,7 +144,7 @@
         const handle = UyDosh.listingContactTelegram(listing);
         const phone = UyDosh.listingContactPhone(listing);
         const ownerId = Number(listing?.user_id ?? listing?.user?.id);
-        const canChat = !isOwner && Number.isFinite(ownerId) && ownerId > 0;
+        const canChat = SHOW_OWNER_DIRECT_CHAT && !isOwner && Number.isFinite(ownerId) && ownerId > 0;
         if (!handle && !phone && !canChat) {
           hideDetailContactBar();
           return;
@@ -553,6 +556,7 @@
           isMember: Boolean(listingGroupContext(l)?.is_member),
         });
         updateDetailAdminEditFab(l, { isAdminViewer });
+        if (isAdminViewer) bindAdminDeleteListing(l.id);
         if (isOwner) {
           loadOwnerViewCount(l.id);
           bindOwnerMenu(l.id);

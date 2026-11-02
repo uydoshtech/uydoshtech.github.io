@@ -1274,7 +1274,7 @@ async function renewListingFromTelegramMiniApp(listingId) {
 
 /**
  * Delete a listing from the Telegram Mini App (verify initData on submit).
- * Only the listing's own owner may delete it.
+ * The listing's owner may delete it, and an admin may delete any listing.
  */
 async function deleteListingFromTelegramMiniApp(listingId) {
   const initData = getTelegramInitData();

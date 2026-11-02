@@ -321,9 +321,21 @@
       }
       .gallery-admin-edit-btn:active { opacity: 0.85; }
       .gallery-admin-edit-btn svg { width: 18px; height: 18px; display: block; }
-      .gallery.has-admin-edit .gallery-share-btn { top: 58px; }
-      .gallery.has-admin-edit .gallery-favorite-btn { top: 102px; }
-      .gallery.has-admin-edit .gallery-report-btn { top: 146px; }
+      .gallery-admin-delete-btn {
+        position: absolute; top: 58px; right: 14px; z-index: 2;
+        appearance: none; border: 0; padding: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #e11d2e; color: #fff; cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      }
+      .gallery-admin-delete-btn:active { opacity: 0.85; }
+      .gallery-admin-delete-btn:disabled { opacity: 0.7; }
+      .gallery-admin-delete-btn .icon svg { width: 18px; height: 18px; display: block; }
+      .gallery-admin-delete-btn .icon svg * { stroke: currentColor; fill: none; }
+      .gallery.has-admin-edit .gallery-share-btn { top: 102px; }
+      .gallery.has-admin-edit .gallery-favorite-btn { top: 146px; }
+      .gallery.has-admin-edit .gallery-report-btn { top: 190px; }
       .gallery-share-btn {
         position: absolute; top: 14px; right: 14px; z-index: 2;
         appearance: none; border: 0; padding: 0;

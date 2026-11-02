@@ -321,19 +321,9 @@
           }
         });
 
-        deleteBtn?.addEventListener('click', async () => {
+        deleteBtn?.addEventListener('click', () => {
           closeOwnerMenu();
-          const lang = UyDosh.getLang();
-          const confirmed = await confirmTelegramAction(UyDosh.t('account.deleteConfirm', lang));
-          if (!confirmed) return;
-          try {
-            await UyDosh.deleteListingFromTelegramMiniApp(listingId);
-            showTelegramAlert(UyDosh.t('account.deleteSuccess', lang));
-            window.location.href = UyDosh.feedPageUrl();
-          } catch (err) {
-            console.error('Failed to delete listing', err);
-            showTelegramAlert(UyDosh.t('account.deleteError', lang));
-          }
+          confirmAndDeleteListing(listingId);
         });
 
         if (!ownerMenuGlobalListenersBound) {
@@ -382,6 +372,44 @@
         } catch (err) {
           console.error('Failed to record listing view', err);
         }
+      }
+
+      /** Admin viewing someone else's listing. Owners already delete from the "..." menu. */
+      function adminDeleteButtonHtml() {
+        if (!UyDosh.isMiniApp() || !UyDosh.isAdmin?.() || isViewingOwnListing()) return '';
+        return `
+          <button type="button" class="gallery-admin-delete-btn" data-admin-delete-listing aria-label="${UyDosh.escapeHtml(UyDosh.t('account.delete'))}">
+            ${UyDosh.iconTrash()}
+          </button>
+        `;
+      }
+
+      async function confirmAndDeleteListing(listingId) {
+        const lang = UyDosh.getLang();
+        const confirmed = await confirmTelegramAction(UyDosh.t('account.deleteConfirm', lang));
+        if (!confirmed) return;
+        try {
+          await UyDosh.deleteListingFromTelegramMiniApp(listingId);
+          showTelegramAlert(UyDosh.t('account.deleteSuccess', lang));
+          window.location.href = UyDosh.feedPageUrl();
+        } catch (err) {
+          console.error('Failed to delete listing', err);
+          showTelegramAlert(UyDosh.t('account.deleteError', lang));
+        }
+      }
+
+      function bindAdminDeleteListing(listingId) {
+        const btn = rootEl.querySelector('[data-admin-delete-listing]');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+          if (btn.disabled) return;
+          btn.disabled = true;
+          try {
+            await confirmAndDeleteListing(listingId);
+          } finally {
+            btn.disabled = false;
+          }
+        });
       }
 
       function shareButtonHtml() {
