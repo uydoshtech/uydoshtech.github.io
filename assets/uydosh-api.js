@@ -1550,10 +1550,20 @@ function fetchAdminTelegramLocationUsers({ q, page = 1, limit = 30 } = {}) {
 }
 
 /** Location trail for one Telegram user id. Admin only. */
-function fetchAdminTelegramLocationHistory(telegramUserId, { page = 1, limit = 200 } = {}) {
+function fetchAdminTelegramLocationHistory(
+  telegramUserId,
+  { page = 1, limit = 1000, dedupPrecision } = {},
+) {
   return fetchJsonAuth(
     `/admin/telegram-mini-app-locations/users/${encodeURIComponent(telegramUserId)}/history`,
-    { params: { page, limit } },
+    { params: { page, limit, dedupPrecision } },
+  );
+}
+
+function deleteAdminTelegramLocationHistory(telegramUserId) {
+  return fetchJsonAuth(
+    `/admin/telegram-mini-app-locations/users/${encodeURIComponent(telegramUserId)}/history`,
+    { method: "DELETE" },
   );
 }
 function fetchHostelForAdminEdit(id) {
@@ -2323,6 +2333,7 @@ Object.assign(window.UyDosh, {
   fetchAdminUsers,
   fetchAdminTelegramLocationUsers,
   fetchAdminTelegramLocationHistory,
+  deleteAdminTelegramLocationHistory,
   loadYandexMapModule,
   loadClassicScript,
   assetScriptUrl,

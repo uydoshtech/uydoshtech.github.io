@@ -1253,6 +1253,7 @@ function syncMiniAppBackButton() {
     /\/telegram\/profile\.html$/i.test(path) ||
     /\/telegram\/hostels?\.html$/i.test(path) ||
     /\/telegram\/hostel-create\.html$/i.test(path) ||
+    /\/telegram\/admin-(?:users|locations)\.html$/i.test(path) ||
     (/\/telegram\/account\.html$/i.test(path) && hasBack);
   try {
     if (show) tg.BackButton.show();
