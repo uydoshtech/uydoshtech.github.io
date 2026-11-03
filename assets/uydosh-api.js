@@ -1489,6 +1489,7 @@ function fetchListings({
   limit = 20,
   listingTypeId,
   gender,
+  roomsNumber,
   withPhoto,
   has3dTour,
   subwayLineId,
@@ -1513,6 +1514,7 @@ function fetchListings({
   if (subwayStationIds?.length) params.subwayStationIds = subwayStationIds.join(",");
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
+  if (roomsNumber) params.roomsNumber = roomsNumber;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
   if (has3dTour != null) params.has3dTour = String(has3dTour);
   if (subwayStationId) params.subwayStationId = subwayStationId;
@@ -1815,6 +1817,7 @@ function fetchListingsForMap({
   limit = 300,
   listingTypeId,
   gender,
+  roomsNumber,
   withPhoto,
   has3dTour,
   subwayLineId,
@@ -1837,6 +1840,7 @@ function fetchListingsForMap({
   if (subwayStationIds?.length) params.subwayStationIds = subwayStationIds.join(",");
   if (listingTypeId) params.listingTypeId = listingTypeId;
   if (gender) params.gender = gender;
+  if (roomsNumber) params.roomsNumber = roomsNumber;
   if (withPhoto != null) params.withPhoto = String(withPhoto);
   if (has3dTour != null) params.has3dTour = String(has3dTour);
   if (subwayStationId) params.subwayStationId = subwayStationId;

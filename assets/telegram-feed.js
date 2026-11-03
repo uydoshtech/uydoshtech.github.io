@@ -253,6 +253,9 @@ function readStoredFilters() {
         ? LISTING_TYPE_ALL
         : (Number(parsed.listingTypeId) || LISTING_TYPE_ALL),
       gender: Number(parsed.gender) || GENDER_ANY,
+      roomsNumber: [1, 2, 3, 4].includes(Number(parsed.roomsNumber))
+        ? Number(parsed.roomsNumber)
+        : null,
       withPhoto:
         parsed.withPhotoExplicit === true
           ? parsed.withPhoto === true
@@ -281,6 +284,7 @@ function persistFilters() {
       JSON.stringify({
         listingTypeId: state.filters.listingTypeId,
         gender: state.filters.gender,
+        roomsNumber: state.filters.roomsNumber,
         withPhoto: state.filters.withPhoto,
         withPhotoExplicit: state.withPhotoExplicit,
         has3dTour: state.filters.has3dTour,
@@ -328,6 +332,7 @@ const state = {
   filters: {
     listingTypeId: discoverySearch?.listingTypeId ?? urlListingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
     gender: discoverySearch?.gender ?? storedFilters?.gender ?? GENDER_ANY,
+    roomsNumber: storedFilters?.roomsNumber ?? null,
     withPhoto: discoverySearch?.withPhoto ?? storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
     has3dTour: discoverySearch?.has3dTour ?? storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
     subwayLineId: discoverySearch?.subwayLineId ?? storedFilters?.subwayLineId ?? METRO_LINE_ANY,
@@ -376,6 +381,7 @@ function hasActiveFilters() {
   return (
     f.listingTypeId !== LISTING_TYPE_ALL ||
     (genderFilterApplies() && f.gender !== GENDER_ANY) ||
+    (roomsFilterApplies() && roomsQueryParam() != null) ||
     f.withPhoto !== DEFAULT_WITH_PHOTO ||
     f.has3dTour !== DEFAULT_HAS_3D_TOUR ||
     f.subwayLineId !== METRO_LINE_ANY ||
@@ -483,6 +489,42 @@ function genderQueryParam() {
   return id > 0 ? id : undefined;
 }
 
+/** Room count applies only to apartment-for-rent. Empty selection means every size. */
+function roomsFilterApplies() {
+  return state.filters.listingTypeId === LISTING_TYPE_APARTMENT_RENT;
+}
+
+function roomsQueryParam() {
+  if (!roomsFilterApplies()) return undefined;
+  const n = Number(state.filters.roomsNumber);
+  return n >= 1 && n <= 4 ? n : undefined;
+}
+
+function roomsSwitchHtml(lang, { compact = false } = {}) {
+  const selected = Number(state.filters.roomsNumber) || 0;
+  const segments = [1, 2, 3, 4].map((n) => `
+    <button
+      type="button"
+      class="rooms-switch-segment"
+      data-rooms="${n}"
+      data-haptic="selection"
+      aria-pressed="${selected === n ? 'true' : 'false'}"
+      aria-label="${UyDosh.escapeHtml(UyDosh.t(`filter.rooms.${n}`, lang))}"
+    >${n}</button>
+  `).join('');
+  return `
+    <div
+      class="rooms-switch${compact ? ' rooms-switch--compact' : ''}"
+      data-selected="${selected || ''}"
+      role="group"
+      aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.rooms.aria', lang))}"
+    >
+      <span class="rooms-switch-thumb" aria-hidden="true"></span>
+      ${segments}
+    </div>
+  `;
+}
+
 function hostelGenderQueryParam() {
   if (state.filters.gender === GENDER_MALE) return 'male';
   if (state.filters.gender === GENDER_FEMALE) return 'female';
@@ -526,6 +568,7 @@ function logSearchEvent() {
   UyDosh.logMiniAppEvent('search', {
     listing_type_id: state.filters.listingTypeId,
     gender: genderQueryParam() ?? GENDER_ANY,
+    rooms_number: roomsQueryParam() ?? 0,
     with_photo: state.filters.withPhoto ? 'true' : 'false',
     has_3d_tour: state.filters.has3dTour ? 'true' : 'false',
     subway_line_id: state.filters.subwayLineId,
@@ -603,6 +646,7 @@ function ensureFeedMap() {
         getFilterParams: () => ({
           listingTypeId: listingTypeQueryParam(),
           gender: genderQueryParam(),
+          roomsNumber: roomsQueryParam(),
           withPhoto: withPhotoQueryParam(),
           has3dTour: has3dTourQueryParam(),
           subwayLineId: subwayLineQueryParam(),
@@ -917,7 +961,7 @@ function renderFilters() {
             </div>
             <div class="filter-row filter-row-gender">
               <div class="filter-controls">
-                ${genderSwitch}
+                ${roomsFilterApplies() ? roomsSwitchHtml(lang) : genderSwitch}
                 ${photoChip}
                 ${threeDChip}
               </div>
@@ -940,7 +984,7 @@ function renderFilters() {
             <div class="filter-row filter-row-compact">
               <div class="chips chips-compact" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.type.aria', lang))}">
                 ${typeChipCompact}
-                ${genderChipCompact}
+                ${roomsFilterApplies() ? roomsSwitchHtml(lang, { compact: true }) : genderChipCompact}
                 ${districtChipCompact}
                 ${lineChipCompact}
                 ${photoChipCompact}
@@ -1067,6 +1111,19 @@ function renderFilters() {
   // Expanded-row gender switch segments only — the compact cycle chip also
   // carries a `data-gender` attribute (for the pressed-state color CSS) and
   // must not get this toggle handler on top of its cycle handler below.
+  filtersEl.querySelectorAll('[data-rooms]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!roomsFilterApplies()) return;
+      const next = Number(btn.getAttribute('data-rooms'));
+      const toggledOff = Number(state.filters.roomsNumber) === next;
+      state.filters.roomsNumber = toggledOff ? null : next;
+      persistFilters();
+      logSearchEvent();
+      resetAndLoad();
+      if (state.view === 'map') withFeedMap((map) => map.loadFeedMap());
+    });
+  });
+
   filtersEl.querySelectorAll('[data-gender]:not([data-gender-cycle])').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (!genderFilterApplies()) return;
@@ -1146,6 +1203,7 @@ function renderFilters() {
       if (!hasActiveFilters()) return;
       state.filters.listingTypeId = LISTING_TYPE_ALL;
       state.filters.gender = GENDER_ANY;
+      state.filters.roomsNumber = null;
       state.filters.withPhoto = DEFAULT_WITH_PHOTO;
       state.withPhotoExplicit = false;
       state.filters.has3dTour = DEFAULT_HAS_3D_TOUR;
@@ -1627,6 +1685,7 @@ async function loadMore() {
         limit: PAGE_SIZE,
         listingTypeId: listingTypeQueryParam(),
         gender: genderQueryParam(),
+        roomsNumber: roomsQueryParam(),
         withPhoto: withPhotoQueryParam(),
         has3dTour: has3dTourQueryParam(),
         subwayLineId: subwayLineQueryParam(),
