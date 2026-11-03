@@ -36,6 +36,11 @@
   color: #60a5fa;
   font-size: 25px;
 }
+.admin-action > span:first-child svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
 .admin-action b,
 .admin-action small {
   display: block;

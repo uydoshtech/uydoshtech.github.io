@@ -21,4 +21,8 @@ const access = document.getElementById("admin-access"),
 // block navigation if Telegram's background session request stalls.
 access.hidden = true;
 tools.hidden = false;
+for (const slot of document.querySelectorAll("[data-admin-icon]")) {
+  const icon = UyDosh.iconChrome?.(slot.getAttribute("data-admin-icon"));
+  if (icon) slot.innerHTML = icon;
+}
 UyDosh.ensureTelegramMiniAppSession();
