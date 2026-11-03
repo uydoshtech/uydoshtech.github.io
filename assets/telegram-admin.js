@@ -25,4 +25,13 @@ for (const slot of document.querySelectorAll("[data-admin-icon]")) {
   const icon = UyDosh.iconChrome?.(slot.getAttribute("data-admin-icon"));
   if (icon) slot.innerHTML = icon;
 }
+for (const toggle of document.querySelectorAll("[data-admin-category-toggle]")) {
+  toggle.addEventListener("click", () => {
+    const card = toggle.closest("[data-admin-category]");
+    if (!card) return;
+    const open = card.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", String(open));
+    UyDosh.haptic?.light?.();
+  });
+}
 UyDosh.ensureTelegramMiniAppSession();
