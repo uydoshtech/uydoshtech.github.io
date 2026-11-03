@@ -383,7 +383,8 @@ function hasActiveFilters() {
     (genderFilterApplies() && f.gender !== GENDER_ANY) ||
     (roomsFilterApplies() && roomsQueryParam() != null) ||
     f.withPhoto !== DEFAULT_WITH_PHOTO ||
-    f.has3dTour !== DEFAULT_HAS_3D_TOUR ||
+    // 3D chip is commented out below, so a saved 3D filter must not keep the reset button on.
+    // f.has3dTour !== DEFAULT_HAS_3D_TOUR ||
     f.subwayLineId !== METRO_LINE_ANY ||
     f.locationId !== DISTRICT_ANY ||
     f.createdWithinDays !== PERIOD_DEFAULT_DAYS ||
@@ -536,7 +537,9 @@ function withPhotoQueryParam() {
 }
 
 function has3dTourQueryParam() {
-  return state.filters.has3dTour ? true : undefined;
+  // Chip is hidden. Restore the line below together with ${threeDChip} in the filter rows.
+  return undefined;
+  // return state.filters.has3dTour ? true : undefined;
 }
 
 function subwayLineQueryParam() {
@@ -963,7 +966,7 @@ function renderFilters() {
               <div class="filter-controls">
                 ${roomsFilterApplies() ? roomsSwitchHtml(lang) : genderSwitch}
                 ${photoChip}
-                ${threeDChip}
+                <!-- ${threeDChip} -->
               </div>
               ${filtersResetHtml}
             </div>
@@ -989,7 +992,7 @@ function renderFilters() {
                 ${lineChipCompact}
                 ${photoChipCompact}
                 ${priceSortChipCompact}
-                ${threeDChipCompact}
+                <!-- ${threeDChipCompact} -->
               </div>
               ${filtersToggleHtml}
             </div>
