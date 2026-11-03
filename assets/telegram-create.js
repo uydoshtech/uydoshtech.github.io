@@ -338,12 +338,11 @@ function priceBoundsForRequest() {
 
 function formatPriceReviewHtml(lang) {
   const bounds = priceBoundsForRequest();
-  const nf = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'ru-RU');
   const perMonth = `<small>${UyDosh.escapeHtml(UyDosh.t('create.perMonth', lang))}</small>`;
   if (bounds.min === bounds.max) {
-    return `$${nf.format(bounds.min)}${perMonth}`;
+    return `$${UyDosh.formatAmount(bounds.min, lang)}${perMonth}`;
   }
-  return `$${nf.format(bounds.min)}–$${nf.format(bounds.max)}${perMonth}`;
+  return `$${UyDosh.formatAmount(bounds.min, lang)}–$${UyDosh.formatAmount(bounds.max, lang)}${perMonth}`;
 }
 
 function listingTypeCycleOrder() {

@@ -1589,7 +1589,7 @@ function hostelCardHtml(hostel) {
   const typeBadge = `<span class="type-badge" data-type="4" style="--badge-type-color:#a78bfa"><span class="type-badge-glyph">${UyDosh.filterListingTypeIcon(4)}</span><span class="type-badge-label">${hostelTypeLabel}</span></span>`;
   const thumb = `<div class="thumb thumb-placeholder"><img loading="lazy" decoding="async" src="${UyDosh.escapeHtml(photoSrc)}" alt="${title}" onerror="this.parentElement.classList.add('empty'); this.remove();" />${typeBadge}</div>`;
   const priceHtml = price
-    ? `<div class="price">${UyDosh.escapeHtml(new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US').format(price))}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></div>`
+    ? `<div class="price">${UyDosh.escapeHtml(UyDosh.formatAmount(price, lang))}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth', lang))}</small></div>`
     : '';
   return `<a class="card hostel-feed-card" href="/telegram/hostel.html?id=${encodeURIComponent(hostel.id)}" data-hostel-card>${thumb}<div class="body"><div class="title-row"><div class="title-col"><div class="title">${title}</div><div class="meta"><span>${UyDosh.iconPin()}${address}</span><span>${beds} ${beds === 1 ? 'место' : 'мест'}</span></div></div>${priceHtml ? `<div class="price-col">${priceHtml}</div>` : ''}</div></div></a>`;
 }

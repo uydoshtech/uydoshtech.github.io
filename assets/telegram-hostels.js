@@ -13,7 +13,7 @@ if (UyDosh.isMiniApp()) {
   setTimeout(() => webApp?.BackButton?.show(), 200);
 }
 const money = (n) =>
-  new Intl.NumberFormat("ru-RU").format(Number(n || 0)) + " сум/мес";
+  `${UyDosh.formatAmount(n, "ru")} сум/мес`;
 const escape = (v) => UyDosh.escapeHtml(String(v ?? ""));
 const hostelPolicyLabel = (policy) => ({
   male: "Мужской",

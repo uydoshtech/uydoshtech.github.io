@@ -483,11 +483,29 @@ function cardPhotoDotsHtml(listing, { activeIndex = 0, maxDots = 5 } = {}) {
   return `<div class="card-photo-dots" aria-hidden="true">${dots}</div>`;
 }
 
+/**
+ * Thousands grouping for money. English keeps the comma (`1,100`).
+ * Russian and Uzbek use a dot (`1.100`), same as the mobile app.
+ * `ru-RU` would insert a space, which wraps badly on the price line.
+ */
+function formatAmount(value, lang = getLang()) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return '';
+  if (lang === 'en') return new Intl.NumberFormat('en-US').format(n);
+  const negative = n < 0;
+  const digits = String(Math.abs(n));
+  let grouped = '';
+  for (let i = 0; i < digits.length; i += 1) {
+    if (i > 0 && (digits.length - i) % 3 === 0) grouped += '.';
+    grouped += digits[i];
+  }
+  return negative ? `-${grouped}` : grouped;
+}
+
 function formatPrice(listing, lang) {
   const n = Number(listing?.price);
   if (!Number.isFinite(n) || n <= 0) return '';
-  const nf = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'ru-RU');
-  return `$${nf.format(n)}`;
+  return `$${formatAmount(n, lang)}`;
 }
 
 /**
@@ -552,9 +570,8 @@ function resolveMapPinDisplayPriceBounds(pin) {
 function formatMapPinPrice(pin, lang = getLang()) {
   const { min, max } = resolveMapPinDisplayPriceBounds(pin);
   if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0) return '';
-  const nf = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'ru-RU');
-  if (min === max) return `$${nf.format(min)}`;
-  return `$${nf.format(min)}–$${nf.format(max)}`;
+  if (min === max) return `$${formatAmount(min, lang)}`;
+  return `$${formatAmount(min, lang)}–$${formatAmount(max, lang)}`;
 }
 
 /** Strip locale-specific year suffixes (e.g. Russian « г. »). */
@@ -1097,6 +1114,7 @@ Object.assign(window.UyDosh, {
   noPhotoPlaceholderImageUrl,
   hostelPlaceholderImageUrl,
   cardPhotoDotsHtml,
+  formatAmount,
   formatPrice,
   listingViewsCountText,
   listingComplaintsCountText,

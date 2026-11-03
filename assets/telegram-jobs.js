@@ -15,7 +15,7 @@
   let page = 0, result = null, controller = null, requestId = 0, phase = 'loading';
   const t = key => UyDosh.t(`jobs.${key}`);
   const escape = value => UyDosh.escapeHtml(String(value ?? ''));
-  const number = value => new Intl.NumberFormat(UyDosh.getLang()).format(value);
+  const number = value => UyDosh.formatAmount(value, UyDosh.getLang());
 
   function salaryHtml(salary) {
     if (!salary || (salary.from == null && salary.to == null)) return escape(t('noSalary'));
