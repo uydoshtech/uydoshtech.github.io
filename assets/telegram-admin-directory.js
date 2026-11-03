@@ -58,13 +58,28 @@
     return label === key ? role : label;
   }
 
-  function userTitle(user) {
-    const username = String(user.telegramUsername || user.telegram_username || "")
+  function telegramHandle(user) {
+    return String(user.telegramUsername || user.telegram_username || "")
       .trim()
       .replace(/^@/, "");
+  }
+
+  function userTitle(user) {
+    const username = telegramHandle(user);
     if (username) return `@${username}`;
     if (user.email) return String(user.email);
     return text("admin.users.unspecified");
+  }
+
+  function openTelegramChat(handle) {
+    const clean = String(handle || "").trim().replace(/^@/, "");
+    if (!clean) return;
+    const url = `https://t.me/${encodeURIComponent(clean)}`;
+    const tg = window.Telegram?.WebApp;
+    UyDosh.haptic?.light?.();
+    if (typeof tg?.openTelegramLink === "function") tg.openTelegramLink(url);
+    else if (typeof tg?.openLink === "function") tg.openLink(url);
+    else window.open(url, "_blank", "noopener,noreferrer");
   }
 
   function showStatus(status, message, { error = false, retry = null } = {}) {
@@ -149,8 +164,14 @@
   }
 
   function userCard(user) {
-    const card = document.createElement("article");
+    const handle = telegramHandle(user);
+    const card = document.createElement(handle ? "button" : "article");
     card.className = "admin-card";
+    if (handle) {
+      card.type = "button";
+      card.classList.add("is-tappable");
+      card.addEventListener("click", () => openTelegramChat(handle));
+    }
     const title = document.createElement("div");
     title.className = "admin-card-title";
     if (user.isOnline) {
@@ -338,7 +359,7 @@
     const back = root.querySelector("[data-admin-back]");
     const title = root.querySelector("h1");
     const shell = root.querySelector("[data-admin-history]");
-    back.hidden = !window.Telegram?.WebApp?.BackButton;
+    if (back) back.hidden = true;
     list.hidden = true;
     document.body.classList.add("admin-history-open");
 
@@ -619,7 +640,19 @@
         view.expanded = groupCount ? groupCount - 1 : null;
         view.selected = view.history.length ? view.history.length - 1 : null;
         const username = String(payload?.telegramUsername || "").trim().replace(/^@/, "");
-        if (title) title.textContent = username ? `@${username}` : `#${telegramUserId}`;
+        if (title) {
+          title.replaceChildren();
+          if (username) {
+            const userLink = document.createElement("button");
+            userLink.type = "button";
+            userLink.className = "admin-history-user";
+            userLink.textContent = `@${username}`;
+            userLink.addEventListener("click", () => openTelegramChat(username));
+            title.appendChild(userLink);
+          } else {
+            title.textContent = `#${telegramUserId}`;
+          }
+        }
         count.textContent = fill("admin.locations.pings", view.total);
         deleteButton.hidden = view.history.length === 0;
         if (!view.history.length) {

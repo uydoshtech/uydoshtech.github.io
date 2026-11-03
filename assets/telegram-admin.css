@@ -85,12 +85,21 @@
 }
 .admin-card {
   display: block;
+  width: 100%;
   padding: 14px 15px;
   border: 1px solid var(--stroke);
   border-radius: 16px;
   background: var(--card);
   color: var(--fg);
   text-decoration: none;
+  text-align: left;
+  font: inherit;
+}
+button.admin-card.is-tappable {
+  cursor: pointer;
+}
+button.admin-card.is-tappable:active {
+  background: rgba(127, 127, 127, 0.16);
 }
 .admin-card-title {
   display: flex;
@@ -160,6 +169,16 @@ body.admin-history-open .admin-page {
 body.admin-history-open .admin-page h1 {
   margin: 0 16px 2px;
   font-size: 20px;
+}
+.admin-history-user {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
 }
 .admin-history {
   flex: 1;
