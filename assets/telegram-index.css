@@ -524,6 +524,11 @@ header {
 .gender-switch.is-disabled { opacity: 0.4; }
 .gender-switch.is-disabled .gender-switch-segment { cursor: default; pointer-events: none; }
 
+.filter-controls .chip-rooms,
+.filter-controls .chip-photo,
+.filter-controls .chip-price-sort {
+  min-height: 34px;
+}
 .chip-rooms[aria-pressed="true"] {
   border-color: #fff;
   background: transparent;

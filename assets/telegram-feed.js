@@ -13,7 +13,7 @@ const DEFAULT_HAS_3D_TOUR = false;
 const PERIOD_DEFAULT_DAYS = 60;
 const PERIOD_ALL_TIME = 0;
 const PERIOD_OPTION_VALUES = [30, 60, 90, PERIOD_ALL_TIME];
-// "Sort by price" cycling chip (filter-row-metro, list view only — see
+// "Sort by price" cycling chip (second filter row, list view only — see
 // PRICE_SORT_ORDER_VALUES/`renderFilters`): null (default order) -> 'asc'
 // (cheapest first) -> 'desc' (priciest first) -> back to null.
 const PRICE_SORT_ORDER_VALUES = [null, 'asc', 'desc'];
@@ -922,9 +922,9 @@ function renderFilters() {
   });
 
   // "Sort by price" cycling chip: same single-button cycle pattern as the
-  // period/district/metro-line chips above, but list-view only — hidden on
-  // the Map tab via `.filters--map-view` (see updateViewTabs) since map pins
-  // aren't sorted.
+  // period/district/metro-line chips above. Lives in the second filter row
+  // (next to rooms and photo). List-view only — hidden on the Map tab via
+  // `.filters--map-view` (see updateViewTabs) since map pins aren't sorted.
   const priceSortOrder = state.filters.priceSortOrder;
   const priceSortAriaLabel = priceSortOrder
     ? UyDosh.t(priceSortOrder === 'asc' ? 'filter.priceSort.asc' : 'filter.priceSort.desc', lang)
@@ -1020,6 +1020,7 @@ function renderFilters() {
                 ${roomsFilterApplies() ? roomsChipHtml(lang) : genderSwitch}
                 ${photoChip}
                 <!-- ${threeDChip} -->
+                ${priceSortChip}
               </div>
               ${filtersResetHtml}
             </div>
@@ -1027,8 +1028,7 @@ function renderFilters() {
               <div class="chips chips-metro" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.line.aria', lang))}">
                 ${districtChip}
                 ${lineChip}
-                ${priceSortChip}
-                ${periodChip}
+                <!-- ${periodChip} -->
               </div>
             </div>
           </div>
