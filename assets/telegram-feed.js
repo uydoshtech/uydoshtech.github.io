@@ -222,25 +222,86 @@ function filterFunnelIcon() {
   `;
 }
 
+/**
+ * Shareable bot link. Telegram only allows [A-Za-z0-9_-] in startapp, so the
+ * district id is packed into the payload rather than a normal query string:
+ *   https://t.me/uydosh_bot?startapp=feed_d9          Yunusabad
+ *   https://t.me/uydosh_bot?startapp=feed_t5_d9       apartments in Yunusabad
+ * The same filters also work as a page URL: ?locationId=9&listingTypeId=5
+ */
+function readMiniAppStartParam() {
+  const tg = window.Telegram?.WebApp;
+  return String(
+    tg?.initDataUnsafe?.start_param
+    || new URLSearchParams(location.search).get('tgWebAppStartParam')
+    || '',
+  ).trim();
+}
+
+function parseFeedStartParam(raw) {
+  const match = /^feed(?:_t(\d+))?(?:_d(\d{1,2}))?$/.exec(raw);
+  if (!match || (match[1] == null && match[2] == null)) return null;
+  const listingTypeId = match[1] != null ? Number(match[1]) : null;
+  const locationId = match[2] != null ? Number(match[2]) : null;
+  if (listingTypeId != null && !isKnownListingTypeId(listingTypeId)) return null;
+  if (locationId != null && !(UyDosh.DISTRICT_IDS || []).includes(locationId)) return null;
+  return { listingTypeId, locationId };
+}
+
+function consumeMiniAppStartParam(raw) {
+  const key = 'uydosh:consumedStartParam';
+  try {
+    if (sessionStorage.getItem(key) === raw) return false;
+    sessionStorage.setItem(key, raw);
+  } catch {
+    /* apply anyway — a second visit may re-select the district */
+  }
+  return true;
+}
+
+function isKnownListingTypeId(id) {
+  return (
+    id === LISTING_TYPE_ALL ||
+    id === LISTING_TYPE_ROOMMATE_NEEDED ||
+    id === LISTING_TYPE_GROUP_FORMING ||
+    id === LISTING_TYPE_HOSTEL ||
+    id === LISTING_TYPE_APARTMENT_RENT
+  );
+}
+
 /** Deep-link support: bot buttons open the feed with ?listingTypeId=1|2 to pre-apply a filter. */
 function readUrlListingTypeId() {
   try {
     const raw = new URLSearchParams(location.search).get('listingTypeId');
     if (raw == null) return null;
     const id = Number(raw);
-    if (
-      id === LISTING_TYPE_ALL ||
-      id === LISTING_TYPE_ROOMMATE_NEEDED ||
-      id === LISTING_TYPE_GROUP_FORMING ||
-      id === LISTING_TYPE_HOSTEL ||
-      id === LISTING_TYPE_APARTMENT_RENT
-    ) {
-      return id;
-    }
+    if (isKnownListingTypeId(id)) return id;
   } catch {
     // ignore
   }
   return null;
+}
+
+function readUrlDistrictId() {
+  try {
+    const raw = new URLSearchParams(location.search).get('locationId');
+    if (raw == null || raw === '') return null;
+    const id = Number(raw);
+    return (UyDosh.DISTRICT_IDS || []).includes(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Link filters win over whatever the recipient last used. Start payload applies once per launch. */
+function readLaunchFeedPreset() {
+  const startRaw = readMiniAppStartParam();
+  const start = parseFeedStartParam(startRaw);
+  const startFresh = start && consumeMiniAppStartParam(startRaw) ? start : null;
+  const listingTypeId = startFresh?.listingTypeId ?? readUrlListingTypeId();
+  const locationId = startFresh?.locationId ?? readUrlDistrictId();
+  if (listingTypeId == null && locationId == null) return null;
+  return { listingTypeId, locationId };
 }
 
 function readStoredFilters() {
@@ -317,7 +378,7 @@ function persistFeedView(view) {
 
 let discoverySearch = UyDoshDiscovery.readSearch(location.search);
 const storedFilters = discoverySearch ? null : readStoredFilters();
-const urlListingTypeId = readUrlListingTypeId();
+const launchPreset = discoverySearch ? null : readLaunchFeedPreset();
 const state = {
   page: 0,
   totalPages: 1,
@@ -330,16 +391,18 @@ const state = {
   emptyResultHapticFired: false,
   items: [],
   filters: {
-    listingTypeId: discoverySearch?.listingTypeId ?? urlListingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
+    listingTypeId: discoverySearch?.listingTypeId ?? launchPreset?.listingTypeId ?? storedFilters?.listingTypeId ?? LISTING_TYPE_ALL,
     gender: discoverySearch?.gender ?? storedFilters?.gender ?? GENDER_ANY,
     roomsNumber: storedFilters?.roomsNumber ?? null,
     withPhoto: discoverySearch?.withPhoto ?? storedFilters?.withPhoto ?? DEFAULT_WITH_PHOTO,
     has3dTour: discoverySearch?.has3dTour ?? storedFilters?.has3dTour ?? DEFAULT_HAS_3D_TOUR,
-    subwayLineId: discoverySearch?.subwayLineId ?? storedFilters?.subwayLineId ?? METRO_LINE_ANY,
+    subwayLineId: launchPreset?.locationId
+      ? METRO_LINE_ANY
+      : (discoverySearch?.subwayLineId ?? storedFilters?.subwayLineId ?? METRO_LINE_ANY),
     locationIds: discoverySearch?.locationIds ?? [],
     searchArea: discoverySearch?.searchArea ?? null,
     subwayStationIds: discoverySearch?.subwayStationIds ?? [],
-    locationId: discoverySearch?.locationId ?? storedFilters?.locationId ?? DISTRICT_ANY,
+    locationId: discoverySearch?.locationId ?? launchPreset?.locationId ?? storedFilters?.locationId ?? DISTRICT_ANY,
     subwayStationId: discoverySearch?.subwayStationId ?? null,
     minPrice: discoverySearch?.minPrice ?? null,
     maxPrice: discoverySearch?.maxPrice ?? null,
@@ -364,9 +427,9 @@ const state = {
   mapTooltipRequestId: 0,
 };
 
-// A bot deep-link (Find housing / Find roommate button) always wins over a stale
-// stored filter from a previous session, and the choice is persisted going forward.
-if (urlListingTypeId != null) {
+// A shared link (district, listing type) wins over a stale stored filter and is
+// persisted, so the chip stays selected after the start payload is consumed.
+if (launchPreset) {
   persistFilters();
 }
 
