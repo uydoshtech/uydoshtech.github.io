@@ -437,6 +437,7 @@ I18N.uz = {
     'filter.gender.female': 'Ayol',
     'filter.gender.aria': 'Jins bo‘yicha filtr',
     'filter.rooms.aria': 'Xonalar soni',
+    'filter.rooms.label': 'Xonalar',
     'filter.rooms.1': '1 xona',
     'filter.rooms.2': '2 xona',
     'filter.rooms.3': '3 xona',

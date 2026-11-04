@@ -436,6 +436,7 @@ I18N.en = {
     'filter.gender.female': 'F',
     'filter.gender.aria': 'Gender filter',
     'filter.rooms.aria': 'Number of rooms',
+    'filter.rooms.label': 'Rooms',
     'filter.rooms.1': '1 room',
     'filter.rooms.2': '2 rooms',
     'filter.rooms.3': '3 rooms',

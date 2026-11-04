@@ -210,14 +210,14 @@ header {
    filter differs from its default. */
 .filters-reset {
   appearance: none;
-  border: 1px solid color-mix(in srgb, var(--error, #f87171) 70%, transparent);
+  border: 1px solid var(--brand);
   background: rgba(127, 127, 127, 0.08);
   border-radius: 999px;
   width: 32px;
   height: 32px;
   padding: 0;
   margin-left: auto;
-  color: var(--error, #f87171);
+  color: var(--brand);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -241,8 +241,8 @@ header {
 }
 .filters-reset:not(:disabled):hover,
 .filters-reset:not(:disabled):focus-visible {
-  color: var(--error, #f87171);
-  border-color: color-mix(in srgb, var(--error, #f87171) 70%, transparent);
+  color: var(--brand);
+  border-color: var(--brand);
 }
 .filters-reset:not(:disabled):active {
   opacity: 0.88;
@@ -524,6 +524,46 @@ header {
 .gender-switch.is-disabled { opacity: 0.4; }
 .gender-switch.is-disabled .gender-switch-segment { cursor: default; pointer-events: none; }
 
+.rooms-filter {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.rooms-filter-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+.rooms-filter-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex: 0 0 auto;
+  color: #fff;
+}
+.rooms-filter--compact {
+  flex-direction: row;
+  align-items: center;
+}
+.rooms-filter--compact .rooms-filter-caption-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .rooms-switch {
   --rooms-switch-pad: 3px;
   position: relative;
@@ -542,7 +582,7 @@ header {
   left: var(--rooms-switch-pad);
   width: calc((100% - var(--rooms-switch-pad) * 2) / 4);
   border-radius: 999px;
-  border: 2px solid var(--brand);
+  border: 2px solid #fff;
   opacity: 0;
   pointer-events: none;
   z-index: 0;
@@ -573,7 +613,7 @@ header {
   font-weight: 700;
   line-height: 1;
 }
-.rooms-switch-segment[aria-pressed="true"] { color: var(--brand); }
+.rooms-switch-segment[aria-pressed="true"] { color: #fff; }
 .rooms-switch--compact .rooms-switch-segment {
   min-width: 28px;
   padding: 7px 0;

@@ -438,6 +438,7 @@ I18N.ru = {
     'filter.gender.female': 'Девушка',
     'filter.gender.aria': 'Фильтр по полу',
     'filter.rooms.aria': 'Количество комнат',
+    'filter.rooms.label': 'Комнаты',
     'filter.rooms.1': '1 комната',
     'filter.rooms.2': '2 комнаты',
     'filter.rooms.3': '3 комнаты',

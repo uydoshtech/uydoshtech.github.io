@@ -564,6 +564,13 @@ function roomsQueryParam() {
   return n >= 1 && n <= 4 ? n : undefined;
 }
 
+function roomsMarkIcon() {
+  return `<svg class="rooms-filter-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 3.5h14a1 1 0 0 1 1 1V20H4V4.5a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M4 20c3.4-.3 5.4-2.4 5.4-6.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`;
+}
+
 function roomsSwitchHtml(lang, { compact = false } = {}) {
   const selected = Number(state.filters.roomsNumber) || 0;
   const segments = [1, 2, 3, 4].map((n) => `
@@ -577,14 +584,20 @@ function roomsSwitchHtml(lang, { compact = false } = {}) {
     >${n}</button>
   `).join('');
   return `
-    <div
-      class="rooms-switch${compact ? ' rooms-switch--compact' : ''}"
-      data-selected="${selected || ''}"
-      role="group"
-      aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.rooms.aria', lang))}"
-    >
-      <span class="rooms-switch-thumb" aria-hidden="true"></span>
-      ${segments}
+    <div class="rooms-filter${compact ? ' rooms-filter--compact' : ''}">
+      <span class="rooms-filter-caption">
+        ${roomsMarkIcon()}
+        <span class="rooms-filter-caption-text">${UyDosh.escapeHtml(UyDosh.t('filter.rooms.label', lang))}</span>
+      </span>
+      <div
+        class="rooms-switch${compact ? ' rooms-switch--compact' : ''}"
+        data-selected="${selected || ''}"
+        role="group"
+        aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.rooms.aria', lang))}"
+      >
+        <span class="rooms-switch-thumb" aria-hidden="true"></span>
+        ${segments}
+      </div>
     </div>
   `;
 }
