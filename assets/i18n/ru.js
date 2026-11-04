@@ -883,4 +883,9 @@ I18N.ru = {
     'compat.groupSummaryPartial': 'частичных',
     'compat.groupSummaryDiscuss': 'обсудить',
     'compat.groupReportTitle': 'Сводка совместимости группы',
+    'concierge.open': 'Консьерж',
+    'concierge.title': 'Алексей',
+    'concierge.role': 'Персональное сопровождение по поиску квартир',
+    'concierge.stub': 'Заглушка. Здесь будет рассказ об Алексее и о том, как он помогает найти квартиру.',
+    'concierge.write': 'Написать Алексею',
 };

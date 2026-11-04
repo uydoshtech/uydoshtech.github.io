@@ -881,4 +881,9 @@ I18N.en = {
     'compat.groupSummaryPartial': 'partial',
     'compat.groupSummaryDiscuss': 'discuss',
     'compat.groupReportTitle': 'Group compatibility insight',
+    'concierge.open': 'Concierge',
+    'concierge.title': 'Alexey',
+    'concierge.role': 'Personal help finding an apartment',
+    'concierge.stub': 'Placeholder. This screen will introduce Alexey and how he helps with the apartment search.',
+    'concierge.write': 'Message Alexey',
 };

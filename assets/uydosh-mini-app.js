@@ -923,6 +923,7 @@ function shouldMountMiniAppTabbar() {
   if (/chat\.html/i.test(path)) return false;
   if (/create\.html/i.test(path)) return false;
   if (/profile\.html/i.test(path)) return false;
+  if (/concierge\.html/i.test(path)) return false;
   if (/delete-account/i.test(path)) return false;
   return /\/telegram(\/|$)/i.test(path) || /telegram\.html$/i.test(path);
 }
@@ -950,7 +951,7 @@ function ensureMiniAppTabbarStyles() {
     }
     html.mini-app-has-tabbar .fab-create { display: none !important; }
     html.mini-app-has-tabbar .scroll-top-btn {
-      bottom: calc(var(--uydosh-tabbar-height) + 18px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+      bottom: calc(var(--uydosh-tabbar-height) + 78px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
     }
     .mini-app-tabbar {
       position: fixed;
@@ -1254,6 +1255,7 @@ function syncMiniAppBackButton() {
     /\/telegram\/hostels?\.html$/i.test(path) ||
     /\/telegram\/hostel-create\.html$/i.test(path) ||
     /\/telegram\/admin-(?:users|locations)\.html$/i.test(path) ||
+    /\/telegram\/concierge\.html$/i.test(path) ||
     (/\/telegram\/account\.html$/i.test(path) && hasBack);
   try {
     if (show) tg.BackButton.show();

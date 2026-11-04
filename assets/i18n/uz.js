@@ -882,4 +882,9 @@ I18N.uz = {
     'compat.groupSummaryPartial': 'qisman',
     'compat.groupSummaryDiscuss': 'muhokama',
     'compat.groupReportTitle': 'Guruh moslik xulosasi',
+    'concierge.open': 'Konsyerj',
+    'concierge.title': 'Aleksey',
+    'concierge.role': 'Kvartira qidirishda shaxsiy yordam',
+    'concierge.stub': 'Vaqtincha sahifa. Bu yerda Aleksey va kvartira qidirishda qanday yordam berishi haqida ma’lumot bo‘ladi.',
+    'concierge.write': 'Alekseyga yozish',
 };
