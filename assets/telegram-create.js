@@ -412,8 +412,9 @@ function updateDefaultTitle(lang = UyDosh.getLang()) {
 
 /** Populate `state.form` from an existing listing (edit mode). */
 function hydrateFormFromListing(listing) {
-  const typeId = Number(listing.listing_type_id);
-  state.form.listingTypeId = isDemandSideType(typeId)
+  const typeId = Number(listing.listing_type_id ?? listing.listing_type?.id);
+  // Keep apartment rent and group forming. Only an unknown type falls back to roommate.
+  state.form.listingTypeId = listingTypeCycleOrder().includes(typeId)
     ? typeId
     : LISTING_TYPE_ROOMMATE_NEEDED;
 

@@ -59,8 +59,9 @@ test('reselecting the active card keeps locations; switching clears metro select
 test('creation links never silently select a type and edit hydration retains stored types',()=>{
  const init=source.slice(source.indexOf("const params = new URLSearchParams(location.search)"));
  assert.doesNotMatch(init,/state\.form\.listingTypeId\s*=/);
- const hydrate=source.slice(source.indexOf('function hydrateFormFromListing('),source.indexOf('function hydrateFormFromListing(')+270);
- assert.match(hydrate,/state\.form\.listingTypeId = isDemandSideType\(typeId\)/);
+ const hydrate=source.slice(source.indexOf('function hydrateFormFromListing('),source.indexOf('function hydrateFormFromListing(')+520);
+ assert.match(hydrate,/listingTypeCycleOrder\(\)\.includes\(typeId\)/);
+ assert.doesNotMatch(hydrate,/state\.form\.listingTypeId = isDemandSideType\(typeId\)/);
 });
 
 test('descriptions collapse after selection while icons remain, including returning to the step',()=>{
@@ -78,6 +79,54 @@ test('descriptions collapse after selection while icons remain, including return
   c.state.step=1;c.state.step=0;
   assert.equal(c.renderStep0('ru'),html);
  }
+});
+
+test('editing an apartment listing keeps apartment rent selected', () => {
+  const state = {
+    form: {
+      listingTypeId: null,
+      selectedLocationIds: [],
+      selectedStationIds: [],
+      addressText: '',
+      locationMode: 'metro',
+      price: 100,
+      priceMin: 50,
+      priceMax: 150,
+      gender: 1,
+      amenityIds: new Set(),
+      moveInDate: '',
+      privateRoom: false,
+      groupSizeTarget: 3,
+      title: '',
+      description: '',
+    },
+    locations: [],
+    nearbyStationsRadiusMinutes: 15,
+    stationCache: {},
+    existingPhotos: [],
+  };
+  const context = vm.createContext({
+    state,
+    LISTING_TYPE_ROOMMATE_NEEDED: 2,
+    LISTING_TYPE_GROUP_FORMING: 3,
+    LISTING_TYPE_APARTMENT_RENT: 5,
+    LOCATION_MODE_METRO: 'metro',
+    LOCATION_MODE_DISTRICT: 'district',
+    LOCATION_MODE_UNIVERSITY: 'university',
+    LOCATION_MODE_RADIUS: 'radius',
+    UyDosh: { formatAddressText: (value) => value },
+    isValidGroupSize: () => false,
+    applyNearbyStations() {},
+  });
+  const start = source.indexOf('function isDemandSideType(');
+  const end = source.indexOf('/**\n * Fetch the caller');
+  vm.runInContext(source.slice(start, end), context);
+  context.hydrateFormFromListing({ listing_type_id: 5, title: '2-комнатная', price: 680 });
+  assert.equal(state.form.listingTypeId, 5);
+  context.hydrateFormFromListing({ listing_type: { id: 3 }, title: 'Группа' });
+  assert.equal(state.form.listingTypeId, 3);
+  context.hydrateFormFromListing({ listing_type_id: 1, title: 'Старое' });
+  assert.equal(state.form.listingTypeId, 2);
 });
 
 test('radius mode requires a loaded map and preserves required selection', () => {
