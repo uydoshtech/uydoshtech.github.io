@@ -19,19 +19,6 @@
         padding: 4px 4px calc(96px + env(safe-area-inset-bottom, 0px));
         text-align: left;
       }
-      .concierge-back {
-        align-self: flex-start;
-        display: inline-flex;
-        align-items: center;
-        gap: 2px;
-        margin: 0;
-        padding: 6px 2px;
-        color: var(--fg);
-        text-decoration: none;
-        font-weight: 650;
-        font-size: 16px;
-      }
-      .concierge-back svg { width: 20px; height: 20px; display: block; }
       .concierge-hero {
         display: flex;
         align-items: center;
@@ -106,7 +93,7 @@
         gap: 12px;
       }
       .concierge-plan-name { min-width: 0; font-weight: 700; font-size: 16px; }
-      .concierge-plan-price { font-weight: 750; font-size: 18px; white-space: nowrap; }
+      .concierge-plan-price { font-weight: 750; font-size: 18px; white-space: nowrap; color: #22c55e; }
       .concierge-plan-note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
       .concierge-dock {
         position: fixed;
@@ -146,12 +133,6 @@
     <div class="wrap">
       <header data-uydosh-mini-app-header></header>
       <main class="concierge">
-        <a class="concierge-back" href="/telegram/">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M15 6l-6 6 6 6"/>
-          </svg>
-          <span data-i18n="concierge.back">Назад</span>
-        </a>
         <div class="concierge-hero">
           <span class="concierge-avatar" aria-hidden="true">
             <span>ЯL</span>
@@ -178,16 +159,16 @@
         <article class="concierge-plan">
           <div class="concierge-plan-row">
             <span class="concierge-plan-name" data-i18n="concierge.plan.standard">Стандарт</span>
-            <span class="concierge-plan-price" data-i18n="concierge.plan.standardPrice">500 000 сум</span>
+            <span class="concierge-plan-price" data-i18n="concierge.plan.standardPrice">500.000 сум</span>
           </div>
           <p class="concierge-plan-note" data-i18n="concierge.plan.standardNote">Полный поиск и сопровождение.</p>
         </article>
         <article class="concierge-plan">
           <div class="concierge-plan-row">
             <span class="concierge-plan-name" data-i18n="concierge.plan.refund">С возможностью возврата</span>
-            <span class="concierge-plan-price" data-i18n="concierge.plan.refundPrice">1 000 000 сум</span>
+            <span class="concierge-plan-price" data-i18n="concierge.plan.refundPrice">1.000.000 сум</span>
           </div>
-          <p class="concierge-plan-note" data-i18n="concierge.plan.refundNote">То же сопровождение. При одобренном возврате возвращается 700 000 сум.</p>
+          <p class="concierge-plan-note" data-i18n="concierge.plan.refundNote">То же сопровождение. При одобренном возврате возвращается 700.000 сум.</p>
         </article>
         <p class="concierge-disclaimer" data-i18n="concierge.disclaimer">Услугу оказывает независимый партнёр. Условия оплаты и возврата согласовываются с ним.</p>
       </main>
@@ -201,7 +182,7 @@
       </button>
     </div>
     <script src="../assets/uydosh-core.js?v=20261103-price-dot"></script>
-    <script src="../assets/uydosh-i18n.js?v=20261104-concierge-yalaev"></script>
+    <script src="../assets/uydosh-i18n.js?v=20261104-concierge-price"></script>
     <script src="../assets/uydosh-icons.js?v=20261102-drop-seeker" defer></script>
     <script src="../assets/uydosh-mini-app.js?v=20261104-concierge-back" defer></script>
     <script>
@@ -213,13 +194,6 @@
         }
         location.href = '/telegram/';
       }
-      document.querySelector('.concierge-back')?.addEventListener('click', (event) => {
-        const ref = document.referrer || '';
-        if (window.history.length > 1 && /\/telegram\//.test(ref) && !/concierge\.html/.test(ref)) {
-          event.preventDefault();
-          window.history.back();
-        }
-      });
       function bootConcierge() {
         try { UyDosh.initTelegramMiniApp(); } catch (err) { console.warn('[UyDosh] concierge init skipped', err); }
         try { UyDosh.applyI18n(); } catch (err) { console.warn('[UyDosh] concierge i18n skipped', err); }
