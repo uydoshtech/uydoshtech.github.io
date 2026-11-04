@@ -16,7 +16,7 @@
         flex-direction: column;
         align-items: stretch;
         gap: 14px;
-        padding: 4px 4px 32px;
+        padding: 4px 4px calc(96px + env(safe-area-inset-bottom, 0px));
         text-align: left;
       }
       .concierge-back {
@@ -108,42 +108,17 @@
       .concierge-plan-name { min-width: 0; font-weight: 700; font-size: 16px; }
       .concierge-plan-price { font-weight: 750; font-size: 18px; white-space: nowrap; }
       .concierge-plan-note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
-      .concierge-partner {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 4px;
-        padding: 14px;
-        border: 1px solid var(--stroke);
-        border-radius: 18px;
-        background: var(--card);
+      .concierge-dock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 30;
+        padding: 10px 16px calc(12px + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px)));
+        background: linear-gradient(to top, var(--bg) 72%, transparent);
       }
-      .concierge-partner-id { display: flex; align-items: center; gap: 10px; }
-      .concierge-partner-avatar {
-        position: relative;
-        flex: 0 0 36px;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        overflow: hidden;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(127, 127, 127, 0.16);
-        color: var(--fg);
-        font-size: 13px;
-        font-weight: 700;
-      }
-      .concierge-partner-avatar img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      .concierge-partner-name { margin: 0; font-weight: 700; }
-      .concierge-partner-role { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
       .concierge-write {
+        width: 100%;
         appearance: none;
         border: 0;
         border-radius: 999px;
@@ -153,7 +128,12 @@
         font-weight: 700;
         padding: 14px 18px;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
+      .concierge-write svg { width: 18px; height: 18px; display: block; flex: 0 0 auto; }
       .concierge-disclaimer {
         margin: 0;
         color: var(--muted);
@@ -209,21 +189,16 @@
           </div>
           <p class="concierge-plan-note" data-i18n="concierge.plan.refundNote">То же сопровождение. При одобренном возврате возвращается 700 000 сум.</p>
         </article>
-        <section class="concierge-partner">
-          <div class="concierge-partner-id">
-            <span class="concierge-partner-avatar concierge-avatar" aria-hidden="true">
-              <span>ЯL</span>
-              <img alt="" referrerpolicy="no-referrer" hidden />
-            </span>
-            <div>
-              <p class="concierge-partner-name" data-i18n="concierge.partner">ЯLaev</p>
-              <p class="concierge-partner-role" data-i18n="concierge.partnerRole">Партнёр UyDosh по поиску жилья</p>
-            </div>
-          </div>
-          <button type="button" class="concierge-write" id="concierge-write" data-i18n="concierge.write">Связаться с консьержем</button>
-        </section>
         <p class="concierge-disclaimer" data-i18n="concierge.disclaimer">Услугу оказывает независимый партнёр. Условия оплаты и возврата согласовываются с ним.</p>
       </main>
+    </div>
+    <div class="concierge-dock">
+      <button type="button" class="concierge-write" id="concierge-write">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3.4 11.2 20.2 3.6c.8-.4 1.6.4 1.3 1.2l-2.8 13.2c-.2.8-1.1 1.1-1.8.7l-4.4-2.4-2.3 2.8c-.5.6-1.5.3-1.6-.5l-.4-3.6 8.2-7.4-10.1 6.3-4.2-1.6c-.9-.3-1-1.5-.1-2.1Z"/>
+        </svg>
+        <span data-i18n="concierge.write">Связаться с консьержем</span>
+      </button>
     </div>
     <script src="../assets/uydosh-core.js?v=20261103-price-dot"></script>
     <script src="../assets/uydosh-i18n.js?v=20261104-concierge-yalaev"></script>
