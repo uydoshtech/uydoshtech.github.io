@@ -882,6 +882,7 @@ I18N.uz = {
     'compat.groupSummaryPartial': 'qisman',
     'compat.groupSummaryDiscuss': 'muhokama',
     'compat.groupReportTitle': 'Guruh moslik xulosasi',
+    'concierge.back': 'Orqaga',
     'concierge.open': 'Konsyerj',
     'concierge.title': 'Aleksey',
     'concierge.role': 'Kvartira qidirishda shaxsiy yordam',

@@ -883,6 +883,7 @@ I18N.ru = {
     'compat.groupSummaryPartial': 'частичных',
     'compat.groupSummaryDiscuss': 'обсудить',
     'compat.groupReportTitle': 'Сводка совместимости группы',
+    'concierge.back': 'Назад',
     'concierge.open': 'Консьерж',
     'concierge.title': 'Алексей',
     'concierge.role': 'Персональное сопровождение по поиску квартир',

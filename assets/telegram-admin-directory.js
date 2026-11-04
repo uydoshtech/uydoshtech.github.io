@@ -260,12 +260,41 @@
     load(false);
   }
 
+  function locationInitials(username, id) {
+    const source = username || String(id);
+    const chars = Array.from(source).filter((ch) => /[\p{L}\p{N}]/u.test(ch));
+    return (chars.slice(0, 2).join("") || "?").toLocaleUpperCase("ru");
+  }
+
+  function locationAvatar(username, id) {
+    const avatar = document.createElement("span");
+    avatar.className = "admin-card-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    const letters = document.createElement("span");
+    letters.textContent = locationInitials(username, id);
+    avatar.appendChild(letters);
+    const url = typeof UyDosh?.telegramAvatarUrl === "function" ? UyDosh.telegramAvatarUrl(username) : "";
+    if (url) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      img.src = url;
+      img.addEventListener("error", () => img.remove());
+      avatar.appendChild(img);
+    }
+    return avatar;
+  }
+
   function locationCard(user) {
     const id = String(user.telegramUserId ?? "");
     const username = String(user.telegramUsername || "").trim().replace(/^@/, "");
     const card = document.createElement("a");
-    card.className = "admin-card";
+    card.className = "admin-card admin-card-row";
     card.href = `/telegram/admin-locations.html?user=${encodeURIComponent(id)}`;
+    card.appendChild(locationAvatar(username, id));
+    const body = document.createElement("div");
+    body.className = "admin-card-body";
     const title = document.createElement("div");
     title.className = "admin-card-title";
     const name = document.createElement("b");
@@ -282,11 +311,12 @@
     when.className = "admin-card-side";
     when.textContent = formatWhenTime(user.lastSeenAt);
     title.appendChild(when);
-    card.appendChild(title);
+    body.appendChild(title);
     const meta = document.createElement("div");
     meta.className = "admin-card-meta";
     meta.textContent = fill("admin.locations.pings", user.pingCount ?? 0);
-    card.appendChild(meta);
+    body.appendChild(meta);
+    card.appendChild(body);
     return card;
   }
 

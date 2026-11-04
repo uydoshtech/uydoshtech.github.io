@@ -2778,7 +2778,10 @@ function initTelegramMiniApp() {
   }
   const tg = window.Telegram?.WebApp;
   if (tg) {
-    getTelegramInitData();
+    // Pages that don't load uydosh-api.js (the concierge screen) have no
+    // session helpers. A missing function must not abort startup: the page
+    // script calls this before translating the screen and showing BackButton.
+    if (typeof getTelegramInitData === "function") getTelegramInitData();
     try {
       tg.ready();
     } catch {
@@ -2814,8 +2817,10 @@ function initTelegramMiniApp() {
     // then start the ~10s heartbeat / realtime socket that detect being
     // superseded by another instance (see uydosh-api.js + backend
     // TelegramMiniAppSessionService). Fire-and-forget — must never block startup.
-    onMiniAppSessionRevoked(showMiniAppSessionRevokedScreen);
-    startTelegramMiniAppSession();
+    if (typeof onMiniAppSessionRevoked === "function") {
+      onMiniAppSessionRevoked(showMiniAppSessionRevokedScreen);
+    }
+    if (typeof startTelegramMiniAppSession === "function") startTelegramMiniAppSession();
     // Fire-and-forget: inits the LocationManager and requests the user's location right away.
     // On a user's very first Mini App visit ever, this is what triggers Telegram's native
     // location permission prompt; on every visit after that (granted or denied), it silently
