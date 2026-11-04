@@ -893,7 +893,7 @@ I18N.uz = {
     'concierge.plans': 'Hamrohlik turini tanlang',
     'concierge.plan.standard': 'Standart',
     'concierge.plan.standardPrice': '500 000 so‘m',
-    'concierge.plan.standardNote': 'To‘liq qidiruv va hamrohlik. To‘lov qaytarilmaydi.',
+    'concierge.plan.standardNote': 'To‘liq qidiruv va hamrohlik.',
     'concierge.plan.refund': 'Qaytarish imkoniyati bilan',
     'concierge.plan.refundPrice': '1 000 000 so‘m',
     'concierge.plan.refundNote': 'Xuddi shu hamrohlik. Qaytarish tasdiqlansa, 700 000 so‘m qaytadi.',

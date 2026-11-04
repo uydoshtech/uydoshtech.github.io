@@ -894,7 +894,7 @@ I18N.ru = {
     'concierge.plans': 'Выберите формат сопровождения',
     'concierge.plan.standard': 'Стандарт',
     'concierge.plan.standardPrice': '500 000 сум',
-    'concierge.plan.standardNote': 'Полный поиск и сопровождение. Без возврата оплаты.',
+    'concierge.plan.standardNote': 'Полный поиск и сопровождение.',
     'concierge.plan.refund': 'С возможностью возврата',
     'concierge.plan.refundPrice': '1 000 000 сум',
     'concierge.plan.refundNote': 'То же сопровождение. При одобренном возврате возвращается 700 000 сум.',

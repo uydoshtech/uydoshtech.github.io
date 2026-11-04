@@ -892,7 +892,7 @@ I18N.en = {
     'concierge.plans': 'Choose how you want to be helped',
     'concierge.plan.standard': 'Standard',
     'concierge.plan.standardPrice': '500 000 sum',
-    'concierge.plan.standardNote': 'Full search and support. The fee is not refundable.',
+    'concierge.plan.standardNote': 'Full search and support.',
     'concierge.plan.refund': 'With a refund option',
     'concierge.plan.refundPrice': '1 000 000 sum',
     'concierge.plan.refundNote': 'The same support. If a refund is approved, 700 000 sum is returned.',
