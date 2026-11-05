@@ -1479,30 +1479,32 @@ body.view-map .feed-map-panel.active .map-container {
 .concierge-banner {
   position: fixed;
   left: 12px;
-  right: calc(14px + 56px + 10px);
-  bottom: calc(85px + env(safe-area-inset-bottom, 0px));
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 34;
-  height: 34px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0 12px;
+  padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid var(--stroke);
-  background: color-mix(in srgb, var(--card) 92%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--fg) 28%, transparent);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--fg);
   font-size: 13px;
   font-weight: 650;
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
 }
 html.mini-app-has-tabbar .concierge-banner {
   bottom: calc(
     var(--uydosh-tabbar-height, 58px)
-    + 23px
+    + 8px
     + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px))
   );
 }
@@ -1511,42 +1513,6 @@ html.mini-app-has-tabbar .concierge-banner {
   font-weight: 750;
 }
 body.view-map .concierge-banner {
-  display: none;
-}
-.fab-concierge {
-  position: fixed;
-  right: max(14px, env(safe-area-inset-right, 0px));
-  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
-  z-index: 35;
-  appearance: none;
-  border: 0;
-  border-radius: 50%;
-  background: #2563eb;
-  color: #fff;
-  width: 56px;
-  height: 56px;
-  padding: 0;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-html.mini-app-has-tabbar .fab-concierge {
-  bottom: calc(
-    var(--uydosh-tabbar-height, 58px)
-    + 12px
-    + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px))
-  );
-}
-.fab-concierge:active { opacity: 0.92; transform: scale(0.98); }
-.fab-concierge svg {
-  width: 28px;
-  height: 28px;
-  display: block;
-}
-body.view-map .fab-concierge {
   display: none;
 }
 
