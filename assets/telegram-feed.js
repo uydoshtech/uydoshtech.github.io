@@ -542,9 +542,13 @@ function isHostelsOnlyFilter() {
   return state.filters.listingTypeId === LISTING_TYPE_HOSTEL;
 }
 
-/** Apartment-for-rent listings are not gendered, so the control stays put but does not filter. */
+/** Gender is only for an explicit roommate, group, or hostel pick.
+ * "Все" and apartment rent hide the control and do not filter by it. */
 function genderFilterApplies() {
-  return state.filters.listingTypeId !== LISTING_TYPE_APARTMENT_RENT;
+  const typeId = state.filters.listingTypeId;
+  return typeId === LISTING_TYPE_ROOMMATE_NEEDED
+    || typeId === LISTING_TYPE_GROUP_FORMING
+    || typeId === LISTING_TYPE_HOSTEL;
 }
 
 function genderQueryParam() {
@@ -1017,7 +1021,7 @@ function renderFilters() {
             </div>
             <div class="filter-row filter-row-gender">
               <div class="filter-controls">
-                ${roomsFilterApplies() ? roomsChipHtml(lang) : genderSwitch}
+                ${roomsFilterApplies() ? roomsChipHtml(lang) : genderApplies ? genderSwitch : ''}
                 ${photoChip}
                 <!-- ${threeDChip} -->
                 ${priceSortChip}
@@ -1040,7 +1044,7 @@ function renderFilters() {
             <div class="filter-row filter-row-compact">
               <div class="chips chips-compact" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('filter.type.aria', lang))}">
                 ${typeChipCompact}
-                ${roomsFilterApplies() ? roomsChipHtml(lang) : genderChipCompact}
+                ${roomsFilterApplies() ? roomsChipHtml(lang) : genderApplies ? genderChipCompact : ''}
                 ${districtChipCompact}
                 ${lineChipCompact}
                 ${photoChipCompact}
