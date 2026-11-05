@@ -1476,6 +1476,43 @@ body.view-map .feed-map-panel.active .map-container {
   pointer-events: none;
 }
 
+.concierge-banner {
+  position: fixed;
+  left: 12px;
+  right: calc(14px + 56px + 10px);
+  bottom: calc(85px + env(safe-area-inset-bottom, 0px));
+  z-index: 34;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: color-mix(in srgb, var(--card) 92%, var(--bg));
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+html.mini-app-has-tabbar .concierge-banner {
+  bottom: calc(
+    var(--uydosh-tabbar-height, 58px)
+    + 23px
+    + max(env(safe-area-inset-bottom, 0px), var(--uydosh-tg-inset-bottom, 0px))
+  );
+}
+.concierge-banner-price {
+  color: #22c55e;
+  font-weight: 750;
+}
+body.view-map .concierge-banner {
+  display: none;
+}
 .fab-concierge {
   position: fixed;
   right: max(14px, env(safe-area-inset-right, 0px));

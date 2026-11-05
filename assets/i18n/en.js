@@ -883,6 +883,7 @@ I18N.en = {
     'compat.groupReportTitle': 'Group compatibility insight',
     'concierge.back': 'Back',
     'concierge.open': 'Concierge',
+    'concierge.banner': 'I\'ll find an apartment, flat fee',
     'concierge.kicker': 'UyDosh Concierge',
     'concierge.kickerSub': 'Personal apartment search',
     'concierge.headline': 'Hi, I\'m Alex, founder of the ЯRENT owners group! I\'ll find you an apartment in Tashkent for a fixed fee. 150+ deals closed in 2.5 months! Refunds available. Come say hi!',

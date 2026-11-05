@@ -884,6 +884,7 @@ I18N.uz = {
     'compat.groupReportTitle': 'Guruh moslik xulosasi',
     'concierge.back': 'Orqaga',
     'concierge.open': 'Konsyerj',
+    'concierge.banner': 'Kvartirani belgilangan narxda topaman',
     'concierge.kicker': 'UyDosh konsyerji',
     'concierge.kickerSub': 'Shaxsiy kvartira qidirish',
     'concierge.headline': 'Salom, men Alex, ЯRENT egalari guruhining asoschisiman! Toshkentda kvartirani belgilangan to‘lov evaziga topaman. 2,5 oyda 150+ bitim yopildi! Qaytarish bor. O‘t, tanishaylik!',
