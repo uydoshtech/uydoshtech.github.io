@@ -1751,6 +1751,13 @@ function createListingConversation(listingId, ownerUserId) {
   });
 }
 
+function createConciergeConversation() {
+  return fetchJsonAuth("/conversations", {
+    method: "POST",
+    body: { context_type: "concierge" },
+  });
+}
+
 function fetchUserConversations({ page = 1, limit = 50 } = {}) {
   return fetchJsonAuth("/conversations", { params: { page, limit } });
 }
@@ -2249,6 +2256,7 @@ Object.assign(window.UyDosh, {
   removeListingGroupMember,
   fetchMyGroupMembershipLimit,
   createListingConversation,
+  createConciergeConversation,
   fetchUserConversations,
   fetchConversation,
   fetchConversationMembers,

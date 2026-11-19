@@ -883,7 +883,7 @@ I18N.en = {
     'compat.groupReportTitle': 'Group compatibility insight',
     'concierge.back': 'Back',
     'concierge.open': 'Concierge',
-    'concierge.banner': 'I\'ll find an apartment, flat fee',
+    'concierge.banner': 'We\'ll search for you',
     'concierge.kicker': 'UyDosh Concierge',
     'concierge.kickerSub': 'Personal apartment search',
     'concierge.headline': 'Hi, I\'m Alex, founder of the ЯRENT owners group! I\'ll find you an apartment in Tashkent for a fixed fee. 150+ deals closed in 2.5 months! Refunds available. Come say hi!',
@@ -899,6 +899,8 @@ I18N.en = {
     'concierge.plan.refundNote': 'The same support. If a refund is approved, 700.000 sum is returned.',
     'concierge.partner': 'ЯLaev',
     'concierge.partnerRole': 'UyDosh partner for apartment search',
-    'concierge.write': 'Contact the concierge',
+    'concierge.write': 'Message the concierge',
+    'concierge.chatError': 'Couldn\'t open the chat. Try again.',
+    'concierge.unavailable': 'The concierge chat isn\'t connected yet. Try again a little later.',
     'concierge.disclaimer': 'The service is provided by an independent partner. Payment and refund terms are agreed with him.',
 };

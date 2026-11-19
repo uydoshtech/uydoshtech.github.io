@@ -885,7 +885,7 @@ I18N.ru = {
     'compat.groupReportTitle': 'Сводка совместимости группы',
     'concierge.back': 'Назад',
     'concierge.open': 'Консьерж',
-    'concierge.banner': 'Найду квартиру за фикс',
+    'concierge.banner': 'Подберём за вас',
     'concierge.kicker': 'Консьерж UyDosh',
     'concierge.kickerSub': 'Персональный поиск квартиры',
     'concierge.headline': 'Привет я Alex основатель группы с собственниками ЯRENT! Найду тебе квартиру в Ташкенте за фиксированную оплату. Закрыто 150+ сделок за 2,5 месяца! Есть возврат. Переходи, давай знакомиться!',
@@ -901,6 +901,8 @@ I18N.ru = {
     'concierge.plan.refundNote': 'То же сопровождение. При одобренном возврате возвращается 700.000 сум.',
     'concierge.partner': 'ЯLaev',
     'concierge.partnerRole': 'Партнёр UyDosh по поиску жилья',
-    'concierge.write': 'Связаться с консьержем',
+    'concierge.write': 'Написать консьержу',
+    'concierge.chatError': 'Не удалось открыть переписку. Попробуйте ещё раз.',
+    'concierge.unavailable': 'Чат консьержа ещё не подключён. Напишите нам чуть позже.',
     'concierge.disclaimer': 'Услугу оказывает независимый партнёр. Условия оплаты и возврата согласовываются с ним.',
 };

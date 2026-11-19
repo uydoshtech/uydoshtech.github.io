@@ -432,9 +432,9 @@ function updateHeader(conversation, members) {
   const people = headerPeople(conversation, members);
   const names = people.map((p) => headerFirstName(p.name)).filter(Boolean).join(', ')
     || UyDosh.t('chat.title');
-  const subtitle = conversation?.listing?.title
-    || conversation?.listing_title
-    || '';
+  const subtitle = conversation?.context_type === 'concierge'
+    ? UyDosh.t('concierge.kicker')
+    : (conversation?.listing?.title || conversation?.listing_title || '');
   const maxFaces = people.length > 4 ? 3 : people.length;
   const shown = people.slice(0, maxFaces);
   const extra = people.length - shown.length;

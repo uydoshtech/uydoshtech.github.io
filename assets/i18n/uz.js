@@ -884,7 +884,7 @@ I18N.uz = {
     'compat.groupReportTitle': 'Guruh moslik xulosasi',
     'concierge.back': 'Orqaga',
     'concierge.open': 'Konsyerj',
-    'concierge.banner': 'Kvartirani belgilangan narxda topaman',
+    'concierge.banner': 'Siz uchun topamiz',
     'concierge.kicker': 'UyDosh konsyerji',
     'concierge.kickerSub': 'Shaxsiy kvartira qidirish',
     'concierge.headline': 'Salom, men Alex, ЯRENT egalari guruhining asoschisiman! Toshkentda kvartirani belgilangan to‘lov evaziga topaman. 2,5 oyda 150+ bitim yopildi! Qaytarish bor. O‘t, tanishaylik!',
@@ -900,6 +900,8 @@ I18N.uz = {
     'concierge.plan.refundNote': 'Xuddi shu hamrohlik. Qaytarish tasdiqlansa, 700.000 so‘m qaytadi.',
     'concierge.partner': 'ЯLaev',
     'concierge.partnerRole': 'UyDosh uy-joy qidirish bo‘yicha hamkori',
-    'concierge.write': 'Konsyerj bilan bog‘lanish',
+    'concierge.write': 'Konsyerjga yozish',
+    'concierge.chatError': 'Yozishmani ochib bo‘lmadi. Qayta urinib ko‘ring.',
+    'concierge.unavailable': 'Konsyerj chati hali ulanmagan. Birozdan keyin yozing.',
     'concierge.disclaimer': 'Xizmatni mustaqil hamkor ko‘rsatadi. To‘lov va qaytarish shartlari u bilan kelishiladi.',
 };
