@@ -378,10 +378,8 @@
         const metro = UyDosh.localized(l.subway_station, lang);
         const rooms = Number(l.rooms_number);
 
-        // Row 1: type / gender / price — the headline facts about the
-        // listing. Row 2: private room / room count — secondary details
-        // that used to just wrap onto their own line by accident; now
-        // they're deliberately grouped together below row 1.
+        // Row 1: type, room count, then price pinned to the right.
+        // Row 2: private room, when the listing has one.
         const primaryBadges = [];
         if (UyDosh.isFeatured(l)) {
           primaryBadges.push(`<span class="badge featured">${UyDosh.escapeHtml(UyDosh.t('card.featured'))}</span>`);
@@ -393,6 +391,9 @@
         }
         const genderBadge = UyDosh.genderBadgeHtml(l, lang);
         if (genderBadge) primaryBadges.push(genderBadge);
+        if (Number.isFinite(rooms) && rooms > 0) {
+          primaryBadges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
+        }
         if (price) {
           primaryBadges.push(`<span class="price">${price}<small>${UyDosh.escapeHtml(UyDosh.t('card.perMonth'))}</small></span>`);
         }
@@ -400,9 +401,6 @@
         const secondaryBadges = [];
         if (l.private_room) {
           secondaryBadges.push(`<span class="badge">${UyDosh.iconLock()}${UyDosh.escapeHtml(UyDosh.t('card.privateRoom'))}</span>`);
-        }
-        if (Number.isFinite(rooms) && rooms > 0) {
-          secondaryBadges.push(`<span class="badge">${rooms} ${UyDosh.escapeHtml(UyDosh.t('card.rooms'))}</span>`);
         }
 
         const amenities = Array.isArray(l.amenities) ? l.amenities : [];

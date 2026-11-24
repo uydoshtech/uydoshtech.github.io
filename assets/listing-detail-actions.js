@@ -41,6 +41,21 @@
         return `${title}${priceLine}`;
       }
 
+      // Publisher tracking token from the original caption. ЯRENT used
+      // «ID: 4871» and now writes «№370». The stored title is only
+      // «2-комнатная квартира», so the number has to be read back out of
+      // the original description (not a translation).
+      function listingPublisherRef(listing) {
+        const source = [listing?.description, listing?.title].filter(Boolean).join('\n');
+        if (!source) return '';
+        const emoji = source.match(/🆔\s*(?:\{ID\}|ID:?\s*)?\s*([A-Za-z]\d+|\d+)/i);
+        if (emoji) return `ID ${emoji[1]}`;
+        const plain = source.match(/(?:^|[^0-9A-Za-z_])ID\s*[:：]\s*([A-Za-z]\d+|\d+)/i);
+        if (plain) return `ID ${plain[1]}`;
+        const numero = source.match(/№\s*(\d+)/u);
+        return numero ? `№${numero[1]}` : '';
+      }
+
       // Prefills the Telegram compose box (via `?text=`) when a guest taps
       // "Contact on Telegram" on the detail screen, so the host immediately
       // knows which listing the message refers to instead of a blank chat.
@@ -50,8 +65,11 @@
         const title = l.title || `#${l.id}`;
         const price = UyDosh.formatPrice(l, lang);
         const district = UyDosh.localized(l.location, lang);
+        const ref = listingPublisherRef(l);
 
-        const factLines = [`📌 ${title}`];
+        const factLines = [];
+        if (ref && !title.includes(ref)) factLines.push(ref);
+        factLines.push(`📌 ${title}`);
         if (price) factLines.push(`💰 ${price}${UyDosh.t('card.perMonth', lang)}`);
         if (district) factLines.push(`📍 ${district}`);
 
