@@ -4,6 +4,7 @@
 // languages' strings when only one (or two, uz+active) is ever used per session.
 window.I18N = window.I18N || {};
 I18N.uz = {
+    "tabbar.events": "Afisha",
     "jobs.title": "Ish",
     "jobs.subtitle": "O‘zbekistondagi talabalar va yosh mutaxassislar uchun",
     "jobs.category": "Toifa",

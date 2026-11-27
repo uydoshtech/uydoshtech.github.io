@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru" class="mini-app">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>UyDosh — Афиша</title>
+    <meta name="uydosh-api-base" content="https://api.uydosh.com" />
+    <script src="../assets/theme-init.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <link rel="stylesheet" href="../assets/loading-spinner.css" />
+    <link rel="stylesheet" href="../assets/telegram-shared.css" />
+    <link rel="stylesheet" href="../assets/telegram-events.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header data-uydosh-mini-app-header></header>
+      <main class="radar-page">
+        <h1 data-radar-label="title">Афиша</h1>
+        <p data-radar-label="subtitle">Куда сходить в Ташкенте</p>
+        <form id="event-filters" class="radar-filters">
+          <label
+            ><span data-radar-label="category">Категория</span
+            ><select id="event-category"></select></label
+          ><label
+            ><span data-radar-label="from">С даты</span
+            ><input id="event-from" type="date" /></label
+          ><label
+            ><span data-radar-label="to">По дату</span
+            ><input id="event-to" type="date" /></label
+          ><button data-radar-label="apply">Показать</button>
+        </form>
+        <div id="radar-status" role="status" aria-live="polite"></div>
+        <button id="radar-retry" hidden data-radar-label="retry">
+          Повторить
+        </button>
+        <div id="radar-list" class="radar-list"></div>
+        <div class="radar-actions">
+          <button id="radar-prev" data-radar-label="previous">Назад</button
+          ><button id="radar-next" data-radar-label="next">Далее</button>
+        </div>
+      </main>
+    </div>
+    <script src="../assets/uydosh-core.js"></script>
+    <script src="../assets/uydosh-i18n.js"></script>
+    <script src="../assets/uydosh-api.js" defer></script>
+    <script src="../assets/uydosh-icons.js" defer></script>
+    <script src="../assets/uydosh-mini-app.js" defer></script>
+    <script src="../assets/city-radar-ui.js" defer></script>
+    <script src="../assets/telegram-events.js" defer></script>
+  </body>
+</html>

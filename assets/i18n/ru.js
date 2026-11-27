@@ -3,6 +3,7 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.ru = {
+    "tabbar.events": "Афиша",
     "jobs.title": "Работа",
     "jobs.subtitle": "Для студентов и молодых специалистов в Узбекистане",
     "jobs.category": "Категория",

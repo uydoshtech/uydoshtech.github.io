@@ -729,7 +729,8 @@ function navDrawerHtml() {
               "nav-drawer-admin-panel",
               "nav.admin",
               "shield",
-              navDrawerSectionHtml(
+              `<a role="menuitem" href="${MINI_APP_ADMIN_PATH}">${UyDosh.iconChrome("shield")}<span data-i18n="nav.admin"></span></a>
+              <a role="menuitem" href="/telegram/admin-events.html">${UyDosh.iconChrome("sparkles")}<span data-i18n="tabbar.events"></span></a>` + navDrawerSectionHtml(
                 "nav-drawer-admin-users-panel",
                 "nav.adminUsers",
                 "users",
@@ -921,6 +922,7 @@ function shouldMountMiniAppTabbar() {
   const path = location.pathname || "";
   if (/listing\.html/i.test(path)) return false;
   if (/chat\.html/i.test(path)) return false;
+  if (/\/event\.html/i.test(path)) return false;
   if (/create\.html/i.test(path)) return false;
   if (/profile\.html/i.test(path)) return false;
   if (/concierge\.html/i.test(path)) return false;
@@ -934,7 +936,7 @@ function miniAppTabbarActiveId() {
   if (/chats\.html/i.test(path)) return "messages";
   if (/create\.html/i.test(path)) return "create";
   if (/account\.html/i.test(path)) return "community";
-  if (/admin\.html/i.test(path)) return "admin";
+  if (/\/events\.html/i.test(path)) return "events";
   if (/\/telegram\/?$/i.test(path) || /\/telegram\/index\.html$/i.test(path))
     return "housing";
   return "";
@@ -966,13 +968,11 @@ function ensureMiniAppTabbarStyles() {
     html.mini-app-header-light .mini-app-tabbar { background: #e8eef6; }
     .mini-app-tabbar-items {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       height: var(--uydosh-tabbar-height);
       align-items: center;
       padding: 0 6px;
     }
-    .mini-app-tabbar-items.has-admin { grid-template-columns: repeat(5, 1fr); }
-    .mini-app-tab[data-admin-tab][hidden] { display: none !important; }
     .mini-app-tab {
       appearance: none;
       position: relative;
@@ -989,6 +989,7 @@ function ensureMiniAppTabbarStyles() {
       line-height: 1.1;
       min-width: 0;
     }
+    .mini-app-tab > span:not(.mini-app-tab-badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .mini-app-tab svg { width: 22px; height: 22px; display: block; }
     .mini-app-tab.is-active { color: #38bdf8; }
     html.mini-app-header-light .mini-app-tab { color: rgba(15, 23, 42, 0.72); }
@@ -1027,10 +1028,10 @@ function miniAppTabbarHtml(activeId) {
     <nav class="mini-app-tabbar" aria-label="Main">
       <div class="mini-app-tabbar-items">
         ${item("housing", MINI_APP_HOUSING_PATH, "house", "tabbar.housing")}
+        ${item("events", "/telegram/events.html", "sparkles", "tabbar.events")}
         ${item("community", MINI_APP_COMMUNITY_PATH, "users", "tabbar.community")}
         ${item("messages", MINI_APP_CHATS_PATH, "chatBubbles", "tabbar.messages")}
         ${item("create", MINI_APP_CREATE_PATH, "plus", "tabbar.create")}
-        <a class="mini-app-tab${activeId === "admin" ? " is-active" : ""}" href="${MINI_APP_ADMIN_PATH}" data-tabbar-id="admin" data-admin-tab hidden>${UyDosh.iconChrome("shield")}<span>Управление</span></a>
       </div>
     </nav>`;
 }
@@ -1078,15 +1079,6 @@ async function revealAdminHostelTools() {
       el.hidden = false;
     });
     document.querySelectorAll("[data-admin-drawer]").forEach((el) => {
-      el.hidden = false;
-    });
-    // Switch the grid before revealing the fifth item. Revealing it first
-    // leaves a 4-column grid for one paint frame, so the shield briefly wraps
-    // onto a second row while the Telegram session finishes loading.
-    document
-      .querySelector(".mini-app-tabbar-items")
-      ?.classList.add("has-admin");
-    document.querySelectorAll("[data-admin-tab]").forEach((el) => {
       el.hidden = false;
     });
   } catch {
@@ -1219,7 +1211,7 @@ function isMiniAppRootRoute() {
   return (
     /\/telegram\/?$/i.test(path) ||
     /\/telegram\/index\.html$/i.test(path) ||
-    /\/telegram\/(?:admin|account|chats)\.html$/i.test(path)
+    /\/telegram\/(?:admin|account|chats|events)\.html$/i.test(path)
   );
 }
 
@@ -1254,7 +1246,8 @@ function syncMiniAppBackButton() {
     /\/telegram\/profile\.html$/i.test(path) ||
     /\/telegram\/hostels?\.html$/i.test(path) ||
     /\/telegram\/hostel-create\.html$/i.test(path) ||
-    /\/telegram\/admin-(?:users|locations)\.html$/i.test(path) ||
+    /\/telegram\/admin-(?:users|locations|events)\.html$/i.test(path) ||
+    /\/telegram\/event\.html$/i.test(path) ||
     /\/telegram\/concierge\.html$/i.test(path) ||
     (/\/telegram\/account\.html$/i.test(path) && hasBack);
   try {

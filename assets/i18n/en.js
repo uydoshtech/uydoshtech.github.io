@@ -3,6 +3,7 @@
 // of uydosh-i18n.js.
 window.I18N = window.I18N || {};
 I18N.en = {
+    "tabbar.events": "Events",
     "jobs.title": "Jobs",
     "jobs.subtitle": "For students and young professionals in Uzbekistan",
     "jobs.category": "Category",

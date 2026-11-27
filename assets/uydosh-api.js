@@ -2366,3 +2366,15 @@ UyDosh.fetchPendingLandlordInvites = () => fetchJsonAuth('/conversations/pending
 UyDosh.respondToLandlordInvite = (groupId, inviteId, accept) => fetchJsonAuth(listingGroupPath(groupId, `/landlord-invites/${encodeURIComponent(inviteId)}/${accept ? 'accept' : 'decline'}`), { method: 'POST' });
 
 UyDosh.rateChatListing = (messageId, { stars, reasons, categoryRatings, verdict }) => fetchJsonAuth(`/messages/${encodeURIComponent(messageId)}/listing-rating`, { method: 'POST', body: { stars, reasons, category_ratings: categoryRatings, verdict } });
+
+// City Radar shares the existing staff session; public requests never carry credentials.
+UyDosh.cityRadarAdmin = (path, options) => fetchJsonAuth(`/admin/city-radar${path}`, options);
+UyDosh.cityRadarPublic = async (path = "", params = {}) => {
+  const url = new URL(`${API_BASE}/events${path}`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== "" && value != null) url.searchParams.set(key, String(value));
+  });
+  const response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+  if (!response.ok) { const error = new Error(`HTTP ${response.status}`); error.status = response.status; throw error; }
+  return response.json();
+};
