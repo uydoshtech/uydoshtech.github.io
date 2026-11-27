@@ -127,12 +127,15 @@
 }
 
 /* A single-column feed with horizontally scrollable category switches. */
+.radar-feed {
+  padding-top: 8px;
+}
 .radar-categories {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   padding: 6px 0 12px;
-  margin: 18px -2px 0;
+  margin: 0 -2px;
   scrollbar-width: thin;
   overscroll-behavior-x: contain;
 }
