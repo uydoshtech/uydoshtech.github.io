@@ -125,3 +125,40 @@
   outline: 2px solid var(--fg);
   outline-offset: 3px;
 }
+
+/* A single-column feed with horizontally scrollable category switches. */
+.radar-categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 0 12px;
+  margin: 18px -2px 0;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+.radar-categories button {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.radar-categories button[aria-pressed="true"] {
+  background: #075985;
+  border-color: #38bdf8;
+  color: #fff;
+}
+.radar-feed-more {
+  justify-content: center;
+}
+.radar-feed-more button {
+  width: 100%;
+}
+.radar-list .radar-card {
+  padding: 22px;
+}
+.radar-list .radar-card .radar-actions {
+  margin-bottom: 0;
+}
+.radar-list .radar-card .radar-actions a {
+  flex: 1;
+  text-align: center;
+}

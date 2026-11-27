@@ -11,7 +11,9 @@ window.CityRadarUI = (() => {
   ];
   const strings = {
     ru: {
-      title: "Афиша",
+      title: "Куда пойдём?",
+      more: "Показать ещё",
+      details: "Подробнее",
       subtitle: "Куда сходить в Ташкенте",
       category: "Категория",
       from: "С даты",
@@ -23,7 +25,7 @@ window.CityRadarUI = (() => {
       back: "← Афиша",
       all: "Все категории",
       loading: "Загружаем…",
-      empty: "Пока нет мероприятий. Попробуйте другие даты или категорию.",
+      empty: "Пока нет мероприятий в этой категории. Загляните позже.",
       unavailable: "Афиша пока недоступна. Загляните позже.",
       missing: "Мероприятие больше не доступно.",
       error: "Не удалось загрузить. Попробуйте ещё раз.",
@@ -45,7 +47,9 @@ window.CityRadarUI = (() => {
       ],
     },
     uz: {
-      title: "Afisha",
+      title: "Qayerga boramiz?",
+      more: "Yana ko‘rsatish",
+      details: "Batafsil",
       subtitle: "Toshkentda qayerga borish mumkin",
       category: "Turkum",
       from: "Sanadan",
@@ -57,7 +61,7 @@ window.CityRadarUI = (() => {
       back: "← Afisha",
       all: "Barcha turkumlar",
       loading: "Yuklanmoqda…",
-      empty: "Hozircha tadbirlar yo‘q. Boshqa sana yoki turkumni tanlang.",
+      empty: "Bu turkumda hozircha tadbirlar yo‘q. Keyinroq qayting.",
       unavailable: "Afisha hozircha mavjud emas. Keyinroq qayting.",
       missing: "Tadbir endi mavjud emas.",
       error: "Yuklab bo‘lmadi. Qayta urinib ko‘ring.",
@@ -79,7 +83,9 @@ window.CityRadarUI = (() => {
       ],
     },
     en: {
-      title: "Events",
+      title: "Where shall we go?",
+      more: "Show more",
+      details: "View details",
       subtitle: "Things to do in Tashkent",
       category: "Category",
       from: "From",
@@ -91,7 +97,7 @@ window.CityRadarUI = (() => {
       back: "← Events",
       all: "All categories",
       loading: "Loading…",
-      empty: "No events yet. Try another date or category.",
+      empty: "No events in this category yet. Check back later.",
       unavailable: "Events are currently unavailable. Check back later.",
       missing: "This event is no longer available.",
       error: "Could not load events. Please try again.",
@@ -183,6 +189,13 @@ window.CityRadarUI = (() => {
         const a = link(label, url);
         if (a) actions.append(a);
       }
+      el.append(actions);
+    }
+    if (!detail) {
+      const actions = node("div", null, "radar-actions");
+      const more = node("a", t("details"));
+      more.href = `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
+      actions.append(more);
       el.append(actions);
     }
     return el;

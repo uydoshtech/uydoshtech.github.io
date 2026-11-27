@@ -20,26 +20,20 @@
       <main class="radar-page">
         <h1 data-radar-label="title">Афиша</h1>
         <p data-radar-label="subtitle">Куда сходить в Ташкенте</p>
-        <form id="event-filters" class="radar-filters">
-          <label
-            ><span data-radar-label="category">Категория</span
-            ><select id="event-category"></select></label
-          ><label
-            ><span data-radar-label="from">С даты</span
-            ><input id="event-from" type="date" /></label
-          ><label
-            ><span data-radar-label="to">По дату</span
-            ><input id="event-to" type="date" /></label
-          ><button data-radar-label="apply">Показать</button>
-        </form>
+        <nav
+          id="event-categories"
+          class="radar-categories"
+          aria-label="Категории мероприятий"
+        ></nav>
         <div id="radar-status" role="status" aria-live="polite"></div>
         <button id="radar-retry" hidden data-radar-label="retry">
           Повторить
         </button>
         <div id="radar-list" class="radar-list"></div>
-        <div class="radar-actions">
-          <button id="radar-prev" data-radar-label="previous">Назад</button
-          ><button id="radar-next" data-radar-label="next">Далее</button>
+        <div class="radar-actions radar-feed-more">
+          <button id="radar-next" hidden data-radar-label="more">
+            Показать ещё
+          </button>
         </div>
       </main>
     </div>

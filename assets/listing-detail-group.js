@@ -78,6 +78,34 @@
         return `<a class="btn primary" href="${UyDosh.escapeHtml(cta.href)}" data-group-open-chat>${UyDosh.escapeHtml(cta.label)}</a>`;
       }
 
+      function groupOrganizerHandle(listing) {
+        const raw = listingGroupContext(listing)?.organizer_telegram || '';
+        return String(raw).trim().replace(/^@+/, '');
+      }
+
+      function groupOrganizerHtml(listing) {
+        const handle = groupOrganizerHandle(listing);
+        if (!handle) return '';
+        const href = typeof UyDosh.telegramUserUrl === 'function'
+          ? UyDosh.telegramUserUrl(handle)
+          : `https://t.me/${encodeURIComponent(handle)}`;
+        const icon = UyDosh.iconChrome?.('paperPlane') || '';
+        return `<p class="group-organizer"><span class="group-organizer-label">${UyDosh.escapeHtml(UyDosh.t('detail.group.organizer'))}</span> <a class="group-organizer-handle" href="${UyDosh.escapeHtml(href)}" data-group-organizer>${icon}<span>@${UyDosh.escapeHtml(handle)}</span></a></p>`;
+      }
+
+      function bindGroupOrganizerLinks() {
+        rootEl.querySelectorAll('[data-group-organizer]').forEach((link) => {
+          link.addEventListener('click', (event) => {
+            const href = link.getAttribute('href');
+            const tg = window.Telegram?.WebApp;
+            if (!href || typeof tg?.openTelegramLink !== 'function') return;
+            event.preventDefault();
+            UyDosh.haptic?.light?.();
+            tg.openTelegramLink(href);
+          });
+        });
+      }
+
       function groupSectionHtml(listing) {
         const ctx = listingGroupContext(listing);
         if (!ctx) return '';
@@ -156,6 +184,7 @@
               </div>
             </div>
             <p class="group-section-error" data-group-error hidden></p>
+            ${groupOrganizerHtml(listing)}
             ${ctx.is_owner ? '' : '<div class="group-avatar-stack" data-group-avatars hidden></div>'}
             ${body}
           </section>
@@ -334,6 +363,7 @@
       }
 
       function bindGroupSection() {
+        bindGroupOrganizerLinks();
         rootEl.querySelector('[data-group-join]')?.addEventListener('click', () => {
           handleGroupJoin();
         });

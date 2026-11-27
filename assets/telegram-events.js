@@ -6,7 +6,8 @@
     next = null,
     generation = 0,
     data = null;
-  let filters = { category: "", date_from: "", date_to: "" };
+  let filters = { category: "" };
+  let loading = false;
   UyDosh.initTelegramMiniApp?.();
   if (detail) {
     const back = window.Telegram?.WebApp?.BackButton;
@@ -20,15 +21,29 @@
       el.textContent = R.t(el.dataset.radarLabel);
     });
     if (!detail) {
-      const selected = $("event-category").value;
-      $("event-category").replaceChildren(
+      $("event-categories").replaceChildren(
         ...["", ...R.categories].map((value) => {
-          const o = R.node("option", value ? R.category(value) : R.t("all"));
-          o.value = value;
-          return o;
+          const button = R.node(
+            "button",
+            value ? R.category(value) : R.t("all"),
+          );
+          button.type = "button";
+          button.setAttribute(
+            "aria-pressed",
+            String(filters.category === value),
+          );
+          button.addEventListener("click", () => {
+            if (filters.category === value) return;
+            filters = { category: value };
+            offset = 0;
+            for (const chip of $("event-categories").children) {
+              chip.setAttribute("aria-pressed", String(chip === button));
+            }
+            load();
+          });
+          return button;
         }),
       );
-      $("event-category").value = selected;
     }
   }
   function render() {
@@ -40,14 +55,17 @@
   }
   async function load() {
     const ticket = ++generation;
-    $("radar-list").replaceChildren();
+    if (offset === 0 || detail) {
+      data = null;
+      $("radar-list").replaceChildren();
+    }
     $("radar-status").textContent = R.t("loading");
     $("radar-retry").hidden = true;
     if (!detail) {
-      $("radar-prev").disabled = true;
+      $("radar-next").hidden = true;
       $("radar-next").disabled = true;
     }
-    data = null;
+    loading = true;
     try {
       const id = new URLSearchParams(location.search).get("id");
       if (detail && !/^[1-9]\d*$/.test(id || ""))
@@ -58,11 +76,24 @@
         limit: 20,
       });
       if (ticket !== generation) return;
-      data = result;
+      data =
+        !detail && offset > 0 && data
+          ? {
+              ...result,
+              events: [
+                ...new Map(
+                  [...data.events, ...result.events].map((event) => [
+                    String(event.id),
+                    event,
+                  ]),
+                ).values(),
+              ],
+            }
+          : result;
       next = result.next_offset;
       render();
       if (!detail) {
-        $("radar-prev").disabled = offset === 0;
+        $("radar-next").hidden = next == null;
         $("radar-next").disabled = next == null;
       }
     } catch (error) {
@@ -75,31 +106,13 @@
             : "error",
       );
       $("radar-retry").hidden = error.status === 404;
+    } finally {
+      if (ticket === generation) loading = false;
     }
   }
   if (!detail) {
-    $("event-filters").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const from = $("event-from").value,
-        to = $("event-to").value;
-      if (from && to && from > to) {
-        $("radar-status").textContent = R.t("dates");
-        return;
-      }
-      filters = {
-        category: $("event-category").value,
-        date_from: from,
-        date_to: to,
-      };
-      offset = 0;
-      load();
-    });
-    $("radar-prev").addEventListener("click", () => {
-      offset = Math.max(0, offset - 20);
-      load();
-    });
     $("radar-next").addEventListener("click", () => {
-      if (next != null) {
+      if (next != null && !loading) {
         offset = next;
         load();
       }

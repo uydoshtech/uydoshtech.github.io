@@ -349,6 +349,7 @@ I18N.ru = {
     'detail.claim.account': "В объявлении указан ваш Telegram-аккаунт {username}. Добавьте объявление в свой профиль UyDosh, чтобы редактировать его и управлять публикацией.",
     'detail.group.spots': '{count} из {target}',
     'detail.group.title': 'Группа',
+    'detail.group.organizer': 'Организатор',
     'detail.group.join': 'Подать заявку',
     'detail.group.joining': 'Отправка…',
     'detail.group.withdraw': 'Отозвать заявку',

@@ -511,7 +511,7 @@
         const titleHtml = `<div class="title-row"><h1>${title}</h1></div>`;
         const contentHtml = isGroupPage ? groupTabsHtml({
           description: `${titleHtml}${groupSectionHtml(l)}${roomScanHtml}${descHtml}${mapHtml}${metaHtml}`,
-          compatibility: `${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.compatUnavailable'))}</p>`,
+          compatibility: `${groupOrganizerHtml(l)}${compatibilityHtml}<p class="group-compat-unavailable discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.compatUnavailable'))}</p>`,
           housing: discoveryHtml || `<p class="discovery-note">${UyDosh.escapeHtml(UyDosh.t('detail.group.housingUnavailable'))}</p>`,
           ...(listingGroupContext(l)?.is_owner || listingGroupContext(l)?.is_member ? { home: UyDoshGroupHome.html() } : {}),
         }) : groupTabsHtml({

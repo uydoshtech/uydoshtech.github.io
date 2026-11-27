@@ -98,8 +98,7 @@ const event = {
 };
 test("late public responses cannot overwrite filters; pagination uses server next offset", async () => {
   const s = setup();
-  s.el("event-category").value = "sports_and_fitness";
-  s.el("event-filters").handlers.submit({ preventDefault() {} });
+  s.el("event-categories").children.at(-1).handlers.click();
   assert.equal(s.calls[1].options.category, "sports_and_fitness");
   s.calls[1].resolve({ events: [event], next_offset: 20 });
   await tick();
@@ -108,6 +107,18 @@ test("late public responses cannot overwrite filters; pagination uses server nex
   assert.equal(s.el("radar-list").children.length, 1);
   s.el("radar-next").handlers.click();
   assert.equal(s.calls[2].options.offset, 20);
+  s.calls[2].resolve({
+    events: [event, { ...event, id: "2" }],
+    next_offset: null,
+  });
+  await tick();
+  assert.equal(s.el("radar-list").children.length, 2);
+  assert.equal(s.el("radar-next").hidden, true);
+  s.el("event-categories").children[0].handlers.click();
+  assert.equal(s.calls[3].options.offset, 0);
+  assert.equal(s.calls[3].options.date_from, undefined);
+  s.calls[3].resolve({ events: [], next_offset: null });
+  await tick();
 });
 test("event title stays text, unsafe URLs are omitted and unknown price stays unknown", async () => {
   const s = setup({ detail: true });
@@ -215,4 +226,19 @@ test("draft acceptance stays separate from publication and preserves Tashkent ti
   );
   s.calls[3].reject({ status: 409 });
   await tick();
+});
+
+test("load-more failure keeps the feed and retry requests the same offset", async () => {
+  const s = setup();
+  s.calls[0].resolve({ events: [event], next_offset: 20 });
+  await tick();
+  s.el("radar-next").handlers.click();
+  s.calls[1].reject({ status: 500 });
+  await tick();
+  assert.equal(s.el("radar-list").children.length, 1);
+  s.el("radar-retry").handlers.click();
+  assert.equal(s.calls[2].options.offset, 20);
+  s.calls[2].resolve({ events: [{ ...event, id: "2" }], next_offset: null });
+  await tick();
+  assert.equal(s.el("radar-list").children.length, 2);
 });

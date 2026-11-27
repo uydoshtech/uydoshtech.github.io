@@ -494,6 +494,25 @@
         margin-bottom: 10px;
       }
       .group-section-head h2 { font-size: 16px; margin: 0; }
+      .group-organizer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
+        margin: 0 0 12px;
+        font-size: 14px;
+      }
+      .group-organizer-label { color: var(--muted); font-size: 13px; }
+      .group-organizer-handle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--accent, #60a5fa);
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .group-organizer-handle svg { width: 14px; height: 14px; display: block; }
+      .group-organizer-handle:active { opacity: 0.7; }
       .group-section-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
       .group-section-spots {
         display: inline-flex;

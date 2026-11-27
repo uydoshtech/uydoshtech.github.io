@@ -347,6 +347,7 @@ I18N.en = {
     'detail.claim.account': "This listing includes your Telegram account {username}. Add it to your UyDosh profile to edit and manage it.",
     'detail.group.spots': '{count} of {target}',
     'detail.group.title': 'Group',
+    'detail.group.organizer': 'Organizer',
     'detail.group.join': 'Request to join',
     'detail.group.joining': 'Sending…',
     'detail.group.withdraw': 'Withdraw request',

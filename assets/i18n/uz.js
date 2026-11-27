@@ -348,6 +348,7 @@ I18N.uz = {
     'detail.claim.account': "Bu e’londa sizning {username} Telegram hisobingiz ko‘rsatilgan. Uni tahrirlash va boshqarish uchun UyDosh profilingizga qo‘shing.",
     'detail.group.spots': '{count} / {target}',
     'detail.group.title': 'Guruh',
+    'detail.group.organizer': 'Tashkilotchi',
     'detail.group.join': 'Guruhga so‘rov',
     'detail.group.joining': 'Yuborilmoqda…',
     'detail.group.withdraw': 'So‘rovni bekor qilish',
