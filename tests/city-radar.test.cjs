@@ -250,3 +250,48 @@ test("covers use only guarded API URLs and disappear cleanly on download error",
  first.children[0].handlers.error();assert.equal(first.children[0].hidden,true);
  assert.equal(second.children[0].tag,"div");
 });
+
+test("event detail hides deletion from ordinary visitors", async () => {
+  const s = setup({ detail: true, allowed: false });
+  s.calls[0].resolve(event);
+  await tick();
+  assert.equal(s.el("radar-list").children.length, 1);
+  assert.equal(s.calls.length, 1);
+});
+
+test("admin deletion requires confirmation and uses the current publication revision", async () => {
+  const s = setup({ detail: true });
+  s.context.confirm = () => false;
+  s.calls[0].resolve(event);
+  await tick();
+  const button = s.el("radar-list").children.at(-1);
+  assert.equal(button.textContent, "Удалить мероприятие");
+  await button.handlers.click();
+  assert.equal(s.calls.length, 1);
+  s.context.confirm = () => true;
+  const deleting = button.handlers.click();
+  assert.equal(s.calls[1].path, "/events/1");
+  s.calls[1].resolve({ event: { id: "1", revision: 7 } });
+  await tick();
+  assert.equal(s.calls[2].path, "/events/1/withdraw");
+  assert.equal(s.calls[2].options.body.expected_revision, 7);
+  assert.equal(s.calls[2].options.method, "POST");
+  s.calls[2].resolve({ event: { status: "withdrawn" } });
+  await deleting;
+  assert.equal(s.el("radar-list").children.length, 0);
+  assert.equal(s.el("radar-status").textContent, "Мероприятие удалено из афиши.");
+});
+
+test("a rejected admin deletion keeps the event visible and allows retry", async () => {
+  const s = setup({ detail: true });
+  s.context.confirm = () => true;
+  s.calls[0].resolve(event);
+  await tick();
+  const button = s.el("radar-list").children.at(-1);
+  const deleting = button.handlers.click();
+  s.calls[1].reject({ status: 403 });
+  await deleting;
+  assert.equal(s.el("radar-list").children.length, 2);
+  assert.equal(button.disabled, false);
+  assert.equal(s.calls.length, 2);
+});

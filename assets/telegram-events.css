@@ -267,3 +267,10 @@
 .radar-meta-icon svg { color: inherit; stroke: currentColor; }
 .radar-event-schedule { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .radar-price-free { color: var(--price-green, #34d399); }
+
+.radar-page .radar-delete-event {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.08);
+  width: 100%;
+}

@@ -8,6 +8,8 @@
     data = null;
   let filters = { category: "" };
   let loading = false;
+  let admin = false;
+  let deleting = false;
   UyDosh.initTelegramMiniApp?.();
   if (detail) {
     const back = window.Telegram?.WebApp?.BackButton;
@@ -50,6 +52,32 @@
     $("radar-list").replaceChildren(
       ...(detail ? [R.card(data, true)] : data.events.map((e) => R.card(e))),
     );
+    if (detail && admin) {
+      const remove = R.node("button", R.t("deleteEvent"), "radar-delete-event");
+      remove.type = "button";
+      remove.disabled = deleting;
+      remove.addEventListener("click", async () => {
+        if (deleting || !data || !window.confirm(R.t("confirmDelete"))) return;
+        deleting = true;
+        remove.disabled = true;
+        try {
+          const id = String(data.id);
+          const current = await UyDosh.cityRadarAdmin(`/events/${encodeURIComponent(id)}`);
+          await UyDosh.cityRadarAdmin(`/events/${encodeURIComponent(id)}/withdraw`, {
+            method: "POST",
+            body: { expected_revision: current.event.revision, reason: "Administrator removed event from its public detail page." },
+          });
+          generation++;
+          data = null;
+          $("radar-list").replaceChildren();
+          $("radar-status").textContent = R.t("eventDeleted");
+          $("radar-retry").hidden = true;
+        } catch (error) {
+          $("radar-status").textContent = R.error(error);
+        } finally { deleting = false; remove.disabled = false; }
+      });
+      $("radar-list").append(remove);
+    }
     $("radar-status").textContent =
       !detail && !data.events.length ? R.t("empty") : "";
   }
@@ -125,4 +153,12 @@
   });
   labels();
   load();
+  if (detail) {
+    (async () => {
+      try {
+        admin = Boolean(await UyDosh.ensureTelegramMiniAppSession?.()) && Boolean(UyDosh.isAdmin?.());
+        if (admin && data) render();
+      } catch { admin = false; }
+    })();
+  }
 })();

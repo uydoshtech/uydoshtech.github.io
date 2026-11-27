@@ -11,6 +11,9 @@ window.CityRadarUI = (() => {
   ];
   const strings = {
     ru: {
+      deleteEvent: "Удалить мероприятие",
+      confirmDelete: "Удалить мероприятие из афиши?",
+      eventDeleted: "Мероприятие удалено из афиши.",
       title: "Куда пойдём?",
       more: "Показать ещё",
       details: "Подробнее",
@@ -47,6 +50,9 @@ window.CityRadarUI = (() => {
       ],
     },
     uz: {
+      deleteEvent: "Tadbirni o‘chirish",
+      confirmDelete: "Tadbir afishadan o‘chirilsinmi?",
+      eventDeleted: "Tadbir afishadan o‘chirildi.",
       title: "Qayerga boramiz?",
       more: "Yana ko‘rsatish",
       details: "Batafsil",
@@ -83,6 +89,9 @@ window.CityRadarUI = (() => {
       ],
     },
     en: {
+      deleteEvent: "Delete event",
+      confirmDelete: "Remove this event from the feed?",
+      eventDeleted: "Event removed from the feed.",
       title: "Where shall we go?",
       more: "Show more",
       details: "View details",
