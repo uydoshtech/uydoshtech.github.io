@@ -265,9 +265,38 @@ a.admin-card.admin-card-row {
   white-space: nowrap;
 }
 .admin-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
   margin-top: 6px;
   color: var(--muted);
   font-size: 13px;
+}
+.admin-card-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-card-stamp-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.admin-card-meta .icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.admin-card-meta .icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.admin-card-meta .icon svg * {
+  stroke: currentColor;
+  fill: none;
 }
 .admin-online {
   width: 8px;

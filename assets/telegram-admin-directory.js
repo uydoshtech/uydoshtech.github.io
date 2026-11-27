@@ -26,29 +26,50 @@
     return text(key).replaceAll(`{${token}}`, String(value));
   }
 
-  function formatWhen(value) {
+  function parsedDate(value) {
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    const lang = typeof getLang === "function" ? getLang() : "ru";
-    const locale = lang === "en" ? "en" : lang === "uz" ? "uz" : "ru";
-    return date.toLocaleDateString(locale, {
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function formatDatePart(value) {
+    const date = parsedDate(value);
+    if (!date) return "";
+    return date.toLocaleDateString(localeTag(), {
       day: "numeric",
       month: "short",
       year: "numeric",
     });
   }
 
+  function formatTimePart(value) {
+    const date = parsedDate(value);
+    if (!date) return "";
+    return date.toLocaleTimeString(localeTag(), {
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+  }
+
   function formatWhenTime(value) {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    const lang = typeof getLang === "function" ? getLang() : "ru";
-    const locale = lang === "en" ? "en" : lang === "uz" ? "uz" : "ru";
-    return date.toLocaleString(locale, {
+    const date = parsedDate(value);
+    if (!date) return "";
+    return date.toLocaleString(localeTag(), {
       day: "numeric",
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
     });
+  }
+
+  function stampPart(iconHtml, label) {
+    const part = document.createElement("span");
+    part.className = "admin-card-stamp-part";
+    part.innerHTML = iconHtml || "";
+    const labelEl = document.createElement("span");
+    labelEl.textContent = label;
+    part.appendChild(labelEl);
+    return part;
   }
 
   function roleLabel(role) {
@@ -186,8 +207,19 @@
     card.appendChild(title);
     const meta = document.createElement("div");
     meta.className = "admin-card-meta";
-    const created = formatWhen(user.lastActiveAt || user.created_at);
-    meta.textContent = created ? `${roleLabel(user.role)} · ${created}` : roleLabel(user.role);
+    const role = document.createElement("span");
+    role.textContent = roleLabel(user.role);
+    meta.appendChild(role);
+    const when = user.lastActiveAt || user.created_at;
+    const dateLabel = formatDatePart(when);
+    const timeLabel = formatTimePart(when);
+    if (dateLabel || timeLabel) {
+      const stamp = document.createElement("span");
+      stamp.className = "admin-card-stamp";
+      if (dateLabel) stamp.appendChild(stampPart(UyDosh.iconCalendar?.() || "", dateLabel));
+      if (timeLabel) stamp.appendChild(stampPart(UyDosh.iconClock?.() || "", timeLabel));
+      meta.appendChild(stamp);
+    }
     card.appendChild(meta);
     return card;
   }
