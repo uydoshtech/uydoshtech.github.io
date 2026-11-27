@@ -202,9 +202,23 @@
   line-height: 1.25;
 }
 .radar-event-venue {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   margin: 0 0 14px;
   color: var(--muted);
 }
+.radar-location-icon {
+  flex: 0 0 18px;
+  margin-top: 2px;
+}
+.radar-location-icon .icon,
+.radar-location-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+.radar-location-icon svg { stroke: currentColor; }
 .radar-event-price {
   display: block;
   font-size: 16px;

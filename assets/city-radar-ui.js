@@ -209,7 +209,15 @@ window.CityRadarUI = (() => {
     body.append(heading);
     if (event.announcement_status === "rescheduled")
       body.append(node("p", t("rescheduled"), "radar-tag"));
-    body.append(node("p", event.venue || t("venue"), "radar-event-venue"));
+    const venue = node("p", null, "radar-event-venue");
+    if (event.venue && UyDosh.iconPin) {
+      const pin = node("span", null, "radar-location-icon");
+      pin.setAttribute("aria-hidden", "true");
+      pin.innerHTML = UyDosh.iconPin();
+      venue.append(pin);
+    }
+    venue.append(node("span", event.venue || t("venue")));
+    body.append(venue);
     if (detail && event.ends_at)
       body.append(
         node(
