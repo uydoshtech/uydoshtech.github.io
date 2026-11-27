@@ -223,3 +223,33 @@
   padding: 12px 0;
   font-weight: 600;
 }
+
+/* Stable category colors shared by every event card. */
+.radar-event-meta .radar-tag {
+  --category-color: #f87171;
+  color: var(--category-color);
+  border-color: color-mix(in srgb, var(--category-color) 45%, transparent);
+  background: color-mix(in srgb, var(--category-color) 12%, transparent);
+  font-weight: 600;
+}
+.radar-tag[data-category="tech_and_startups"] { --category-color: #60a5fa; }
+.radar-tag[data-category="board_games_and_social"] { --category-color: #c084fc; }
+.radar-tag[data-category="outdoor_and_travel"] { --category-color: #2dd4bf; }
+.radar-tag[data-category="cinema_and_entertainment"] { --category-color: #f472b6; }
+.radar-tag[data-category="education_and_volunteering"] { --category-color: #fbbf24; }
+.radar-tag[data-category="sports_and_fitness"] { --category-color: #a3e635; }
+.radar-event-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.radar-meta-icon,
+.radar-meta-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.radar-meta-icon svg { color: inherit; stroke: currentColor; }
+.radar-event-schedule { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.radar-price-free { color: var(--price-green, #34d399); }

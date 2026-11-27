@@ -169,26 +169,35 @@ window.CityRadarUI = (() => {
     const body = node("div", null, "radar-card-body");
     el.append(body);
     const meta = node("div", null, "radar-event-meta");
+    const tag = node("span", category(event.category), "radar-tag");
+    tag.dataset.category = categories.includes(event.category) ? event.category : "general_events";
+    meta.append(tag);
     if (event.starts_at) {
       const date = new Date(event.starts_at);
-      const time = node(
-        "time",
-        new Intl.DateTimeFormat(lang(), {
-          timeZone: "Asia/Tashkent",
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-          ...(date.getUTCFullYear() !== new Date().getUTCFullYear()
-            ? { year: "numeric" }
-            : {}),
-        }).format(date),
-      );
-      time.dateTime = event.starts_at;
-      meta.append(time);
+      const options = { timeZone: "Asia/Tashkent" };
+      const day = new Intl.DateTimeFormat(lang(), {
+        ...options, day: "numeric", month: "long",
+        ...(date.getUTCFullYear() !== new Date().getUTCFullYear() ? { year: "numeric" } : {}),
+      }).format(date);
+      const weekday = new Intl.DateTimeFormat(lang(), { ...options, weekday: "long" }).format(date);
+      const clock = new Intl.DateTimeFormat(lang(), {
+        ...options, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+      }).format(date);
+      const schedule = node("div", null, "radar-event-schedule");
+      for (const [label, icon] of [[`${day}, ${weekday}`, UyDosh.iconCalendar?.()], [clock, UyDosh.iconClock?.()]]) {
+        const time = node("time", null, "radar-event-time");
+        time.dateTime = event.starts_at;
+        if (icon) {
+          const symbol = node("span", null, "radar-meta-icon");
+          symbol.setAttribute("aria-hidden", "true");
+          symbol.innerHTML = icon;
+          time.append(symbol);
+        }
+        time.append(node("span", label));
+        schedule.append(time);
+      }
+      meta.append(schedule);
     }
-    meta.append(node("span", category(event.category), "radar-tag"));
     body.append(meta);
     const heading = node(detail ? "h1" : "h2");
     if (detail) heading.textContent = event.title;
@@ -221,7 +230,7 @@ window.CityRadarUI = (() => {
           : Number(event.price.amount) === 0
             ? t("free")
             : `${new Intl.NumberFormat(lang()).format(event.price.amount)} ${event.price.currency}`,
-        "radar-event-price",
+        "radar-event-price" + (event.price != null && Number(event.price.amount) === 0 ? " radar-price-free" : ""),
       ),
     );
     const actions = node("div", null, "radar-actions");
