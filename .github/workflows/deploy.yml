@@ -33,7 +33,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/stamp-build.cjs --guard
       - name: Test build versioning
-        run: node --test tests/build-version.test.cjs tests/build-info.test.cjs
+        run: node --test tests/build-version.test.cjs tests/build-info.test.cjs tests/pages-artifact.test.cjs
       - name: Minify JS/CSS assets
         run: bash scripts/minify-assets.sh
       - name: Stamp release metadata and asset versions
@@ -41,9 +41,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
+        id: artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "."
+      - name: Wait for artifact metadata propagation
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PAGES_ARTIFACT_ID: ${{ steps.artifact.outputs.artifact_id }}
+        run: node scripts/wait-pages-artifact.cjs
       - name: Prevent an older run from replacing a newer release
         env:
           GITHUB_TOKEN: ${{ github.token }}
