@@ -39,6 +39,11 @@ function setup({ admin = false, allowed = true, detail = false } = {}) {
     if (!elements.has(id)) elements.set(id, new Element());
     return elements.get(id);
   };
+  const sections = ["sources", "drafts", "events"].map((id) => {
+    const b = new Element("button");
+    b.dataset.section = id;
+    return b;
+  });
   const context = {
     URL,
     URLSearchParams,
@@ -52,7 +57,8 @@ function setup({ admin = false, allowed = true, detail = false } = {}) {
     document: {
       createElement: (tag) => new Element(tag),
       getElementById: el,
-      querySelectorAll: () => [],
+      querySelectorAll: (selector) =>
+        selector === "[data-section]" ? sections : [],
       addEventListener: (key, fn) => (events[key] = fn),
     },
     UyDosh: {
@@ -78,7 +84,7 @@ function setup({ admin = false, allowed = true, detail = false } = {}) {
     ),
     context,
   );
-  return { context, el, calls, events };
+  return { context, el, calls, events, sections };
 }
 const event = {
   id: "1",
@@ -162,4 +168,51 @@ test("source review preserves revision and never starts collection on opening", 
   await tick();
   assert.match(s.el("radar-status").textContent, /Обновите/);
   assert.equal(s.el("radar-editor").children.length, 0);
+});
+
+test("draft acceptance stays separate from publication and preserves Tashkent time", async () => {
+  const s = setup({ admin: true });
+  await tick();
+  s.calls[0].resolve({ sources: [] });
+  await tick();
+  s.sections[1].handlers.click();
+  const d = {
+    id: "4",
+    revision: 9,
+    status: "needs_review",
+    source: { handle: "example" },
+    text: "Event",
+    verification: { canAccept: true, blockers: [] },
+    event: {
+      ...event,
+      title: "Event",
+      announcement_status: "scheduled",
+      registration_url: null,
+      evidence: { title: "Event", date: null, venue: null, price: null },
+    },
+  };
+  s.calls[1].resolve({ drafts: [d] });
+  await tick();
+  s.el("radar-list").children[0].children.at(-1).handlers.click();
+  s.calls[2].resolve(d);
+  await tick();
+  const form = s
+    .el("radar-editor")
+    .children[0].children.find((n) => n.tag === "form");
+  const decision = form.children.find((n) => n.textContent === "Решение")
+    .children[0];
+  decision.value = "accepted";
+  form.handlers.submit({ preventDefault() {} });
+  assert.equal(s.calls[3].path, "/drafts/4/review");
+  assert.equal(s.calls[3].options.body.expected_revision, 9);
+  assert.equal(
+    s.calls[3].options.body.event.starts_at,
+    "2026-12-01T18:00:00+05:00",
+  );
+  assert.equal(
+    s.calls.some((call) => call.path.endsWith("/publish")),
+    false,
+  );
+  s.calls[3].reject({ status: 409 });
+  await tick();
 });
