@@ -162,3 +162,61 @@
   flex: 1;
   text-align: center;
 }
+
+.radar-list .radar-event-card,
+.radar-event-card {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 22px;
+}
+.radar-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--stroke);
+}
+.radar-card-body {
+  padding: 20px;
+}
+.radar-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.radar-event-meta .radar-tag {
+  border: 1px solid var(--stroke);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+.radar-event-card h2,
+.radar-event-card h1 {
+  margin: 14px 0 10px;
+  font-size: 23px;
+  line-height: 1.25;
+}
+.radar-event-venue {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.radar-event-price {
+  display: block;
+  font-size: 16px;
+}
+.radar-event-card .radar-actions > a {
+  background: #075985;
+  border-color: #1684ae;
+  color: #fff;
+  font-weight: 600;
+}
+.radar-page details {
+  margin: 16px 0;
+}
+.radar-page summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
+}

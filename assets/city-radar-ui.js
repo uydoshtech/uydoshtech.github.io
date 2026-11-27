@@ -142,35 +142,78 @@ window.CityRadarUI = (() => {
   };
   const category = (value) => t("cats")[categories.indexOf(value)] || value;
   function card(event, detail = false) {
-    const el = node("article", null, "radar-card");
-    el.append(node("span", category(event.category), "radar-tag"));
-    const heading = node("h2");
+    const el = node("article", null, "radar-card radar-event-card");
+    if (event.photo_url) {
+      try {
+        const base = new URL(UyDosh.API_BASE || "https://api.uydosh.com");
+        const url = new URL(base.href.replace(/\/$/, "") + event.photo_url);
+        // Covers are served by the API with the same visibility checks as events.
+        if (
+          url.origin === base.origin &&
+          /^\/events\/\d+\/photo$/.test(event.photo_url)
+        ) {
+          const img = node("img", null, "radar-cover");
+          img.src = url.href;
+          img.alt = event.title;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.addEventListener("error", () => {
+            img.hidden = true;
+          });
+          el.append(img);
+        }
+      } catch {
+        /* Text-only card when a cover is unavailable. */
+      }
+    }
+    const body = node("div", null, "radar-card-body");
+    el.append(body);
+    const meta = node("div", null, "radar-event-meta");
+    if (event.starts_at) {
+      const date = new Date(event.starts_at);
+      const time = node(
+        "time",
+        new Intl.DateTimeFormat(lang(), {
+          timeZone: "Asia/Tashkent",
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          ...(date.getUTCFullYear() !== new Date().getUTCFullYear()
+            ? { year: "numeric" }
+            : {}),
+        }).format(date),
+      );
+      time.dateTime = event.starts_at;
+      meta.append(time);
+    }
+    meta.append(node("span", category(event.category), "radar-tag"));
+    body.append(meta);
+    const heading = node(detail ? "h1" : "h2");
     if (detail) heading.textContent = event.title;
     else {
-      const a = node("a", event.title);
-      a.href = `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
-      heading.append(a);
+      const titleLink = node("a", event.title);
+      titleLink.href = `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
+      heading.append(titleLink);
     }
-    el.append(heading);
+    body.append(heading);
     if (event.announcement_status === "rescheduled")
-      el.append(node("p", t("rescheduled"), "radar-tag"));
-    const format = (value) =>
-      new Intl.DateTimeFormat(lang(), {
-        timeZone: "Asia/Tashkent",
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(value));
-    if (event.starts_at)
-      el.append(
+      body.append(node("p", t("rescheduled"), "radar-tag"));
+    body.append(node("p", event.venue || t("venue"), "radar-event-venue"));
+    if (detail && event.ends_at)
+      body.append(
         node(
           "p",
-          format(event.starts_at) +
-            (event.ends_at ? " — " + format(event.ends_at) : "") +
-            " · Ташкент (UTC+5)",
+          "→ " +
+            new Intl.DateTimeFormat(lang(), {
+              timeZone: "Asia/Tashkent",
+              dateStyle: "medium",
+              timeStyle: "short",
+            }).format(new Date(event.ends_at)),
         ),
       );
-    el.append(node("p", event.venue || t("venue")));
-    el.append(
+    body.append(
       node(
         "strong",
         event.price == null
@@ -178,10 +221,11 @@ window.CityRadarUI = (() => {
           : Number(event.price.amount) === 0
             ? t("free")
             : `${new Intl.NumberFormat(lang()).format(event.price.amount)} ${event.price.currency}`,
+        "radar-event-price",
       ),
     );
+    const actions = node("div", null, "radar-actions");
     if (detail) {
-      const actions = node("div", null, "radar-actions");
       for (const [label, url] of [
         [t("register"), event.registration_url],
         [t("source"), event.source_url],
@@ -189,15 +233,12 @@ window.CityRadarUI = (() => {
         const a = link(label, url);
         if (a) actions.append(a);
       }
-      el.append(actions);
-    }
-    if (!detail) {
-      const actions = node("div", null, "radar-actions");
+    } else {
       const more = node("a", t("details"));
       more.href = `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
       actions.append(more);
-      el.append(actions);
     }
+    body.append(actions);
     return el;
   }
   function error(error) {

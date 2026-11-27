@@ -124,7 +124,7 @@ test("event title stays text, unsafe URLs are omitted and unknown price stays un
   const s = setup({ detail: true });
   s.calls[0].resolve(event);
   await tick();
-  const card = s.el("radar-list").children[0];
+  const card = s.el("radar-list").children[0].children[0];
   assert.equal(card.children[1].textContent, event.title);
   assert.equal(
     card.children.find((n) => n.tag === "strong").textContent,
@@ -209,7 +209,7 @@ test("draft acceptance stays separate from publication and preserves Tashkent ti
   await tick();
   const form = s
     .el("radar-editor")
-    .children[0].children.find((n) => n.tag === "form");
+    .children[0].children.find((n) => n.tag === "details" && n.children.some(c => c.tag === "form")).children.find(n => n.tag === "form");
   const decision = form.children.find((n) => n.textContent === "Решение")
     .children[0];
   decision.value = "accepted";
@@ -241,4 +241,12 @@ test("load-more failure keeps the feed and retry requests the same offset", asyn
   s.calls[2].resolve({ events: [{ ...event, id: "2" }], next_offset: null });
   await tick();
   assert.equal(s.el("radar-list").children.length, 2);
+});
+
+test("covers use only guarded API URLs and disappear cleanly on download error",async()=>{
+ const s=setup();s.calls[0].resolve({events:[{...event,photo_url:"/events/1/photo"},{...event,id:"2",photo_url:"https://tracker.invalid/image.jpg"}],next_offset:null});await tick();
+ const first=s.el("radar-list").children[0],second=s.el("radar-list").children[1];
+ assert.equal(first.children[0].tag,"img");assert.equal(first.children[0].src,"https://api.uydosh.com/events/1/photo");
+ first.children[0].handlers.error();assert.equal(first.children[0].hidden,true);
+ assert.equal(second.children[0].tag,"div");
 });

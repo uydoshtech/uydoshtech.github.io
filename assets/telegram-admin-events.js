@@ -257,7 +257,13 @@
         `#${d.id} · ${statuses[d.status]} · @${d.source.handle} · ревизия ${d.revision}`,
       ),
     );
-    panel.append(R.node("h3", "Оригинал сообщения"), R.node("pre", d.text));
+    panel.append(R.card(d.event, true));
+    const original = R.node("details");
+    original.append(
+      R.node("summary", "Оригинал сообщения"),
+      R.node("pre", d.text),
+    );
+    panel.append(original);
     const blockers = {
       INVALID_OR_UNGROUNDED_EVENT: "Поля не подтверждены исходным текстом",
       STALE_MESSAGE_REVISION: "Исходный пост изменился",
@@ -282,8 +288,42 @@
           draftEditor(d.duplicate_of),
         ),
       );
+    const quick = R.node("div", null, "radar-actions");
+    if (d.status === "needs_review" && d.verification.canAccept)
+      quick.append(
+        button("Одобрить", () =>
+          mutate(
+            `/drafts/${d.id}/review`,
+            {
+              expected_revision: d.revision,
+              decision: "accepted",
+              reason: "Администратор одобрил событие после просмотра карточки.",
+            },
+            "PATCH",
+          ),
+        ),
+      );
+    if (d.status === "needs_review")
+      quick.append(
+        button("Отклонить", () =>
+          mutate(
+            `/drafts/${d.id}/review`,
+            {
+              expected_revision: d.revision,
+              decision: "rejected",
+              reason:
+                "Администратор отклонил событие после просмотра карточки.",
+            },
+            "PATCH",
+          ),
+        ),
+      );
+    panel.append(quick);
+    const editing = R.node("details");
+    editing.append(R.node("summary", "Редактировать поля и подтверждения"));
     const form = R.node("form", null, "radar-form");
-    panel.append(form);
+    editing.append(form);
+    panel.append(editing);
     const title = field(form, "Название", d.event.title);
     title.required = true;
     title.maxLength = 200;
