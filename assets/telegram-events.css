@@ -278,3 +278,29 @@
 .radar-gathering-description { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .radar-company-label { color: #c084fc; font-size: 13px; font-weight: 600; margin-bottom: 0; }
+
+/* Shared gathering actions: meaning stays in the label as well as the color. */
+.radar-page .radar-gathering-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-weight: 600;
+  color: var(--action-ink);
+  background: var(--action-fill);
+  border-color: var(--action-border);
+}
+.radar-gathering-action--blue { --action-ink: #60a5fa; --action-fill: #60a5fa18; --action-border: #60a5fa66; }
+.radar-gathering-action--purple { --action-ink: #c4b5fd; --action-fill: #a78bfa24; --action-border: #a78bfa80; }
+.radar-gathering-action--green { --action-ink: #4ade80; --action-fill: #22c55e1f; --action-border: #22c55e80; }
+.radar-gathering-action--red { --action-ink: #f87171; --action-fill: #ef44441a; --action-border: #ef444466; }
+.radar-action-icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px; }
+.radar-action-icon svg { width: 100%; height: 100%; }
+.radar-gathering-action:focus-visible { outline: 2px solid var(--action-ink); outline-offset: 3px; }
+@media (hover: hover) { .radar-gathering-action:hover:not(:disabled) { filter: brightness(1.15); } }
+@media (prefers-color-scheme: light) {
+  .radar-gathering-action--blue { --action-ink: #1d4ed8; }
+  .radar-gathering-action--purple { --action-ink: #6d28d9; }
+  .radar-gathering-action--green { --action-ink: #15803d; }
+  .radar-gathering-action--red { --action-ink: #b91c1c; }
+}

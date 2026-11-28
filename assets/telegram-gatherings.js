@@ -9,8 +9,14 @@
   let authenticated=false,busy=false,event=null;
   const id=new URLSearchParams(location.search).get('id');
   const note=text=>{$('radar-status').textContent=text;};
-  function button(label,action,cls=''){
-    const b=R.node('button',label,cls);b.type='button';b.addEventListener('click',action);return b;
+  function decorateButton(b,icon,tone){
+    b.className=`${b.className||''} radar-gathering-action radar-gathering-action--${tone}`.trim();
+    const symbol=R.node('span',null,'radar-action-icon');symbol.setAttribute('aria-hidden','true');
+    symbol.innerHTML=icon==='check'?UyDosh.iconCheck?.()||'':icon==='trash'?UyDosh.iconTrash?.()||'':icon==='minus'?UyDosh.iconMinus?.()||'':UyDosh.iconChrome?.(icon)||'';
+    b.prepend(symbol);return b;
+  }
+  function button(label,action,cls='',icon='refresh',tone='blue'){
+    const b=decorateButton(R.node('button',label,cls),icon,tone);b.type='button';b.addEventListener('click',action);return b;
   }
   async function mutate(path,body){
     if(busy)return;busy=true;
@@ -37,7 +43,7 @@
     const capacity=field(t('capacity'),'input','number');capacity.min=2;capacity.max=50;capacity.step=1;capacity.value=6;capacity.required=true;
     const price=field(t('price'),'input','number');price.min=0;price.max=1000000000;price.step='any';price.placeholder=t('priceHint');
     f.append(R.node('p',t('joinInfo'),'radar-muted'));
-    const submit=R.node('button',t('publish'));submit.type='submit';f.append(submit);
+    const submit=decorateButton(R.node('button',t('publish')),'paperPlane','purple');submit.type='submit';f.append(submit);
     const requestId=crypto.randomUUID();
     f.addEventListener('submit',async e=>{
       e.preventDefault();if(busy||!f.reportValidity())return;busy=true;submit.disabled=true;note(R.t('loading'));
@@ -56,16 +62,16 @@
     if(event.private_location)panel.append(R.node('h2',t('address')),R.node('p',event.private_location,'radar-gathering-description'));
     const actions=R.node('div',null,'radar-actions');panel.append(actions);
     actions.append(button(t('refresh'),load));
-    actions.append(button(t('share'),async()=>{try{await navigator.clipboard.writeText(location.href);note(t('shared'));}catch{note(location.href);}}));
+    actions.append(button(t('share'),async()=>{try{await navigator.clipboard.writeText(location.href);note(t('shared'));}catch{note(location.href);}},'','paperPlane','purple'));
     const open=event.status==='published'&&Date.parse(event.starts_at)>Date.now();
     if(!open)panel.append(R.node('p',t('closed')));
     else if(!authenticated)panel.append(R.node('p',t('login')));
     else if(!event.is_owner){
       if(['pending','approved'].includes(event.my_status)){
         panel.append(R.node('p',t(event.my_status)));
-        actions.append(button(t('leave'),()=>mutate(`/${id}/leave`,{})));
+        actions.append(button(t('leave'),()=>mutate(`/${id}/leave`,{}),'','minus','red'));
       }else if(event.my_status==='rejected')panel.append(R.node('p',t('rejected')));
-      else if(event.spots_left>0){panel.append(R.node('p',t('joinInfo')));actions.append(button(t('join'),()=>mutate(`/${id}/join`,{})));}
+      else if(event.spots_left>0){panel.append(R.node('p',t('joinInfo')));actions.append(button(t('join'),()=>mutate(`/${id}/join`,{}),'','users','purple'));}
       else panel.append(R.node('p',t('full')));
     }
     if(event.can_manage){
@@ -74,15 +80,15 @@
       for(const r of event.requests){
         const row=R.node('article',null,'radar-card');row.append(R.node('strong',r.name),R.node('p',t(r.status==='approved'?'confirmed':'waiting')));
         if(open){const controls=R.node('div',null,'radar-actions');
-          if(r.status==='pending')controls.append(button(t('approve'),()=>mutate(`/${id}/requests/${r.user_id}`,{decision:'approved'})));
-          controls.append(button(t(r.status==='approved'?'remove':'reject'),()=>mutate(`/${id}/requests/${r.user_id}`,{decision:'rejected'})));row.append(controls);}
+          if(r.status==='pending')controls.append(button(t('approve'),()=>mutate(`/${id}/requests/${r.user_id}`,{decision:'approved'}),'','check','green'));
+          controls.append(button(t(r.status==='approved'?'remove':'reject'),()=>mutate(`/${id}/requests/${r.user_id}`,{decision:'rejected'}),'','minus','red'));row.append(controls);}
         panel.append(row);
       }
       if(event.status==='published')panel.append(button(R.t('deleteEvent'),async()=>{
         if(busy||!confirm(t('removeConfirm')))return;busy=true;
         try{await UyDosh.communityEvent(`/${id}/withdraw`,{method:'POST',body:{expected_revision:event.revision}});event=null;$('radar-list').replaceChildren();note(t('saved'));}
         catch{note(t('error'));}finally{busy=false;}
-      },'radar-delete-event'));
+      },'radar-delete-event','trash','red'));
     }
     $('radar-list').replaceChildren(panel);
   }
