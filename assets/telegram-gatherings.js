@@ -84,6 +84,8 @@
           controls.append(button(t(r.status==='approved'?'remove':'reject'),()=>mutate(`/${id}/requests/${r.user_id}`,{decision:'rejected'}),'','minus','red'));row.append(controls);}
         panel.append(row);
       }
+    }
+    if(event.can_delete||event.can_manage){
       if(event.status==='published')panel.append(button(R.t('deleteEvent'),async()=>{
         if(busy||!confirm(t('removeConfirm')))return;busy=true;
         try{await UyDosh.communityEvent(`/${id}/withdraw`,{method:'POST',body:{expected_revision:event.revision}});event=null;$('radar-list').replaceChildren();note(t('saved'));}
