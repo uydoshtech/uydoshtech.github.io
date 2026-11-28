@@ -11,6 +11,7 @@ window.CityRadarUI = (() => {
   ];
   const strings = {
     ru: {
+      company: "Собираю компанию",
       deleteEvent: "Удалить мероприятие",
       confirmDelete: "Удалить мероприятие из афиши?",
       eventDeleted: "Мероприятие удалено из афиши.",
@@ -50,6 +51,7 @@ window.CityRadarUI = (() => {
       ],
     },
     uz: {
+      company: "Birga boramiz",
       deleteEvent: "Tadbirni o‘chirish",
       confirmDelete: "Tadbir afishadan o‘chirilsinmi?",
       eventDeleted: "Tadbir afishadan o‘chirildi.",
@@ -89,6 +91,7 @@ window.CityRadarUI = (() => {
       ],
     },
     en: {
+      company: "Find your people",
       deleteEvent: "Delete event",
       confirmDelete: "Remove this event from the feed?",
       eventDeleted: "Event removed from the feed.",
@@ -208,6 +211,7 @@ window.CityRadarUI = (() => {
       meta.append(schedule);
     }
     body.append(meta);
+    if (event.source_kind === "community") body.append(node("p", t("company"), "radar-company-label"));
     const heading = node(detail ? "h1" : "h2");
     if (detail) heading.textContent = event.title;
     else {

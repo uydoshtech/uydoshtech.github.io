@@ -276,3 +276,5 @@
 }
 
 .radar-gathering-description { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.radar-company-label { color: #c084fc; font-size: 13px; font-weight: 600; margin-bottom: 0; }

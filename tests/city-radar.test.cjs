@@ -31,7 +31,7 @@ class Element {
   scrollIntoView() {}
 }
 const tick = () => new Promise((resolve) => setImmediate(resolve));
-function setup({ admin = false, allowed = true, detail = false } = {}) {
+function setup({ admin = false, allowed = true, detail = false, gathering = false, createGathering = false } = {}) {
   const elements = new Map(),
     calls = [],
     events = {};
@@ -47,12 +47,13 @@ function setup({ admin = false, allowed = true, detail = false } = {}) {
   const context = {
     URL,
     URLSearchParams,
+    crypto: require("node:crypto").webcrypto,
     Intl,
     Date,
     console,
     location: {
-      pathname: detail ? "/telegram/event.html" : "/telegram/events.html",
-      search: detail ? "?id=1" : "",
+      pathname: gathering ? (createGathering ? "/telegram/create-gathering.html" : "/telegram/gathering.html") : detail ? "/telegram/event.html" : "/telegram/events.html",
+      search: detail || (gathering && !createGathering) ? "?id=1" : "",
     },
     document: {
       createElement: (tag) => new Element(tag),
@@ -74,12 +75,14 @@ function setup({ admin = false, allowed = true, detail = false } = {}) {
     );
   context.UyDosh.cityRadarPublic = request;
   context.UyDosh.cityRadarAdmin = request;
+  context.UyDosh.communityEvent = request;
+  context.UyDosh.communityEventPublic = request;
   context.window = context;
   vm.createContext(context);
   vm.runInContext(fs.readFileSync("assets/city-radar-ui.js", "utf8"), context);
   vm.runInContext(
     fs.readFileSync(
-      admin ? "assets/telegram-admin-events.js" : "assets/telegram-events.js",
+      gathering ? "assets/telegram-gatherings.js" : admin ? "assets/telegram-admin-events.js" : "assets/telegram-events.js",
       "utf8",
     ),
     context,
@@ -294,4 +297,36 @@ test("a rejected admin deletion keeps the event visible and allows retry", async
   assert.equal(s.el("radar-list").children.length, 2);
   assert.equal(button.disabled, false);
   assert.equal(s.calls.length, 2);
+});
+
+function descendants(node) { return [node, ...node.children.flatMap(descendants)]; }
+test('community feed cards route to the gathering instead of a Telegram event', () => {
+  const s=setup();
+  const card=s.context.CityRadarUI.card({...event,id:'community:42',source_kind:'community'});
+  const links=descendants(card).filter(e=>e.tag==='a');
+  assert.equal(links.length,2);
+  for(const link of links)assert.equal(link.href,'/telegram/gathering.html?id=42');
+});
+test('gathering form sends a private address separately and preserves Tashkent time', async()=>{
+  const s=setup({gathering:true,createGathering:true});await tick();
+  const form=descendants(s.el('radar-list')).find(e=>e.tag==='form');
+  const fields=descendants(form).filter(e=>['input','textarea','select'].includes(e.tag));
+  ['Мафия дома','Играем в мафию с новыми друзьями','board_games_and_social','2026-12-12T18:00','Ташкент, Юнусабад','Квартира 99','6','0'].forEach((v,i)=>fields[i].value=v);
+  const action=form.handlers.submit({preventDefault(){}});
+  assert.equal(s.calls[0].options.body.starts_at,'2026-12-12T18:00:00+05:00');
+  assert.equal(s.calls[0].options.body.private_location,'Квартира 99');
+  assert.equal(s.calls[0].options.body.venue,'Ташкент, Юнусабад');
+  assert.equal(s.calls[0].options.body.price.amount,0);
+  s.calls[0].resolve({id:'42'});await action;
+  assert.equal(s.context.location.href,'/telegram/gathering.html?id=42');
+});
+test('requesting to join refreshes membership instead of granting immediate admission',async()=>{
+  const s=setup({gathering:true});await tick();
+  const detail={...event,description:'Мафия с друзьями',owner_name:'Организатор',capacity:6,spots_left:5,status:'published',is_owner:false,can_manage:false,my_status:null,private_location:null};
+  s.calls[0].resolve(detail);await tick();
+  const join=descendants(s.el('radar-list')).find(e=>e.textContent==='Хочу с вами');
+  const action=join.handlers.click();assert.equal(s.calls[1].path,'/1/join');
+  s.calls[1].resolve({status:'pending'});await tick();
+  s.calls[2].resolve({...detail,my_status:'pending'});await action;
+  assert.ok(descendants(s.el('radar-list')).some(e=>e.textContent.includes('Ждём решения организатора')));
 });
