@@ -274,3 +274,5 @@
   background: rgba(248, 113, 113, 0.08);
   width: 100%;
 }
+
+.radar-gathering-description { white-space: pre-wrap; overflow-wrap: anywhere; }

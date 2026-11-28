@@ -212,7 +212,9 @@ window.CityRadarUI = (() => {
     if (detail) heading.textContent = event.title;
     else {
       const titleLink = node("a", event.title);
-      titleLink.href = `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
+      titleLink.href = event.source_kind === "community"
+        ? `/telegram/gathering.html?id=${encodeURIComponent(String(event.id).replace(/^community:/, ""))}`
+        : `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
       heading.append(titleLink);
     }
     body.append(heading);
@@ -261,7 +263,9 @@ window.CityRadarUI = (() => {
       }
     } else {
       const more = node("a", t("details"));
-      more.href = `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
+      more.href = event.source_kind === "community"
+        ? `/telegram/gathering.html?id=${encodeURIComponent(String(event.id).replace(/^community:/, ""))}`
+        : `/telegram/event.html?id=${encodeURIComponent(event.id)}`;
       actions.append(more);
     }
     body.append(actions);

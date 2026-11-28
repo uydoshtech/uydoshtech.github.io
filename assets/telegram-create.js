@@ -1742,6 +1742,17 @@ function renderStep0(lang) {
       </button>`;
   }).join('');
 
+  const gatheringCopy = {
+    ru: ['Собираю компанию', 'Мафия дома, настолки, кино или концерт — придумай план и найди тех, кто пойдёт с тобой.'],
+    uz: ['Birga boramiz', 'Uyda mafiya, stol o‘yinlari, kino yoki konsert — reja tuzing va hamroh toping.'],
+    en: ['Find your people', 'Mafia at home, board games, a movie or a concert — make a plan and find your people.'],
+  }[lang] || ['Собираю компанию', 'Придумай план и найди тех, кто пойдёт с тобой.'];
+  const gatheringCard = compact ? '' : `<a class="listing-type-card gathering-type-card" href="/telegram/create-gathering.html">
+    <span class="listing-type-glyph gathering-type-glyph" aria-hidden="true">${UyDosh.iconChrome('users')}<span class="gathering-type-spark">${UyDosh.iconChrome('sparkles')}</span></span>
+    <span class="listing-type-label">${UyDosh.escapeHtml(gatheringCopy[0])}</span>
+    <span class="listing-type-description">${UyDosh.escapeHtml(gatheringCopy[1])}</span>
+  </a>`;
+
   const locationSection = state.form.listingTypeId === null
     ? ''
     : isDemandSideType()
@@ -1752,7 +1763,7 @@ function renderStep0(lang) {
     <section class="panel active" data-step="0">
       <div class="field listing-type-field${compact ? ' is-compact' : ''}" data-validation-anchor="listingType">
         ${compact ? '' : `<span class="field-label" id="listing-type-heading">${UyDosh.escapeHtml(UyDosh.t('create.chooseListingAction', lang))}</span>`}
-        <div class="listing-type-cards" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}">${cards}</div>
+        <div class="listing-type-cards" role="group" aria-label="${UyDosh.escapeHtml(UyDosh.t('create.listingType', lang))}">${cards}${gatheringCard}</div>
       </div>
       ${locationSection}
     </section>`;

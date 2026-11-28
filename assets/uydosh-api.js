@@ -2378,3 +2378,6 @@ UyDosh.cityRadarPublic = async (path = "", params = {}) => {
   if (!response.ok) { const error = new Error(`HTTP ${response.status}`); error.status = response.status; throw error; }
   return response.json();
 };
+
+UyDosh.communityEventPublic = (id) => fetchJson(`/community-events/${encodeURIComponent(id)}`);
+UyDosh.communityEvent = (path, options) => fetchJsonAuth(`/community-events${path}`, options);
